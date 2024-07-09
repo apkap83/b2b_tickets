@@ -1,0 +1,6 @@
+1 customers.sql
+2 users.sql
+3 statuses.sql
+4 ticket_categories.sql
+5 tickets.sql
+6 ticket_comments.sql
