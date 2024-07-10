@@ -14,7 +14,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@/*": ["./*"],
+      "@/b2b_tickets/*": ["../b2b_tickets/*"],
+      "@/b2b_tickets_app/*": ["../b2b_tickets/app/*"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
