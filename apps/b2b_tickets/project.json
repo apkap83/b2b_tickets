@@ -1,0 +1,9 @@
+{
+  "name": "b2b_tickets",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/b2b_tickets",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project b2b_tickets --web",
+  "targets": {}
+}
