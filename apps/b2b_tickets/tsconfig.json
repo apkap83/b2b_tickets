@@ -16,7 +16,8 @@
         "name": "next"
       }
     ],
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "baseUrl": "./"
   },
   "include": [
     "**/*.ts",
@@ -25,7 +26,8 @@
     "**/*.jsx",
     "../../apps/b2b_tickets/.next/types/**/*.ts",
     "../../dist/apps/b2b_tickets/.next/types/**/*.ts",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules", "jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
 }

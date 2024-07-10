@@ -1,0 +1,2 @@
+# Run development Environment on port 3500
+nx dev b2b_tickets -p 3500
