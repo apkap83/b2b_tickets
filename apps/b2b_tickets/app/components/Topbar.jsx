@@ -39,16 +39,10 @@ const Topbar = () => {
             flexDirection: 'column',
             alignItems: 'center',
             borderRadius: '5px',
+            ml: 1,
           }}
         >
-          <Image
-            // className={'company--logo-navbar'}
-            priority
-            src={NovaLogo}
-            alt={'Nova Logo'}
-            // width="100px"
-            height={18}
-          />
+          <Image priority src={NovaLogo} alt={'Nova Logo'} height={18} />
           <Typography
             component="p"
             variant="myVariantTypo1"
@@ -71,6 +65,7 @@ const Topbar = () => {
           bgcolor: colors.grey[900],
         }}
         className="rounded"
+        px={2}
       >
         <IconButton onClick={colorMode.toggleColorMode}>
           {theme.palette.mode === 'dark' ? (

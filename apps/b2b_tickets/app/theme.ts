@@ -181,34 +181,34 @@ export const themeSettings = (mode: PaletteMode) => {
           }),
     },
     typography: {
-      fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+      fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
       fontSize: 12,
       h1: {
-        fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 40,
       },
       h2: {
-        fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 32,
       },
       h3: {
-        fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 24,
       },
       h4: {
-        fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 20,
       },
       h5: {
-        fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 16,
       },
       h6: {
-        fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 14,
       },
       myVariantTypo1: {
-        fontFamily: [manRope.style.fontFamily, 'sans-serif'].join(','),
+        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 8.5,
         letterSpacing: '1px',
       },
