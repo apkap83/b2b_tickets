@@ -11,7 +11,7 @@ import '@fontsource/roboto/700.css';
 
 import './global.css';
 import './sass/main.scss';
-import Topbar from './components/Topbar';
+import NavBar from './components/NavBar';
 
 import AuthProvider from './utils/AuthProvider';
 import ToastProvider from './utils/toast-provider';
@@ -45,7 +45,7 @@ export default function RootLayout({
             <ToastProvider>
               <div className="app">
                 <main className="content">
-                  <Topbar />
+                  <NavBar />
                   {children}
                 </main>
               </div>

@@ -15,7 +15,7 @@ import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import NovaLogo from '@/b2b_tickets_app/assets/novaLogo.svg';
 
-const Topbar = () => {
+const NavBar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
@@ -88,4 +88,4 @@ const Topbar = () => {
   );
 };
 
-export default Topbar;
+export default NavBar;

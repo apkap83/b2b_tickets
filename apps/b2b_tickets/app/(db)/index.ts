@@ -25,11 +25,11 @@ const setSchema = async (pool: pg.Pool, schema: string) => {
 
 // (async () => {
 //   try {
-//     const res = await pool.query('SELECT NOW()');
+//     const res = await pgB2Bpool.query('SELECT NOW()');
 //     console.log(res.rows[0]); // Output: { now: '2024-07-09T12:34:56.789Z' }
 //   } catch (err) {
 //     console.error(err);
 //   } finally {
-//     await pool.end();
+//     await pgB2Bpool.end();
 //   }
 // })();
