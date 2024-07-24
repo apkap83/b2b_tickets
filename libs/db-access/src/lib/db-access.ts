@@ -1,16 +1,15 @@
-import pg from 'pg';
-const { Pool, Client } = pg;
+import { Pool } from 'pg';
 
 export const pgB2Bpool = new Pool({
-  user: process.env.POSTGRES_B2B_USER_NAME,
-  password: process.env.POSTGRES_B2B_PASSWORD,
-  host: process.env.POSTGRES_B2B_HOST,
-  port: Number.parseInt(process.env.POSTGRES_B2B_PORT || '12345', 10),
-  database: process.env.POSTGRES_B2B_DB,
+  user: process.env['POSTGRES_B2B_USER_NAME'],
+  password: process.env['POSTGRES_B2B_PASSWORD'],
+  host: process.env['POSTGRES_B2B_HOST'],
+  port: Number.parseInt(process.env['POSTGRES_B2B_PORT'] || '12345', 10),
+  database: process.env['POSTGRES_B2B_DB'],
 });
 
 // Function to set the search path to the desired schema
-export const setSchema = async (pool: pg.Pool, schema: string) => {
+export const setSchema = async (pool: Pool, schema: string) => {
   try {
     await pool.query(`SET search_path TO ${schema}`);
   } catch (error) {

@@ -1,7 +1,6 @@
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 
 // @ts-ignore
-import { ThemeProvider, CssVarsProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import '@fontsource/roboto/300.css';
@@ -11,12 +10,11 @@ import '@fontsource/roboto/700.css';
 
 import './global.css';
 import './sass/main.scss';
-import NavBar from './components/NavBar';
+// import NavBar from './components/NavBar';
+import { NavBar } from '@b2b-tickets/ui';
 
-import AuthProvider from './utils/AuthProvider';
-import ToastProvider from './utils/toast-provider';
-
-import AppThemeProvider from './themeProvider';
+import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
+import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import { Paper } from '@mui/material';
 import StyledComponentsRegistry from './lib/registry';
 
@@ -56,7 +54,6 @@ export default function RootLayout({
           </AppRouterCacheProvider>
         </StyledComponentsRegistry>
       </body>
-      {/* </AuthProvider> */}
     </html>
   );
 }
