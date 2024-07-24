@@ -1,2 +1,9 @@
 # Run development Environment on port 3500
 nx dev b2b_tickets -p 3500
+
+# Creating ui library under libs folder
+nx g lib --directory libs --appProject b2b_tickets --tags type:ui,
+scope:b2b_tickets --dryRun
+
+# Create config library under libs folder
+nx g @nrwl/js:lib config

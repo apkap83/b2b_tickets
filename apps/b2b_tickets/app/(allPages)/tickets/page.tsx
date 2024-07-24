@@ -16,9 +16,9 @@ import Container from '@mui/material/Container';
 
 import clsx from 'clsx';
 
-import { getAllTickets } from '@/app/lib/actions';
-import ThemeToggle from '@/b2b_tickets_app/components/ThemeToggle';
-import { ColorModeContext, tokens } from '@/b2b_tickets_app/theme';
+import { getAllTickets } from '@b2b_tickets_app/lib/actions';
+import ThemeToggle from '@b2b_tickets_app/components/ThemeToggle';
+import { tokens } from '@b2b_tickets_app/theme';
 
 const App: React.FC = () => {
   const [tickets, setTickets] = useState<any>([]);

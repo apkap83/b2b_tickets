@@ -1,7 +1,9 @@
 'use server';
-import { pgB2Bpool } from '@/b2b_tickets_app/(db)';
+import { pgB2Bpool, setSchema } from '@b2b_tickets_app/(db)';
+import { config } from '@b2b-tickets/config';
 
 export const getAllTickets = async () => {
+  await setSchema(pgB2Bpool, config['postgresSchemaName']);
   try {
     const query = 'SELECT * FROM tickets_v';
     const res = await pgB2Bpool.query(query);

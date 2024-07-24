@@ -4,6 +4,10 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import Button from '@mui/material/Button';
+
+// import { Ui } from '@b2b-tickets/ui';
+// import { GlobalStyles } from '@b2b-tickets/ui';
+
 export default function Index() {
   /*
    * Replace the elements below with your own.
@@ -12,6 +16,7 @@ export default function Index() {
    */
   return (
     <Container>
+      {/* <GlobalStyles /> */}
       <Typography
         variant="h1"
         component="h1"
@@ -22,6 +27,7 @@ export default function Index() {
       </Typography>
 
       <Box marginTop={3} padding={3}>
+        {/* <Ui /> */}
         <Typography variant="h3" component="h3" marginBottom={2}>
           Available Pages
         </Typography>
