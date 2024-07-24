@@ -16,11 +16,20 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
+      "@b2b-tickets/assets": ["libs/assets/src/index.ts"],
+      "@b2b-tickets/assets/server": ["libs/assets/src/server.ts"],
       "@b2b-tickets/config": ["libs/config/src/index.ts"],
+      "@b2b-tickets/db-access": ["libs/db-access/src/index.ts"],
+      "@b2b-tickets/react-hooks": ["libs/react-hooks/src/index.ts"],
+      "@b2b-tickets/server-actions": ["libs/server-actions/src/index.ts"],
+      "@b2b-tickets/server-actions/server": [
+        "libs/server-actions/src/server.ts"
+      ],
+      "@b2b-tickets/shared-models": ["libs/shared-models/src/index.ts"],
       "@b2b-tickets/ui": ["libs/ui/src/index.ts"],
-      "@b2b-tickets/ui/server": ["libs/ui/src/server.ts"]
-      // "@b2b_tickets/*": ["apps/b2b_tickets/*"],
-      // "@b2b_tickets_app/*": ["apps/b2b_tickets/app/*"]
+      "@b2b-tickets/ui-theme": ["libs/ui-theme/src/index.ts"],
+      "@b2b-tickets/ui/server": ["libs/ui/src/server.ts"],
+      "@b2b-tickets/utils": ["libs/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

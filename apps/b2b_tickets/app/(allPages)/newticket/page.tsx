@@ -17,7 +17,7 @@ import Container from '@mui/material/Container';
 import clsx from 'clsx';
 
 import { getAllTickets } from '@b2b_tickets_app/lib/actions';
-import { tokens } from '@b2b_tickets_app/theme';
+import { tokens } from '@b2b-tickets/ui-theme';
 
 const App: React.FC = () => {
   const [tickets, setTickets] = useState<any>([]);

@@ -2,8 +2,28 @@
 nx dev b2b_tickets -p 3500
 
 # Creating ui library under libs folder
-nx g lib --directory libs --appProject b2b_tickets --tags type:ui,
-scope:b2b_tickets --dryRun
+nx g lib --directory libs --appProject b2b_tickets --tags type:ui,scope:b2b_tickets
 
 # Create config library under libs folder
 nx g @nrwl/js:lib config
+
+# Create NavBar component
+nx g component NavBar --project ui --export --tags type:ui,scope=b2b_tickets
+
+# Creating ui-theme library under libs folder
+nx g lib --directory libs --tags type:ui,scope:b2b_tickets
+
+# Creating Server Actions library
+ nx g @nx/next:library server-actions --directory libs --tags type:server,scope:b2b_tickets
+
+# Creating Assets library (e.g. Nova Logo)
+nx g @nx/next:library assets --directory libs --tags type:ui,scope:b2b_tickets
+
+# Creating Utils library
+ nx g lib utils --directory libs --tags type:utils,scope:b2b_tickets
+
+# Create React Hooks Library
+ nx g @nx/react:library react_hooks --directory libs --tags type:utils,scope:b2b_tickets
+
+ # Create React Hooks Library
+ nx g lib shared-models --directory libs --tags type:utils,scope:shared

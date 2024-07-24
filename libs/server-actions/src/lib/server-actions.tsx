@@ -1,5 +1,5 @@
 'use server';
-import { pgB2Bpool, setSchema } from '@b2b_tickets_app/(db)';
+import { pgB2Bpool, setSchema } from '@b2b-tickets/db-access';
 import { config } from '@b2b-tickets/config';
 
 export const getAllTickets = async () => {

@@ -1,16 +1,19 @@
 'use client';
 
 import { ThemeProvider } from '@mui/material';
-import { useMode, ColorModeContext } from './theme';
+import { useMode, ColorModeContext } from '@b2b-tickets/ui-theme';
 
-const AppThemeProvider = ({ children }) => {
+export const AppThemeProvider = ({ children }: any) => {
   const [theme, colorMode] = useMode();
 
   // Adding the mode to the context value
+  //@ts-ignore
   const contextValue = { ...colorMode, mode: theme.palette.mode };
 
   return (
+    //@ts-ignore
     <ColorModeContext.Provider value={contextValue}>
+      {/* //@ts-ignore */}
       <ThemeProvider theme={theme}>{children}</ThemeProvider>
     </ColorModeContext.Provider>
   );

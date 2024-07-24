@@ -1,11 +1,17 @@
 'use client';
+import styled from 'styled-components';
+
+const StyledNavBar = styled.div`
+  color: pink;
+`;
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Paper, Box, IconButton, useTheme, Typography } from '@mui/material';
 import { useContext } from 'react';
 import Stack from '@mui/material/Stack';
 
-import { ColorModeContext, tokens } from '@b2b_tickets_app/theme';
+import { ColorModeContext, tokens } from '@b2b-tickets/ui-theme';
 
 import InputBase from '@mui/material/InputBase';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
@@ -14,9 +20,9 @@ import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import SearchIcon from '@mui/icons-material/Search';
-import NovaLogo from '@b2b_tickets_app/assets/novaLogo.svg';
+import { NovaLogo } from '@b2b-tickets/assets';
 
-const NavBar = () => {
+export const NavBar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
