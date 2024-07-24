@@ -10,7 +10,7 @@ export const pgB2Bpool = new Pool({
 });
 
 // Function to set the search path to the desired schema
-const setSchema = async (pool: pg.Pool, schema: string) => {
+export const setSchema = async (pool: pg.Pool, schema: string) => {
   try {
     await pool.query(`SET search_path TO ${schema}`);
   } catch (error) {
@@ -19,9 +19,9 @@ const setSchema = async (pool: pg.Pool, schema: string) => {
 };
 
 // Set the schema right after pool creation
-(async () => {
-  await setSchema(pgB2Bpool, 'b2btickets_dev');
-})();
+// (async () => {
+//   await setSchema(pgB2Bpool, 'b2btickets_dev');
+// })();
 
 // (async () => {
 //   try {

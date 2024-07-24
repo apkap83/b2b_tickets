@@ -18,6 +18,7 @@ import ToastProvider from './utils/toast-provider';
 
 import AppThemeProvider from './themeProvider';
 import { Paper } from '@mui/material';
+import StyledComponentsRegistry from './lib/registry';
 
 export const metadata = {
   title: 'NOVA - B2B Tickets',
@@ -39,19 +40,21 @@ export default function RootLayout({
       </head>
       {/* <AuthProvider> */}
       <body>
-        <CssBaseline />
-        <AppRouterCacheProvider>
-          <AppThemeProvider>
-            <ToastProvider>
-              <div className="app">
-                <main className="content">
-                  <NavBar />
-                  {children}
-                </main>
-              </div>
-            </ToastProvider>
-          </AppThemeProvider>
-        </AppRouterCacheProvider>
+        <StyledComponentsRegistry>
+          <CssBaseline />
+          <AppRouterCacheProvider>
+            <AppThemeProvider>
+              <ToastProvider>
+                <div className="app">
+                  <main className="content">
+                    <NavBar />
+                    {children}
+                  </main>
+                </div>
+              </ToastProvider>
+            </AppThemeProvider>
+          </AppRouterCacheProvider>
+        </StyledComponentsRegistry>
       </body>
       {/* </AuthProvider> */}
     </html>

@@ -16,8 +16,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@/b2b_tickets/*": ["../b2b_tickets/*"],
-      "@/b2b_tickets_app/*": ["../b2b_tickets/app/*"]
+      "@b2b-tickets/config": ["libs/config/src/index.ts"],
+      "@b2b-tickets/ui": ["libs/ui/src/index.ts"],
+      "@b2b-tickets/ui/server": ["libs/ui/src/server.ts"]
+      // "@b2b_tickets/*": ["apps/b2b_tickets/*"],
+      // "@b2b_tickets_app/*": ["apps/b2b_tickets/app/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]

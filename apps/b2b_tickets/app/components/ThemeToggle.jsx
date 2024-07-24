@@ -4,7 +4,7 @@
 import React, { useContext } from 'react';
 import { IconButton } from '@mui/material';
 import { Brightness4, Brightness7 } from '@mui/icons-material';
-import { ColorModeContext } from '@/b2b_tickets_app/theme';
+import { ColorModeContext } from '@b2b_tickets_app/theme';
 
 const ThemeToggle = () => {
   const colorMode = useContext(ColorModeContext);
