@@ -1,14 +1,16 @@
-drop function tck_ticket_new
-
-//
-
-
 CREATE OR REPLACE FUNCTION tck_ticket_new(
    in pvch_title varchar,
    in pvch_description varchar,
    in pnum_category_id numeric,
    in pnum_service_id numeric,
    in pnum_equipment_id numeric,
+   in pvch_sid varchar,
+   in pvch_cid varchar,
+   in pvch_useraname varchar,
+   in pvch_cli varchar,
+   in pvch_contact_person varchar,
+   in pvch_contact_phone_number varchar,
+   in ptmsp_occurrence_date timestamp,
    in pnum_user_id numeric,
    in pvch_api_user varchar,
    in pvch_api_process varchar,
@@ -52,6 +54,23 @@ begin
       return null;
    END IF;
    
+   
+   IF NULLIF(TRIM(pvch_contact_person  ),'') IS NULL THEN
+      RAISE EXCEPTION 'Invalid Argument pvch_contact_person [%], value not given', pvch_contact_person  ;
+      return null;
+   END IF;
+   
+   IF NULLIF(TRIM(pvch_contact_phone_number  ),'') IS NULL THEN
+      RAISE EXCEPTION 'Invalid Argument pvch_contact_phone_number [%], value not given', pvch_contact_phone_number  ;
+      return null;
+   END IF;
+   
+   IF ptmsp_occurrence_date IS NULL THEN
+      RAISE EXCEPTION 'Invalid Argument ptmsp_occurrence_date [%], value not given', ptmsp_occurrence_date  ;
+      return null;
+   END IF;
+   
+   
    vnum_ticket_id = nextval('tickets_sq');
  
    select 
@@ -89,6 +108,13 @@ begin
       category_id,
       service_id,
       equipment_id,
+      sid,
+      cid,
+      username,
+      cli,
+      contact_person,
+      contact_phone_number,
+      occurrence_date,
       open_date,
       open_user_id,
       status_id,
@@ -107,6 +133,13 @@ begin
       pnum_category_id ,
       pnum_service_id,
       pnum_equipment_id,
+      pvch_sid,
+      pvch_cid,
+      pvch_username,
+      pvch_cli,
+      pvch_contact_person,
+      pvch_contact_phone_number,
+      ptmsp_occurrence_date,
       clock_timestamp(),
       pnum_user_id ,
       1,

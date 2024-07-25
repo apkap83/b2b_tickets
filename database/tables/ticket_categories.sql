@@ -15,7 +15,7 @@ create table ticket_categories (
 
 //
 
-create sequence catgories_sq
+create sequence categories_sq
 
 //
 
