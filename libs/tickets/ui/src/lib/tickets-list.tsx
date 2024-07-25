@@ -1,4 +1,10 @@
 'use client';
+
+import styled from 'styled-components';
+const StyledTicketsUi = styled.div`
+  color: pink;
+`;
+
 import React, { useState, useEffect } from 'react';
 import Stack from '@mui/material/Stack';
 import { Typography, useTheme } from '@mui/material';
@@ -14,12 +20,11 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Container from '@mui/material/Container';
 
-import clsx from 'clsx';
-
-import { getAllTickets } from '@b2b_tickets_app/lib/actions';
+import { getAllTickets } from '@b2b-tickets/server-actions';
 import { tokens } from '@b2b-tickets/ui-theme';
-
-const App: React.FC = () => {
+import { formatDate } from '@b2b-tickets/utils';
+import { NewTicketDialog } from './new-ticket';
+export const TicketsList: React.FC = () => {
   const [tickets, setTickets] = useState<any>([]);
   const [isFetching, setIsFetching] = useState(true);
   const theme = useTheme();
@@ -50,35 +55,21 @@ const App: React.FC = () => {
 
   const generateTableHeadAndColumns = (columnsArray: any) => {
     return (
-      <TableHead>
-        <TableRow sx={{ whiteSpace: 'nowrap' }}>
-          {columnsArray.map((item: any, id: number) => (
-            <TableCell key={id} align="center">
-              {item}
-            </TableCell>
-          ))}
-        </TableRow>
-      </TableHead>
+      <>
+        <TableHead>
+          <TableRow sx={{ whiteSpace: 'nowrap' }}>
+            {columnsArray.map((item: any, id: number) => (
+              <TableCell key={id} align="center">
+                {item}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+      </>
     );
   };
 
-  function formatDate(date: Date) {
-    if (!date) return null;
-    return date
-      .toLocaleString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      })
-      .replace(',', '');
-  }
-
   const generateTableBody = (items: any) => {
-    console.log('items', items);
     return (
       <TableBody>
         {items.map((item: any) => (
@@ -123,17 +114,7 @@ const App: React.FC = () => {
         </Typography>
 
         <Paper elevation={2}>
-          <Button
-            variant="contained"
-            sx={{
-              ':hover': {
-                backgroundColor: 'black',
-                color: 'white',
-              },
-            }}
-          >
-            Create New Ticket
-          </Button>
+          <NewTicketDialog />
         </Paper>
       </Box>
       <Box>
@@ -154,4 +135,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default TicketsList;
