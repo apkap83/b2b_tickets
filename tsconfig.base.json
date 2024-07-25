@@ -1,0 +1,36 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@b2b-tickets/assets": ["libs/assets/src/index.ts"],
+      "@b2b-tickets/assets/server": ["libs/assets/src/server.ts"],
+      "@b2b-tickets/config": ["libs/config/src/index.ts"],
+      "@b2b-tickets/db-access": ["libs/db-access/src/index.ts"],
+      "@b2b-tickets/react-hooks": ["libs/react-hooks/src/index.ts"],
+      "@b2b-tickets/server-actions": ["libs/server-actions/src/index.ts"],
+      "@b2b-tickets/server-actions/server": [
+        "libs/server-actions/src/server.ts"
+      ],
+      "@b2b-tickets/shared-models": ["libs/shared-models/src/index.ts"],
+      "@b2b-tickets/ui": ["libs/ui/src/index.ts"],
+      "@b2b-tickets/ui-theme": ["libs/ui-theme/src/index.ts"],
+      "@b2b-tickets/ui/server": ["libs/ui/src/server.ts"],
+      "@b2b-tickets/utils": ["libs/utils/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

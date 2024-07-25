@@ -1,0 +1,9 @@
+{
+  "name": "b2b_tickets-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/b2b_tickets-e2e/src",
+  "tags": [],
+  "implicitDependencies": ["b2b_tickets"],
+  "// targets": "to see all targets run: nx show project b2b_tickets-e2e --web",
+  "targets": {}
+}
