@@ -13,6 +13,7 @@
     "@mui/material": "5.16.0",
     "@mui/material-nextjs": "^5.15.11",
     "@mui/x-data-grid": "7.9.0",
+    "@mui/x-date-pickers": "7.11.0",
     "config": "^3.3.12",
     "formik": "2.4.6",
     "next": "14.2.3",
