@@ -1,0 +1,19 @@
+{
+  "name": "db-access",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/db-access/src",
+  "projectType": "library",
+  "tags": ["type:server", "scope:b2b_tickets"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/db-access",
+        "main": "libs/db-access/src/index.ts",
+        "tsConfig": "libs/db-access/tsconfig.lib.json",
+        "assets": ["libs/db-access/*.md"]
+      }
+    }
+  }
+}
