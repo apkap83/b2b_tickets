@@ -1,0 +1,9 @@
+{
+  "name": "tickets-ui-admin-dashboard",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/tickets/ui/admin-dashboard/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project tickets-ui-admin-dashboard --web",
+  "targets": {}
+}

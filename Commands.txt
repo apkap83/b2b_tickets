@@ -25,7 +25,7 @@ nx g @nx/next:library assets --directory libs --tags type:ui,scope:b2b_tickets
 # Create React Hooks Library
  nx g @nx/react:library react_hooks --directory libs --tags type:utils,scope:b2b_tickets
 
- # Create React Hooks Library
+ # Create Shared Typescript Models Library
  nx g lib shared-models --directory libs --tags type:utils,scope:shared
 
  # Create SubmitButton component

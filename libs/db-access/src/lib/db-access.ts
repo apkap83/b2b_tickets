@@ -1,6 +1,9 @@
 import { Pool } from 'pg';
 import { config } from '@b2b-tickets/config';
 
+export * from './sequelize';
+export * from './sequelize/seeders/seedDB';
+
 export const pgB2Bpool = new Pool({
   user: config.postgres_b2b_database.username,
   password: process.env['POSTGRES_B2B_PASSWORD'],
@@ -17,19 +20,3 @@ export const setSchema = async (pool: Pool, schema: string) => {
     console.error(`Error setting schema: ${error}`);
   }
 };
-
-// Set the schema right after pool creation
-// (async () => {
-//   await setSchema(pgB2Bpool, 'b2btickets_dev');
-// })();
-
-// (async () => {
-//   try {
-//     const res = await pgB2Bpool.query('SELECT NOW()');
-//     console.log(res.rows[0]); // Output: { now: '2024-07-09T12:34:56.789Z' }
-//   } catch (err) {
-//     console.error(err);
-//   } finally {
-//     await pgB2Bpool.end();
-//   }
-// })();

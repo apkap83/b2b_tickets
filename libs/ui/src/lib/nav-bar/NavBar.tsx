@@ -20,7 +20,11 @@ import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import SearchIcon from '@mui/icons-material/Search';
+import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
+import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import { NovaLogo } from '@b2b-tickets/assets';
+import { toast } from 'react-hot-toast';
+import { syncDBAlterTrueAction, seedDB } from '@/libs/server-actions/src';
 
 export const NavBar = () => {
   const theme = useTheme();
@@ -74,6 +78,31 @@ export const NavBar = () => {
         className="rounded"
         px={2}
       >
+        <IconButton
+          onClick={async () => {
+            try {
+              await syncDBAlterTrueAction();
+              console.log('Sync DB Alter True Complete!');
+            } catch (error: any) {
+              toast.error(error.message);
+            }
+          }}
+        >
+          <PublishedWithChangesIcon />
+        </IconButton>
+        <IconButton
+          onClick={async () => {
+            try {
+              await seedDB();
+              console.log('Seed Database Complete!');
+            } catch (error: any) {
+              toast.error(error.message);
+            }
+          }}
+        >
+          <DataSaverOnIcon />
+        </IconButton>
+
         <IconButton onClick={colorMode.toggleColorMode}>
           {theme.palette.mode === 'dark' ? (
             <LightModeOutlinedIcon />
