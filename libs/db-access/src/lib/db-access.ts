@@ -1,11 +1,12 @@
 import { Pool } from 'pg';
+import { config } from '@b2b-tickets/config';
 
 export const pgB2Bpool = new Pool({
-  user: process.env['POSTGRES_B2B_USER_NAME'],
+  user: config.postgres_b2b_database.username,
   password: process.env['POSTGRES_B2B_PASSWORD'],
-  host: process.env['POSTGRES_B2B_HOST'],
-  port: Number.parseInt(process.env['POSTGRES_B2B_PORT'] || '12345', 10),
-  database: process.env['POSTGRES_B2B_DB'],
+  host: config.postgres_b2b_database.host,
+  port: config.postgres_b2b_database.port,
+  database: config.postgres_b2b_database.db,
 });
 
 // Function to set the search path to the desired schema
