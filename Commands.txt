@@ -30,3 +30,6 @@ nx g @nx/next:library assets --directory libs --tags type:ui,scope:b2b_tickets
 
  # Create SubmitButton component
 nx g component SubmitButton --project ui --export --tags type:ui,scope=b2b_tickets
+
+# Create Admin Dashboard Component under tickets/ui library
+nx generate @nx/next:library admin-dashboard --directory=tickets/ui --component
