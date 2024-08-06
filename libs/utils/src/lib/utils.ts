@@ -12,3 +12,12 @@ export function formatDate(date: Date) {
     })
     .replace(',', '');
 }
+
+// utils.ts
+export const getEnvVariable = (variableName: string): string => {
+  const value = process.env[variableName];
+  if (!value) {
+    throw new Error(`${variableName} environment variable is not set.`);
+  }
+  return value;
+};

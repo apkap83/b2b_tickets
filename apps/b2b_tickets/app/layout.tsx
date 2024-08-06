@@ -10,13 +10,14 @@ import '@fontsource/roboto/700.css';
 
 import './global.css';
 import './sass/main.scss';
-// import NavBar from './components/NavBar';
 import { NavBar } from '@b2b-tickets/ui';
 
 import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
 import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import { Paper } from '@mui/material';
-import StyledComponentsRegistry from './lib/registry';
+
+// TODO Fix Error With the below entry
+// import StyledComponentsRegistry from './lib/registry';
 
 export const metadata = {
   title: 'NOVA - B2B Tickets',
@@ -36,23 +37,20 @@ export default function RootLayout({
         <meta name="color-scheme" content="light only" />
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </head>
-      {/* <AuthProvider> */}
-      <body>
-        <StyledComponentsRegistry>
-          <CssBaseline />
-          <AppRouterCacheProvider>
-            <AppThemeProvider>
-              <ToastProvider>
-                <div className="app">
-                  <main className="content">
-                    <NavBar />
-                    {children}
-                  </main>
-                </div>
-              </ToastProvider>
-            </AppThemeProvider>
-          </AppRouterCacheProvider>
-        </StyledComponentsRegistry>
+      <body className={'subpixel-antialiased'}>
+        {/* <StyledComponentsRegistry> */}
+        <CssBaseline />
+        <AppRouterCacheProvider>
+          <AppThemeProvider>
+            <ToastProvider>
+              <main>
+                <NavBar />
+                {children}
+              </main>
+            </ToastProvider>
+          </AppThemeProvider>
+        </AppRouterCacheProvider>
+        {/* </StyledComponentsRegistry> */}
       </body>
     </html>
   );

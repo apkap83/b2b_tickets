@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* For Firefox */
+/* html {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+} */
+
+/* Entire scrollbar */
+::-webkit-scrollbar {
+  width: 5px; /* width of the entire scrollbar */
+  height: 12px; /* height of the horizontal scrollbar */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px; /* rounded corners */
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Button at the ends */
+::-webkit-scrollbar-button {
+  background: #000;
+  display: none; /* Hide scrollbar buttons */
+}
+
+/* Bottom corner where two scrollbars meet */
+::-webkit-scrollbar-corner {
+  background: #000;
+}
+
 /* html,
 body,
 #root,

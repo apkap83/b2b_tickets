@@ -88,7 +88,7 @@ export const NavBar = () => {
           <SettingsOutlinedIcon />
         </IconButton>
         {/* <IconButton color="primary.main"> */}
-        <IconButton sx={{ color: theme.palette.primary.main }}>
+        <IconButton>
           <PersonOutlinedIcon />
         </IconButton>
       </Box>
@@ -96,4 +96,4 @@ export const NavBar = () => {
   );
 };
 
-export default NavBar;
+// export default NavBar;

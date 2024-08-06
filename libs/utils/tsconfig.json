@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "module": "commonjs",
+    "module": "ESNext",
+    "target": "ES6",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitOverride": true,

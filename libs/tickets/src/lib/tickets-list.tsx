@@ -19,27 +19,21 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Container from '@mui/material/Container';
-
+import { Ticket } from '@/libs/shared-models/src';
 import { getAllTickets } from '@b2b-tickets/server-actions';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { formatDate } from '@b2b-tickets/utils';
-import { NewTicketDialog } from './new-ticket';
-export const TicketsList: React.FC = () => {
-  const [tickets, setTickets] = useState<any>([]);
-  const [isFetching, setIsFetching] = useState(true);
+import { NewTicketModal } from './new-ticket';
+
+interface TicketsListProps {
+  tickets: Ticket[];
+}
+
+export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
+  const [showCreateTicketModal, setShowCreateTicketModal] = useState(false);
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-
-  useEffect(() => {
-    const getTickets = async () => {
-      const tickets = await getAllTickets();
-      setTickets(tickets);
-      console.log('tickets', tickets);
-      setIsFetching(false);
-    };
-
-    getTickets();
-  }, []);
 
   const columnsForTickets = [
     'Ticket Number',
@@ -93,9 +87,6 @@ export const TicketsList: React.FC = () => {
     );
   };
 
-  if (!tickets || tickets.length === 0) {
-    return <h2>Loading...</h2>;
-  }
   return (
     <Container
       maxWidth="xl"
@@ -113,9 +104,18 @@ export const TicketsList: React.FC = () => {
           Tickets
         </Typography>
 
-        <Paper elevation={2}>
-          <NewTicketDialog />
-        </Paper>
+        <Button
+          variant="contained"
+          onClick={() => setShowCreateTicketModal(true)}
+          sx={{
+            ':hover': {
+              backgroundColor: 'black',
+              color: 'white',
+            },
+          }}
+        >
+          Create New Ticket
+        </Button>
       </Box>
       <Box>
         <Table
@@ -131,6 +131,9 @@ export const TicketsList: React.FC = () => {
           {generateTableBody(tickets)}
         </Table>
       </Box>
+      {showCreateTicketModal && (
+        <NewTicketModal closeModal={() => setShowCreateTicketModal(false)} />
+      )}
     </Container>
   );
 };
