@@ -13,6 +13,25 @@ import {
   TicketFormState,
 } from '@b2b-tickets/shared-models';
 
+import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
+import { populateDB } from '@b2b-tickets/db-access';
+
+export const seedDB = async () => {
+  await populateDB();
+};
+export const syncDBAlterTrueAction = async () => {
+  // const session = await getServerSession(options);
+  // if (!session) {
+  //   throw new Error('Unauthenticated access: User is not authenticated');
+  // }
+  // if (!userHasPermission(session, 'Sync DB (Alter True)')) {
+  //   throw new Error(
+  //     'Unauthorized access: User is not authorized for this action (Sync DB (Alter True))'
+  //   );
+  // }
+  await syncDatabaseAlterTrue();
+};
+
 export const getAllTickets = async (): Promise<Ticket[]> => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
   try {

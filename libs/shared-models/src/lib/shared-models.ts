@@ -52,3 +52,17 @@ export interface TicketFormState {
   ticketCategory: string;
   serviceType: string;
 }
+
+export enum AppRoleTypes {
+  Admin = 'Admin',
+}
+
+export enum AppPermissionTypes {
+  API_Admin = 'API_Admin',
+  API_Security_Management = 'API_Security_Management',
+}
+
+export enum AuthenticationTypes {
+  LOCAL = 'LOCAL',
+  LDAP = 'LDAP',
+}

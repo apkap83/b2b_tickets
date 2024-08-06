@@ -29,6 +29,12 @@
       "@b2b-tickets/tickets": ["libs/tickets/src/index.ts"],
       "@b2b-tickets/tickets/server": ["libs/tickets/src/server.ts"],
       "@b2b-tickets/tickets/ui": ["libs/tickets/ui/src/index.ts"],
+      "@b2b-tickets/tickets/ui/admin-dashboard": [
+        "libs/tickets/ui/admin-dashboard/src/index.ts"
+      ],
+      "@b2b-tickets/tickets/ui/admin-dashboard/server": [
+        "libs/tickets/ui/admin-dashboard/src/server.ts"
+      ],
       "@b2b-tickets/tickets/ui/server": ["libs/tickets/ui/src/server.ts"],
       "@b2b-tickets/ui": ["libs/ui/src/index.ts"],
       "@b2b-tickets/ui-theme": ["libs/ui-theme/src/index.ts"],

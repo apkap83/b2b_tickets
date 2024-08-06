@@ -15,7 +15,7 @@ import { NavBar } from '@b2b-tickets/ui';
 import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
 import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import { Paper } from '@mui/material';
-
+import * as k from '@b2b-tickets/db-access';
 // TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
 
