@@ -1,9 +1,9 @@
-import { getServerSession } from "next-auth";
-import { options } from "@/NMS_Portal_app/api/auth/[...nextauth]/options";
-import { redirect } from "next/navigation";
+import { getServerSession } from 'next-auth';
+import { options } from '@/NMS_Portal_app/api/auth/[...nextauth]/options';
+import { redirect } from 'next/navigation';
 
-import AdminDashboard from "@/NMS_Portal_app/(components)/AdminDashboard";
-import { getAdminDashboardData } from "@/NMS_Portal_app/lib/actions";
+import AdminDashboard from '@b2b-tickets/tickets/ui';
+import { getAdminDashboardData } from '@/NMS_Portal_app/lib/actions';
 
 const AdminPage = async () => {
   // const session = await getServerSession(options);

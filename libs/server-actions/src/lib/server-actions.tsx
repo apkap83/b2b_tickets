@@ -279,3 +279,37 @@ export const createNewTicket = async (
     return fromErrorToFormState(error);
   }
 };
+
+export const getAdminDashboardData = async () => {
+  try {
+    // await checkAuthenticationAndAdminRole();
+    const { AppUser, AppRole, AppPermission } = sequelize.models;
+
+    const usersListWithRoles = await AppUser.findAll({ include: AppRole });
+    const rolesListWithPermissions = await AppRole.findAll({
+      include: AppPermission,
+    });
+    const permissionsList = await AppPermission.findAll();
+
+    // Convert models to plain objects
+    const plainUsersListWithRoles = usersListWithRoles.map((user) =>
+      user.toJSON()
+    );
+
+    const plainRolesListWithPermissions = rolesListWithPermissions.map((role) =>
+      role.toJSON()
+    );
+    const plainPermissionsList = permissionsList.map((permission) =>
+      permission.toJSON()
+    );
+
+    return {
+      usersList: plainUsersListWithRoles,
+      rolesList: plainRolesListWithPermissions,
+      permissionsList: plainPermissionsList,
+    };
+  } catch (error) {
+    console.log('ERROR:', error);
+    redirect('/signin?callbackUrl=/admin');
+  }
+};
