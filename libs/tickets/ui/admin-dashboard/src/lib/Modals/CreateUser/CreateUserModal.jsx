@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { useFormState } from "react-dom";
+import React, { useState, useEffect } from 'react';
+import { useFormState } from 'react-dom';
 
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { faker } from "@faker-js/faker";
-import { FaMobileRetro } from "react-icons/fa6";
-import { CgNametag } from "react-icons/cg";
-import { FaKey } from "react-icons/fa";
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { faker } from '@faker-js/faker';
+import { FaMobileRetro } from 'react-icons/fa6';
+import { CgNametag } from 'react-icons/cg';
+import { FaKey } from 'react-icons/fa';
 
-import { useToastMessage } from "@/NMS_Portal_app/(hooks)/use-toast-message";
-import { FieldError } from "@/NMS_Portal_app/(components)/common/field-error";
+import { useToastMessage } from '@b2b-tickets/react-hooks';
+import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 
-import { EMPTY_FORM_STATE } from "@/NMS_Portal_app/utils/to-form-state";
-import { SubmitButton } from "@/NMS_Portal_app/(components)/ui/SubmitButton";
+import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
+import { SubmitButton } from '../../common/SubmitButton';
 
-import { createUser } from "@/NMS_Portal_app/lib/actions";
-import { FormStateError } from "@/NMS_Portal_app/(components)/common/form-state-error";
+import { createUser } from '@b2b-tickets/admin-server-actions';
+import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 
 function CreateUserModal({ closeModal }) {
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
@@ -35,7 +35,7 @@ function CreateUserModal({ closeModal }) {
   });
 
   useEffect(() => {
-    if (formState.status === "SUCCESS") closeModal();
+    if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
   return (
@@ -185,18 +185,18 @@ function CreateUserModal({ closeModal }) {
 }
 
 const validationSchema = Yup.object({
-  firstName: Yup.string().required("First name is required"),
-  lastName: Yup.string().required("Last name is required"),
-  userName: Yup.string().required("User name is required"),
+  firstName: Yup.string().required('First name is required'),
+  lastName: Yup.string().required('Last name is required'),
+  userName: Yup.string().required('User name is required'),
   password: Yup.string()
-    .min(8, "Password must be at least 8 characters long")
-    .required("Password is required"),
+    .min(8, 'Password must be at least 8 characters long')
+    .required('Password is required'),
   email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
+    .email('Invalid email address')
+    .required('Email is required'),
   mobilePhone: Yup.string()
     // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
-    .required("Mobile phone is required"),
+    .required('Mobile phone is required'),
 });
 
 export default CreateUserModal;

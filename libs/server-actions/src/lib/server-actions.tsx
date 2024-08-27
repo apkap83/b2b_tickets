@@ -1,4 +1,5 @@
 'use server';
+import { redirect } from 'next/navigation';
 import * as yup from 'yup';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -12,14 +13,17 @@ import {
   ServiceType,
   TicketFormState,
 } from '@b2b-tickets/shared-models';
+import { sequelize } from '@b2b-tickets/db-access';
 
 import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { populateDB } from '@b2b-tickets/db-access';
 
 export const seedDB = async () => {
+  // TODO Session & Authorization Enabled Action
   await populateDB();
 };
 export const syncDBAlterTrueAction = async () => {
+  // TODO Session & Authorization Enabled Action
   // const session = await getServerSession(options);
   // if (!session) {
   //   throw new Error('Unauthenticated access: User is not authenticated');

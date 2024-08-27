@@ -33,3 +33,18 @@ nx g component SubmitButton --project ui --export --tags type:ui,scope=b2b_ticke
 
 # Create Admin Dashboard Component under tickets/ui library
 nx generate @nx/next:library admin-dashboard --directory=tickets/ui --component
+
+# Create logging library under libs folder
+nx g @nrwl/js:lib logging
+
+# Creating Server Actions library
+ nx g @nx/next:library admin-server-actions --directory libs --tags type:server,scope:b2b_tickets
+
+# Creating Auth-Options library
+ nx g @nx/next:library auth-options --directory libs --tags type:server,scope:b2b_tickets
+
+ # Create Pagination component
+nx g component Pagination --project ui --export --tags type:ui,scope=b2b_tickets
+
+ # Logged In Indication component
+nx g component LoggedInIndication --project ui --export --tags type:ui,scope=b2b_tickets

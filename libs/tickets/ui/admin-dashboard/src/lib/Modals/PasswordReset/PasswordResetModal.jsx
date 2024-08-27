@@ -1,26 +1,27 @@
-import React, { useEffect } from "react";
-import { useFormState } from "react-dom";
-import { useFormik } from "formik";
-import * as Yup from "yup";
+'use client';
+import React, { useEffect } from 'react';
+import { useFormState } from 'react-dom';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 
-import { FaKey } from "react-icons/fa";
-import { FieldError } from "@/NMS_Portal_app/(components)/common/field-error";
-import { updateUserPassword } from "@/NMS_Portal_app/lib/actions";
-import { useToastMessage } from "@/NMS_Portal_app/(hooks)/use-toast-message";
-import { EMPTY_FORM_STATE } from "@/NMS_Portal_app/utils/to-form-state";
-import { SubmitButton } from "@/NMS_Portal_app/(components)/ui/SubmitButton";
-import { FaUserLarge } from "react-icons/fa6";
+import { FaKey } from 'react-icons/fa';
+import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { updateUserPassword } from '@b2b-tickets/admin-server-actions';
+import { useToastMessage } from '@b2b-tickets/react-hooks';
+import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
+import { SubmitButton } from '../../common/SubmitButton';
+import { FaUserLarge } from 'react-icons/fa6';
 
 const validationSchema = Yup.object({
   password: Yup.string()
-    .min(8, "Password must be at least 8 characters long")
-    .required("Password is required"),
+    .min(8, 'Password must be at least 8 characters long')
+    .required('Password is required'),
   verifyPassword: Yup.string()
-    .oneOf([Yup.ref("password"), null], "Passwords must match")
-    .required("Verify Password is required"),
+    .oneOf([Yup.ref('password'), null], 'Passwords must match')
+    .required('Verify Password is required'),
 });
 
-const PasswordResetModal = ({ userDetails, closeModal }) => {
+export const PasswordResetModal = ({ userDetails, closeModal }) => {
   const [formState, action] = useFormState(
     updateUserPassword,
     EMPTY_FORM_STATE
@@ -29,16 +30,16 @@ const PasswordResetModal = ({ userDetails, closeModal }) => {
 
   const formik = useFormik({
     initialValues: {
-      userName: "",
-      password: "",
-      verifyPassword: "",
+      userName: '',
+      password: '',
+      verifyPassword: '',
     },
     validationSchema: validationSchema,
     // onSubmit: async (values, { setSubmitting }) => {},
   });
 
   useEffect(() => {
-    if (formState.status === "SUCCESS") closeModal();
+    if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
   return (

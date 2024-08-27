@@ -55,6 +55,7 @@ export interface TicketFormState {
 
 export enum AppRoleTypes {
   Admin = 'Admin',
+  SimpleUser = 'SimpleUser',
 }
 
 export enum AppPermissionTypes {

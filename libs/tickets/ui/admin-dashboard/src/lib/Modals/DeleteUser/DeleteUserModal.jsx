@@ -1,8 +1,8 @@
-import React, { useTransition } from "react";
-import { toast } from "react-hot-toast";
-import { deleteUser } from "@/NMS_Portal_app/lib/actions";
-import { CloseButton } from "@/NMS_Portal_app/(components)/ui/CloseButton";
-import { ConfirmButton } from "@/NMS_Portal_app/(components)/ui/ConfirmButton";
+import React, { useTransition } from 'react';
+import { toast } from 'react-hot-toast';
+import { deleteUser } from '@b2b-tickets/admin-server-actions';
+import { CloseButton } from '../../common/CloseButton';
+import { ConfirmButton } from '../../common/ConfirmButton';
 
 function DeleteUserModal({ userDetails, closeModal }) {
   const [isPending, startTransition] = useTransition();
@@ -20,7 +20,7 @@ function DeleteUserModal({ userDetails, closeModal }) {
           </h4>
           <ul
             className="flex flex-col list-none justify-center w-1/2 mt-5 ml-auto border p-2"
-            style={{ transform: "translateX(-50%)" }}
+            style={{ transform: 'translateX(-50%)' }}
           >
             <li>First Name: {userDetails.firstName}</li>
             <li>Last Name: {userDetails.lastName}</li>
@@ -39,7 +39,7 @@ function DeleteUserModal({ userDetails, closeModal }) {
                     userName: userDetails.userName,
                   });
 
-                  if (response.status === "SUCCESS") {
+                  if (response.status === 'SUCCESS') {
                     toast.success(response.message);
                   } else {
                     toast.error(response.message);
@@ -47,11 +47,11 @@ function DeleteUserModal({ userDetails, closeModal }) {
 
                   closeModal();
                 } catch (error) {
-                  toast.error("An unexpected error occurred.");
+                  toast.error('An unexpected error occurred.');
                 }
               });
             }}
-            label={isPending ? "Deleting..." : "Confirm"}
+            label={isPending ? 'Deleting...' : 'Confirm'}
           />
 
           <CloseButton label="Close" onClick={closeModal} />

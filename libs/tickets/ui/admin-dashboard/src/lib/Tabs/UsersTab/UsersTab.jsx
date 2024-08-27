@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
-import Pagination from '@/CommonLibraries/ui/Pagination';
-import { renderActiveness } from '@/NMS_Portal_app/utils/help_func';
+import { Pagination } from '@b2b-tickets/ui';
+import { renderActiveness } from '@b2b-tickets/ui';
 import slice from 'lodash/slice';
-import { AuthenticationTypes } from '@/CommonLibraries/definitions';
+import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 
 import CreateUserModal from '../../Modals/CreateUser/CreateUserModal';
 import DeleteUserModal from '../../Modals/DeleteUser/DeleteUserModal';
@@ -15,7 +15,7 @@ import { EditButton } from './Buttons/EditButton';
 import { DeleteButton } from './Buttons/DeleteButton';
 import { LockOrUnlock } from './Buttons/LockUnlockButton';
 import clsx from 'clsx';
-import { updateAuthMethodForUser } from '@/NMS_Portal_app/lib/actions';
+import { updateAuthMethodForUser } from '@b2b-tickets/admin-server-actions';
 
 const userDetailsInitalState = {
   firstName: null,
@@ -52,8 +52,8 @@ export function UsersTab({ usersList, rolesList }) {
 
   return (
     <>
-      <div className='border-b h-[623px] overflow-y-auto'>
-        <table className='table border-b'>
+      <div className="border-b h-[623px] overflow-y-auto">
+        <table className="table border-b">
           <thead>
             <tr>
               <th></th>
@@ -62,15 +62,15 @@ export function UsersTab({ usersList, rolesList }) {
               <th>User Name</th>
               <th>E-mail</th>
               <th>Mobile Phone</th>
-              <th className='text-center w-[350px]'>Roles</th>
+              <th className="text-center w-[350px]">Roles</th>
               <th>Auth</th>
               <th>State</th>
-              <th className='w-[150px] text-center'>Actions</th>
+              <th className="w-[150px] text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedUsersList.map((user, index) => (
-              <tr key={user.userName + index} className='hover:bg-slate-100'>
+              <tr key={user.userName + index} className="hover:bg-slate-100">
                 <th>{index + 1 + itemsPerPage * (activePage - 1)}</th>
                 <td>{user.firstName}</td>
                 <td>{user.lastName}</td>
@@ -102,7 +102,7 @@ export function UsersTab({ usersList, rolesList }) {
                 <td>
                   {/*{user.authenticationType}*/}
                   <select
-                    className='text-left select max-w-xs'
+                    className="text-left select max-w-xs"
                     onChange={(e) =>
                       updateAuthMethodForUser({
                         user,
@@ -120,7 +120,7 @@ export function UsersTab({ usersList, rolesList }) {
                 </td>
                 <td>{renderActiveness(user.active)}</td>
                 <td>
-                  <div className='flex bg-purple-50 shadow-xl py-2 px-2 gap-3 w-fit'>
+                  <div className="flex bg-purple-50 shadow-xl py-2 px-2 gap-3 w-fit">
                     {LockOrUnlock({ user })}
                     {EditButton({ user, setShowEditUserModal })}
                     {user.authenticationType === AuthenticationTypes.LOCAL
@@ -138,10 +138,10 @@ export function UsersTab({ usersList, rolesList }) {
           <tfoot></tfoot>
         </table>
       </div>
-      <div className='pt-5 flex justify-between items-center'>
-        <div className='py-5 flex gap-1 '>
+      <div className="pt-5 flex justify-between items-center">
+        <div className="py-5 flex gap-1 ">
           <button
-            className='btn btn-primary btn-sm'
+            className="btn btn-primary btn-sm"
             onClick={() => {
               setShowCreateUserModal(true);
             }}
@@ -183,13 +183,13 @@ export function UsersTab({ usersList, rolesList }) {
         />
       )}
 
-      <ReactTooltip id='editIcon' place='bottom' content='Edit User' />
-      <ReactTooltip id='deleteIcon' place='bottom' content='Delete User' />
-      <ReactTooltip id='lockIcon' place='bottom' content='Lock/Unlock User' />
+      <ReactTooltip id="editIcon" place="bottom" content="Edit User" />
+      <ReactTooltip id="deleteIcon" place="bottom" content="Delete User" />
+      <ReactTooltip id="lockIcon" place="bottom" content="Lock/Unlock User" />
       <ReactTooltip
-        id='passwordChangeIcon'
-        place='bottom'
-        content='Password reset'
+        id="passwordChangeIcon"
+        place="bottom"
+        content="Password reset"
       />
     </>
   );

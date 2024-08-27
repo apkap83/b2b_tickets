@@ -1,25 +1,25 @@
-import React, { useEffect } from "react";
-import * as Yup from "yup";
-import { useFormState } from "react-dom";
-import { useFormik, Field } from "formik";
-import { FieldError } from "@/NMS_Portal_app/(components)/common/field-error";
-import { CgNametag } from "react-icons/cg";
-import { useToastMessage } from "@/NMS_Portal_app/(hooks)/use-toast-message";
-import { EMPTY_FORM_STATE } from "@/NMS_Portal_app/utils/to-form-state";
-import { SubmitButton } from "@/NMS_Portal_app/(components)/ui/SubmitButton";
-import { editUser } from "@/NMS_Portal_app/lib/actions";
-import { FormStateError } from "@/NMS_Portal_app/(components)/common/form-state-error";
+import React, { useEffect } from 'react';
+import * as Yup from 'yup';
+import { useFormState } from 'react-dom';
+import { useFormik, Field } from 'formik';
+import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { CgNametag } from 'react-icons/cg';
+import { useToastMessage } from '@b2b-tickets/react-hooks';
+import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
+import { SubmitButton } from '../../common/SubmitButton';
+import { editUser } from '@b2b-tickets/admin-server-actions';
+import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 
 const validationSchema = Yup.object({
-  firstName: Yup.string().required("First name is required"),
-  lastName: Yup.string().required("Last name is required"),
-  userName: Yup.string().required("User name is required"),
+  firstName: Yup.string().required('First name is required'),
+  lastName: Yup.string().required('Last name is required'),
+  userName: Yup.string().required('User name is required'),
   email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
+    .email('Invalid email address')
+    .required('Email is required'),
   mobilePhone: Yup.string()
     // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
-    .required("Mobile phone is required"),
+    .required('Mobile phone is required'),
 });
 
 const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
@@ -28,7 +28,7 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
   const noScriptFallback = useToastMessage(formState);
 
   const checkIfUserHasRole = (user, role) => {
-    if (!userDetails.hasOwnProperty("AppRoles")) return false;
+    if (!userDetails.hasOwnProperty('AppRoles')) return false;
 
     for (let i = 0; i < user.AppRoles.length; i++) {
       if (role.id === userDetails.AppRoles[i].id) {
@@ -53,7 +53,7 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
   });
 
   useEffect(() => {
-    if (formState.status === "SUCCESS") closeModal();
+    if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
   return (

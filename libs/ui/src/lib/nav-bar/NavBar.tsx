@@ -1,11 +1,9 @@
 'use client';
-import styled from 'styled-components';
-
-const StyledNavBar = styled.div`
-  color: pink;
-`;
 
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { useRouter, usePathname } from 'next/navigation';
+
 import Link from 'next/link';
 import { Paper, Box, IconButton, useTheme, Typography } from '@mui/material';
 import { useContext } from 'react';
@@ -25,11 +23,36 @@ import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { toast } from 'react-hot-toast';
 import { syncDBAlterTrueAction, seedDB } from '@/libs/server-actions/src';
+import { LoggedInIndication } from '@b2b-tickets/ui';
+import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 
 export const NavBar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
+  const router = useRouter(); // Initialize the useRouter hook
+  const pathname = usePathname(); // Get the current path
+
+  const { data: session, status } = useSession();
+  const isAdminPath = pathname === '/admin';
+
+  console.log('session', session);
+
+  const userHasPermission = (session: any, permissionName: any) => {
+    if (!session) return false;
+    return session?.user?.permissions.some(
+      (permission: any) =>
+        permission.permissionName === permissionName ||
+        permission.permissionName === AppPermissionTypes.API_Admin
+    );
+  };
+
+  const userHasRole = (session: any, roleName: any) => {
+    if (!session) return false;
+    return session?.user?.roles.some(
+      (role: any) => role === AppRoleTypes.Admin || role === roleName
+    );
+  };
 
   return (
     <Box
@@ -78,48 +101,70 @@ export const NavBar = () => {
         className="rounded"
         px={2}
       >
-        <IconButton
-          onClick={async () => {
-            try {
-              await syncDBAlterTrueAction();
-              console.log('Sync DB Alter True Complete!');
-            } catch (error: any) {
-              toast.error(error.message);
-            }
-          }}
-        >
-          <PublishedWithChangesIcon />
-        </IconButton>
-        <IconButton
-          onClick={async () => {
-            try {
-              await seedDB();
-              console.log('Seed Database Complete!');
-            } catch (error: any) {
-              toast.error(error.message);
-            }
-          }}
-        >
-          <DataSaverOnIcon />
-        </IconButton>
+        {userHasRole(session, AppRoleTypes.SimpleUser) ? (
+          <>
+            <IconButton
+              className="flex flex-col"
+              onClick={async () => {
+                try {
+                  await syncDBAlterTrueAction();
+                  console.log('Sync DB Alter True Complete!');
+                } catch (error: any) {
+                  toast.error(error.message);
+                }
+              }}
+            >
+              <PublishedWithChangesIcon />
+              <span className="text-xs">Sync DB</span>
+            </IconButton>
+            <IconButton
+              className="flex flex-col"
+              onClick={async () => {
+                try {
+                  await seedDB();
+                  console.log('Seed Database Complete!');
+                } catch (error: any) {
+                  toast.error(error.message);
+                }
+              }}
+            >
+              <DataSaverOnIcon />
+              <span className="text-xs">Seed DB</span>
+            </IconButton>
+            <IconButton
+              className="flex flex-col"
+              onClick={() => {
+                router.push('/admin');
+              }}
+              style={{
+                color: isAdminPath ? colors.blueAccent[500] : colors.grey[500], // Conditionally apply color
+              }}
+            >
+              <SettingsOutlinedIcon />
+              <span className="text-xs">Admin</span>
+            </IconButton>
+          </>
+        ) : null}
 
-        <IconButton onClick={colorMode.toggleColorMode}>
+        <IconButton
+          className="flex flex-col"
+          onClick={colorMode.toggleColorMode}
+        >
           {theme.palette.mode === 'dark' ? (
             <LightModeOutlinedIcon />
           ) : (
             <DarkModeOutlinedIcon />
           )}
+          <span className="text-xs">Theme</span>
         </IconButton>
-        <IconButton>
-          <NotificationsOutlinedIcon />
-        </IconButton>
-        <IconButton>
-          <SettingsOutlinedIcon />
-        </IconButton>
+
         {/* <IconButton color="primary.main"> */}
-        <IconButton>
+
+        <LoggedInIndication session={session} />
+
+        {/* <IconButton>
           <PersonOutlinedIcon />
-        </IconButton>
+        </IconButton> */}
       </Box>
     </Box>
   );
