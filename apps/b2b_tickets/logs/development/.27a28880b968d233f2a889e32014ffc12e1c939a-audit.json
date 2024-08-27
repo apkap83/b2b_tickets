@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/apostoloskapetanios/LocalProgramming/b2b_tickets/apps/b2b_tickets/logs/development/.27a28880b968d233f2a889e32014ffc12e1c939a-audit.json",
+    "files": [
+        {
+            "date": 1723208145874,
+            "name": "/Users/apostoloskapetanios/LocalProgramming/b2b_tickets/apps/b2b_tickets/logs/development/auth-2024-08-09.log",
+            "hash": "20092f5543626528e00935c4be041af35d78ae249cf4da5bb0cd8a994ef51654"
+        }
+    ],
+    "hashType": "sha256"
+}

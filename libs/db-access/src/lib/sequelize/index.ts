@@ -6,7 +6,8 @@ import { AppRole } from './models/Role';
 import { AppPermission } from './models/Permission';
 import { Audit } from './models/Audit';
 
-// import { sequelizeDBActionsLogger } from '@/NMS_Portal/logger';
+// import { sequelizeDBActionsLogger } from '@b2b-tickets/logging';
+
 // Custom logging function
 // function sequelizeLogging(msg: string) {
 //   sequelizeDBActionsLogger.info(msg);

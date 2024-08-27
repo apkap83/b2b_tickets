@@ -1,18 +1,18 @@
-import React, { useEffect } from "react";
-import * as Yup from "yup";
-import { useFormState } from "react-dom";
-import { useFormik } from "formik";
-import { FieldError } from "@/NMS_Portal_app/(components)/common/field-error";
-import { useToastMessage } from "@/NMS_Portal_app/(hooks)/use-toast-message";
-import { EMPTY_FORM_STATE } from "@/NMS_Portal_app/utils/to-form-state";
-import { SubmitButton } from "@/NMS_Portal_app/(components)/ui/SubmitButton";
-import { editRole } from "@/NMS_Portal_app/lib/actions";
-import { FormStateError } from "@/NMS_Portal_app/(components)/common/form-state-error";
-import { FaMobileRetro } from "react-icons/fa6";
+import React, { useEffect } from 'react';
+import * as Yup from 'yup';
+import { useFormState } from 'react-dom';
+import { useFormik } from 'formik';
+import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { useToastMessage } from '@b2b-tickets/react-hooks';
+import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
+import { SubmitButton } from '../../common/SubmitButton';
+import { editRole } from '@b2b-tickets/admin-server-actions';
+import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { FaMobileRetro } from 'react-icons/fa6';
 
 const validationSchema = Yup.object({
-  roleName: Yup.string().required("Role name is required"),
-  description: Yup.string().required("Role description is required"),
+  roleName: Yup.string().required('Role name is required'),
+  description: Yup.string().required('Role description is required'),
 });
 
 const EditRoleModal = ({ roleDetails, permissionsList, closeModal }) => {
@@ -21,7 +21,7 @@ const EditRoleModal = ({ roleDetails, permissionsList, closeModal }) => {
   const noScriptFallback = useToastMessage(formState);
 
   const checkIfRoleHasPermission = (role, permission) => {
-    if (!role.hasOwnProperty("AppPermissions")) return false;
+    if (!role.hasOwnProperty('AppPermissions')) return false;
 
     for (let i = 0; i < role.AppPermissions.length; i++) {
       if (permission.id === roleDetails.AppPermissions[i].id) {
@@ -43,7 +43,7 @@ const EditRoleModal = ({ roleDetails, permissionsList, closeModal }) => {
   });
 
   useEffect(() => {
-    if (formState.status === "SUCCESS") closeModal();
+    if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
   return (

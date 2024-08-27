@@ -3,16 +3,13 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import Button from '@mui/material/Button';
-
+import { redirect } from 'next/navigation';
 // import { Ui } from '@b2b-tickets/ui';
 // import { GlobalStyles } from '@b2b-tickets/ui';
 
 export default function Index() {
-  /*
-   * Replace the elements below with your own.
-   *
-   * Note: The corresponding styles are in the ./index.tailwind file.
-   */
+  redirect('/tickets');
+
   return (
     <Container>
       {/* <GlobalStyles /> */}

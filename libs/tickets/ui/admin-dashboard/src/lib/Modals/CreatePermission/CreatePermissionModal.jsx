@@ -1,13 +1,13 @@
-import React, { useEffect } from "react";
-import { useFormState } from "react-dom";
-import { createPermission } from "@/NMS_Portal_app/lib/actions";
-import { EMPTY_FORM_STATE } from "@/NMS_Portal_app/utils/to-form-state";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { useToastMessage } from "@/NMS_Portal_app/(hooks)/use-toast-message";
-import { FieldError } from "@/NMS_Portal_app/(components)/common/field-error";
-import { FormStateError } from "@/NMS_Portal_app/(components)/common/form-state-error";
-import { SubmitButton } from "@/NMS_Portal_app/(components)/ui/SubmitButton";
+import React, { useEffect } from 'react';
+import { useFormState } from 'react-dom';
+import { createPermission } from '@b2b-tickets/admin-server-actions';
+import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { useToastMessage } from '@b2b-tickets/react-hooks';
+import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { SubmitButton } from '../../common/SubmitButton';
 
 const CreatePermissionModal = ({ closeModal }) => {
   const [formState, action] = useFormState(createPermission, EMPTY_FORM_STATE);
@@ -16,16 +16,16 @@ const CreatePermissionModal = ({ closeModal }) => {
 
   const formik = useFormik({
     initialValues: {
-      permissionName: "",
-      endPoint: "",
-      permissionDescription: "",
+      permissionName: '',
+      endPoint: '',
+      permissionDescription: '',
     },
     validationSchema: validationSchema,
     // onSubmit: async (values, { setSubmitting }) => {},
   });
 
   useEffect(() => {
-    if (formState.status === "SUCCESS") closeModal();
+    if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
   return (
@@ -132,9 +132,9 @@ const CreatePermissionModal = ({ closeModal }) => {
 };
 
 const validationSchema = Yup.object({
-  permissionName: Yup.string().required("Permission name is required"),
+  permissionName: Yup.string().required('Permission name is required'),
   permissionDescription: Yup.string().required(
-    "Permission description is required"
+    'Permission description is required'
   ),
 });
 

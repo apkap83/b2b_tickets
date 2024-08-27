@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { DeleteButton } from "./Buttons/DeleteButton";
-import CreateRoleModal from "../../Modals/CreateRole/CreateRoleModal";
-import DeleteRoleModal from "../../Modals/DeleteRole/DeleteRoleModal";
-import EditRoleModal from "../../Modals/EditRole/EditRoleModal";
+'use client';
+import React, { useState } from 'react';
+import { DeleteButton } from './Buttons/DeleteButton';
+import CreateRoleModal from '../../Modals/CreateRole/CreateRoleModal';
+import DeleteRoleModal from '../../Modals/DeleteRole/DeleteRoleModal';
+import EditRoleModal from '../../Modals/EditRole/EditRoleModal';
 
-import { EditButton } from "./Buttons/EditButton";
-import { Span } from "next/dist/trace";
+import { EditButton } from './Buttons/EditButton';
 
 export const RolesTab = ({ rolesList, permissionsList }) => {
   const [showCreateRoleModal, setShowCreateRoleModal] = useState({
@@ -15,8 +15,8 @@ export const RolesTab = ({ rolesList, permissionsList }) => {
   const [showDeleteRoleModal, setShowDeleteRoleModal] = useState({
     visible: false,
     role: {
-      roleName: "",
-      roleDescription: "",
+      roleName: '',
+      roleDescription: '',
     },
   });
 

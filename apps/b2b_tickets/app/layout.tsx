@@ -37,21 +37,23 @@ export default function RootLayout({
         <meta name="color-scheme" content="light only" />
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </head>
-      <body className={'subpixel-antialiased'}>
-        {/* <StyledComponentsRegistry> */}
-        <CssBaseline />
-        <AppRouterCacheProvider>
-          <AppThemeProvider>
-            <ToastProvider>
-              <main>
-                <NavBar />
-                {children}
-              </main>
-            </ToastProvider>
-          </AppThemeProvider>
-        </AppRouterCacheProvider>
-        {/* </StyledComponentsRegistry> */}
-      </body>
+      <AuthProvider>
+        <body className={'subpixel-antialiased'}>
+          {/* <StyledComponentsRegistry> */}
+          <CssBaseline />
+          <AppRouterCacheProvider>
+            <AppThemeProvider>
+              <ToastProvider>
+                <main>
+                  {/* <NavBar /> */}
+                  {children}
+                </main>
+              </ToastProvider>
+            </AppThemeProvider>
+          </AppRouterCacheProvider>
+          {/* </StyledComponentsRegistry> */}
+        </body>
+      </AuthProvider>
     </html>
   );
 }
