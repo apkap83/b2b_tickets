@@ -1,20 +1,22 @@
 import React, { useTransition } from 'react';
 import clsx from 'clsx';
 
+import { FaUser } from 'react-icons/fa6';
+import { FaUserSlash } from 'react-icons/fa6';
+
 import { FaLock } from 'react-icons/fa';
 import { FaUnlock } from 'react-icons/fa';
-import { lockorUnlockUser } from '@b2b-tickets/admin-server-actions';
+import { activeorInactiveUser } from '@b2b-tickets/admin-server-actions';
 
 import toast from 'react-hot-toast';
 
-export const LockOrUnlock = ({ user }) => {
+export const DisableUser = ({ user }) => {
   //   const [isPending, startTransition] = useTransition();
 
-  const handleLockOrUnlock = async () => {
-    console.log('*** 14', user);
+  const handleDisableEnableUser = async () => {
     // startTransition(async () => {
     try {
-      const message = await lockorUnlockUser({
+      const message = await activeorInactiveUser({
         username: user.username,
       });
 
@@ -25,7 +27,7 @@ export const LockOrUnlock = ({ user }) => {
         toast.success(
           <p className="text-center">
             {`User ${user.first_name} ${user.last_name} successfully ${
-              message.status === 'SUCCESS_UNLOCKED' ? 'unlocked' : 'locked'
+              message.status === 'SUCCESS_UNLOCKED' ? 'enabled' : 'disabled'
             }`}
           </p>
         );
@@ -46,13 +48,13 @@ export const LockOrUnlock = ({ user }) => {
         className={clsx(
           'w-6 h-6  outline-none hover:scale-105 border-spacing-2 border shadow-md',
           {
-            'text-green-400': user.is_locked === 'n',
-            'text-red-400': user.is_locked === 'y',
+            'text-green-400': user.is_active === 'y',
+            'text-red-400': user.is_active === 'n',
           }
         )}
-        onClick={async () => await handleLockOrUnlock()}
+        onClick={async () => await handleDisableEnableUser()}
       >
-        {user.is_locked === 'n' ? (
+        {user.is_active === 'y' ? (
           //   <UnLock isPending={isPending} />
           <UnLock />
         ) : (
@@ -66,26 +68,26 @@ export const LockOrUnlock = ({ user }) => {
 
 const UnLock = ({ isPending }) => {
   return (
-    <FaUnlock
+    <FaUser
       className={clsx(
         `w-full h-full`,
 
         { 'bg-red-500 border-2': isPending }
       )}
-      data-tooltip-id="lockIcon"
+      data-tooltip-id="disableIcon"
     />
   );
 };
 
 const Lock = ({ isPending }) => {
   return (
-    <FaLock
+    <FaUserSlash
       className={clsx(
         `w-full h-full`,
 
         { 'bg-green-500 border-2': isPending }
       )}
-      data-tooltip-id="lockIcon"
+      data-tooltip-id="disableIcon"
     />
   );
 };

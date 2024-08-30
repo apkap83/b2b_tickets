@@ -40,12 +40,12 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
 
   const formik = useFormik({
     initialValues: {
-      userId: userDetails.id,
-      firstName: userDetails.firstName,
-      lastName: userDetails.lastName,
-      userName: userDetails.userName,
+      userId: userDetails.user_id,
+      firstName: userDetails.first_name,
+      lastName: userDetails.last_name,
+      userName: userDetails.username,
       email: userDetails.email,
-      mobilePhone: userDetails.mobilePhone,
+      mobilePhone: userDetails.mobile_phone,
       roles: {},
     },
     validationSchema: validationSchema,

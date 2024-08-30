@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -12,6 +13,7 @@ import Stack from '@mui/material/Stack';
 import { ColorModeContext, tokens } from '@b2b-tickets/ui-theme';
 
 import InputBase from '@mui/material/InputBase';
+import { IoListSharp } from 'react-icons/io5';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
@@ -22,7 +24,11 @@ import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { toast } from 'react-hot-toast';
-import { syncDBAlterTrueAction, seedDB } from '@/libs/server-actions/src';
+import {
+  syncDBAlterTrueAction,
+  seedDB,
+  getCustomerFromCustomerId,
+} from '@/libs/server-actions/src';
 import { LoggedInIndication } from '@b2b-tickets/ui';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 
@@ -30,13 +36,18 @@ export const NavBar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
-  const router = useRouter(); // Initialize the useRouter hook
-  const pathname = usePathname(); // Get the current path
+  const router = useRouter();
+  const pathname = usePathname();
 
   const { data: session, status } = useSession();
-  const isAdminPath = pathname === '/admin';
 
-  console.log('session', session);
+  //@ts-ignore
+  const customerName = session?.user?.customer_name;
+
+  const isAdminPath = pathname === '/admin';
+  const isTicketsPath = pathname === '/tickets';
+
+  const [companyName, setCompanyName] = useState('');
 
   const userHasPermission = (session: any, permissionName: any) => {
     if (!session) return false;
@@ -92,79 +103,100 @@ export const NavBar = () => {
           </Typography>
         </Stack>
       </Link>
-      {/* ICONS */}
-      <Box
-        display="flex"
-        sx={{
-          bgcolor: colors.grey[900],
-        }}
-        className="rounded"
-        px={2}
-      >
-        {userHasRole(session, AppRoleTypes.SimpleUser) ? (
-          <>
-            <IconButton
-              className="flex flex-col"
-              onClick={async () => {
-                try {
-                  await syncDBAlterTrueAction();
-                  console.log('Sync DB Alter True Complete!');
-                } catch (error: any) {
-                  toast.error(error.message);
-                }
-              }}
-            >
-              <PublishedWithChangesIcon />
-              <span className="text-xs">Sync DB</span>
-            </IconButton>
-            <IconButton
-              className="flex flex-col"
-              onClick={async () => {
-                try {
-                  await seedDB();
-                  console.log('Seed Database Complete!');
-                } catch (error: any) {
-                  toast.error(error.message);
-                }
-              }}
-            >
-              <DataSaverOnIcon />
-              <span className="text-xs">Seed DB</span>
-            </IconButton>
-            <IconButton
-              className="flex flex-col"
-              onClick={() => {
-                router.push('/admin');
-              }}
-              style={{
-                color: isAdminPath ? colors.blueAccent[500] : colors.grey[500], // Conditionally apply color
-              }}
-            >
-              <SettingsOutlinedIcon />
-              <span className="text-xs">Admin</span>
-            </IconButton>
-          </>
+      <div className="text-white text-xs flex flex-col justify-center items-center ">
+        {customerName !== 'Nova' ? (
+          <div className="text-lg">{customerName}</div>
         ) : null}
-
-        <IconButton
-          className="flex flex-col"
-          onClick={colorMode.toggleColorMode}
+      </div>
+      {/* ICONS */}
+      <Box display="flex">
+        <Box
+          display="flex"
+          sx={{
+            bgcolor: colors.grey[900],
+            marginRight: '10px',
+          }}
+          className="rounded"
+          px={2}
         >
-          {theme.palette.mode === 'dark' ? (
-            <LightModeOutlinedIcon />
-          ) : (
-            <DarkModeOutlinedIcon />
-          )}
-          <span className="text-xs">Theme</span>
-        </IconButton>
+          {userHasRole(session, AppRoleTypes.SimpleUser) ? (
+            <>
+              <IconButton
+                className="flex flex-col"
+                onClick={async () => {
+                  try {
+                    await syncDBAlterTrueAction();
+                    console.log('Sync DB Alter True Complete!');
+                  } catch (error: any) {
+                    toast.error(error.message);
+                  }
+                }}
+              >
+                <PublishedWithChangesIcon />
+                <span className="text-xs">Sync DB</span>
+              </IconButton>
+              <IconButton
+                className="flex flex-col"
+                onClick={async () => {
+                  try {
+                    await seedDB();
+                    console.log('Seed Database Complete!');
+                  } catch (error: any) {
+                    toast.error(error.message);
+                  }
+                }}
+              >
+                <DataSaverOnIcon />
+                <span className="text-xs">Seed DB</span>
+              </IconButton>
+              <IconButton
+                className="flex flex-col"
+                onClick={() => {
+                  router.push('/admin');
+                }}
+                style={{
+                  color: isAdminPath
+                    ? colors.blueAccent[500]
+                    : colors.grey[100], // Conditionally apply color
+                }}
+              >
+                <SettingsOutlinedIcon />
+                <span className="text-xs">Users List</span>
+              </IconButton>
+            </>
+          ) : null}
 
-        {/* <IconButton color="primary.main"> */}
+          <IconButton
+            className="flex flex-col"
+            onClick={() => {
+              router.push('/tickets');
+            }}
+            style={{
+              color: isTicketsPath ? colors.blueAccent[500] : colors.grey[100], // Conditionally apply color
+            }}
+          >
+            <IoListSharp />
+            <span className="text-xs">Tickets</span>
+          </IconButton>
+          <IconButton
+            className="flex flex-col"
+            onClick={colorMode.toggleColorMode}
+          >
+            {theme.palette.mode === 'dark' ? (
+              <LightModeOutlinedIcon />
+            ) : (
+              <DarkModeOutlinedIcon />
+            )}
+            <span className="text-xs">Theme</span>
+          </IconButton>
 
-        <LoggedInIndication session={session} />
+          {/* <IconButton color="primary.main"> */}
 
-        {/* <IconButton>
+          {/* <IconButton>
           <PersonOutlinedIcon />
-        </IconButton> */}
+          </IconButton> */}
+        </Box>
+        <LoggedInIndication session={session} />
       </Box>
     </Box>
   );

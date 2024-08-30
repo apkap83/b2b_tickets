@@ -22,9 +22,9 @@ function DeleteUserModal({ userDetails, closeModal }) {
             className="flex flex-col list-none justify-center w-1/2 mt-5 ml-auto border p-2"
             style={{ transform: 'translateX(-50%)' }}
           >
-            <li>First Name: {userDetails.firstName}</li>
-            <li>Last Name: {userDetails.lastName}</li>
-            <li>User Name: {userDetails.userName}</li>
+            <li>First Name: {userDetails.first_name}</li>
+            <li>Last Name: {userDetails.last_name}</li>
+            <li>User Name: {userDetails.username}</li>
           </ul>
         </div>
 
@@ -36,7 +36,7 @@ function DeleteUserModal({ userDetails, closeModal }) {
               startTransition(async () => {
                 try {
                   const response = await deleteUser({
-                    userName: userDetails.userName,
+                    userName: userDetails.username,
                   });
 
                   if (response.status === 'SUCCESS') {

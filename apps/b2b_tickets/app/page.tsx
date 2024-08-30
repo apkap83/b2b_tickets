@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import Button from '@mui/material/Button';
 import { redirect } from 'next/navigation';
+import { NavBar } from '@b2b-tickets/ui';
 // import { Ui } from '@b2b-tickets/ui';
 // import { GlobalStyles } from '@b2b-tickets/ui';
 
@@ -11,7 +12,8 @@ export default function Index() {
   redirect('/tickets');
 
   return (
-    <Container>
+    <>
+      <NavBar />
       {/* <GlobalStyles /> */}
       <Typography
         variant="h1"
@@ -38,6 +40,6 @@ export default function Index() {
           {/* 1. Show All Tickets{' '} */}
         </Link>
       </Box>
-    </Container>
+    </>
   );
 }

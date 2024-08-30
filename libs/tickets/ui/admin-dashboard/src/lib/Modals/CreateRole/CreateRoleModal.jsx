@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useFormState } from 'react-dom';
-import { createRole } from '@b2b-tickets/server-actions';
+import { createRole } from '@b2b-tickets/admin-server-actions';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';

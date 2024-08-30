@@ -14,6 +14,8 @@ import { PasswordChangeButton } from './Buttons/PasswordChangeButton';
 import { EditButton } from './Buttons/EditButton';
 import { DeleteButton } from './Buttons/DeleteButton';
 import { LockOrUnlock } from './Buttons/LockUnlockButton';
+import { DisableUser } from './Buttons/DisableUser';
+
 import clsx from 'clsx';
 import { updateAuthMethodForUser } from '@b2b-tickets/admin-server-actions';
 
@@ -62,32 +64,37 @@ export function UsersTab({ usersList, rolesList }) {
               <th>User Name</th>
               <th>E-mail</th>
               <th>Mobile Phone</th>
-              <th className="text-center w-[350px]">Roles</th>
+              <th>Customer</th>
+              <th className="text-center min-w-[250px]">Roles</th>
               <th>Auth</th>
-              <th>State</th>
+              <th>Locked</th>
+              <th>Active</th>
               <th className="w-[150px] text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedUsersList.map((user, index) => (
-              <tr key={user.userName + index} className="hover:bg-slate-100">
+              <tr key={user.username + index} className="hover:bg-slate-100">
                 <th>{index + 1 + itemsPerPage * (activePage - 1)}</th>
-                <td>{user.firstName}</td>
-                <td>{user.lastName}</td>
-                <td>{user.userName}</td>
+                <td>{user.first_name}</td>
+                <td>{user.last_name}</td>
+                <td>{user.username}</td>
                 <td>{user.email}</td>
-                <td>{user.mobilePhone}</td>
+                <td>{user.mobile_phone}</td>
+                <td>{user.customer_name}</td>
                 <td>
                   {user.AppRoles.map((role) => {
                     return (
                       <span
                         className={clsx(
-                          'bg-gray-200 rounded-full text-sm px-2 inline-block m-1 font-bold text-i ',
+                          'bg-gray-200 rounded-full text-xs px-2 inline-block m-1 font-bold text-i ',
                           {
                             'text-red-500': role.roleName === 'Admin',
-                            'text-blue-500': role.roleName === 'NMS_Member',
-                            'text-purple-500': role.roleName === 'CX_PM',
-                            'text-green-500': role.roleName === 'IP Operations',
+                            'text-blue-500':
+                              role.roleName === 'B2B Ticket Creator',
+                            'text-purple-500': role.roleName === 'Other',
+                            'text-green-500':
+                              role.roleName === 'B2B Ticket Handler',
                             'text-cyan-500': role.roleName === 'Smartcare',
                             'text-yellow-500': role.roleName === 'Zabbix',
                           }
@@ -112,18 +119,40 @@ export function UsersTab({ usersList, rolesList }) {
                     style={{
                       backgroundColor: 'transparent',
                     }}
-                    defaultValue={user.authenticationType}
+                    defaultValue={user.authentication_type}
                   >
                     <option value={'LOCAL'}>LOCAL</option>
                     <option value={'LDAP'}>LDAP</option>
                   </select>
                 </td>
-                <td>{renderActiveness(user.active)}</td>
+                <td>
+                  {user.is_locked === 'y' ? (
+                    <span className="bg-red-400 p-2 rounded-full text-white">
+                      Locked
+                    </span>
+                  ) : (
+                    <span className="bg-green-400 p-2 rounded-lg text-white">
+                      Unlocked
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {user.is_active === 'y' ? (
+                    <span className="bg-green-400 p-2 rounded-lg text-white">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="bg-red-400 p-2 rounded-full text-white">
+                      Inactive
+                    </span>
+                  )}
+                </td>
                 <td>
                   <div className="flex bg-purple-50 shadow-xl py-2 px-2 gap-3 w-fit">
                     {LockOrUnlock({ user })}
+                    {DisableUser({ user })}
                     {EditButton({ user, setShowEditUserModal })}
-                    {user.authenticationType === AuthenticationTypes.LOCAL
+                    {user.authentication_type === AuthenticationTypes.LOCAL
                       ? PasswordChangeButton({
                           user,
                           setShowPasswordResetModal,
@@ -186,6 +215,11 @@ export function UsersTab({ usersList, rolesList }) {
       <ReactTooltip id="editIcon" place="bottom" content="Edit User" />
       <ReactTooltip id="deleteIcon" place="bottom" content="Delete User" />
       <ReactTooltip id="lockIcon" place="bottom" content="Lock/Unlock User" />
+      <ReactTooltip
+        id="disableIcon"
+        place="bottom"
+        content="Disable/Enable User"
+      />
       <ReactTooltip
         id="passwordChangeIcon"
         place="bottom"

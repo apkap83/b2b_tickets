@@ -1,8 +1,8 @@
-import { RiDeleteBin5Fill } from "react-icons/ri";
-import clsx from "clsx";
+import { RiDeleteBin5Fill } from 'react-icons/ri';
+import clsx from 'clsx';
 
 export const DeleteButton = ({ user, setShowDeleteUserModal }) => {
-  if (user.userName === "admin") return;
+  if (user.username === 'admin') return;
   return (
     <button className="w-6 h-6 text-red-900 outline-none hover:scale-105 border-spacing-2 border shadow-md">
       <RiDeleteBin5Fill
@@ -12,9 +12,9 @@ export const DeleteButton = ({ user, setShowDeleteUserModal }) => {
           setShowDeleteUserModal({
             visible: true,
             userDetails: {
-              firstName: user.firstName,
-              lastName: user.lastName,
-              userName: user.userName,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              username: user.username,
             },
           });
         }}

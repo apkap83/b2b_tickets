@@ -61,10 +61,15 @@ export const LoggedInIndication = ({ session }: any) => {
     <>
       <IconButton
         className="flex flex-col"
+        style={{
+          color: 'white',
+          padding: 0,
+        }}
         onClick={() => setProfileMenuOpen(!profileMenuOpen)}
       >
         <PersonOutlinedIcon />
-        <span className="text-xs">apostolos.kapetanios</span>
+        <span className="text-xs">{session?.user?.userName || ''}</span>
+
         {profileMenuOpen ? <ProfileMenuContents /> : null}
       </IconButton>
     </>
