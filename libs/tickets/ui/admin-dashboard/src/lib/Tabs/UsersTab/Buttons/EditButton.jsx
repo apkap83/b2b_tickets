@@ -1,8 +1,8 @@
-import { FaPencil } from "react-icons/fa6";
-import clsx from "clsx";
+import { FaPencil } from 'react-icons/fa6';
+import clsx from 'clsx';
 
 export const EditButton = ({ user, setShowEditUserModal }) => {
-  if (user.userName === "admin") return;
+  if (user.username === 'admin') return;
   return (
     <button
       className="

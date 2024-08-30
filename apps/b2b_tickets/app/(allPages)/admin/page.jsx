@@ -3,7 +3,7 @@ import { options } from '@b2b-tickets/auth-options';
 import { redirect } from 'next/navigation';
 
 import { AdminDashboard } from '@b2b-tickets/tickets/ui';
-import { getAdminDashboardData } from '@b2b-tickets/server-actions';
+import { getAdminDashboardData } from '@b2b-tickets/admin-server-actions';
 
 const AdminPage = async () => {
   // const session = await getServerSession(options);
@@ -15,7 +15,7 @@ const AdminPage = async () => {
   const { usersList, rolesList, permissionsList } =
     await getAdminDashboardData();
 
-  console.log('usersList', usersList);
+  // console.log('usersList', usersList);
   return (
     <AdminDashboard
       usersList={usersList}

@@ -30,7 +30,7 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
 
   const formik = useFormik({
     initialValues: {
-      userName: '',
+      username: '',
       password: '',
       verifyPassword: '',
     },
@@ -75,7 +75,7 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
               <FaUserLarge className="w-4 h-4 opacity-70 " />
               <input
                 type="text"
-                name="userName"
+                name="username"
                 value={userDetails.userName}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}

@@ -11,9 +11,13 @@ const App: React.FC = async () => {
   if (!session) {
     redirect('/api/auth/signin?callbackUrl=/tickets');
   } else {
-    const allTicketsList: Ticket[] = await getAllTickets();
+    const allTicketsList: Ticket[] = await getAllTickets({
+      userId: session?.user?.user_id,
+    });
     return <TicketsList tickets={allTicketsList} />;
   }
+  // const allTicketsList: Ticket[] = await getAllTickets();
+  // return <TicketsList tickets={allTicketsList} />;
 };
 
 export default App;

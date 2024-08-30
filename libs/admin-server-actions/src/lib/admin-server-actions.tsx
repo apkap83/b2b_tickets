@@ -5,9 +5,18 @@ import { options } from '@b2b-tickets/auth-options';
 import { redirect } from 'next/navigation';
 
 import * as yup from 'yup';
-import { sequelize } from '@b2b-tickets/db-access';
+import {
+  sequelize,
+  AppUser,
+  AppPermission,
+  AppRole,
+  B2BUser,
+  pgB2Bpool,
+  setSchema,
+} from '@b2b-tickets/db-access';
 import { revalidatePath } from 'next/cache';
 import { fromErrorToFormState, toFormState } from '@b2b-tickets/utils';
+import { config } from '@b2b-tickets/config';
 
 import {
   AppRoleTypes,
@@ -23,6 +32,7 @@ import { syncDatabase, syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { userHasPermission } from '@b2b-tickets/auth-options';
 
 const checkAuthenticationAndAdminRole = async () => {
+  return;
   try {
     const session = await getServerSession(options);
 
@@ -68,12 +78,34 @@ export const syncDBAlterTrueAction = async () => {
   await syncDatabaseAlterTrue();
 };
 
+export const getCustomersList = async () => {
+  try {
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const getList = 'SELECT customer_id, customer_name from customers';
+    const customersList = await pgB2Bpool.query(getList);
+
+    return customersList.rows;
+  } catch (error) {
+    console.log('ERROR:', error);
+  }
+};
+
 export const getAdminDashboardData = async () => {
   try {
-    // await checkAuthenticationAndAdminRole();
-    const { AppUser, AppRole, AppPermission } = sequelize.models;
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    const usersListWithRoles = await AppUser.findAll({ include: AppRole });
+    // TODO Uncomment
+    // await checkAuthenticationAndAdminRole();
+
+    const queryForUsersWithCustomer =
+      'SELECT * FROM users as U INNER JOIN customers as C on U.customer_id = c.customer_id';
+    const usersWithCustomers = await pgB2Bpool.query(queryForUsersWithCustomer);
+
+    const usersListWithRoles = await B2BUser.findAll({
+      include: AppRole,
+      order: [['user_id', 'ASC']],
+    });
     const rolesListWithPermissions = await AppRole.findAll({
       include: AppPermission,
     });
@@ -83,7 +115,6 @@ export const getAdminDashboardData = async () => {
     const plainUsersListWithRoles = usersListWithRoles.map((user) =>
       user.toJSON()
     );
-
     const plainRolesListWithPermissions = rolesListWithPermissions.map((role) =>
       role.toJSON()
     );
@@ -91,34 +122,26 @@ export const getAdminDashboardData = async () => {
       permission.toJSON()
     );
 
+    for (const user of plainUsersListWithRoles) {
+      //@ts-ignore
+      for (const item of usersWithCustomers.rows) {
+        if (user.user_id === item.user_id) {
+          //@ts-ignore
+          user['customer_name'] = item['customer_name'];
+        }
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
     return {
       usersList: plainUsersListWithRoles,
+      fullUsersListWithCustomers: usersWithCustomers.rows,
       rolesList: plainRolesListWithPermissions,
       permissionsList: plainPermissionsList,
     };
   } catch (error) {
     console.log('ERROR:', error);
     redirect('/signin?callbackUrl=/admin');
-  }
-};
-
-export const getNMSSystemData = async () => {
-  try {
-    await checkAuthenticationAndAdminRole();
-    const { NMS_Systems, NMS_Systems_Additional_Pages } = sequelize.models;
-
-    const nmsSystemsData = await NMS_Systems.findAll({
-      include: {
-        model: NMS_Systems_Additional_Pages,
-      },
-    });
-
-    const plainNmsSystemData = nmsSystemsData.map((item) => item.toJSON());
-
-    return plainNmsSystemData;
-  } catch (error) {
-    console.log('ERROR', error);
-    redirect('/signin?callbackUrl=/NMS_Team/Systems');
   }
 };
 
@@ -134,17 +157,20 @@ const userSchema = yup.object().shape({
     .required('Password is required'),
 });
 
-const { AppUser, AppRole, AppPermission } = sequelize.models;
-
 export async function createUser(formState: any, formData: any) {
   try {
-    await checkAuthenticationAndAdminRole();
-    const firstName = formData.get('firstName');
-    const lastName = formData.get('lastName');
-    const userName = formData.get('userName');
+    // TODO Enable below line
+    // await checkAuthenticationAndAdminRole();
+
+    console.log('formData', formData);
+
+    const customerId = formData.get('company');
+    const firstName = formData.get('first_name');
+    const lastName = formData.get('last_name');
+    const userName = formData.get('username');
     const password = formData.get('password');
     const email = formData.get('email');
-    const mobilePhone = formData.get('mobilePhone');
+    const mobilePhone = formData.get('mobile_phone');
 
     const userData = {
       firstName,
@@ -159,10 +185,12 @@ export async function createUser(formState: any, formData: any) {
     await userSchema.validate(userData, { abortEarly: false });
 
     // Check if the user already exists (optional step)
-    const existingEmail = await AppUser.findOne({ where: { email } });
-    const existingUserName = await AppUser.findOne({ where: { userName } });
-    const existingMobilePhone = await AppUser.findOne({
-      where: { mobilePhone },
+    const existingEmail = await B2BUser.findOne({ where: { email } });
+    const existingUserName = await B2BUser.findOne({
+      where: { username: userName },
+    });
+    const existingMobilePhone = await B2BUser.findOne({
+      where: { mobile_phone: mobilePhone },
     });
 
     if (existingEmail) throw new Error('User with this email already exists.');
@@ -171,15 +199,40 @@ export async function createUser(formState: any, formData: any) {
     if (existingMobilePhone)
       throw new Error('User with this mobile phone already exists.');
 
+    // Get next user_id from sequence
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    let user_id = null;
+    try {
+      const query = "select nextval('users_sq')";
+      const res = await pgB2Bpool.query(query);
+
+      user_id = res.rows[0].nextval;
+      // return res.rows as Ticket[]; // Type assertion to ensure res.rows is of type Ticket[]
+    } catch (error) {
+      throw error;
+    }
+
     //   // Create and save the new user
-    const newUser = await AppUser.create({
-      firstName,
-      lastName,
-      userName,
+    const newUser = await B2BUser.create({
+      user_id,
+      customer_id: customerId,
+      username: userName,
       password,
+      password_change_date: new Date(),
+      first_name: firstName,
+      last_name: lastName,
+      mobile_phone: mobilePhone,
       email,
-      mobilePhone,
-      authenticationType: AuthenticationTypes.LOCAL,
+      authentication_type: AuthenticationTypes.LOCAL,
+      change_password: 'n',
+      is_active: 'y',
+      is_locked: 'n',
+      last_login_attempt: new Date('1970-01-01T00:00:00Z'),
+      last_login_status: 'i',
+      record_version: 1,
+      creation_date: new Date(),
+      creation_user: 'admin',
+      last_update_process: 'b2btickets',
     });
 
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -190,15 +243,6 @@ export async function createUser(formState: any, formData: any) {
     return fromErrorToFormState(error);
   }
 }
-
-// interface userObj {
-//   firstName: string;
-//   lastName: string;
-//   userName: string;
-//   password: string;
-//   email: string;
-//   mobilePhone: string;
-// }
 
 export async function createUserIfNotExistsAfterLDAPSuccessfullAuth(user: any) {
   try {
@@ -237,11 +281,13 @@ export async function createUserIfNotExistsAfterLDAPSuccessfullAuth(user: any) {
 
 export async function deleteUser({ userName }: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // TODO Uncomment
+    // await checkAuthenticationAndAdminRole();
+
     //  Delete User
-    const deletedCount = await AppUser.destroy({
+    const deletedCount = await B2BUser.destroy({
       where: {
-        userName,
+        username: userName,
       },
     });
 
@@ -258,16 +304,18 @@ export async function deleteUser({ userName }: any) {
   }
 }
 
-export async function lockorUnlockUser({ userName }: any) {
+export async function lockorUnlockUser({ username }: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // TODO Enable below line
+    // await checkAuthenticationAndAdminRole();
+
     // Check if the user already exists
-    const user = await AppUser.findOne({ where: { userName } });
+    const user = await B2BUser.findOne({ where: { username } });
     if (!user)
-      throw new Error(`User with user name ${userName} was not found!`);
+      throw new Error(`User with user name ${username} was not found!`);
 
     //@ts-ignore
-    user.active = !user.active;
+    user.is_locked === 'y' ? (user.is_locked = 'n') : (user.is_locked = 'y');
     user.save();
 
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -275,11 +323,47 @@ export async function lockorUnlockUser({ userName }: any) {
 
     return {
       //@ts-ignore
-      status: `${user.active ? 'SUCCESS_UNLOCKED' : 'SUCCESS_LOCKED'}`,
+      status: `${
+        user.is_locked === 'y' ? 'SUCCESS_UNLOCKED' : 'SUCCESS_LOCKED'
+      }`,
       // @ts-ignore
-      message: `User ${userName} is now ${user.active ? 'unlocked' : 'locked'}`,
+      message: `User ${username} is now ${
+        user.is_locked === 'y' ? 'unlocked' : 'locked'
+      }`,
     };
-  } catch (error) {
+  } catch (error: any) {
+    return { status: 'ERROR', message: error.message };
+  }
+}
+
+export async function activeorInactiveUser({ username }: any) {
+  try {
+    // TODO Enable below line
+    // await checkAuthenticationAndAdminRole();
+
+    // Check if the user already exists
+    const user = await B2BUser.findOne({ where: { username } });
+    if (!user)
+      throw new Error(`User with user name ${username} was not found!`);
+
+    //@ts-ignore
+    user.is_active === 'y' ? (user.is_active = 'n') : (user.is_active = 'y');
+    user.save();
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    revalidatePath('/admin');
+
+    return {
+      //@ts-ignore
+      status: `${
+        user.is_active === 'y' ? 'SUCCESS_UNLOCKED' : 'SUCCESS_LOCKED'
+      }`,
+      // @ts-ignore
+      message: `User ${username} is now ${
+        user.is_active === 'y' ? 'unlocked' : 'locked'
+      }`,
+    };
+  } catch (error: any) {
     return { status: 'ERROR', message: error.message };
   }
 }
@@ -306,7 +390,8 @@ function getRoleData(formData: any) {
 
 export async function editUser(formState: any, formData: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // TODO Enable below line
+    // await checkAuthenticationAndAdminRole();
 
     const firstName = formData.get('firstName');
     const lastName = formData.get('lastName');
@@ -328,19 +413,19 @@ export async function editUser(formState: any, formData: any) {
     await userSchema_updateUser.validate(userData, { abortEarly: false });
 
     // Check if the user already exists
-    const user = await AppUser.findOne({ where: { userName } });
+    const user = await B2BUser.findOne({ where: { username: userName } });
 
     if (!user)
       throw new Error(`User with user name ${userName} was not found!`);
 
     // @ts-ignore
-    user.firstName = firstName;
+    user.first_name = firstName;
     // @ts-ignore
-    user.lastName = lastName;
+    user.last_name = lastName;
     // @ts-ignore
     user.email = email;
     // @ts-ignore
-    user.mobilePhone = mobilePhone;
+    user.mobile_phone = mobilePhone;
 
     await user.save();
 
@@ -454,7 +539,8 @@ export async function updateUserPassword(formState: any, formData: any) {
   try {
     await checkAuthenticationAndAdminRole();
 
-    const userName = formData.get('userName');
+    console.log('formData', formData);
+    const userName = formData.get('username');
     const password = formData.get('password');
     const verifyPassword = formData.get('verifyPassword');
 
@@ -469,7 +555,7 @@ export async function updateUserPassword(formState: any, formData: any) {
     });
 
     // Check if the user already exists
-    const user = await AppUser.findOne({ where: { userName } });
+    const user = await B2BUser.findOne({ where: { username: userName } });
 
     if (!user)
       throw new Error(`User with user name ${userName} was not found!`);
@@ -490,7 +576,9 @@ export async function updateUserPassword(formState: any, formData: any) {
 
 export async function createPermission(formState: any, formData: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // TODO Uncomment
+    // await checkAuthenticationAndAdminRole();
+
     const permissionName = formData.get('permissionName');
     const endPoint = formData.get('endPoint');
     const permissionDescription = formData.get('permissionDescription');
@@ -550,7 +638,9 @@ export async function createRole(formState: any, formData: any) {
 
 export async function deleteRole({ role }: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // TODO Uncomment below line
+    // await checkAuthenticationAndAdminRole();
+
     //  Delete User
     const deletedCount = await AppRole.destroy({
       where: {
@@ -617,63 +707,5 @@ export async function deletePermission({ permission }: any) {
     return { status: 'SUCCESS', message: 'Permission Deleted!' };
   } catch (error) {
     return { status: 'ERROR', message: error.message };
-  }
-}
-
-// export async function readNMStandByFile() {
-//   const filePath = path.join(
-//     process.cwd(),
-//     'app',
-//     '(db)',
-//     'seeders',
-//     'standby_files',
-//     'Stand by NMS.txt'
-//   );
-
-//   try {
-//     const contents = await fs.promises.readFile(filePath, 'utf8');
-
-//     return contents;
-//   } catch (err) {
-//     console.error('Error reading file:', err);
-//     throw err;
-//   }
-// }
-
-export async function getStandByHistory() {
-  try {
-    const { StandBy, NMS_Standby_Order } = sequelize.models;
-
-    const standByEntries = await StandBy.findAll({
-      order: [['date', 'ASC']], // This will order the results by the 'date' column in ascending order
-    });
-
-    const nmsStandByOrder = await NMS_Standby_Order.findAll();
-    // Convert models to plain objects
-    const plainNmsStandByOrderList = nmsStandByOrder
-      .map((user) => user.toJSON())
-      .map((item) => [item.id, item.standByPerson]);
-
-    // Create an object to store the results
-    const standByEntriesByDate = {};
-
-    // Populate the object with date as key and standByPerson as value
-    standByEntries.forEach((entry) => {
-      const formattedDate = dayjs(entry.date).format('YYYY-MM-DD');
-      standByEntriesByDate[formattedDate] = entry.standByPerson;
-    });
-
-    // Ensure both results are arrays
-    if (
-      !Array.isArray(plainNmsStandByOrderList) ||
-      typeof standByEntriesByDate !== 'object'
-    ) {
-      throw new Error('Invalid return values from getStandByHistory');
-    }
-
-    return [plainNmsStandByOrderList, standByEntriesByDate];
-  } catch (err) {
-    console.error('Error reading file:', err);
-    throw err;
   }
 }

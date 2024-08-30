@@ -14,21 +14,26 @@ import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { SubmitButton } from '../../common/SubmitButton';
 
-import { createUser } from '@b2b-tickets/admin-server-actions';
+import {
+  createUser,
+  getCustomersList,
+} from '@b2b-tickets/admin-server-actions';
 import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 
 function CreateUserModal({ closeModal }) {
+  const [customersList, setCustomersList] = useState([]);
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
 
   const noScriptFallback = useToastMessage(formState);
   const formik = useFormik({
     initialValues: {
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      userName: faker.internet.userName(),
+      company: '',
+      first_name: faker.person.firstName(),
+      last_name: faker.person.lastName(),
+      username: faker.internet.userName(),
       password: faker.internet.password(),
       email: faker.internet.email(),
-      mobilePhone: faker.phone.number(),
+      mobile_phone: faker.phone.number(),
     },
     validationSchema: validationSchema,
     // onSubmit: async (values, { setSubmitting }) => {},
@@ -38,17 +43,44 @@ function CreateUserModal({ closeModal }) {
     if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
+  useEffect(() => {
+    const getCustList = async () => {
+      const customerList = await getCustomersList();
+      console.log('customerList', customerList);
+
+      setCustomersList(customerList);
+    };
+
+    getCustList();
+  }, []);
+
+  console.log('Formik errors', formik?.errors);
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white px-8 py-3 rounded-lg">
         <h3 className="font-bold text-lg text-center">Create User Form</h3>
 
-        <form
-          className="flex flex-col gap-3 pt-3"
-          // onSubmit={formik.handleSubmit}
-          action={action}
-          // ref={formRef}
-        >
+        <form className="flex flex-col gap-3 pt-3" action={action}>
+          <select
+            name="company"
+            className="text-left select max-w-xs"
+            value={formik.values.company}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          >
+            <option value="" disabled hidden>
+              Company
+            </option>
+            {customersList.map((item) => {
+              return (
+                <option key={item.customer_id} value={item.customer_id}>
+                  {item.customer_name}
+                </option>
+              );
+            })}
+          </select>
+          <FieldError formik={formik} name="company" />
+
           <label className="input input-bordered flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -60,15 +92,15 @@ function CreateUserModal({ closeModal }) {
             </svg>
             <input
               type="text"
-              name="firstName"
-              value={formik.values.firstName}
+              name="first_name"
+              value={formik.values.first_name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className="grow"
               placeholder="First Name"
             />
           </label>
-          <FieldError formik={formik} name="firstName" />
+          <FieldError formik={formik} name="first_name" />
 
           <label className="input input-bordered flex items-center gap-2">
             <svg
@@ -81,29 +113,29 @@ function CreateUserModal({ closeModal }) {
             </svg>
             <input
               type="text"
-              name="lastName"
-              value={formik.values.lastName}
+              name="last_name"
+              value={formik.values.last_name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className="grow"
               placeholder="Last Name"
             />
           </label>
-          <FieldError formik={formik} name="lastName" />
+          <FieldError formik={formik} name="last_name" />
 
           <label className="input input-bordered flex items-center gap-2">
             <CgNametag className="w-4 h-4 opacity-70" />
             <input
               type="text"
-              name="userName"
-              value={formik.values.userName}
+              name="username"
+              value={formik.values.username}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className="grow"
               placeholder="User Name"
             />
           </label>
-          <FieldError formik={formik} name="userName" />
+          <FieldError formik={formik} name="username" />
 
           <label className="input input-bordered flex items-center gap-2">
             <FaKey className="w-4 h-4 opacity-70" />
@@ -146,8 +178,8 @@ function CreateUserModal({ closeModal }) {
 
             <input
               type="text"
-              name="mobilePhone"
-              value={formik.values.mobilePhone}
+              name="mobile_phone"
+              value={formik.values.mobile_phone}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               className="grow"
@@ -155,7 +187,7 @@ function CreateUserModal({ closeModal }) {
             />
           </label>
 
-          <FieldError formik={formik} name="mobilePhone" />
+          <FieldError formik={formik} name="mobile_phone" />
 
           <div
             className="flex h-8 items-end space-x-1"
@@ -185,16 +217,17 @@ function CreateUserModal({ closeModal }) {
 }
 
 const validationSchema = Yup.object({
-  firstName: Yup.string().required('First name is required'),
-  lastName: Yup.string().required('Last name is required'),
-  userName: Yup.string().required('User name is required'),
+  company: Yup.string().min(1, '').required('Company is required'),
+  first_name: Yup.string().required('First name is required'),
+  last_name: Yup.string().required('Last name is required'),
+  username: Yup.string().required('User name is required'),
   password: Yup.string()
     .min(8, 'Password must be at least 8 characters long')
     .required('Password is required'),
   email: Yup.string()
     .email('Invalid email address')
     .required('Email is required'),
-  mobilePhone: Yup.string()
+  mobile_phone: Yup.string()
     // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
     .required('Mobile phone is required'),
 });
