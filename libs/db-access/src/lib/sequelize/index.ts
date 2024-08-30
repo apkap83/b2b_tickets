@@ -1,10 +1,14 @@
 import { Sequelize } from 'sequelize-typescript';
 
 import { config } from '@b2b-tickets/config';
+
 import { AppUser } from './models/User';
 import { AppRole } from './models/Role';
 import { AppPermission } from './models/Permission';
 import { Audit } from './models/Audit';
+import { B2BUser } from './models/users';
+
+import { initModels } from './models/sequelize_auto_generated/init-models';
 
 // import { sequelizeDBActionsLogger } from '@b2b-tickets/logging';
 
@@ -42,17 +46,33 @@ const sequelize = new Sequelize({
   // logging: false,
 });
 
-const modelDefiners = [AppUser, AppRole, AppPermission, Audit];
-
-for (const modelDefiner of modelDefiners) {
-  modelDefiner(sequelize);
-}
+// initModels(sequelize);
+AppUser.initModel(sequelize);
+AppRole.initModel(sequelize);
+AppPermission.initModel(sequelize);
+B2BUser.initModel(sequelize);
+Audit(sequelize);
 
 const applyAssociations = async () => {
-  const { AppUser, AppRole, AppPermission, Audit } = sequelize.models;
+  const { AppUser, AppRole, AppPermission, Audit, B2BUser } = sequelize.models;
 
-  AppUser.belongsToMany(AppRole, { through: '_userRole', timestamps: false });
-  AppRole.belongsToMany(AppUser, { through: '_userRole', timestamps: false });
+  AppUser.belongsToMany(AppRole, {
+    through: '_userRole',
+    timestamps: false,
+  });
+  B2BUser.belongsToMany(AppRole, {
+    through: '_userRoleB2B',
+    timestamps: false,
+  });
+
+  AppRole.belongsToMany(AppUser, {
+    through: '_userRole',
+    timestamps: false,
+  });
+  AppRole.belongsToMany(B2BUser, {
+    through: '_userRoleB2B',
+    timestamps: false,
+  });
 
   AppRole.belongsToMany(AppPermission, {
     through: '_rolePermission',
@@ -98,4 +118,4 @@ const testConnection = async () => {
   }
 };
 
-export { sequelize, syncDatabase };
+export { sequelize, syncDatabase, AppUser, AppRole, AppPermission, B2BUser };

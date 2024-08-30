@@ -1,4 +1,7 @@
 'use server';
+
+import { getServerSession } from 'next-auth';
+import { options } from '@b2b-tickets/auth-options';
 import { redirect } from 'next/navigation';
 import * as yup from 'yup';
 import { z } from 'zod';
@@ -36,14 +39,50 @@ export const syncDBAlterTrueAction = async () => {
   await syncDatabaseAlterTrue();
 };
 
-export const getAllTickets = async (): Promise<Ticket[]> => {
+export const getAllTickets = async ({
+  userId,
+}: {
+  userId: number;
+}): Promise<Ticket[]> => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-  try {
-    const query = 'SELECT * FROM tickets_v order by "Opened" DESC';
-    const res = await pgB2Bpool.query(query);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    return res.rows as Ticket[]; // Type assertion to ensure res.rows is of type Ticket[]
+  try {
+    // const query =
+    //   'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
+    // const res = await pgB2Bpool.query(query, [userId]);
+
+    // Find Customer ID for User
+    const queryForCustomerId =
+      'SELECT customer_id FROM users WHERE user_id = $1';
+    const customerIdRes = await pgB2Bpool.query(queryForCustomerId, [userId]);
+
+    const customerId = customerIdRes.rows[0]['customer_id'];
+
+    // Find Customer Name from Customer ID
+    const queryForCustomerName =
+      'SELECT customer_name FROM customers WHERE customer_id = $1';
+    const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
+      customerId,
+    ]);
+
+    const customerName = customerNameRes.rows[0]['customer_name'];
+
+    // Artificial Delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // In case there is no Customer Id then return all
+    if (customerId === '-1') {
+      const query = 'SELECT * FROM tickets_v order by "Opened" DESC';
+      const res = await pgB2Bpool.query(query);
+      return res?.rows as Ticket[]; // Type assertion to ensure res.rows is of type Ticket[]
+    }
+
+    // Filter Tickets View by Customer Name
+    const finalQuery =
+      'SELECT * FROM tickets_v where "Customer" = $1 order by "Opened" DESC';
+    const res = await pgB2Bpool.query(finalQuery, [customerName]);
+
+    return res?.rows as Ticket[]; // Type assertion to ensure res.rows is of type Ticket[]
   } catch (error) {
     throw error;
   }
@@ -182,6 +221,9 @@ export const createNewTicket = async (
   formData: FormData
 ): Promise<any> => {
   try {
+    const session = await getServerSession(options);
+
+    console.log(226, session);
     // console.log('formData', formData);
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
@@ -264,7 +306,7 @@ export const createNewTicket = async (
         contactPhoneNum,
         standardizedDate,
         //@ts-ignore
-        getEnvVariable('USER_ID'),
+        session.user.user_id,
         //@ts-ignore
         config.api.user,
         config.api.process,
@@ -272,48 +314,11 @@ export const createNewTicket = async (
       ]
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 750));
+    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
-    throw new Error('Testing Errors!');
-
-    console.log('SUCCESS: Ticket Created!');
     return toFormState('SUCCESS', 'Ticket Created!');
   } catch (error) {
     console.log('ERROR', error);
     return fromErrorToFormState(error);
-  }
-};
-
-export const getAdminDashboardData = async () => {
-  try {
-    // await checkAuthenticationAndAdminRole();
-    const { AppUser, AppRole, AppPermission } = sequelize.models;
-
-    const usersListWithRoles = await AppUser.findAll({ include: AppRole });
-    const rolesListWithPermissions = await AppRole.findAll({
-      include: AppPermission,
-    });
-    const permissionsList = await AppPermission.findAll();
-
-    // Convert models to plain objects
-    const plainUsersListWithRoles = usersListWithRoles.map((user) =>
-      user.toJSON()
-    );
-
-    const plainRolesListWithPermissions = rolesListWithPermissions.map((role) =>
-      role.toJSON()
-    );
-    const plainPermissionsList = permissionsList.map((permission) =>
-      permission.toJSON()
-    );
-
-    return {
-      usersList: plainUsersListWithRoles,
-      rolesList: plainRolesListWithPermissions,
-      permissionsList: plainPermissionsList,
-    };
-  } catch (error) {
-    console.log('ERROR:', error);
-    redirect('/signin?callbackUrl=/admin');
   }
 };

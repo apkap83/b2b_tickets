@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-// import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 import { FaUserLarge } from 'react-icons/fa6';
 
@@ -27,7 +27,7 @@ const MyProfile = () => {
   };
 
   return (
-    <div className="absolute inset-20 flex justify-center items-center -translate-y-5">
+    <div className="absolute inset-0 flex justify-center items-center -translate-y-5 bg-black bg-opacity-50">
       <div className="card lg:card-side bg-base-100 shadow-xl w-[550px] p-10">
         <figure className="w-1/3 m-3">
           <FaUserLarge />
@@ -53,12 +53,12 @@ const MyProfile = () => {
           />
         </div>
       </div>
-      {/* {showPasswordResetModal.visible ? (
+      {showPasswordResetModal.visible ? (
         <PasswordResetModal
           userDetails={showPasswordResetModal.userDetails}
           closeModal={() => setShowPasswordResetModal(false)}
         />
-      ) : null} */}
+      ) : null}
     </div>
   );
 };

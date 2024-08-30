@@ -285,7 +285,7 @@ export function NewTicketModal({ closeModal }) {
                     <FormControl
                       sx={{
                         mt: '.5rem',
-                        border: `1px solid ${colors.grey[800]}`,
+                        border: `1px solid ${colors.grey[700]}`,
                         padding: '10px',
                         outline: 'none',
                         '& > textarea': {
@@ -559,8 +559,8 @@ export function NewTicketModal({ closeModal }) {
                   onClick={closeModal}
                   variant="outlined"
                   style={{
-                    color: `${colors.grey[100]}`,
-                    border: `1px solid ${colors.grey[100]}`,
+                    color: `${colors.grey[500]}`,
+                    border: `1px solid ${colors.grey[500]}`,
                   }}
                 >
                   Cancel

@@ -1,23 +1,31 @@
-import Credentials from 'next-auth/providers/credentials';
-import { AuthenticationTypes } from '@b2b-tickets/shared-models';
-import { sequelize } from '@b2b-tickets/db-access';
-import bcrypt from 'bcryptjs';
 import * as Yup from 'yup';
+import Credentials from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
+import { config } from '@b2b-tickets/config';
+import { AuthenticationTypes } from '@b2b-tickets/shared-models';
+import {
+  sequelize,
+  AppUser,
+  AppPermission,
+  AppRole,
+  B2BUser,
+  pgB2Bpool,
+  setSchema,
+} from '@b2b-tickets/db-access';
 // import ldap from 'ldapjs'; // ME GAMHSES PATOKORFA LDAPJS!
-import { Client } from 'ldapts';
+import { Client, SearchOptions } from 'ldapts';
 
 import { createUserIfNotExistsAfterLDAPSuccessfullAuth } from '@b2b-tickets/admin-server-actions';
 
 // import { logAuth } from '@b2b-tickets/logging';
 
 import { headers } from 'next/headers';
+type CredentialsType = Record<'userName' | 'password', string> | undefined;
 
-const { AppUser, AppRole, AppPermission } = sequelize.models;
-const tryLocalAuthentication = async (credentials) => {
+const tryLocalAuthentication = async (credentials: CredentialsType) => {
   const headersList = headers();
   const reqIP = headersList.get('request-ip');
   const reqURL = headersList.get('request-url');
-
   try {
     // logAuth.info(
     //   `Trying Local authentication for user name: ${credentials.userName}`,
@@ -26,16 +34,16 @@ const tryLocalAuthentication = async (credentials) => {
     //     reqURL,
     //   }
     // );
-    const foundUser = await AppUser.scope('withPassword').findOne({
+    const foundUser = (await B2BUser.scope('withPassword').findOne({
       where: {
-        userName: credentials.userName,
-        authenticationType: AuthenticationTypes.LOCAL,
+        username: credentials!.userName,
+        authentication_type: AuthenticationTypes.LOCAL,
       },
       include: {
         model: AppRole,
         include: [AppPermission],
       },
-    });
+    })) as B2BUser & { AppRoles: AppRole[] };
 
     if (foundUser) {
       // logAuth.debug(
@@ -45,8 +53,13 @@ const tryLocalAuthentication = async (credentials) => {
       //     reqURL,
       //   }
       // );
+
+      if (foundUser.is_locked === 'y') {
+        throw new Error('User is currently locked');
+      }
+
       const match = await bcrypt.compare(
-        credentials.password,
+        credentials!.password,
         foundUser.password
       );
 
@@ -74,22 +87,34 @@ const tryLocalAuthentication = async (credentials) => {
         //   reqURL,
         // });
 
+        // Find Customer Name from Customer ID
+        await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+        const queryForCustomerName =
+          'SELECT customer_name FROM customers WHERE customer_id = $1';
+        const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
+          foundUser.customer_id,
+        ]);
+
+        const customer_name = customerNameRes.rows[0]['customer_name'];
+
         return [
-          foundUser.active,
+          foundUser.is_active,
           {
-            id: foundUser.id,
-            firstName: foundUser.firstName,
-            lastName: foundUser.lastName,
-            userName: foundUser.userName,
+            user_id: foundUser.user_id,
+            customer_id: foundUser.customer_id,
+            customer_name: customer_name,
+            firstName: foundUser.first_name,
+            lastName: foundUser.last_name,
+            userName: foundUser.username,
             email: foundUser.email,
-            authenticationType: foundUser.authenticationType,
+            authenticationType: foundUser.authentication_type,
             roles,
             permissions,
           },
         ];
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     // logAuth.error(error, {
     //   reqIP,
     //   reqURL,
@@ -99,7 +124,7 @@ const tryLocalAuthentication = async (credentials) => {
   return [undefined, null];
 };
 
-const tryLocalLDAPAuthentication = async (credentials) => {
+const tryLocalLDAPAuthentication = async (credentials: CredentialsType) => {
   console.log('Trying LDAP Auth...');
   const headersList = headers();
   const reqIP = headersList.get('request-ip');
@@ -132,7 +157,6 @@ const tryLocalLDAPAuthentication = async (credentials) => {
       //   }
       // );
 
-      console.log('138 found user');
       const roles = foundUser.AppRoles.map((role) => role.roleName);
 
       const permissions = foundUser.AppRoles.flatMap((role) =>
@@ -191,13 +215,16 @@ export const options = {
         const headersList = headers();
         const reqIP = headersList.get('request-ip');
         const reqURL = headersList.get('request-url');
+
+        if (!credentials) return null;
+
         try {
           const validationSchema = Yup.object({
             userName: Yup.string().required('User name is required'),
             password: Yup.string().required('Password is required'),
           });
           await validationSchema.validate(credentials, { abortEarly: false });
-        } catch (error) {
+        } catch (error: any) {
           // logAuth.error(error, {
           //   reqIP,
           //   reqURL,
@@ -210,13 +237,35 @@ export const options = {
           await tryLocalAuthentication(credentials);
 
         if (localAuthUserDetails) {
-          if (!localAccountActive) {
+          if (localAccountActive === 'n') {
             // logAuth.info(`User '${credentials.userName}' is currently locked`, {
             //   reqIP,
             //   reqURL,
             // });
             throw new Error('User is currently locked');
           }
+
+          // localAuthUserDetails
+          //   id: '2',
+          //   firstName: 'Administrator',
+          //   lastName: 'Administrator',
+          //   userName: 'admin',
+          //   email: 'nms_system_support@nova.gr',
+          //   authenticationType: 'LOCAL',
+          //   roles: [ 'Admin' ],
+          //   permissions: [
+          //     {
+          //       permissionName: 'API_Admin',
+          //       permissionEndPoint: null,
+          //       permissionDescription: 'Full Access for All API Endpoints'
+          //     },
+          //     {
+          //       permissionName: 'API_Security_Management',
+          //       permissionEndPoint: null,
+          //       permissionDescription: 'Full Access for All Security Endpoints'
+          //     }
+          //   ]
+          // }
 
           return new Promise((resolve, reject) => {
             // logAuth.info(
@@ -229,7 +278,9 @@ export const options = {
             resolve(localAuthUserDetails);
           });
         }
-
+        throw new Error('Invalid credentials');
+        // NO LDAP FOR NOW
+        /*
         // For Local LDAP Account (Authentication Type = LOCAL) - Try to authenticate
         const [ldapAccountActive, localLDAPAccountUserDetails] =
           await tryLocalLDAPAuthentication(credentials);
@@ -250,6 +301,7 @@ export const options = {
           connectTimeout: 0,
           strictDN: true,
         });
+        
 
         try {
           const bindDN = `sys\\${credentials.userName.replace('sys\\', '')}`;
@@ -280,7 +332,7 @@ export const options = {
           }
 
           // Search options
-          const opts = {
+          const opts: SearchOptions = {
             filter: `(&(objectClass=*)(sAMAccountName=${credentials.userName.replace(
               'sys\\',
               ''
@@ -309,12 +361,13 @@ export const options = {
           const entry = searchEntries[0];
 
           let firstName =
-            entry.givenName.charAt(0).toUpperCase() +
-            entry.givenName.slice(1).toLowerCase();
+            String(entry.givenName).charAt(0).toUpperCase() +
+            String(entry.givenName).slice(1).toLowerCase();
           let lastName =
-            entry.sn.charAt(0).toUpperCase() + entry.sn.slice(1).toLowerCase();
-          let userName = entry.sAMAccountName.toLowerCase();
-          let email = entry.userPrincipalName.toLowerCase();
+            String(entry.sn).charAt(0).toUpperCase() +
+            String(entry.sn).slice(1).toLowerCase();
+          let userName = String(entry.sAMAccountName).toLowerCase();
+          let email = String(entry.userPrincipalName).toLowerCase();
           let mobilePhone = entry.mobile;
 
           const user = {
@@ -355,8 +408,9 @@ export const options = {
           // });
           throw new Error('Invalid credentials');
         } finally {
-          await client.unbind();
+          // await client.unbind();
         }
+        */
       },
     }),
   ],
@@ -367,6 +421,9 @@ export const options = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.user_id = user.user_id;
+        token.customer_id = user.customer_id;
+        token.customer_name = user.customer_name;
         token.userName = user.userName;
         token.firstName = user.firstName;
         token.lastName = user.lastName;
@@ -379,6 +436,9 @@ export const options = {
 
     async session({ session, token }) {
       if (session?.user) {
+        session.user.user_id = token.user_id;
+        session.user.customer_id = token.customer_id;
+        session.user.customer_name = token.customer_name;
         session.user.userName = token.userName;
         session.user.firstName = token.firstName;
         session.user.lastName = token.lastName;

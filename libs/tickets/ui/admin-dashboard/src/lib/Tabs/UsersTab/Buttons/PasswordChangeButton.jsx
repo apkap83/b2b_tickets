@@ -1,5 +1,5 @@
-import clsx from "clsx";
-import { FaKey } from "react-icons/fa6";
+import clsx from 'clsx';
+import { FaKey } from 'react-icons/fa6';
 
 export const PasswordChangeButton = ({ user, setShowPasswordResetModal }) => {
   return (
@@ -18,11 +18,11 @@ export const PasswordChangeButton = ({ user, setShowPasswordResetModal }) => {
           setShowPasswordResetModal({
             visible: true,
             userDetails: {
-              firstName: user.firstName,
-              lastName: user.lastName,
-              userName: user.userName,
+              firstName: user.first_name,
+              lastName: user.last_name,
+              userName: user.username,
               email: user.email,
-              mobilePhone: user.mobilePhone,
+              mobilePhone: user.mobile_phone,
             },
           });
         }}

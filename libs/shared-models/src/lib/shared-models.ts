@@ -19,13 +19,13 @@ export interface Ticket {
   Cli: string;
   'Contact person': string;
   'Contact phone number': string;
-  'Occurence date': Date; // Adjusted to Date type for better type safety
-  Opened: Date; // Adjusted to Date type for better type safety
+  'Occurence date': Date;
+  Opened: Date;
   'Opened By': string;
   Status: string;
-  'Status Date': Date; // Adjusted to Date type for better type safety
+  'Status Date': Date;
   'Status User': string;
-  Closed: Date | null; // Adjusted to Date type for better type safety and nullability
+  Closed: Date | null;
   'Closed By': string | null;
 }
 
