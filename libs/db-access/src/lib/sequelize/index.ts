@@ -20,6 +20,7 @@ import { initModels } from './models/sequelize_auto_generated/init-models';
 // const sequelize = new Sequelize("Sequelize_Example_DB", "root", "nsm055!3", {
 const sequelize = new Sequelize({
   host: config.postgres_b2b_database.host,
+  port: config.postgres_b2b_database.port,
   username: config.postgres_b2b_database.username,
   password: process.env['POSTGRES_B2B_PASSWORD'],
   database: config.postgres_b2b_database.db,
