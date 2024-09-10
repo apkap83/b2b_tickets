@@ -28,12 +28,9 @@ const MyProfile = () => {
 
   return (
     <div className="absolute inset-0 flex justify-center items-center -translate-y-5 bg-black bg-opacity-50">
-      <div className="card lg:card-side bg-base-100 shadow-xl w-[550px] p-10">
-        <figure className="w-1/3 m-3">
-          <FaUserLarge />
-        </figure>
+      <div className="card lg:card-side bg-base-100 shadow-xl p-10">
         <div className="card-body py-1">
-          <h2 className="card-title text-center">Profile Details</h2>
+          <h2 className="card-title text-center">User Profile Details</h2>
           <label className="inline">
             First Name: &nbsp;<span>{session?.user.firstName}</span>
           </label>

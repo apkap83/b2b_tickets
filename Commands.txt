@@ -55,3 +55,6 @@ nx g component LoggedInIndication --project ui --export --tags type:ui,scope=b2b
 
     # Generate Whole DB Models
     npx sequelize-auto -o "./models" -d postgres -h 127.0.0.1 -p 9002 -u postgres -x postgres -s 'b2btickets_dev' --dialect postgres -l ts
+
+# Create Comments Component under tickets/ui library
+nx generate @nx/next:library comments --directory=tickets/ui --component

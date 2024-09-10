@@ -53,7 +53,7 @@ export interface TicketFormState {
   serviceType: string;
 }
 
-export interface TicketComments {
+export interface TicketComment {
   comment_id: number;
   ticket_id: number;
   comment_date: Date;
@@ -63,6 +63,43 @@ export interface TicketComments {
   creation_user: string;
   username: string;
   customer_name: string;
+}
+
+export interface TicketDetail {
+  ticket_id: string;
+  customer_id: string;
+  ticket_number: string;
+  title: string;
+  description: string;
+  category_id: string;
+  service_id: string;
+  equipment_id: string;
+  sid: string;
+  cid: string;
+  username: string;
+  cli: string;
+  contact_person: string;
+  contact_phone_number: string;
+  occurrence_date: Date;
+  open_date: Date;
+  open_user_id: string;
+  status_id: string;
+  status_date: Date;
+  status_user_id: string;
+  close_date: Date | null;
+  close_user_id: string | null;
+  root_cause: string | null;
+  record_version: string;
+  creation_date: Date;
+  creation_user: string;
+  last_update_date: Date | null;
+  last_update_user: string | null;
+  last_update_process: string;
+  category_name: string;
+  service_name: string;
+  start_date: Date;
+  end_date: Date | null;
+  comments: TicketComment[];
 }
 
 export enum AppRoleTypes {
