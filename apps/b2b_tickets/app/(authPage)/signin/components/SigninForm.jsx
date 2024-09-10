@@ -56,7 +56,6 @@ export default function SignInForm({ providers, csrfToken }) {
     onSubmit: async (values, { setSubmitting }) => {
       setError(null);
       setIsLoading(true);
-      console.log(53, values);
       const result = await signIn('credentials', {
         redirect: false,
         userName: values.userName,

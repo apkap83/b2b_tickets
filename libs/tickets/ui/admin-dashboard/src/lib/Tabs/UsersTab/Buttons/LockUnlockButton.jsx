@@ -11,7 +11,6 @@ export const LockOrUnlock = ({ user }) => {
   //   const [isPending, startTransition] = useTransition();
 
   const handleLockOrUnlock = async () => {
-    console.log('*** 14', user);
     // startTransition(async () => {
     try {
       const message = await lockorUnlockUser({
