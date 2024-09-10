@@ -53,6 +53,18 @@ export interface TicketFormState {
   serviceType: string;
 }
 
+export interface TicketComments {
+  comment_id: number;
+  ticket_id: number;
+  comment_date: Date;
+  comment_user_id: Date;
+  comment: string;
+  is_closure: string;
+  creation_user: string;
+  username: string;
+  customer_name: string;
+}
+
 export enum AppRoleTypes {
   Admin = 'Admin',
   SimpleUser = 'SimpleUser',

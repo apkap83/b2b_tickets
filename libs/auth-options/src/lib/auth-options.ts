@@ -62,8 +62,11 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
         credentials!.password,
         foundUser.password
       );
-
+      console.log(65);
+      console.log('credentials!.password', credentials!.password);
+      console.log('foundUser.password', foundUser.password);
       if (match) {
+        console.log(67);
         // logAuth.debug(`Given password and DB passwords match`, {
         //   reqIP,
         //   reqURL,

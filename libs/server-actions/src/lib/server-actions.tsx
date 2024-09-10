@@ -39,7 +39,7 @@ export const syncDBAlterTrueAction = async () => {
   await syncDatabaseAlterTrue();
 };
 
-export const getAllTickets = async ({
+export const getAllTicketsForCustomerId = async ({
   userId,
 }: {
   userId: number;
@@ -83,6 +83,60 @@ export const getAllTickets = async ({
     const res = await pgB2Bpool.query(finalQuery, [customerName]);
 
     return res?.rows as Ticket[]; // Type assertion to ensure res.rows is of type Ticket[]
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getTicketDetailsForTicketId = async ({
+  ticketNumber,
+}: {
+  ticketNumber: string;
+}): Promise<Ticket[]> => {
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+  try {
+    const queryForTicketsCategoriesAndTypes = `
+    SELECT * FROM tickets as t
+    INNER JOIN ticket_categories as tc
+    ON t.category_id = tc.category_id
+    INNER JOIN service_types as s
+    ON t.service_id = s.service_id
+    WHERE t.ticket_number = $1
+    
+    `;
+
+    const queryForComments = `
+      SELECT tc.comment_id,
+      tc.ticket_id,
+      tc.comment_date,
+      tc.comment_user_id,
+      tc.comment,
+      tc.is_closure,
+      tc.creation_date,
+      tc.creation_user,
+      u.username,
+      c.customer_name
+      FROM tickets as t
+      INNER JOIN ticket_comments as tc
+      ON t.ticket_id = tc.ticket_id
+      INNER JOIN users as u
+      ON u.user_id = tc.comment_user_id
+      INNER JOIN customers as c
+      ON u.customer_id = c.customer_id
+      WHERE t.ticket_number = $1
+    `;
+    const queryRes1 = await pgB2Bpool.query(queryForTicketsCategoriesAndTypes, [
+      ticketNumber,
+    ]);
+    const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
+
+    console.log('queryRes2', queryRes2);
+    // Add Comments in the querRes1 result set
+    // @ts-ignore
+    queryRes1.rows[0]['comments'] = queryRes2.rows;
+
+    return queryRes1.rows;
   } catch (error) {
     throw error;
   }
@@ -222,9 +276,6 @@ export const createNewTicket = async (
 ): Promise<any> => {
   try {
     const session = await getServerSession(options);
-
-    console.log(226, session);
-    // console.log('formData', formData);
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     const {
