@@ -44,6 +44,12 @@
       "@b2b-tickets/tickets/ui/admin-dashboard/server": [
         "libs/tickets/ui/admin-dashboard/src/server.ts"
       ],
+      "@b2b-tickets/tickets/ui/comments": [
+        "libs/tickets/ui/comments/src/index.ts"
+      ],
+      "@b2b-tickets/tickets/ui/comments/server": [
+        "libs/tickets/ui/comments/src/server.ts"
+      ],
       "@b2b-tickets/tickets/ui/server": ["libs/tickets/ui/src/server.ts"],
       "@b2b-tickets/ui": ["libs/ui/src/index.ts"],
       "@b2b-tickets/ui-theme": ["libs/ui-theme/src/index.ts"],

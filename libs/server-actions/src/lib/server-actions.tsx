@@ -18,6 +18,8 @@ import {
 } from '@b2b-tickets/shared-models';
 import { sequelize } from '@b2b-tickets/db-access';
 
+import { TicketDetail } from '@b2b-tickets/shared-models';
+
 import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { populateDB } from '@b2b-tickets/db-access';
 
@@ -92,7 +94,7 @@ export const getTicketDetailsForTicketId = async ({
   ticketNumber,
 }: {
   ticketNumber: string;
-}): Promise<Ticket[]> => {
+}): Promise<TicketDetail[]> => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
   try {
@@ -130,12 +132,9 @@ export const getTicketDetailsForTicketId = async ({
       ticketNumber,
     ]);
     const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
-
-    console.log('queryRes2', queryRes2);
-    // Add Comments in the querRes1 result set
-    // @ts-ignore
     queryRes1.rows[0]['comments'] = queryRes2.rows;
 
+    await new Promise((resolve) => setTimeout(resolve, 250));
     return queryRes1.rows;
   } catch (error) {
     throw error;
@@ -250,6 +249,7 @@ const ticketSchema_zod = z
     message: 'At least one of SID, CID, User Name, or CLI Value is required',
     path: ['occurrenceDate'], // This points to the field where the error will be shown
   });
+
 const convertToISODate = (dateStr: string) => {
   // Replace Greek AM/PM with standard AM/PM
   let standardizedDateStr = dateStr.replace('πμ', 'AM').replace('μμ', 'PM');
@@ -320,7 +320,6 @@ export const createNewTicket = async (
     // const occurrenceDate = formData.get('occurrenceDate');
 
     const standardizedDate = convertToISODate(occurrenceDate);
-    console.log('standardizedDate', standardizedDate);
 
     const ticketData = {
       title,
@@ -358,6 +357,7 @@ export const createNewTicket = async (
         standardizedDate,
         //@ts-ignore
         session.user.user_id,
+        // TODO: What to set for config.api.user/process in production ?
         //@ts-ignore
         config.api.user,
         config.api.process,
@@ -368,6 +368,55 @@ export const createNewTicket = async (
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
+  } catch (error) {
+    console.log('ERROR', error);
+    return fromErrorToFormState(error);
+  }
+};
+
+const commentSchema_zod = z.object({
+  ticketId: z.string(),
+  comment: z.string().min(1),
+  isClosure: z.string(),
+  ticketNumber: z.string(),
+});
+
+export const createNewComment = async (
+  formState: TicketFormState,
+  formData: FormData
+): Promise<any> => {
+  try {
+    const session = await getServerSession(options);
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    console.log('formData', formData);
+
+    const { comment, ticketId, ticketNumber, isClosure } =
+      commentSchema_zod.parse({
+        ticketId: formData.get('ticketId'),
+        comment: formData.get('comment'),
+        isClosure: formData.get('isClosure'),
+        ticketNumber: formData.get('ticketNumber'),
+      });
+    console.log('comment', comment);
+
+    const result = await pgB2Bpool.query(
+      'CALL b2btickets_dev.cmt_insert($1, $2, $3, $4, $5, $6, $7)',
+      [
+        ticketId,
+        comment,
+        isClosure,
+        session.user.user_id,
+        //@ts-ignore
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    revalidatePath(`/ticket/${ticketNumber}`);
+    return toFormState('SUCCESS', 'Comment Created!');
   } catch (error) {
     console.log('ERROR', error);
     return fromErrorToFormState(error);
