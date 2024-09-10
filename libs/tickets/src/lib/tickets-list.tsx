@@ -23,7 +23,7 @@ import Container from '@mui/material/Container';
 import { Ticket } from '@/libs/shared-models/src';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { formatDate } from '@b2b-tickets/utils';
-import { NewTicketModal } from './new-ticket';
+import { NewTicketModal } from './new-ticket-modal';
 
 interface TicketsListProps {
   tickets: Ticket[];
