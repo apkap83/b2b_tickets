@@ -9,6 +9,8 @@ import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { SubmitButton } from '../../common/SubmitButton';
 
+import styles from './CreatePermissionModal.module.scss';
+
 const CreatePermissionModal = ({ closeModal }) => {
   const [formState, action] = useFormState(createPermission, EMPTY_FORM_STATE);
 
@@ -41,67 +43,53 @@ const CreatePermissionModal = ({ closeModal }) => {
           action={action}
           // ref={formRef}
         >
-          <label className="input input-bordered flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              className="w-4 h-4 opacity-70"
-            >
-              <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-            </svg>
-            <input
-              type="text"
-              name="permissionName"
-              value={formik.values.permissionName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className="grow"
-              placeholder="Permission Name"
-            />
-          </label>
+          <div>
+            <span className={styles.inputDescription}>Permission Name</span>
+            <label className="input input-bordered flex items-center gap-2">
+              <input
+                type="text"
+                name="permissionName"
+                value={formik.values.permissionName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="grow"
+              />
+            </label>
+          </div>
           <FieldError formik={formik} name="permissionName" />
 
-          <label className="input input-bordered flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              className="w-4 h-4 opacity-70"
-            >
-              <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-            </svg>
-            <input
-              type="text"
-              name="endPoint"
-              value={formik.values.endPoint}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className="grow"
-              placeholder="End Point (optional)"
-            />
-          </label>
+          <div>
+            <span className={styles.inputDescription}>
+              End Point (optional)
+            </span>
+            <label className="input input-bordered flex items-center gap-2">
+              <input
+                type="text"
+                name="endPoint"
+                value={formik.values.endPoint}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="grow"
+              />
+            </label>
+          </div>
           <FieldError formik={formik} name="endPoint" />
 
-          <label className="input input-bordered flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 16 16"
-              fill="currentColor"
-              className="w-4 h-4 opacity-70"
-            >
-              <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-            </svg>
-            <input
-              type="text"
-              name="permissionDescription"
-              value={formik.values.permissionDescription}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className="grow"
-              placeholder="Permission Description"
-            />
-          </label>
+          <div>
+            <span className={styles.inputDescription}>
+              Permission Description
+            </span>
+            <label className="input input-bordered flex items-center gap-2">
+              <input
+                type="text"
+                name="permissionDescription"
+                value={formik.values.permissionDescription}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="grow"
+              />
+            </label>
+          </div>
           <FieldError formik={formik} name="permissionDescription" />
 
           <div

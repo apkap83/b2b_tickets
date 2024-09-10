@@ -21,3 +21,17 @@ export const getEnvVariable = (variableName: string): string => {
   }
   return value;
 };
+
+export const getGreekDateFormat = (dateString: Date) => {
+  // Format the date as DD/MM/YYYY
+  const formattedDate = dateString.toLocaleDateString('el-GR');
+
+  // Format the time as HH:MM AM/PM in Greek (πμ for AM and μμ for PM)
+  const formattedTime = dateString.toLocaleTimeString('el-GR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit', // Include seconds
+    hour12: true, // This ensures AM/PM format (πμ/μμ in Greek)
+  });
+  return `${formattedDate} ${formattedTime}`;
+};

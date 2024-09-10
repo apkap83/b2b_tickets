@@ -6,6 +6,7 @@ const StyledTicketsUi = styled.div`
 `;
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Stack from '@mui/material/Stack';
 import { Typography, useTheme } from '@mui/material';
 
@@ -20,7 +21,6 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Container from '@mui/material/Container';
 import { Ticket } from '@/libs/shared-models/src';
-import { getAllTickets } from '@b2b-tickets/server-actions';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { formatDate } from '@b2b-tickets/utils';
 import { NewTicketModal } from './new-ticket';
@@ -67,8 +67,22 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
     return (
       <TableBody>
         {items.map((item: any) => (
-          <TableRow key={item.ticket_id} sx={{ whiteSpace: 'nowrap' }}>
-            <TableCell align="center">{item.Ticket}</TableCell>
+          <TableRow
+            key={item.ticket_id}
+            sx={{
+              whiteSpace: 'nowrap',
+
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,.05)',
+                // cursor: 'pointer',
+              },
+            }}
+          >
+            <TableCell align="center">
+              <Link href={`/ticket/${item.Ticket}`} className="text-blue-500">
+                {item.Ticket}
+              </Link>
+            </TableCell>
             <TableCell align="center">{formatDate(item.Opened)}</TableCell>
             <TableCell align="center">{item.Title}</TableCell>
             <TableCell align="center">{item.Category}</TableCell>
