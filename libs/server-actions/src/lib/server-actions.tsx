@@ -22,7 +22,7 @@ import { TicketDetail } from '@b2b-tickets/shared-models';
 
 import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { populateDB } from '@b2b-tickets/db-access';
-import { convertToISODate } from '@b2b-tickets/utils';
+import { convertTo24HourFormat } from '@b2b-tickets/utils';
 
 export const seedDB = async () => {
   // TODO Session & Authorization Enabled Action
@@ -335,23 +335,9 @@ export const createNewTicket = async (
     // const contactPhoneNum = formData.get('contactPhoneNum');
     // const occurrenceDate = formData.get('occurrenceDate');
 
-    const standardizedDate = convertToISODate(occurrenceDate);
-
-    const ticketData = {
-      title,
-      description,
-      category,
-      service,
-      equipmentId,
-      sid,
-      cid,
-      userName,
-      cliValue,
-      contactPerson,
-      contactPhoneNum,
-      occurrenceDate: standardizedDate,
-    };
-
+    console.log('occurrenceDate', occurrenceDate);
+    const standardizedDate = convertTo24HourFormat(occurrenceDate);
+    console.log('standardizedDate', standardizedDate);
     // Validate input data with yup
     // await ticketSchema.validate(ticketData, { abortEarly: false });
 

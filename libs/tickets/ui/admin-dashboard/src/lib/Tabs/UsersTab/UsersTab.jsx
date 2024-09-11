@@ -18,6 +18,7 @@ import { DisableUser } from './Buttons/DisableUser';
 
 import clsx from 'clsx';
 import { updateAuthMethodForUser } from '@b2b-tickets/admin-server-actions';
+import styles from './css/UsersTab.module.scss';
 
 const userDetailsInitalState = {
   firstName: null,
@@ -55,7 +56,7 @@ export function UsersTab({ usersList, rolesList }) {
   return (
     <>
       <div className="border-b h-[623px] overflow-y-auto">
-        <table className="table border-b">
+        <table className={`${styles.myTable} table border-b`}>
           <thead>
             <tr>
               <th></th>
@@ -65,7 +66,7 @@ export function UsersTab({ usersList, rolesList }) {
               <th>E-mail</th>
               <th>Mobile Phone</th>
               <th>Customer</th>
-              <th className="text-center min-w-[250px]">Roles</th>
+              <th className="text-center">Roles</th>
               <th>Auth</th>
               <th>Locked</th>
               <th>Active</th>
@@ -81,13 +82,17 @@ export function UsersTab({ usersList, rolesList }) {
                 <td>{user.username}</td>
                 <td>{user.email}</td>
                 <td>{user.mobile_phone}</td>
-                <td>{user.customer_name}</td>
+                <td>
+                  <span className="whitespace-nowrap">
+                    {user.customer_name}
+                  </span>
+                </td>
                 <td>
                   {user.AppRoles.map((role) => {
                     return (
                       <span
                         className={clsx(
-                          'bg-gray-200 rounded-full text-xs px-2 inline-block m-1 font-bold text-i ',
+                          'bg-gray-200 whitespace-nowrap rounded-full text-xs px-2 inline-block m-1 font-bold text-i ',
                           {
                             'text-red-500': role.roleName === 'Admin',
                             'text-blue-500':
@@ -111,18 +116,21 @@ export function UsersTab({ usersList, rolesList }) {
                   <select
                     className="text-left select max-w-xs"
                     onChange={(e) =>
-                      updateAuthMethodForUser({
-                        user,
-                        authType: e.target.value,
-                      })
+                      // updateAuthMethodForUser({
+                      //   user,
+                      //   authType: e.target.value,
+                      // })
+                      pass
                     }
                     style={{
                       backgroundColor: 'transparent',
+                      fontSize: '12px',
+                      outline: 'none',
                     }}
                     defaultValue={user.authentication_type}
                   >
                     <option value={'LOCAL'}>LOCAL</option>
-                    <option value={'LDAP'}>LDAP</option>
+                    {/* <option value={'LDAP'}>LDAP</option> */}
                   </select>
                 </td>
                 <td>
