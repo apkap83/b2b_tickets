@@ -1,0 +1,18 @@
+.myTable th {
+  font-size: 14px;
+}
+.myTable th,
+.myTable td {
+  padding-top: 10px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+@media (max-width: 1275px) {
+  .myTable th:nth-child(5),
+  .myTable tr td:nth-child(5),
+  .myTable th:nth-child(6),
+  .myTable tr td:nth-child(6) {
+    display: none;
+  }
+}
