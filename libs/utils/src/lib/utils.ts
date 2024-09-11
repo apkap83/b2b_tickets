@@ -1,3 +1,29 @@
+import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
+
+export const userHasPermission = (session: any, permissionName: any) => {
+  if (!session) return false;
+  return session?.user?.permissions.some(
+    (permission: any) =>
+      permission.permissionName === permissionName ||
+      permission.permissionName === AppPermissionTypes.API_Admin
+  );
+};
+
+export const endPointPermitted = (session: any, endpoint: any) => {
+  if (session?.user?.roles.includes(AppRoleTypes.Admin)) return true;
+
+  return session?.user?.permissions.some((perm: any) =>
+    perm.permissionEndPoint?.startsWith(endpoint)
+  );
+};
+
+export const userHasRole = (session: any, roleName: any) => {
+  if (!session) return false;
+  return session?.user?.roles.some(
+    (role: any) => role === AppRoleTypes.Admin || role === roleName
+  );
+};
+
 export function formatDate(date: Date) {
   if (!date) return null;
   return date
@@ -34,4 +60,24 @@ export const getGreekDateFormat = (dateString: Date) => {
     hour12: true, // This ensures AM/PM format (πμ/μμ in Greek)
   });
   return `${formattedDate} ${formattedTime}`;
+};
+
+export const convertToISODate = (dateStr: string) => {
+  // Replace Greek AM/PM with standard AM/PM
+  let standardizedDateStr = dateStr.replace('πμ', 'AM').replace('μμ', 'PM');
+
+  // Swap day and month
+  const dateRegex = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2} [AP]M)/;
+  const match = standardizedDateStr.match(dateRegex);
+
+  if (match) {
+    const [, day, month, year, time] = match;
+    standardizedDateStr = `${month}/${day}/${year} ${time}`;
+  }
+
+  // Parse the standardized date string to a JavaScript Date object
+  const parsedDate = new Date(standardizedDateStr);
+
+  // Convert the Date object to an ISO string
+  return parsedDate.toISOString();
 };

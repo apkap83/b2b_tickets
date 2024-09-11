@@ -1,7 +1,37 @@
+import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 import { TicketComment } from '@b2b-tickets/shared-models';
 import { getGreekDateFormat } from '@b2b-tickets/utils';
+import { CgProfile } from 'react-icons/cg';
+import { FcBusinessman } from 'react-icons/fc';
+import { FcVoicePresentation } from 'react-icons/fc';
+
+import { NovaLogo_49x49 as imagePath } from '@b2b-tickets/assets';
+import { RiChatDeleteFill } from 'react-icons/ri';
+import { Paper, Box, IconButton, useTheme, Typography } from '@mui/material';
+import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
+import { userHasPermission } from '@b2b-tickets/utils';
+
+const getRightAvatar = (company: string) => {
+  return company === 'Nova' ? (
+    <Image src={imagePath} alt="Nova Avatar" width={49} />
+  ) : (
+    <FcVoicePresentation size={49} />
+  );
+};
+
+const getRightCommentCreatorName = (comment: TicketComment) => {
+  if (comment.username === 'admin') return 'Administrator';
+  if (comment.customer_name === 'Nova')
+    return comment.first_name.concat(' ', comment.last_name);
+  return comment.customer_name.concat(
+    ' - ',
+    comment.first_name.concat(' ', comment.last_name)
+  );
+};
 
 export function TicketsUiComments({ comments }: { comments: TicketComment[] }) {
+  const { data: session, status } = useSession();
   return (
     <div className="rounded-t-md rounded-b-md shadow-lg self-stretch border border-[#d4d4d6] justify-start items-center gap-6 inline-flex">
       <div className="rounded-t-md rounded-b-md grow shrink basis-0 bg-[#6870fa]/0 flex-col justify-start items-center inline-flex">
@@ -21,21 +51,36 @@ export function TicketsUiComments({ comments }: { comments: TicketComment[] }) {
                     key={item.comment_id}
                     className="self-stretch h-[205px] p-4 bg-white rounded-lg flex-col justify-start items-start gap-2.5 flex"
                   >
-                    <div className="self-stretch justify-start items-center gap-2.5 inline-flex">
-                      <img
-                        className="w-[49px] h-[49px] rounded-full"
-                        src="https://via.placeholder.com/49x49"
-                      />
-                      <div>
-                        <span className="text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                          {item.customer_name} - {item.username}
-                        </span>
-                        <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                          {' '}
-                          added a comment at{' '}
-                          {getGreekDateFormat(item.comment_date)}
-                        </span>
+                    <div className="self-stretch justify-between items-center gap-2.5 inline-flex">
+                      <div className="flex justify-center items-center gap-2">
+                        {getRightAvatar(item.customer_name)}
+                        <div>
+                          <span className="text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                            {getRightCommentCreatorName(item)}
+                          </span>
+                          <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+                            {' '}
+                            added a comment at{' '}
+                            {getGreekDateFormat(item.comment_date)}
+                          </span>
+                        </div>
                       </div>
+                      {userHasPermission(
+                        session,
+                        AppPermissionTypes.Delete_Comments
+                      ) ? (
+                        <IconButton
+                          onClick={() => {
+                            alert('Postgres Function not implemented yet');
+                          }}
+                          className="flex flex-col justify-center items-center"
+                        >
+                          <RiChatDeleteFill
+                            size="25"
+                            color="rgba(104, 112, 250, .75)"
+                          />
+                        </IconButton>
+                      ) : null}
                     </div>
                     <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">
                       <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">

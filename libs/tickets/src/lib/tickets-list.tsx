@@ -24,14 +24,13 @@ import { Ticket } from '@/libs/shared-models/src';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { formatDate } from '@b2b-tickets/utils';
 import { NewTicketModal } from './new-ticket-modal';
-
+import clsx from 'clsx';
 interface TicketsListProps {
   tickets: Ticket[];
 }
 
 export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
   const [showCreateTicketModal, setShowCreateTicketModal] = useState(false);
-
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -80,7 +79,11 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
           >
             <TableCell align="center">
               <Link href={`/ticket/${item.Ticket}`} className="text-blue-500">
-                {item.Ticket}
+                {
+                  <span className="font-medium tracking-wider">
+                    {item.Ticket}
+                  </span>
+                }
               </Link>
             </TableCell>
             <TableCell align="center">{formatDate(item.Opened)}</TableCell>
@@ -91,7 +94,24 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
             <TableCell align="center">
               {formatDate(item['Opened By'])}
             </TableCell>
-            <TableCell align="center">{item.Status}</TableCell>
+            <TableCell align="center">
+              {
+                <div
+                  className={clsx('px-1 py-1 rounded-md font-medium', {
+                    'text-[#ffffff]  border bg-[#6870fa]':
+                      item.Status === 'New',
+                    'text-[#ffffff] border bg-[#684e32]':
+                      item.Status === 'Working',
+                    'text-[#ffffff] border bg-[#dc5743]':
+                      item.Status === 'Cancelled',
+                    'text-[#ffffff] border bg-[#3d8d52]':
+                      item.Status === 'Closed',
+                  })}
+                >
+                  {item.Status}
+                </div>
+              }
+            </TableCell>
             <TableCell align="center">
               {formatDate(item['Status Date'])}
             </TableCell>

@@ -22,6 +22,7 @@ import { TicketDetail } from '@b2b-tickets/shared-models';
 
 import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { populateDB } from '@b2b-tickets/db-access';
+import { convertToISODate } from '@b2b-tickets/utils';
 
 export const seedDB = async () => {
   // TODO Session & Authorization Enabled Action
@@ -99,11 +100,44 @@ export const getTicketDetailsForTicketId = async ({
 
   try {
     const queryForTicketsCategoriesAndTypes = `
-    SELECT * FROM tickets as t
+    SELECT 
+        ticket_id,
+        t.customer_id,
+        ticket_number,
+        title,
+        description,
+        t.category_id,
+        t.service_id,
+        equipment_id,
+        sid,
+        cid,
+        username,
+        cli,
+        contact_person,
+        contact_phone_number,
+        occurrence_date,
+        open_date,
+        open_user_id,
+        t.status_id,
+        status_date,
+        status_user_id,
+        close_date,
+        close_user_id,
+        root_cause,
+        t.creation_date,
+        t.creation_user,
+        category_name,
+        service_name,
+        start_date,
+        end_date,
+        statuses.status_name
+    FROM tickets as t
     INNER JOIN ticket_categories as tc
     ON t.category_id = tc.category_id
     INNER JOIN service_types as s
     ON t.service_id = s.service_id
+    INNER JOIN statuses as statuses
+    ON statuses.status_id = t.status_id
     WHERE t.ticket_number = $1
     
     `;
@@ -118,6 +152,8 @@ export const getTicketDetailsForTicketId = async ({
       tc.creation_date,
       tc.creation_user,
       u.username,
+      u.first_name,
+      u.last_name,
       c.customer_name
       FROM tickets as t
       INNER JOIN ticket_comments as tc
@@ -250,26 +286,6 @@ const ticketSchema_zod = z
     path: ['occurrenceDate'], // This points to the field where the error will be shown
   });
 
-const convertToISODate = (dateStr: string) => {
-  // Replace Greek AM/PM with standard AM/PM
-  let standardizedDateStr = dateStr.replace('πμ', 'AM').replace('μμ', 'PM');
-
-  // Swap day and month
-  const dateRegex = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2} [AP]M)/;
-  const match = standardizedDateStr.match(dateRegex);
-
-  if (match) {
-    const [, day, month, year, time] = match;
-    standardizedDateStr = `${month}/${day}/${year} ${time}`;
-  }
-
-  // Parse the standardized date string to a JavaScript Date object
-  const parsedDate = new Date(standardizedDateStr);
-
-  // Convert the Date object to an ISO string
-  return parsedDate.toISOString();
-};
-
 export const createNewTicket = async (
   formState: TicketFormState,
   formData: FormData
@@ -389,8 +405,6 @@ export const createNewComment = async (
     const session = await getServerSession(options);
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    console.log('formData', formData);
-
     const { comment, ticketId, ticketNumber, isClosure } =
       commentSchema_zod.parse({
         ticketId: formData.get('ticketId'),
@@ -398,7 +412,6 @@ export const createNewComment = async (
         isClosure: formData.get('isClosure'),
         ticketNumber: formData.get('ticketNumber'),
       });
-    console.log('comment', comment);
 
     const result = await pgB2Bpool.query(
       'CALL b2btickets_dev.cmt_insert($1, $2, $3, $4, $5, $6, $7)',
@@ -422,3 +435,36 @@ export const createNewComment = async (
     return fromErrorToFormState(error);
   }
 };
+
+export async function updateTicketStatus({ ticketId, statusId, userId }: any) {
+  try {
+    // TODO Enable below line
+    // await checkAuthenticationAndAdminRole();
+
+    const session = await getServerSession(options);
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const result = await pgB2Bpool.query(
+      'CALL b2btickets_dev.tck_ticket_status_update($1, $2, $3, $4, $5, $6, $7)',
+      [
+        ticketId,
+        statusId,
+        userId,
+        'No Comment',
+        //@ts-ignore
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    revalidatePath('/tickets');
+
+    return {
+      status: `SUCCESS`,
+      message: `Ticket was updated successfuly`,
+    };
+  } catch (error: any) {
+    return { status: 'ERROR', message: error.message };
+  }
+}
