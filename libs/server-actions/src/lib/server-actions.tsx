@@ -6,7 +6,11 @@ import { redirect } from 'next/navigation';
 import * as yup from 'yup';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { pgB2Bpool, setSchema } from '@b2b-tickets/db-access';
+import {
+  pgB2Bpool,
+  setSchema,
+  setSchemaAndTimezone,
+} from '@b2b-tickets/db-access';
 import { config } from '@b2b-tickets/config';
 import { toFormState, fromErrorToFormState } from '@b2b-tickets/utils';
 import { getEnvVariable } from '@b2b-tickets/utils';
@@ -47,7 +51,12 @@ export const getAllTicketsForCustomerId = async ({
 }: {
   userId: number;
 }): Promise<Ticket[]> => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+  // await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+  await setSchemaAndTimezone(
+    pgB2Bpool,
+    config.postgres_b2b_database.schemaName,
+    'EET'
+  );
 
   try {
     // const query =
@@ -335,9 +344,8 @@ export const createNewTicket = async (
     // const contactPhoneNum = formData.get('contactPhoneNum');
     // const occurrenceDate = formData.get('occurrenceDate');
 
-    console.log('occurrenceDate', occurrenceDate);
     const standardizedDate = convertTo24HourFormat(occurrenceDate);
-    console.log('standardizedDate', standardizedDate);
+
     // Validate input data with yup
     // await ticketSchema.validate(ticketData, { abortEarly: false });
 
