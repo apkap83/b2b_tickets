@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ReCAPTCHA from 'react-google-recaptcha';
+
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
@@ -76,7 +78,7 @@ export default function SignInForm({ providers, csrfToken }) {
 
   return (
     <div
-      className={`w-[500px] h-[350px] relative shadow-md rounded-2xl flex flex-col justify-center 
+      className={`w-[500px] relative shadow-md rounded-2xl flex flex-col justify-center 
       items-center p-5  backdrop-blur-lg bg-gray-100 opacity-95`}
       style={{
         transform: 'translateY(-25%)',
@@ -132,6 +134,10 @@ export default function SignInForm({ providers, csrfToken }) {
               />
             </label>
             <FieldError formik={formik} name="password" />
+          </div>
+
+          <div>
+            <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} />
           </div>
           {error && <p className="text-red-500 text-center">{error}</p>}
           <div className="mt-10 flex justify-around">
