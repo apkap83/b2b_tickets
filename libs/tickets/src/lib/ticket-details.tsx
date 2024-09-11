@@ -8,12 +8,21 @@ import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
 import { NewCommentModal } from './new-comment-modal';
 
 import Button from '@mui/material/Button';
+import clsx from 'clsx';
+import styles from './css/ticket-details.module.scss';
+import { useSession } from 'next-auth/react';
+
+import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
+import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
+import { updateTicketStatus } from '@b2b-tickets/server-actions';
+import toast from 'react-hot-toast';
 
 export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   // const theme = useTheme();
   // const colors = tokens(theme.palette.mode);
-
+  const { data: session, status } = useSession();
   const [showNewComment, setShowNewComment] = useState(false);
+  const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
 
   if (ticketDetails.length === 0) return;
 
@@ -57,6 +66,102 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
         <div className="self-stretch h-[1151.29px] pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex">
           <div className="self-stretch justify-start items-center gap-6 inline-flex">
             <div className="shadow-lg p-2 bg-white rounded-lg border border-black/25 flex-col justify-start items-start inline-flex">
+              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
+                  Status
+                </div>
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                  {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
+                    <select
+                      name="company"
+                      className={clsx(
+                        `${styles.customSelect} text-center border-1 rounded-md px-1 outline-none font-semibold tracking-wide`,
+                        {
+                          'text-[#6870fa] border border-[#6870fa]':
+                            ticketStatus === '1',
+                          'text-[#684e32] border border-[#684e32]':
+                            ticketStatus === '2',
+                          'text-[#dc5743] border border-[#dc5743]':
+                            ticketStatus === '3',
+                          'text-[#3d8d52] border border-[#3d8d52]':
+                            ticketStatus === '4',
+                        }
+                      )}
+                      onChange={async (item) => {
+                        try {
+                          setTicketStatus(item.target.value);
+                          const ticketId = ticketDetails[0].ticket_id;
+                          const statusId = item.target.value;
+                          //@ts-ignore
+                          const userId = session?.user.user_id;
+
+                          const response = await updateTicketStatus({
+                            ticketId,
+                            statusId,
+                            userId,
+                          });
+
+                          if (response.status === 'SUCCCESS')
+                            toast.success(response.message);
+                          if (response.status === 'ERROR')
+                            toast.error(response.message);
+                        } catch (error) {
+                          toast.error('An unexpected error occurred.');
+                          console.error('Error message:', error.message);
+                        }
+                      }}
+                      // onBlur={formik.handleBlur}
+                      value={ticketStatus}
+                    >
+                      <option value="1">New</option>
+                      <option value="2">Working</option>
+                      <option value="3">Cancelled</option>
+                      <option value="4">Closed</option>
+                    </select>
+                  ) : (
+                    <span
+                      className={clsx(`px-2`, {
+                        'text-[#6870fa] border border-[#6870fa]':
+                          ticketStatus === '1',
+                        'text-[#916430] border border-[#916430]':
+                          ticketStatus === '2',
+                        'text-[#dc5743] border border-[#dc5743]':
+                          ticketStatus === '3',
+                        'text-[#3d8d52] border border-[#3d8d52]':
+                          ticketStatus === '4',
+                      })}
+                    >
+                      {ticketDetails[0].status_name}
+                    </span>
+                  )}
+                  {/* <select
+                    name="company"
+                    className={clsx(
+                      `${styles.customSelect} text-left border-1 rounded-md px-1 outline-none font-semibold tracking-wide`,
+                      {
+                        'text-[#6870fa] border border-[#6870fa]':
+                          ticketStatus === '1',
+                        'text-[#916430] border border-[#916430]':
+                          ticketStatus === '2',
+                        'text-[#dc5743] border border-[#dc5743]':
+                          ticketStatus === '3',
+                        'text-[#3d8d52] border border-[#3d8d52]':
+                          ticketStatus === '4',
+                      }
+                    )}
+                    onChange={(item) => {
+                      setTicketStatus(item.target.value);
+                    }}
+                    // onBlur={formik.handleBlur}
+                    value={ticketStatus}
+                  >
+                    <option value="1">New</option>
+                    <option value="2">Working</option>
+                    <option value="3">Cancelled</option>
+                    <option value="4">Closed</option>
+                  </select> */}
+                </div>
+              </div>
               <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Title

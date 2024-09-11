@@ -24,13 +24,10 @@ import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { toast } from 'react-hot-toast';
-import {
-  syncDBAlterTrueAction,
-  seedDB,
-  getCustomerFromCustomerId,
-} from '@/libs/server-actions/src';
+import { syncDBAlterTrueAction, seedDB } from '@/libs/server-actions/src';
 import { LoggedInIndication } from '@b2b-tickets/ui';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
+import { userHasRole } from '@b2b-tickets/utils';
 
 export const NavBar = () => {
   const theme = useTheme();
@@ -55,13 +52,6 @@ export const NavBar = () => {
       (permission: any) =>
         permission.permissionName === permissionName ||
         permission.permissionName === AppPermissionTypes.API_Admin
-    );
-  };
-
-  const userHasRole = (session: any, roleName: any) => {
-    if (!session) return false;
-    return session?.user?.roles.some(
-      (role: any) => role === AppRoleTypes.Admin || role === roleName
     );
   };
 
