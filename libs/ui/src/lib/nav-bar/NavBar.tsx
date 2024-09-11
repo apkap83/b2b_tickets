@@ -62,6 +62,7 @@ export const NavBar = () => {
       p={1.3}
       sx={{
         bgcolor: 'black',
+        minWidth: '1000px',
       }}
     >
       <Link href="/">

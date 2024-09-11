@@ -120,12 +120,12 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
       </TableBody>
     );
   };
-
   return (
     <Container
       maxWidth="xl"
       sx={{
         marginTop: 2.5,
+        minWidth: '1000px',
       }}
     >
       <Box
@@ -152,18 +152,22 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
         </Button>
       </Box>
       <Box>
-        <Table
-          sx={{
-            width: '100%',
-            bgcolor:
-              theme.palette.mode === 'light' ? 'white' : colors.primary[900],
-          }}
-          size="medium"
-          aria-label="a dense table"
-        >
-          {generateTableHeadAndColumns(columnsForTickets)}
-          {generateTableBody(tickets)}
-        </Table>
+        {tickets.length === 0 ? (
+          <p className="pt-5 text-center">No Tickets Currently Exist</p>
+        ) : (
+          <Table
+            sx={{
+              width: '100%',
+              bgcolor:
+                theme.palette.mode === 'light' ? 'white' : colors.primary[900],
+            }}
+            size="medium"
+            aria-label="a dense table"
+          >
+            {generateTableHeadAndColumns(columnsForTickets)}
+            {generateTableBody(tickets)}
+          </Table>
+        )}
       </Box>
       {showCreateTicketModal && (
         <NewTicketModal closeModal={() => setShowCreateTicketModal(false)} />
