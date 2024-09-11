@@ -1,0 +1,29 @@
+/* Hide the default select arrow */
+.customSelect select {
+  appearance: none; /* Hide the default arrow */
+  -webkit-appearance: none; /* Safari & Chrome */
+  -moz-appearance: none; /* Firefox */
+  background-color: white;
+  padding: 10px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+/* Add a custom chevron */
+.customSelect::after {
+  content: '\25BC'; /* Unicode for down arrow */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none; /* Prevent clicking on the icon */
+  font-size: 16px;
+  color: #333;
+}
+
+/* Optional: Add padding to the select to avoid text overlapping the chevron */
+.customSelect select {
+  padding-right: 30px;
+}

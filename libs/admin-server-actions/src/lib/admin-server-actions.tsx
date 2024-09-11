@@ -29,7 +29,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 import { syncDatabase, syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
-import { userHasPermission } from '@b2b-tickets/auth-options';
+import { userHasPermission } from '@b2b-tickets/utils';
 
 const checkAuthenticationAndAdminRole = async () => {
   return;

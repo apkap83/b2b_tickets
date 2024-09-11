@@ -62,6 +62,8 @@ export interface TicketComment {
   is_closure: string;
   creation_user: string;
   username: string;
+  first_name: string;
+  last_name: string;
   customer_name: string;
 }
 
@@ -105,11 +107,13 @@ export interface TicketDetail {
 export enum AppRoleTypes {
   Admin = 'Admin',
   SimpleUser = 'SimpleUser',
+  B2B_TicketHandler = 'B2B Ticket Handler',
 }
 
 export enum AppPermissionTypes {
   API_Admin = 'API_Admin',
   API_Security_Management = 'API_Security_Management',
+  Delete_Comments = 'Delete Comments',
 }
 
 export enum AuthenticationTypes {
