@@ -75,9 +75,41 @@ export const convertToISODate = (dateStr: string) => {
     standardizedDateStr = `${month}/${day}/${year} ${time}`;
   }
 
+  console.log('standardizedDateStr', standardizedDateStr);
+
   // Parse the standardized date string to a JavaScript Date object
   const parsedDate = new Date(standardizedDateStr);
+  console.log('parsedDate', parsedDate);
 
   // Convert the Date object to an ISO string
   return parsedDate.toISOString();
+};
+
+export const convertTo24HourFormat = (dateStr: string): string | null => {
+  // Replace Greek AM/PM with standard AM/PM
+  let standardizedDateStr = dateStr.replace('πμ', 'AM').replace('μμ', 'PM');
+
+  // Parse the date string using a regex
+  const dateRegex = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}) (AM|PM)/;
+  const match = standardizedDateStr.match(dateRegex);
+
+  if (!match) return null;
+
+  let [, day, month, year, hour, minute, period] = match;
+
+  // Convert hour to 24-hour format
+  let hourNumber = parseInt(hour);
+  if (period === 'PM' && hourNumber < 12) {
+    hourNumber += 12;
+  } else if (period === 'AM' && hourNumber === 12) {
+    hourNumber = 0;
+  }
+
+  // Format the date string to YYYY-MM-DD HH:mm:ss
+  const formattedDate = `${year}-${month}-${day} ${String(hourNumber).padStart(
+    2,
+    '0'
+  )}:${minute}:00`;
+
+  return formattedDate;
 };
