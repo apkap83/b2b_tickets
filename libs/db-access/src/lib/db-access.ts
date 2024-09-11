@@ -20,3 +20,26 @@ export const setSchema = async (pool: Pool, schema: string) => {
     console.error(`Error setting schema: ${error}`);
   }
 };
+
+// Function to set the search path to the desired schema and timezone
+export const setSchemaAndTimezone = async (
+  pool: Pool,
+  schema: string,
+  timezone: string
+) => {
+  try {
+    // Set search path
+    await pool.query(`SET search_path TO ${schema}`);
+    // Set timezone
+    await pool.query(`SET TIME ZONE '${timezone}'`);
+  } catch (error) {
+    console.error(`Error setting schema or timezone: ${error}`);
+  }
+};
+
+// Example usage
+setSchemaAndTimezone(
+  pgB2Bpool,
+  config.postgres_b2b_database.schemaName,
+  'Europe/Athens'
+);
