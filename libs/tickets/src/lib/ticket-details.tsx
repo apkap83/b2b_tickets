@@ -4,7 +4,7 @@ import { getTicketDetailsForTicketId } from '@b2b-tickets/server-actions';
 import { getGreekDateFormat } from '@b2b-tickets/utils';
 import { TicketComment } from '@b2b-tickets/shared-models';
 import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
-
+import { revalidatePath } from 'next/cache';
 import { NewCommentModal } from './new-comment-modal';
 
 import Button from '@mui/material/Button';
@@ -13,7 +13,13 @@ import styles from './css/ticket-details.module.scss';
 import { useSession } from 'next-auth/react';
 
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
-import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
+import {
+  AppPermissionTypes,
+  AppRoleTypes,
+  TicketDetailsModalActions,
+  TicketStatus,
+  TicketStatusColors,
+} from '@b2b-tickets/shared-models';
 import { updateTicketStatus } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 
@@ -21,8 +27,18 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   // const theme = useTheme();
   // const colors = tokens(theme.palette.mode);
   const { data: session, status } = useSession();
+  //@ts-ignore
+  const userId = session?.user.user_id;
+
   const [showNewComment, setShowNewComment] = useState(false);
   const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
+  const [modalAction, setModalAction] = useState<TicketDetailsModalActions>(
+    TicketDetailsModalActions.NO_ACTION
+  );
+
+  useEffect(() => {
+    setTicketStatus(ticketDetails[0].status_id);
+  }, [ticketDetails]);
 
   if (ticketDetails.length === 0) return;
 
@@ -41,6 +57,155 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   const greekOccurrenceDate = getGreekDateFormat(occurrenceDate);
   const problemDescription = ticketDetails[0]['description'];
   const commentsArray: TicketComment[] = ticketDetails[0]['comments'];
+  const ticketId = ticketDetails[0].ticket_id;
+
+  console.log('ticketDetails', ticketStatus);
+
+  const customButtonBasedOnTicketStatus = () => {
+    if (userHasRole(session, AppRoleTypes.Admin)) {
+      if (
+        ticketStatus === TicketStatus.CLOSED ||
+        ticketStatus === TicketStatus.CANCELLED
+      ) {
+        return (
+          <Button
+            onClick={async () => {
+              const statusId = '1'; // Working
+
+              const response = await updateTicketStatus({
+                ticketId,
+                statusId,
+                userId,
+                comment: `Re-Openning Ticket`,
+              });
+
+              if (response.status === 'SUCCESS') {
+                toast.success(response.message);
+                await new Promise((res) => setTimeout(res, 500));
+                setTicketStatus(statusId);
+              }
+              if (response.status === 'ERROR') toast.error(response.message);
+            }}
+            sx={{
+              backgroundColor: '#474cae',
+              color: 'white',
+              paddingLeft: '1.2rem',
+              paddingRight: '1.2rem',
+              '&:hover': {
+                backgroundColor: '#585ed6',
+              },
+            }}
+          >
+            ADMINISTRATIVE <br />
+            ReOpen Ticket
+          </Button>
+        );
+      }
+    }
+    if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
+      if (ticketStatus === TicketStatus.NEW) {
+        return (
+          <Button
+            onClick={async () => {
+              const statusId = '2'; // Working
+
+              const response = await updateTicketStatus({
+                ticketId,
+                statusId,
+                userId,
+                comment: `Started Working On Ticket: ${ticketNumber}`,
+              });
+
+              if (response.status === 'SUCCESS') {
+                toast.success(response.message);
+                await new Promise((res) => setTimeout(res, 500));
+                setTicketStatus(statusId);
+              }
+              if (response.status === 'ERROR') toast.error(response.message);
+            }}
+            sx={{
+              backgroundColor: '#474cae',
+              color: 'white',
+              paddingLeft: '1.2rem',
+              paddingRight: '1.2rem',
+              '&:hover': {
+                backgroundColor: '#585ed6',
+              },
+            }}
+          >
+            Start Work
+          </Button>
+        );
+      }
+
+      if (ticketStatus === TicketStatus.WORKING) {
+        return (
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setModalAction(TicketDetailsModalActions.CLOSE);
+                setShowNewComment(true);
+              }}
+              variant="outlined"
+              sx={{
+                backgroundColor: '#474cae',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#585ed6',
+                },
+              }}
+            >
+              Close Ticket
+            </Button>
+            <Button
+              onClick={() => {
+                setModalAction(TicketDetailsModalActions.CANCEL);
+                setShowNewComment(true);
+              }}
+              variant="outlined"
+              sx={{
+                backgroundColor: '#cd5353',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: '#cd4343',
+                },
+              }}
+            >
+              Cancel Ticket
+            </Button>
+            <Button
+              onClick={() => {
+                setModalAction(TicketDetailsModalActions.NO_ACTION);
+                setShowNewComment(true);
+              }}
+              variant="outlined"
+            >
+              Add New Comment
+            </Button>
+          </div>
+        );
+      }
+    }
+
+    if (userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
+      if (
+        ticketStatus === TicketStatus.NEW ||
+        ticketStatus === TicketStatus.WORKING
+      ) {
+        return (
+          <Button
+            onClick={() => {
+              setModalAction(TicketDetailsModalActions.NO_ACTION);
+              setShowNewComment(true);
+            }}
+            variant="outlined"
+          >
+            Add New Comment
+          </Button>
+        );
+      }
+    }
+  };
 
   return (
     <>
@@ -54,14 +219,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
               {ticketNumber}
             </div>
           </div>
-          <Button
-            onClick={() => {
-              setShowNewComment(true);
-            }}
-            variant="outlined"
-          >
-            Add New Comment
-          </Button>
+          <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
         </div>
         <div className="self-stretch h-[1151.29px] pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex">
           <div className="self-stretch justify-start items-center gap-6 inline-flex">
@@ -71,95 +229,20 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   Status
                 </div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
-                    <select
-                      name="company"
-                      className={clsx(
-                        `${styles.customSelect} text-center border-1 rounded-md px-1 outline-none font-semibold tracking-wide`,
-                        {
-                          'text-[#6870fa] border border-[#6870fa]':
-                            ticketStatus === '1',
-                          'text-[#684e32] border border-[#684e32]':
-                            ticketStatus === '2',
-                          'text-[#dc5743] border border-[#dc5743]':
-                            ticketStatus === '3',
-                          'text-[#3d8d52] border border-[#3d8d52]':
-                            ticketStatus === '4',
-                        }
-                      )}
-                      onChange={async (item) => {
-                        try {
-                          setTicketStatus(item.target.value);
-                          const ticketId = ticketDetails[0].ticket_id;
-                          const statusId = item.target.value;
-                          //@ts-ignore
-                          const userId = session?.user.user_id;
-
-                          const response = await updateTicketStatus({
-                            ticketId,
-                            statusId,
-                            userId,
-                          });
-
-                          if (response.status === 'SUCCCESS')
-                            toast.success(response.message);
-                          if (response.status === 'ERROR')
-                            toast.error(response.message);
-                        } catch (error) {
-                          toast.error('An unexpected error occurred.');
-                          console.error('Error message:', error.message);
-                        }
-                      }}
-                      // onBlur={formik.handleBlur}
-                      value={ticketStatus}
-                    >
-                      <option value="1">New</option>
-                      <option value="2">Working</option>
-                      <option value="3">Cancelled</option>
-                      <option value="4">Closed</option>
-                    </select>
-                  ) : (
-                    <span
-                      className={clsx(`px-2`, {
-                        'text-[#6870fa] border border-[#6870fa]':
-                          ticketStatus === '1',
-                        'text-[#916430] border border-[#916430]':
-                          ticketStatus === '2',
-                        'text-[#dc5743] border border-[#dc5743]':
-                          ticketStatus === '3',
-                        'text-[#3d8d52] border border-[#3d8d52]':
-                          ticketStatus === '4',
-                      })}
-                    >
-                      {ticketDetails[0].status_name}
-                    </span>
-                  )}
-                  {/* <select
-                    name="company"
-                    className={clsx(
-                      `${styles.customSelect} text-left border-1 rounded-md px-1 outline-none font-semibold tracking-wide`,
-                      {
-                        'text-[#6870fa] border border-[#6870fa]':
-                          ticketStatus === '1',
-                        'text-[#916430] border border-[#916430]':
-                          ticketStatus === '2',
-                        'text-[#dc5743] border border-[#dc5743]':
-                          ticketStatus === '3',
-                        'text-[#3d8d52] border border-[#3d8d52]':
-                          ticketStatus === '4',
-                      }
-                    )}
-                    onChange={(item) => {
-                      setTicketStatus(item.target.value);
-                    }}
-                    // onBlur={formik.handleBlur}
-                    value={ticketStatus}
+                  <span
+                    className={clsx(`px-2`, {
+                      [`text-[#ffffff] border border-[${TicketStatusColors.NEW}] bg-[${TicketStatusColors.NEW}] rounded-sm`]:
+                        ticketStatus === '1',
+                      [`text-[#ffffff] border border-[${TicketStatusColors.WORKING}] bg-[${TicketStatusColors.WORKING}] rounded-sm`]:
+                        ticketStatus === '2',
+                      [`text-[#ffffff] border border-[${TicketStatusColors.CANCELLED}] bg-[${TicketStatusColors.CANCELLED}] rounded-sm`]:
+                        ticketStatus === '3',
+                      [`text-[#ffffff] border border-[${TicketStatusColors.CLOSED}] bg-[${TicketStatusColors.CLOSED}] rounded-sm`]:
+                        ticketStatus === '4',
+                    })}
                   >
-                    <option value="1">New</option>
-                    <option value="2">Working</option>
-                    <option value="3">Cancelled</option>
-                    <option value="4">Closed</option>
-                  </select> */}
+                    {ticketDetails[0].status_name}
+                  </span>
                 </div>
               </div>
               <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
@@ -275,6 +358,8 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
       </div>
       {showNewComment ? (
         <NewCommentModal
+          modalAction={modalAction}
+          userId={userId}
           closeModal={setShowNewComment}
           ticketDetail={ticketDetails}
         />

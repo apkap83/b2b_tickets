@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 import { useFormStatus } from 'react-dom';
 import { Typography, useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
-
+import { TicketDetailsModalActions } from '@b2b-tickets/shared-models';
 import styled from 'styled-components';
 
 const StyledSubmitButton = styled.div`
@@ -15,12 +15,14 @@ type SubmitButtonProps = {
   label: string;
   loadingText: string;
   isValid: boolean;
+  action: TicketDetailsModalActions;
 };
 
 export const SubmitButton = ({
   label,
   loadingText,
   isValid,
+  action = TicketDetailsModalActions.NO_ACTION,
 }: SubmitButtonProps) => {
   const { pending } = useFormStatus();
   const theme = useTheme();
@@ -32,6 +34,17 @@ export const SubmitButton = ({
     }
   };
 
+  let letterColor = '#ddd7d7';
+  let backgroundColor = '#141b2d';
+  let borderColor = '#141b2d';
+
+  if (action === TicketDetailsModalActions.CANCEL) {
+    letterColor = '#e9b1b1';
+  }
+  if (action === TicketDetailsModalActions.CLOSE) {
+    letterColor = '#989cf0';
+  }
+
   return (
     <Button
       variant="contained"
@@ -41,8 +54,9 @@ export const SubmitButton = ({
       aria-disabled={pending}
       onClick={handleClick}
       style={{
-        color: `#888888`,
-        border: `1px solid grey`,
+        color: `${letterColor}`,
+        backgroundColor: `${backgroundColor}`,
+        border: `1px solid ${borderColor}`,
       }}
     >
       {pending ? loadingText : label}

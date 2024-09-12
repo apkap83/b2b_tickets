@@ -10,6 +10,8 @@ import Link from 'next/link';
 import Stack from '@mui/material/Stack';
 import { Typography, useTheme } from '@mui/material';
 
+import { useSession } from 'next-auth/react';
+
 // MUI Lib Imports
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -20,10 +22,17 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Container from '@mui/material/Container';
-import { Ticket } from '@/libs/shared-models/src';
+import {
+  Ticket,
+  TicketStatusName,
+  TicketStatusColors,
+  AppRoleTypes,
+} from '@b2b-tickets/shared-models';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { formatDate } from '@b2b-tickets/utils';
 import { NewTicketModal } from './new-ticket-modal';
+import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
+
 import clsx from 'clsx';
 interface TicketsListProps {
   tickets: Ticket[];
@@ -34,7 +43,9 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const columnsForTickets = [
+  const { data: session, status } = useSession();
+
+  let columnsForTickets = [
     'Ticket Number',
     'Opened',
     'Title',
@@ -45,6 +56,21 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
     'Status',
     'Status Date',
   ];
+
+  if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
+    columnsForTickets = [
+      'Customer',
+      'Ticket Number',
+      'Opened',
+      'Title',
+      'Category',
+      'Service',
+      'Equipment',
+      'Opened By',
+      'Status',
+      'Status Date',
+    ];
+  }
 
   const generateTableHeadAndColumns = (columnsArray: any) => {
     return (
@@ -77,6 +103,11 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
               },
             }}
           >
+            {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
+              <TableCell align="center">
+                <span className="font-medium">{item.Customer}</span>
+              </TableCell>
+            ) : null}
             <TableCell align="center">
               <Link href={`/ticket/${item.Ticket}`} className="text-blue-500">
                 {
@@ -98,14 +129,14 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
               {
                 <div
                   className={clsx('px-1 py-1 rounded-md font-medium', {
-                    'text-[#ffffff]  border bg-[#6870fa]':
-                      item.Status === 'New',
-                    'text-[#ffffff] border bg-[#684e32]':
-                      item.Status === 'Working',
-                    'text-[#ffffff] border bg-[#dc5743]':
-                      item.Status === 'Cancelled',
-                    'text-[#ffffff] border bg-[#3d8d52]':
-                      item.Status === 'Closed',
+                    [`text-[#ffffff]  border bg-[${TicketStatusColors.NEW}]`]:
+                      item.Status === TicketStatusName.NEW,
+                    [`text-[#ffffff] border bg-[${TicketStatusColors.WORKING}]`]:
+                      item.Status === TicketStatusName.WORKING,
+                    [`text-[#ffffff] border bg-[${TicketStatusColors.CANCELLED}]`]:
+                      item.Status === TicketStatusName.CANCELLED,
+                    [`text-[#ffffff] border bg-[${TicketStatusColors.CLOSED}]`]:
+                      item.Status === TicketStatusName.CLOSED,
                   })}
                 >
                   {item.Status}
@@ -120,6 +151,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
       </TableBody>
     );
   };
+  const color = '#eb8d21';
   return (
     <Container
       maxWidth="xl"
@@ -138,18 +170,21 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
           Tickets
         </Typography>
 
-        <Button
-          variant="contained"
-          onClick={() => setShowCreateTicketModal(true)}
-          sx={{
-            ':hover': {
-              backgroundColor: 'black',
-              color: 'white',
-            },
-          }}
-        >
-          Create New Ticket
-        </Button>
+        {!userHasRole(session, AppRoleTypes.B2B_TicketHandler) ||
+        userHasRole(session, AppRoleTypes.Admin) ? (
+          <Button
+            variant="contained"
+            onClick={() => setShowCreateTicketModal(true)}
+            sx={{
+              ':hover': {
+                backgroundColor: 'black',
+                color: 'white',
+              },
+            }}
+          >
+            Create New Ticket
+          </Button>
+        ) : null}
       </Box>
       <Box>
         {tickets.length === 0 ? (
