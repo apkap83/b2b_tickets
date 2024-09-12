@@ -106,8 +106,8 @@ export interface TicketDetail {
 
 export enum AppRoleTypes {
   Admin = 'Admin',
-  SimpleUser = 'SimpleUser',
   B2B_TicketHandler = 'B2B Ticket Handler',
+  B2B_TicketCreator = 'B2B Ticket Creator',
 }
 
 export enum AppPermissionTypes {
@@ -119,4 +119,31 @@ export enum AppPermissionTypes {
 export enum AuthenticationTypes {
   LOCAL = 'LOCAL',
   LDAP = 'LDAP',
+}
+
+export enum TicketDetailsModalActions {
+  NO_ACTION = 'No Action',
+  CLOSE = 'Close',
+  CANCEL = 'Cancel',
+}
+
+export enum TicketStatus {
+  NEW = '1',
+  WORKING = '2',
+  CANCELLED = '3',
+  CLOSED = '4',
+}
+
+export enum TicketStatusName {
+  NEW = 'New',
+  WORKING = 'Working',
+  CANCELLED = 'Cancelled',
+  CLOSED = 'Closed',
+}
+
+export enum TicketStatusColors {
+  NEW = '#6870fa',
+  WORKING = '#916430',
+  CANCELLED = '#dc5743',
+  CLOSED = '#3d8d52',
 }

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
+import { validateReCaptcha } from '@/libs/server-actions/src';
 // import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import * as Yup from 'yup';
 
@@ -27,6 +28,11 @@ export default function SignInForm({ providers, csrfToken }) {
   const [loading, setIsLoading] = useState(false);
 
   const [callbackUrl, setCallbackUrl] = useState('/');
+
+  // Create a reference for reCAPTCHA
+  const recaptchaRef = useRef(null); // New useRef for reCAPTCHA
+
+  const [captcha, setCaptcha] = useState();
 
   useEffect(() => {
     // If user is already authenticated, redirect to the homepage
@@ -56,8 +62,23 @@ export default function SignInForm({ providers, csrfToken }) {
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
+      if (!captcha) {
+        setError('Verify reCAPTCHA!');
+        setSubmitting(false);
+
+        return;
+      }
       setError(null);
       setIsLoading(true);
+
+      const reCaptchaValidationResult = await validateReCaptcha(captcha);
+      if (!reCaptchaValidationResult) {
+        setError('reCAPTCHA validation failed!');
+        setIsLoading(false);
+        setSubmitting(false);
+        recaptchaRef.current.reset(); // Reset reCAPTCHA on validation failure
+        return;
+      }
       const result = await signIn('credentials', {
         redirect: false,
         userName: values.userName,
@@ -68,6 +89,7 @@ export default function SignInForm({ providers, csrfToken }) {
       if (result.error) {
         setError(result.error);
         setIsLoading(false);
+        recaptchaRef.current.reset(); // Reset reCAPTCHA on invalid credentials
         return;
       }
       window.location.href = callbackUrl;
@@ -137,7 +159,10 @@ export default function SignInForm({ providers, csrfToken }) {
           </div>
 
           <div>
-            <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY} />
+            <ReCAPTCHA
+              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+              onChange={setCaptcha}
+            />
           </div>
           {error && <p className="text-red-500 text-center">{error}</p>}
           <div className="mt-10 flex justify-around">

@@ -22,7 +22,10 @@ import {
 } from '@b2b-tickets/shared-models';
 import { sequelize } from '@b2b-tickets/db-access';
 
-import { TicketDetail } from '@b2b-tickets/shared-models';
+import {
+  TicketDetail,
+  TicketDetailsModalActions,
+} from '@b2b-tickets/shared-models';
 
 import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { populateDB } from '@b2b-tickets/db-access';
@@ -172,6 +175,7 @@ export const getTicketDetailsForTicketId = async ({
       INNER JOIN customers as c
       ON u.customer_id = c.customer_id
       WHERE t.ticket_number = $1
+      ORDER BY tc.comment_date DESC
     `;
     const queryRes1 = await pgB2Bpool.query(queryForTicketsCategoriesAndTypes, [
       ticketNumber,
@@ -387,8 +391,9 @@ export const createNewTicket = async (
 const commentSchema_zod = z.object({
   ticketId: z.string(),
   comment: z.string().min(1),
-  isClosure: z.string(),
   ticketNumber: z.string(),
+  modalAction: z.string(),
+  userId: z.string(),
 });
 
 export const createNewComment = async (
@@ -399,20 +404,65 @@ export const createNewComment = async (
     const session = await getServerSession(options);
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    const { comment, ticketId, ticketNumber, isClosure } =
+    const { comment, ticketId, ticketNumber, modalAction, userId } =
       commentSchema_zod.parse({
         ticketId: formData.get('ticketId'),
         comment: formData.get('comment'),
-        isClosure: formData.get('isClosure'),
         ticketNumber: formData.get('ticketNumber'),
+        modalAction: formData.get('modalAction'),
+        userId: formData.get('userId'),
       });
+
+    if (modalAction === TicketDetailsModalActions.CLOSE) {
+      const statusId = '4'; // Closed
+
+      const response = await updateTicketStatus({
+        ticketId,
+        statusId,
+        userId,
+        comment,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      revalidatePath(`/ticket/${ticketNumber}`);
+      return toFormState('SUCCESS', 'Comment Created!');
+    }
+
+    if (modalAction === TicketDetailsModalActions.CANCEL) {
+      const statusId = '3'; // Cancel
+
+      const response = await updateTicketStatus({
+        ticketId,
+        statusId,
+        userId,
+        comment,
+      });
+
+      const result = await pgB2Bpool.query(
+        'CALL b2btickets_dev.cmt_insert($1, $2, $3, $4, $5, $6, $7)',
+        [
+          ticketId,
+          comment,
+          'y', // isClosure -> y for Cancel
+          session.user.user_id,
+          //@ts-ignore
+          config.api.user,
+          config.api.process,
+          config.postgres_b2b_database.debugMode,
+        ]
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      revalidatePath(`/ticket/${ticketNumber}`);
+      return toFormState('SUCCESS', 'Comment Created!');
+    }
 
     const result = await pgB2Bpool.query(
       'CALL b2btickets_dev.cmt_insert($1, $2, $3, $4, $5, $6, $7)',
       [
         ticketId,
         comment,
-        isClosure,
+        'n',
         session.user.user_id,
         //@ts-ignore
         config.api.user,
@@ -430,7 +480,17 @@ export const createNewComment = async (
   }
 };
 
-export async function updateTicketStatus({ ticketId, statusId, userId }: any) {
+export async function updateTicketStatus({
+  ticketId,
+  statusId,
+  userId,
+  comment,
+}: {
+  ticketId: string;
+  statusId: string;
+  userId: string;
+  comment: string;
+}) {
   try {
     // TODO Enable below line
     // await checkAuthenticationAndAdminRole();
@@ -444,7 +504,7 @@ export async function updateTicketStatus({ ticketId, statusId, userId }: any) {
         ticketId,
         statusId,
         userId,
-        'No Comment',
+        comment,
         //@ts-ignore
         config.api.user,
         config.api.process,
@@ -462,3 +522,28 @@ export async function updateTicketStatus({ ticketId, statusId, userId }: any) {
     return { status: 'ERROR', message: error.message };
   }
 }
+
+export const validateReCaptcha = async (token: string) => {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+
+  if (!secretKey) {
+    throw new Error('reCAPTCHA secret key is missing.');
+  }
+
+  const params = new URLSearchParams();
+  params.append('secret', secretKey);
+  params.append('response', token);
+
+  try {
+    const response = await fetch(
+      'https://www.google.com/recaptcha/api/siteverify',
+      { method: 'POST', body: params }
+    );
+
+    const data = await response.json();
+    return data.success;
+  } catch (error) {
+    console.error('Error verifying reCAPTCHA', error);
+    return false;
+  }
+};
