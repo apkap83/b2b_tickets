@@ -65,6 +65,12 @@ export function TicketsUiComments({ comments }: { comments: TicketComment[] }) {
                           </span>
                         </div>
                       </div>
+                      {item.is_closure === 'y' ? (
+                        <div className="inline text-right border p-1 text-[#3d8d52] text-sm">
+                          Closing Comment
+                        </div>
+                      ) : null}
+
                       {userHasPermission(
                         session,
                         AppPermissionTypes.Delete_Comments

@@ -48,19 +48,28 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import * as yup from 'yup';
 
-import { TicketDetail } from '@/libs/shared-models/src';
+import {
+  TicketDetail,
+  TicketDetailsModalActions,
+} from '@b2b-tickets/shared-models';
 
 export function NewCommentModal({
-  closeModal,
+  modalAction = TicketDetailsModalActions.NO_ACTION,
+  userId,
   ticketDetail,
+  closeModal,
 }: {
-  closeModal: any;
+  modalAction: TicketDetailsModalActions;
+  userId: string;
   ticketDetail: TicketDetail[];
+  closeModal: any;
 }) {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
   const { ticket_id, ticket_number } = ticketDetail[0];
+
+  const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit Comment');
 
   const [formState, action] = useFormState<any, any>(
     createNewComment,
@@ -72,7 +81,39 @@ export function NewCommentModal({
   useEffect(() => {
     if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
-  // const noScriptFallback = useToastMessage(formState);
+
+  useEffect(() => {
+    if (modalAction === TicketDetailsModalActions.CLOSE)
+      setSubmitButtonLabel('Submit Comment & Close Ticket');
+    if (modalAction === TicketDetailsModalActions.CANCEL)
+      setSubmitButtonLabel('Submit Comment & Cancel Ticket');
+  }, [modalAction]);
+
+  const getCorrectTitle = () => {
+    if (modalAction === TicketDetailsModalActions.NO_ACTION) {
+      return (
+        <div className="self-stretch text-gray-300 text-2xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]">
+          {`B2B - New Comment for Ticket  ${ticket_number}`}
+        </div>
+      );
+    }
+
+    if (modalAction === TicketDetailsModalActions.CLOSE) {
+      return (
+        <div className="self-stretch text-gray-300 text-2xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]">
+          {`B2B - Closing Comment for Ticket ${ticket_number}`}
+        </div>
+      );
+    }
+
+    if (modalAction === TicketDetailsModalActions.CANCEL) {
+      return (
+        <div className="self-stretch text-gray-300 text-2xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]">
+          {`B2B - Cancel Comment for Ticket ${ticket_number}`}
+        </div>
+      );
+    }
+  };
 
   return (
     <React.Fragment>
@@ -83,9 +124,7 @@ export function NewCommentModal({
         <div className="w-[851px] h-[501px] pl-8 pr-[51px] pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex">
           <div className="w-[768px] self-stretch flex-col justify-start items-start gap-[20.80px] inline-flex">
             <div className="self-stretch h-11 pl-3 py-2 bg-gradient-to-r from-[#020024] to-[#373742] rounded-md flex-col justify-start items-start flex">
-              <div className="self-stretch text-gray-300 text-2xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]">
-                B2B - New Comment for Ticket CUST00000XXXX
-              </div>
+              {getCorrectTitle()}
             </div>
             <form
               action={action}
@@ -120,7 +159,13 @@ export function NewCommentModal({
                       name="ticketNumber"
                       value={ticket_number}
                     />
-                    <input type="hidden" name="isClosure" value={'n'} />
+                    <input
+                      type="hidden"
+                      name="modalAction"
+                      value={modalAction}
+                    />
+
+                    <input type="hidden" name="userId" value={userId} />
                   </div>
                 </div>
               </div>
@@ -140,10 +185,11 @@ export function NewCommentModal({
                   Cancel
                 </Button>
                 <SubmitButton
-                  label="Submit Comment"
+                  label={submitButtonLabel}
                   loadingText="Creating..."
                   // isValid={formik.isValid}
                   isValid={true}
+                  action={modalAction}
                 />
               </div>
             </form>
