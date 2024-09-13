@@ -1,5 +1,9 @@
 'use server';
 
+// TODO
+// Prevent users from looking into other Customers' tickets by changing the URL
+// ReCheck reCAPTCHA validation
+
 import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
 import { redirect } from 'next/navigation';
@@ -196,6 +200,7 @@ export const getTicketCategoriesForUserId = async ({
   userId: number;
 }): Promise<TicketCategory[]> => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+  console.log('userId', userId);
   try {
     const query =
       'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
@@ -544,6 +549,6 @@ export const validateReCaptcha = async (token: string) => {
     return data.success;
   } catch (error) {
     console.error('Error verifying reCAPTCHA', error);
-    return false;
+    throw error;
   }
 };

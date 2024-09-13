@@ -141,9 +141,9 @@ export enum TicketStatusName {
   CLOSED = 'Closed',
 }
 
-export enum TicketStatusColors {
-  NEW = '#6870fa',
-  WORKING = '#916430',
-  CANCELLED = '#dc5743',
-  CLOSED = '#3d8d52',
-}
+export const TicketStatusColors = {
+  NEW: '#6870fa',
+  WORKING: '#916430',
+  CANCELLED: '#dc5743',
+  CLOSED: '#3d8d52',
+};

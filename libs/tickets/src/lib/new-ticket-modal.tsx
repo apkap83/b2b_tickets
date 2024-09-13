@@ -50,6 +50,7 @@ import { faker } from '@faker-js/faker';
 
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import updateLocale from 'dayjs/plugin/updateLocale';
+import { useSession } from 'next-auth/react';
 
 import * as yup from 'yup';
 
@@ -74,13 +75,15 @@ const FieldError = ({ formik, name }: any) => {
   );
 };
 
-export function NewTicketModal({ closeModal }) {
+export function NewTicketModal({ closeModal, userId }: any) {
   const autoComplete = 'off';
   const rightPanelMinWidthPx = '320px';
   const minWidth = '550px';
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
+  const { data: session, status } = useSession();
+  console.log(session);
   const [formState, action] = useFormState<any, any>(
     createNewTicket,
     EMPTY_FORM_STATE
@@ -107,7 +110,8 @@ export function NewTicketModal({ closeModal }) {
 
   useEffect(() => {
     const getCategories = async () => {
-      const rows = await getTicketCategoriesForUserId({ userId: 5 });
+      const rows = await getTicketCategoriesForUserId({ userId });
+      console.log('ticket categories rows', rows);
       setticketCategories(rows);
     };
 
@@ -475,7 +479,6 @@ export function NewTicketModal({ closeModal }) {
 
                   <FormControl sx={{ minWidth: rightPanelMinWidthPx }}>
                     <TextField
-                      required
                       margin="dense"
                       id="equipmentId"
                       name="equipmentId"
