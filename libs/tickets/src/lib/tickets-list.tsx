@@ -129,13 +129,13 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
               {
                 <div
                   className={clsx('px-1 py-1 rounded-md font-medium', {
-                    [`text-[#ffffff]  border bg-[${TicketStatusColors.NEW}]`]:
+                    [`text-[#ffffff]  border bg-[#6870fa]`]:
                       item.Status === TicketStatusName.NEW,
-                    [`text-[#ffffff] border bg-[${TicketStatusColors.WORKING}]`]:
+                    [`text-[#ffffff] border bg-[#916430]`]:
                       item.Status === TicketStatusName.WORKING,
-                    [`text-[#ffffff] border bg-[${TicketStatusColors.CANCELLED}]`]:
+                    [`text-[#ffffff] border bg-[#dc5743]`]:
                       item.Status === TicketStatusName.CANCELLED,
-                    [`text-[#ffffff] border bg-[${TicketStatusColors.CLOSED}]`]:
+                    [`text-[#ffffff] border bg-[#3d8d52]`]:
                       item.Status === TicketStatusName.CLOSED,
                   })}
                 >
@@ -151,7 +151,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
       </TableBody>
     );
   };
-  const color = '#eb8d21';
+
   return (
     <Container
       maxWidth="xl"
@@ -205,7 +205,11 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
         )}
       </Box>
       {showCreateTicketModal && (
-        <NewTicketModal closeModal={() => setShowCreateTicketModal(false)} />
+        <NewTicketModal
+          //@ts-ignore
+          userId={session?.user.user_id}
+          closeModal={() => setShowCreateTicketModal(false)}
+        />
       )}
     </Container>
   );
