@@ -15,7 +15,7 @@ type SubmitButtonProps = {
   label: string;
   loadingText: string;
   isValid: boolean;
-  action: TicketDetailsModalActions;
+  action?: TicketDetailsModalActions;
 };
 
 export const SubmitButton = ({
@@ -43,6 +43,10 @@ export const SubmitButton = ({
   }
   if (action === TicketDetailsModalActions.CLOSE) {
     letterColor = '#989cf0';
+  }
+
+  if (!isValid || pending) {
+    backgroundColor = '#5b5b5d';
   }
 
   return (

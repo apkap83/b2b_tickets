@@ -6,7 +6,6 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
-import { validateReCaptcha } from '@/libs/server-actions/src';
 // import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import * as Yup from 'yup';
 
@@ -71,18 +70,11 @@ export default function SignInForm({ providers, csrfToken }) {
       setError(null);
       setIsLoading(true);
 
-      const reCaptchaValidationResult = await validateReCaptcha(captcha);
-      if (!reCaptchaValidationResult) {
-        setError('reCAPTCHA validation failed!');
-        setIsLoading(false);
-        setSubmitting(false);
-        recaptchaRef.current.reset(); // Reset reCAPTCHA on validation failure
-        return;
-      }
       const result = await signIn('credentials', {
         redirect: false,
         userName: values.userName,
         password: values.password,
+        captchaToken: captcha,
       });
       await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -185,7 +177,7 @@ export default function SignInForm({ providers, csrfToken }) {
 const SignInButton = ({ pending, label, loadingText, isValid, loading }) => {
   return (
     <button
-      className={clsx('btn btn-primary text-white', {
+      className={clsx('btn btn-primary text-white shadow-lg', {
         'text-white-500 cursor-not-allowed': pending || loading,
       })}
       style={{

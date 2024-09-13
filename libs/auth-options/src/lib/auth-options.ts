@@ -12,14 +12,18 @@ import {
   pgB2Bpool,
   setSchema,
 } from '@b2b-tickets/db-access';
+
 // import ldap from 'ldapjs'; // ME GAMHSES PATOKORFA LDAPJS!
 import { Client, SearchOptions } from 'ldapts';
 
 import { createUserIfNotExistsAfterLDAPSuccessfullAuth } from '@b2b-tickets/admin-server-actions';
+import { validateReCaptcha } from '@b2b-tickets/server-actions';
 
 // import { logAuth } from '@b2b-tickets/logging';
 
 import { headers } from 'next/headers';
+import { strategy } from 'sharp';
+import { signIn } from 'next-auth/react';
 type CredentialsType = Record<'userName' | 'password', string> | undefined;
 
 const tryLocalAuthentication = async (credentials: CredentialsType) => {
@@ -418,7 +422,30 @@ export const options = {
   pages: {
     signIn: '/signin', // Custom sign-in page
   },
+  session: {
+    strategy: 'jwt',
+    maxAge: 60 * 60, // Session max age to 60 minutes (in seconds)
+    updateAge: 5 * 60, // Session is refreshed every 5 minutes (in seconds)
+  },
   callbacks: {
+    async signIn({ credentials }) {
+      // Get the reCAPTCHA token from the credentials
+      const captchaToken = credentials.captchaToken;
+
+      try {
+        const reCaptchaValidResponse = await validateReCaptcha(captchaToken);
+
+        if (!reCaptchaValidResponse) {
+          throw new Error('reCAPTCHA validation failed');
+        }
+
+        // Proceed with login after successful reCAPTCHA validation
+        return true;
+      } catch (error) {
+        console.error('reCAPTCHA validation error:', error);
+        return false;
+      }
+    },
     async jwt({ token, user }) {
       if (user) {
         token.user_id = user.user_id;

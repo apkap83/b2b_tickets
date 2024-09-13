@@ -59,8 +59,6 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   const commentsArray: TicketComment[] = ticketDetails[0]['comments'];
   const ticketId = ticketDetails[0].ticket_id;
 
-  console.log('ticketDetails', ticketStatus);
-
   const customButtonBasedOnTicketStatus = () => {
     if (userHasRole(session, AppRoleTypes.Admin)) {
       if (
@@ -231,13 +229,13 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   <span
                     className={clsx(`px-2`, {
-                      [`text-[#ffffff] border border-[${TicketStatusColors.NEW}] bg-[${TicketStatusColors.NEW}] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.NEW}] bg-[#6870fa] rounded-sm`]:
                         ticketStatus === '1',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.WORKING}] bg-[${TicketStatusColors.WORKING}] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.WORKING}] bg-[#916430] rounded-sm`]:
                         ticketStatus === '2',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.CANCELLED}] bg-[${TicketStatusColors.CANCELLED}] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.CANCELLED}] bg-[#dc5743] rounded-sm`]:
                         ticketStatus === '3',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.CLOSED}] bg-[${TicketStatusColors.CLOSED}] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.CLOSED}] bg-[#3d8d52] rounded-sm`]:
                         ticketStatus === '4',
                     })}
                   >
