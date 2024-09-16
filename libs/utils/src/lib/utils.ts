@@ -75,11 +75,8 @@ export const convertToISODate = (dateStr: string) => {
     standardizedDateStr = `${month}/${day}/${year} ${time}`;
   }
 
-  console.log('standardizedDateStr', standardizedDateStr);
-
   // Parse the standardized date string to a JavaScript Date object
   const parsedDate = new Date(standardizedDateStr);
-  console.log('parsedDate', parsedDate);
 
   // Convert the Date object to an ISO string
   return parsedDate.toISOString();

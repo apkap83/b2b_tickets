@@ -5,7 +5,7 @@ const StyledTicketsUi = styled.div`
   color: pink;
 `;
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Stack from '@mui/material/Stack';
 import { Typography, useTheme } from '@mui/material';
@@ -34,14 +34,24 @@ import { NewTicketModal } from './new-ticket-modal';
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 
 import styles from './css/tickets-list.module.scss';
-
+import { Pagination } from '@b2b-tickets/ui';
+import slice from 'lodash/slice';
 import clsx from 'clsx';
+import { useEscKeyListener } from '@b2b-tickets/react-hooks';
+
 interface TicketsListProps {
   tickets: Ticket[];
 }
 
 export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
+  const itemsPerPage = 15;
+
+  const [activePage, setActivePage] = useState(1);
   const [showCreateTicketModal, setShowCreateTicketModal] = useState(false);
+
+  // Custom Hook for ESC Key Press
+  useEscKeyListener(() => setShowCreateTicketModal(false));
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -169,12 +179,20 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
     );
   };
 
+  const paginatedTicketsList = slice(
+    tickets,
+    (activePage - 1) * itemsPerPage,
+    (activePage - 1) * itemsPerPage + itemsPerPage
+  );
+
   return (
     <Container
       maxWidth="xl"
       sx={{
-        marginTop: 2.5,
+        marginTop: 2,
+        paddingBottom: '55px',
       }}
+      className="relative"
     >
       <Box
         display="flex"
@@ -219,7 +237,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
             className={`${styles.ticketsList}`}
           >
             {generateTableHeadAndColumns(columnsForTickets)}
-            {generateTableBody(tickets)}
+            {generateTableBody(paginatedTicketsList)}
           </Table>
         )}
       </Box>
@@ -230,6 +248,16 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
           closeModal={() => setShowCreateTicketModal(false)}
         />
       )}
+
+      <div className="pt-5 flex justify-between items-center">
+        <div>Total Items: {tickets.length}</div>
+        <Pagination
+          totalItems={tickets.length || 0}
+          pageSize={itemsPerPage}
+          activePage={activePage}
+          onPageChange={(page) => setActivePage(page)}
+        />
+      </div>
     </Container>
   );
 };
