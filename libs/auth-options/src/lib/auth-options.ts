@@ -4,8 +4,6 @@ import bcrypt from 'bcryptjs';
 import { config } from '@b2b-tickets/config';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 import {
-  sequelize,
-  AppUser,
   AppPermission,
   AppRole,
   B2BUser,
@@ -100,7 +98,7 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
         ]);
 
         const customer_name = customerNameRes.rows[0]['customer_name'];
-
+        console.log('*** foundUser', foundUser);
         return [
           foundUser.is_active,
           {
@@ -111,6 +109,7 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
             lastName: foundUser.last_name,
             userName: foundUser.username,
             email: foundUser.email,
+            mobilePhone: foundUser.mobile_phone,
             authenticationType: foundUser.authentication_type,
             roles,
             permissions,
@@ -123,80 +122,6 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
     //   reqIP,
     //   reqURL,
     // });
-    throw new Error(error);
-  }
-  return [undefined, null];
-};
-
-const tryLocalLDAPAuthentication = async (credentials: CredentialsType) => {
-  console.log('Trying LDAP Auth...');
-  const headersList = headers();
-  const reqIP = headersList.get('request-ip');
-  const reqURL = headersList.get('request-url');
-  try {
-    // logAuth.info(
-    //   'Trying Local LDAP authentication for user name: ' + credentials.userName,
-    //   {
-    //     reqIP,
-    //     reqURL,
-    //   }
-    // );
-    const foundUser = await AppUser.findOne({
-      where: {
-        userName: credentials.userName,
-        authenticationType: AuthenticationTypes.LDAP,
-      },
-      include: {
-        model: AppRole,
-        include: [AppPermission],
-      },
-    });
-
-    if (foundUser) {
-      // logAuth.info(
-      //   `LDAP User with user name '${foundUser.userName}' was found in Local DB`,
-      //   {
-      //     reqIP,
-      //     reqURL,
-      //   }
-      // );
-
-      const roles = foundUser.AppRoles.map((role) => role.roleName);
-
-      const permissions = foundUser.AppRoles.flatMap((role) =>
-        role.AppPermissions.map((permission) => ({
-          permissionName: permission.permissionName,
-          permissionEndPoint: permission.endPoint,
-          permissionDescription: permission.description,
-        }))
-      );
-
-      const plainUser = foundUser.toJSON();
-      delete plainUser.password;
-      // logAuth.debug(
-      //   `Found LDAP User in Local DB: ${JSON.stringify(plainUser)}`,
-      //   {
-      //     reqIP,
-      //     reqURL,
-      //   }
-      // );
-
-      return [
-        foundUser.active,
-        {
-          id: foundUser.id,
-          firstName: foundUser.firstName,
-          lastName: foundUser.lastName,
-          userName: foundUser.userName,
-          email: foundUser.email,
-          authenticationType: foundUser.authenticationType,
-          roles,
-          permissions,
-        },
-      ];
-    }
-  } catch (error) {
-    // logAuth.error(error);
     throw new Error(error);
   }
   return [undefined, null];
@@ -283,138 +208,6 @@ export const options = {
           });
         }
         throw new Error('Invalid credentials');
-        // NO LDAP FOR NOW
-        /*
-        // For Local LDAP Account (Authentication Type = LOCAL) - Try to authenticate
-        const [ldapAccountActive, localLDAPAccountUserDetails] =
-          await tryLocalLDAPAuthentication(credentials);
-
-        if (localLDAPAccountUserDetails) {
-          if (!ldapAccountActive) {
-            // logAuth.info(`User '${credentials.userName}' is currently locked`, {
-            //   reqIP,
-            //   reqURL,
-            // });
-            throw new Error('User is currently locked');
-          }
-        }
-
-        const client = new Client({
-          url: process.env.LDAP_URI,
-          timeout: 0,
-          connectTimeout: 0,
-          strictDN: true,
-        });
-        
-
-        try {
-          const bindDN = `sys\\${credentials.userName.replace('sys\\', '')}`;
-          const searchBase = 'OU=End Users,DC=sys,DC=telestet,DC=gr';
-
-          // Bind to the LDAP server
-          try {
-            await client.bind(bindDN, credentials.password);
-            // logAuth.info(
-            //   `LDAP Authentication Successful for user '${credentials.userName}'`,
-            //   {
-            //     reqIP,
-            //     reqURL,
-            //   }
-            // );
-          } catch (err) {
-            // logAuth.error(
-            //   new Error(
-            //     `Invalid credentials for provided user name ${credentials.userName} or LDAP connection error`
-            //   ),
-            //   {
-            //     reqIP,
-            //     reqURL,
-            //   }
-            // );
-
-            throw new Error('Invalid credentials');
-          }
-
-          // Search options
-          const opts: SearchOptions = {
-            filter: `(&(objectClass=*)(sAMAccountName=${credentials.userName.replace(
-              'sys\\',
-              ''
-            )}))`,
-            scope: 'sub',
-            attributes: [
-              'cn',
-              'sn',
-              'userPrincipalName',
-              'memberOf',
-              'sAMAccountName',
-              'givenName',
-              'mobile',
-            ],
-            paged: true,
-            sizeLimit: 200,
-          };
-
-          // Search in the LDAP server
-          const { searchEntries } = await client.search(searchBase, opts);
-
-          if (searchEntries.length === 0) {
-            throw new Error('User not found');
-          }
-
-          const entry = searchEntries[0];
-
-          let firstName =
-            String(entry.givenName).charAt(0).toUpperCase() +
-            String(entry.givenName).slice(1).toLowerCase();
-          let lastName =
-            String(entry.sn).charAt(0).toUpperCase() +
-            String(entry.sn).slice(1).toLowerCase();
-          let userName = String(entry.sAMAccountName).toLowerCase();
-          let email = String(entry.userPrincipalName).toLowerCase();
-          let mobilePhone = entry.mobile;
-
-          const user = {
-            firstName,
-            lastName,
-            userName,
-            password: credentials.password,
-            email,
-            mobilePhone,
-          };
-
-          if (!localLDAPAccountUserDetails)
-            // logAuth.info(
-            //   `Creating New LDAP account in Local DB for user '${credentials.userName}'`,
-            //   {
-            //     reqIP,
-            //     reqURL,
-            //   }
-            // );
-            await createUserIfNotExistsAfterLDAPSuccessfullAuth(user);
-
-          return new Promise((resolve, reject) =>
-            resolve({
-              id: 1,
-              firstName,
-              lastName,
-              userName,
-              email,
-              roles: localLDAPAccountUserDetails?.roles || [],
-              permissions: localLDAPAccountUserDetails?.permissions || [],
-              authenticationType: AuthenticationTypes.LDAP,
-            })
-          );
-        } catch (err) {
-          // logAuth.error(err, {
-          //   reqIP,
-          //   reqURL,
-          // });
-          throw new Error('Invalid credentials');
-        } finally {
-          // await client.unbind();
-        }
-        */
       },
     }),
   ],
@@ -454,6 +247,7 @@ export const options = {
         token.userName = user.userName;
         token.firstName = user.firstName;
         token.lastName = user.lastName;
+        token.mobilePhone = user.mobilePhone;
         token.roles = user.roles;
         token.permissions = user.permissions;
         token.authenticationType = user.authenticationType;
@@ -469,6 +263,7 @@ export const options = {
         session.user.userName = token.userName;
         session.user.firstName = token.firstName;
         session.user.lastName = token.lastName;
+        session.user.mobilePhone = token.mobilePhone;
         session.user.roles = token.roles;
         session.user.permissions = token.permissions;
         session.user.authenticationType = token.authenticationType;

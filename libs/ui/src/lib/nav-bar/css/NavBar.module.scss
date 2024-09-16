@@ -1,0 +1,11 @@
+.navBar {
+  background-color: black;
+}
+
+@media (max-width: 600px) {
+  .navBar {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+}

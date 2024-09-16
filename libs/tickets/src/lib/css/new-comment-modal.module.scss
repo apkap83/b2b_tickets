@@ -1,0 +1,66 @@
+.mainDiv {
+  width: 851px;
+}
+
+.buttonDiv {
+  justify-content: space-around;
+  padding-bottom: 1rem;
+}
+
+@media only screen and (max-width: 862px) {
+  .mainDiv {
+    width: 90%;
+  }
+}
+
+@media only screen and (max-width: 766px) {
+  .title {
+    font-size: 16px;
+    // font-weight: 600;
+  }
+
+  .buttonDiv {
+    button {
+      font-size: 12px;
+    }
+  }
+}
+
+@media only screen and (max-width: 613px) {
+  .title {
+    font-size: 14px;
+  }
+}
+
+@media only screen and (max-width: 576px) {
+  .title {
+    font-size: 70%;
+  }
+}
+
+@media only screen and (max-width: 532px) {
+  .title {
+    font-size: 70%;
+  }
+}
+
+@media only screen and (max-width: 484px) {
+  .title {
+    font-size: 70%;
+  }
+
+  .buttonDiv {
+    button {
+      font-size: 11px;
+    }
+  }
+}
+
+@media only screen and (max-width: 450px) {
+  .buttonDiv {
+    button {
+      font-size: 9px;
+      padding: 0.4rem;
+    }
+  }
+}
