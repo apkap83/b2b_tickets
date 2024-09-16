@@ -99,9 +99,8 @@ export const NavBar = () => {
         ) : null}
       </div>
       {/* ICONS */}
-      <Box display="flex">
+      <Box className={`${styles.menuAndLoggedIndication}`}>
         <Box
-          display="flex"
           sx={{
             bgcolor: colors.grey[900],
             marginRight: '10px',
@@ -111,7 +110,7 @@ export const NavBar = () => {
         >
           {userHasRole(session, AppRoleTypes.SimpleUser) ? (
             <>
-              <IconButton
+              {/* <IconButton
                 className="flex flex-col"
                 onClick={async () => {
                   try {
@@ -138,7 +137,7 @@ export const NavBar = () => {
               >
                 <DataSaverOnIcon />
                 <span className="text-xs">Seed DB</span>
-              </IconButton>
+              </IconButton> */}
               <IconButton
                 className="flex flex-col"
                 onClick={() => {
@@ -168,7 +167,7 @@ export const NavBar = () => {
             <IoListSharp />
             <span className="text-xs">Tickets</span>
           </IconButton>
-          <IconButton
+          {/* <IconButton
             className="flex flex-col"
             onClick={colorMode.toggleColorMode}
           >
@@ -178,7 +177,7 @@ export const NavBar = () => {
               <DarkModeOutlinedIcon />
             )}
             <span className="text-xs">Theme</span>
-          </IconButton>
+          </IconButton> */}
 
           {/* <IconButton color="primary.main"> */}
 

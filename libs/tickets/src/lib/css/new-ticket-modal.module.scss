@@ -26,3 +26,10 @@
     padding-bottom: 3rem;
   }
 }
+
+@media only screen and (max-height: 820px) {
+  .formContainer {
+    overflow-y: auto;
+    height: 80vh;
+  }
+}
