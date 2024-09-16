@@ -27,3 +27,19 @@
 .customSelect select {
   padding-right: 30px;
 }
+
+@media only screen and (max-width: 800px) {
+  .header {
+    height: auto;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .statusAndDescriptionDiv {
+    flex-direction: column;
+  }
+
+  .statusDiv {
+    width: 100%;
+  }
+}

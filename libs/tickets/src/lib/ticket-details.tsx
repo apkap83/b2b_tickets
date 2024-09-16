@@ -9,7 +9,6 @@ import { NewCommentModal } from './new-comment-modal';
 
 import Button from '@mui/material/Button';
 import clsx from 'clsx';
-import styles from './css/ticket-details.module.scss';
 import { useSession } from 'next-auth/react';
 
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
@@ -22,6 +21,7 @@ import {
 } from '@b2b-tickets/shared-models';
 import { updateTicketStatus } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
+import styles from './css/ticket-details.module.scss';
 
 export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   // const theme = useTheme();
@@ -208,7 +208,9 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   return (
     <>
       <div className="w-full h-[1404px] flex-col justify-start items-center gap-5 inline-flex">
-        <div className="w-full h-[92px] px-6 pb-[9px] border-b border-black justify-between items-center inline-flex">
+        <div
+          className={`${styles.header} w-full h-[92px] px-6 pb-[9px] border-b border-black justify-between items-center inline-flex`}
+        >
           <div className="self-stretch flex-col justify-center items-center inline-flex">
             <div className="text-black/90 text-5xl font-bold leading-[57.60px]">
               Ticket Details
@@ -219,10 +221,16 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
           </div>
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
         </div>
-        <div className="self-stretch h-[1151.29px] pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex">
-          <div className="self-stretch justify-start items-center gap-6 inline-flex">
-            <div className="shadow-lg p-2 bg-white rounded-lg border border-black/25 flex-col justify-start items-start inline-flex">
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+        <div
+          className={`self-stretch h-[1151.29px] pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex`}
+        >
+          <div
+            className={`${styles.statusAndDescriptionDiv} self-stretch justify-start items-center gap-6 inline-flex`}
+          >
+            <div
+              className={`${styles.statusDiv} shadow-lg p-2 bg-white rounded-lg border border-black/25 flex-col justify-start items-start inline-flex`}
+            >
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Status
                 </div>
@@ -243,7 +251,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   </span>
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Title
                 </div>
@@ -251,7 +259,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {title}
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Category
                 </div>
@@ -259,7 +267,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {category}
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Service Name
                 </div>
@@ -267,7 +275,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {serviceName}
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Equipment ID
                 </div>
@@ -275,7 +283,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {equipment_id}
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Contact Person
                 </div>
@@ -283,7 +291,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {contact_person}
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Contact Phone
                 </div>
@@ -291,8 +299,8 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {contact_phone}
                 </div>
               </div>
-              <div className="w-[344px] h-[0px] border border-black/20"></div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full h-[0px] border border-black/20"></div>
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   SID
                 </div>
@@ -301,7 +309,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                 </div>
               </div>
 
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   CID
                 </div>
@@ -309,7 +317,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {cid}
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   User Name
                 </div>
@@ -317,7 +325,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {userName}
                 </div>
               </div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   CLI Value
                 </div>
@@ -325,8 +333,8 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   {cliValue}
                 </div>
               </div>
-              <div className="w-[344px] h-[0px] border border-black/20"></div>
-              <div className="w-[344px] justify-center items-center gap-2.5 inline-flex">
+              <div className="w-full h-[0px] border border-black/20"></div>
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Occurence Date
                 </div>

@@ -1,0 +1,28 @@
+.fieldsMainContainer {
+  display: flex;
+  gap: 1.5rem;
+}
+
+@media only screen and (min-width: 1000px) {
+  .fourFieldsContainer {
+    min-width: 475px !important;
+  }
+}
+
+@media only screen and (max-width: 842px) {
+  .mainContainer {
+    max-height: none;
+    overflow-y: auto;
+  }
+  .formContainer {
+    max-height: 80vh;
+  }
+  .fieldsMainContainer {
+    flex-direction: column;
+    overflow-y: auto !important;
+  }
+
+  .buttonsDiv {
+    padding-bottom: 3rem;
+  }
+}

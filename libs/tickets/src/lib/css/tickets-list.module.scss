@@ -1,0 +1,57 @@
+.ticketsList {
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 5px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  thead {
+    background-color: #f2f2f2;
+  }
+}
+
+@media only screen and (max-width: 1063px) {
+  .ticketsList {
+    thead {
+      display: none;
+    }
+
+    tbody,
+    tr,
+    td {
+      display: block;
+      width: 100%;
+    }
+
+    tr {
+      margin-bottom: 10px;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+
+    /* Each cell will now have two columns: header and data */
+    td {
+      display: flex;
+      padding: 5px;
+      text-align: left;
+      border: none;
+      position: relative;
+      font-size: 16px;
+    }
+
+    /* Add the header name before the data */
+    td::before {
+      content: attr(data-label);
+      // font-weight: bold;
+      font-size: 16px;
+      flex-basis: 45%; /* Adjust width of the header part */
+    }
+
+    td {
+      flex-basis: 55%; /* Adjust width of the data part */
+    }
+  }
+}

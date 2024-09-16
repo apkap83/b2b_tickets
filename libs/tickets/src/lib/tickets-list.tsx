@@ -33,6 +33,8 @@ import { formatDate } from '@b2b-tickets/utils';
 import { NewTicketModal } from './new-ticket-modal';
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 
+import styles from './css/tickets-list.module.scss';
+
 import clsx from 'clsx';
 interface TicketsListProps {
   tickets: Ticket[];
@@ -88,6 +90,8 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
     );
   };
 
+  let myAttr = { 'data-label': 'value' };
+
   const generateTableBody = (items: any) => {
     return (
       <TableBody>
@@ -104,11 +108,11 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
             }}
           >
             {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
-              <TableCell align="center">
+              <TableCell data-label="Customer" align="center">
                 <span className="font-medium">{item.Customer}</span>
               </TableCell>
             ) : null}
-            <TableCell align="center">
+            <TableCell data-label="Ticket Number" align="center">
               <Link href={`/ticket/${item.Ticket}`} className="text-blue-500">
                 {
                   <span className="font-medium tracking-wider">
@@ -117,33 +121,46 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
                 }
               </Link>
             </TableCell>
-            <TableCell align="center">{formatDate(item.Opened)}</TableCell>
-            <TableCell align="center">{item.Title}</TableCell>
-            <TableCell align="center">{item.Category}</TableCell>
-            <TableCell align="center">{item.Service}</TableCell>
-            <TableCell align="center">{item.Equipment}</TableCell>
-            <TableCell align="center">
+            <TableCell data-label="Opened" align="center">
+              {formatDate(item.Opened)}
+            </TableCell>
+            <TableCell data-label="Title" align="center">
+              {item.Title}
+            </TableCell>
+            <TableCell data-label="Category" align="center">
+              {item.Category}
+            </TableCell>
+            <TableCell data-label="Service" align="center">
+              {item.Service}
+            </TableCell>
+            <TableCell data-label="Equipment" align="center">
+              {item.Equipment}
+            </TableCell>
+            <TableCell data-label="Opened By" align="center">
               {formatDate(item['Opened By'])}
             </TableCell>
-            <TableCell align="center">
+            <TableCell data-label="Status" align="center">
               {
                 <div
-                  className={clsx('px-1 py-1 rounded-md font-medium', {
-                    [`text-[#ffffff]  border bg-[#6870fa]`]:
-                      item.Status === TicketStatusName.NEW,
-                    [`text-[#ffffff] border bg-[#916430]`]:
-                      item.Status === TicketStatusName.WORKING,
-                    [`text-[#ffffff] border bg-[#dc5743]`]:
-                      item.Status === TicketStatusName.CANCELLED,
-                    [`text-[#ffffff] border bg-[#3d8d52]`]:
-                      item.Status === TicketStatusName.CLOSED,
-                  })}
+                  className={clsx(
+                    'px-1 py-1 rounded-md font-medium text-center',
+                    {
+                      [`text-[#ffffff]  border bg-[#6870fa]`]:
+                        item.Status === TicketStatusName.NEW,
+                      [`text-[#ffffff] border bg-[#916430]`]:
+                        item.Status === TicketStatusName.WORKING,
+                      [`text-[#ffffff] border bg-[#dc5743]`]:
+                        item.Status === TicketStatusName.CANCELLED,
+                      [`text-[#ffffff] border bg-[#3d8d52]`]:
+                        item.Status === TicketStatusName.CLOSED,
+                    }
+                  )}
                 >
                   {item.Status}
                 </div>
               }
             </TableCell>
-            <TableCell align="center">
+            <TableCell data-label="Status Date" align="center">
               {formatDate(item['Status Date'])}
             </TableCell>
           </TableRow>
@@ -157,7 +174,6 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
       maxWidth="xl"
       sx={{
         marginTop: 2.5,
-        minWidth: '1000px',
       }}
     >
       <Box
@@ -165,8 +181,10 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
         justifyContent="space-between"
         alignItems="center"
         borderBottom={`1px solid ${colors.blueAccent[800]}`}
+        paddingBottom={'0.5rem'}
+        marginBottom={'0.5rem'}
       >
-        <Typography variant="h1" component="h1" mb={2}>
+        <Typography variant="h1" component="h1">
           Tickets
         </Typography>
 
@@ -198,6 +216,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
             }}
             size="medium"
             aria-label="a dense table"
+            className={`${styles.ticketsList}`}
           >
             {generateTableHeadAndColumns(columnsForTickets)}
             {generateTableBody(tickets)}

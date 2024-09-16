@@ -29,6 +29,8 @@ import { LoggedInIndication } from '@b2b-tickets/ui';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 
+import styles from './css/NavBar.module.scss';
+
 export const NavBar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -60,10 +62,7 @@ export const NavBar = () => {
       display="flex"
       justifyContent="space-between"
       p={1.3}
-      sx={{
-        bgcolor: 'black',
-        minWidth: '1000px',
-      }}
+      className={`${styles.navBar}`}
     >
       <Link href="/">
         <Stack

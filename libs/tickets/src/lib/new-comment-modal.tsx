@@ -53,6 +53,8 @@ import {
   TicketDetailsModalActions,
 } from '@b2b-tickets/shared-models';
 
+import styles from './css/new-comment-modal.module.scss';
+
 export function NewCommentModal({
   modalAction = TicketDetailsModalActions.NO_ACTION,
   userId,
@@ -92,7 +94,9 @@ export function NewCommentModal({
   const getCorrectTitle = () => {
     if (modalAction === TicketDetailsModalActions.NO_ACTION) {
       return (
-        <div className="self-stretch text-gray-300 text-2xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]">
+        <div
+          className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
+        >
           {`B2B - New Comment for Ticket  ${ticket_number}`}
         </div>
       );
@@ -100,7 +104,9 @@ export function NewCommentModal({
 
     if (modalAction === TicketDetailsModalActions.CLOSE) {
       return (
-        <div className="self-stretch text-gray-300 text-2xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]">
+        <div
+          className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
+        >
           {`B2B - Closing Comment for Ticket ${ticket_number}`}
         </div>
       );
@@ -108,7 +114,9 @@ export function NewCommentModal({
 
     if (modalAction === TicketDetailsModalActions.CANCEL) {
       return (
-        <div className="self-stretch text-gray-300 text-2xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]">
+        <div
+          className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
+        >
           {`B2B - Cancel Comment for Ticket ${ticket_number}`}
         </div>
       );
@@ -121,9 +129,11 @@ export function NewCommentModal({
         className="fixed inset-0 flex items-center justify-center
        bg-black bg-opacity-50"
       >
-        <div className="w-[851px] h-[501px] pl-8 pr-[51px] pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex">
-          <div className="w-[768px] self-stretch flex-col justify-start items-start gap-[20.80px] inline-flex">
-            <div className="self-stretch h-11 pl-3 py-2 bg-gradient-to-r from-[#020024] to-[#373742] rounded-md flex-col justify-start items-start flex">
+        <div
+          className={`${styles.mainDiv} px-8 pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex`}
+        >
+          <div className="w-full self-stretch flex-col justify-start items-start gap-[20.80px] inline-flex">
+            <div className="self-stretch  pl-3 py-2 bg-gradient-to-r from-[#020024] to-[#373742] rounded-md flex-col justify-start items-start flex">
               {getCorrectTitle()}
             </div>
             <form
@@ -170,7 +180,9 @@ export function NewCommentModal({
                 </div>
               </div>
               {/* </div> */}
-              <div className="self-stretch justify-center items-center gap-[250.20px] inline-flex">
+              <div
+                className={`${styles.buttonDiv} self-stretch justify-center items-center inline-flex`}
+              >
                 <Button
                   onClick={() => {
                     closeModal();
