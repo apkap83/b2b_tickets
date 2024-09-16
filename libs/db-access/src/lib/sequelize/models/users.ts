@@ -187,6 +187,7 @@ export class B2BUser extends Model<
               'username',
               'password',
               'email',
+              'mobile_phone',
               'is_active',
               'is_locked',
               'authentication_type',

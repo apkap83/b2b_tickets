@@ -53,6 +53,7 @@ import updateLocale from 'dayjs/plugin/updateLocale';
 import { useSession } from 'next-auth/react';
 
 import * as yup from 'yup';
+import styles from './css/new-ticket-modal.module.scss';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -198,7 +199,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
       userName: '',
       cliValue: '',
       contactPerson: '',
-      contactPhoneNum: '',
+      contactPhoneNum: session?.user.mobilePhone || '',
       occurrenceDate: dayjs().toISOString(),
       // occurrenceDate: '',
     },
@@ -232,14 +233,14 @@ export function NewTicketModal({ closeModal, userId }: any) {
   return (
     <React.Fragment>
       <div
-        className="fixed inset-0 flex items-center justify-center
-       bg-black bg-opacity-50"
+        className={`${styles.mainContainer} fixed inset-0 flex items-center justify-center
+       bg-black bg-opacity-50`}
       >
         <div
-          className="bg-white pt-[1.3rem] pb-[1.3rem] px-[2rem] 
-        rounded-lg max-h-[95vh]  overflow-hidden flow-root bg-gray-50"
+          className={`${styles.mainContainer} bg-white pt-[1.3rem] pb-[1.3rem] px-[2rem] 
+        rounded-lg max-h-[95vh]  overflow-hidden flow-root bg-gray-50`}
         >
-          <form action={action}>
+          <form action={action} className={`${styles.formContainer}`}>
             <>
               <Typography
                 variant="h3"
@@ -254,7 +255,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                 B2B - New Ticket Form
               </Typography>
 
-              <div className="flex gap-3 max-h-[70vh]">
+              <div className={`${styles.fieldsMainContainer}`}>
                 <div
                   className="flex-grow  overflow-y-auto 
                  pr-[1rem] overflow-x-hidden
@@ -330,8 +331,8 @@ export function NewTicketModal({ closeModal, userId }: any) {
 
                       <Box>
                         <FormControl
+                          className={`${styles.fourFieldsContainer}`}
                           sx={{
-                            minWidth: minWidth,
                             display: 'flex',
                             flexDirection: 'row',
                             gap: '5.3rem',
@@ -364,8 +365,8 @@ export function NewTicketModal({ closeModal, userId }: any) {
                         </FormControl>
 
                         <FormControl
+                          className={`${styles.fourFieldsContainer}`}
                           sx={{
-                            minWidth: minWidth,
                             display: 'flex',
                             flexDirection: 'row',
                             gap: '5.3rem',
@@ -557,7 +558,9 @@ export function NewTicketModal({ closeModal, userId }: any) {
                   <FieldError formik={formik} name="occurrenceDate" />
                 </div>
               </div>
-              <div className="flex justify-evenly mt-[1.3rem]">
+              <div
+                className={`${styles.buttonsDiv} flex justify-evenly mt-[1.3rem]`}
+              >
                 <Button
                   onClick={closeModal}
                   variant="outlined"
