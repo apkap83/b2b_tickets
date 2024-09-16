@@ -98,7 +98,6 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
         ]);
 
         const customer_name = customerNameRes.rows[0]['customer_name'];
-        console.log('*** foundUser', foundUser);
         return [
           foundUser.is_active,
           {

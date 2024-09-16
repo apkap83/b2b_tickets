@@ -1,8 +1,8 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { FormState } from '@b2b-tickets/shared-models';
 
-const useToastMessage = (formState: FormState) => {
+export const useToastMessage = (formState: FormState) => {
   const prevTimestamp = useRef(formState.timestamp);
 
   const showToast =
@@ -33,4 +33,23 @@ const useToastMessage = (formState: FormState) => {
   );
 };
 
-export { useToastMessage };
+export const useEscKeyListener = (onEscPress: () => void) => {
+  const handleEscKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onEscPress();
+      }
+    },
+    [onEscPress]
+  );
+
+  useEffect(() => {
+    // Attach the event listener
+    window.addEventListener('keydown', handleEscKeyPress);
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleEscKeyPress);
+    };
+  }, [handleEscKeyPress]);
+};

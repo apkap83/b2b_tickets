@@ -2,10 +2,20 @@
   background-color: black;
 }
 
-@media (max-width: 600px) {
+.menuAndLoggedIndication {
+  display: flex;
+}
+
+@media (max-width: 580px) {
   .navBar {
     flex-direction: column;
     gap: 0.5rem;
     align-items: center;
+  }
+
+  .menuAndLoggedIndication {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
   }
 }

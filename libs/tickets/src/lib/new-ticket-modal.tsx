@@ -84,7 +84,6 @@ export function NewTicketModal({ closeModal, userId }: any) {
   const colors = tokens(theme.palette.mode);
 
   const { data: session, status } = useSession();
-  console.log(session);
   const [formState, action] = useFormState<any, any>(
     createNewTicket,
     EMPTY_FORM_STATE
@@ -112,7 +111,6 @@ export function NewTicketModal({ closeModal, userId }: any) {
   useEffect(() => {
     const getCategories = async () => {
       const rows = await getTicketCategoriesForUserId({ userId });
-      console.log('ticket categories rows', rows);
       setticketCategories(rows);
     };
 
@@ -234,7 +232,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
     <React.Fragment>
       <div
         className={`${styles.mainContainer} fixed inset-0 flex items-center justify-center
-       bg-black bg-opacity-50`}
+       bg-black bg-opacity-65 z-10`}
       >
         <div
           className={`${styles.mainContainer} bg-white pt-[1.3rem] pb-[1.3rem] px-[2rem] 

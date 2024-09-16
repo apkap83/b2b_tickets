@@ -10,6 +10,7 @@ import { NewCommentModal } from './new-comment-modal';
 import Button from '@mui/material/Button';
 import clsx from 'clsx';
 import { useSession } from 'next-auth/react';
+import { useEscKeyListener } from '@b2b-tickets/react-hooks';
 
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 import {
@@ -36,9 +37,8 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
     TicketDetailsModalActions.NO_ACTION
   );
 
-  useEffect(() => {
-    setTicketStatus(ticketDetails[0].status_id);
-  }, [ticketDetails]);
+  // Custom Hook for ESC Key Press
+  useEscKeyListener(() => setShowNewComment(false));
 
   if (ticketDetails.length === 0) return;
 
