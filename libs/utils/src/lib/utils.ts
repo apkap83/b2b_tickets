@@ -1,6 +1,9 @@
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 
-export const userHasPermission = (session: any, permissionName: any) => {
+export const userHasPermission = (
+  session: any,
+  permissionName: AppPermissionTypes
+) => {
   if (!session) return false;
   return session?.user?.permissions.some(
     (permission: any) =>
@@ -17,7 +20,7 @@ export const endPointPermitted = (session: any, endpoint: any) => {
   );
 };
 
-export const userHasRole = (session: any, roleName: any) => {
+export const userHasRole = (session: any, roleName: AppRoleTypes) => {
   if (!session) return false;
   return session?.user?.roles.some(
     (role: any) => role === AppRoleTypes.Admin || role === roleName

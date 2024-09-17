@@ -32,11 +32,14 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   const userId = session?.user.user_id;
 
   const [showNewComment, setShowNewComment] = useState(false);
-  const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
+  // const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
   const [modalAction, setModalAction] = useState<TicketDetailsModalActions>(
     TicketDetailsModalActions.NO_ACTION
   );
 
+  const ticketStatus = ticketDetails[0].status_id;
+
+  console.log('ticketDetails', ticketDetails);
   // Custom Hook for ESC Key Press
   useEscKeyListener(() => setShowNewComment(false));
 
@@ -72,15 +75,14 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
 
               const response = await updateTicketStatus({
                 ticketId,
+                ticketNumber,
                 statusId,
-                userId,
                 comment: `Re-Openning Ticket`,
               });
 
               if (response.status === 'SUCCESS') {
                 toast.success(response.message);
                 await new Promise((res) => setTimeout(res, 500));
-                setTicketStatus(statusId);
               }
               if (response.status === 'ERROR') toast.error(response.message);
             }}
@@ -105,19 +107,18 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
         return (
           <Button
             onClick={async () => {
-              const statusId = '2'; // Working
+              const statusId = TicketStatus.WORKING;
 
               const response = await updateTicketStatus({
                 ticketId,
+                ticketNumber,
                 statusId,
-                userId,
                 comment: `Started Working On Ticket: ${ticketNumber}`,
               });
 
               if (response.status === 'SUCCESS') {
                 toast.success(response.message);
                 await new Promise((res) => setTimeout(res, 500));
-                setTicketStatus(statusId);
               }
               if (response.status === 'ERROR') toast.error(response.message);
             }}
@@ -207,7 +208,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
 
   return (
     <>
-      <div className="w-full h-[1404px] flex-col justify-start items-center gap-5 inline-flex">
+      <div className="w-full flex-col justify-start items-center gap-5 inline-flex mb-[75px]">
         <div
           className={`${styles.header} w-full h-[92px] px-6 pb-[9px] border-b border-black justify-between items-center inline-flex`}
         >
@@ -222,7 +223,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
         </div>
         <div
-          className={`self-stretch h-[1151.29px] pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex`}
+          className={`self-stretch pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex`}
         >
           <div
             className={`${styles.statusAndDescriptionDiv} self-stretch justify-start items-center gap-6 inline-flex`}
@@ -255,7 +256,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Title
                 </div>
-                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight text-right">
                   {title}
                 </div>
               </div>
@@ -349,13 +350,17 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   Problem Description
                 </div>
               </div>
-              <div className="w-full h-[342.29px] px-[13px] py-[17px] bg-white border border-[#ebebeb] flex-col justify-start items-start inline-flex">
-                <div className="overflow-y-auto self-stretch text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+              <div className="w-full overflow-y-auto font-['Roboto'] h-[400px] px-[13px] py-[17px] bg-white border border-[#ebebeb]">
+                {/* <div className="overflow-y-auto self-stretch text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight"> */}
+                <pre
+                  style={{
+                    fontFamily: 'Roboto',
+                    whiteSpace: 'break-spaces',
+                  }}
+                >
                   {problemDescription}
-                </div>
-                <div className="self-stretch p-0.5 justify-end items-center gap-2.5 inline-flex">
-                  <div className="w-4 p-0.5 flex-col justify-start items-start gap-2.5 inline-flex"></div>
-                </div>
+                </pre>
+                {/* </div> */}
               </div>
             </div>
           </div>
