@@ -238,13 +238,13 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   <span
                     className={clsx(`px-2`, {
-                      [`text-[#ffffff] border border-[${TicketStatusColors.NEW}] bg-[#6870fa] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.NEW}] bg-[#6870fa] rounded-md p-1`]:
                         ticketStatus === '1',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.WORKING}] bg-[#916430] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.WORKING}] bg-[#916430] rounded-md p-1`]:
                         ticketStatus === '2',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.CANCELLED}] bg-[#dc5743] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.CANCELLED}] bg-[#dc5743] rounded-md p-1`]:
                         ticketStatus === '3',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.CLOSED}] bg-[#3d8d52] rounded-sm`]:
+                      [`text-[#ffffff] border border-[${TicketStatusColors.CLOSED}] bg-[#3d8d52] rounded-md p-1`]:
                         ticketStatus === '4',
                     })}
                   >

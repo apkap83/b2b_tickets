@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 
-export const LoggedInIndication = ({ session }: any) => {
+export const LoggedInIndication = ({ session, customerName }: any) => {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const menuRef = useRef();
 
@@ -61,15 +61,38 @@ export const LoggedInIndication = ({ session }: any) => {
     <>
       <IconButton
         className="flex flex-col"
-        style={{
+        sx={{
           color: 'white',
           padding: 0,
+          paddingX: '5px',
+          borderRadius: '5px',
+
+          '&:hover': {
+            backgroundColor: '#3d3d3f',
+          },
         }}
         onClick={() => setProfileMenuOpen(!profileMenuOpen)}
       >
         <PersonOutlinedIcon />
-        <span className="text-xs">{session?.user?.userName || ''}</span>
-
+        <span className="text-xs leading-3 ">
+          {session?.user?.userName || ''}
+        </span>
+        <div
+          style={{
+            fontSize: '9px',
+          }}
+          className="text-[#bcbff0] mt-[3px] font-bold border-t border-dotted justify-center items-center "
+        >
+          {customerName !== 'Nova' ? (
+            <div className="border-t  border-dotted border-black">
+              {customerName}
+            </div>
+          ) : (
+            <div className="border-t border-dotted border-black">
+              Nova Ticket Handler
+            </div>
+          )}
+        </div>
         {profileMenuOpen ? <ProfileMenuContents /> : null}
       </IconButton>
     </>
