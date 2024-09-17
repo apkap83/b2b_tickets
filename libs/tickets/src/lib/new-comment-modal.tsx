@@ -174,8 +174,6 @@ export function NewCommentModal({
                       name="modalAction"
                       value={modalAction}
                     />
-
-                    <input type="hidden" name="userId" value={userId} />
                   </div>
                 </div>
               </div>

@@ -38,7 +38,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { Typography, useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
 import {
-  getTicketCategoriesForUserId,
+  getTicketCategories,
   getServiceTypes,
   createNewTicket,
 } from '@b2b-tickets/server-actions';
@@ -110,7 +110,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
 
   useEffect(() => {
     const getCategories = async () => {
-      const rows = await getTicketCategoriesForUserId({ userId });
+      const rows = await getTicketCategories();
       setticketCategories(rows);
     };
 
@@ -142,7 +142,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
         'Service cannot be empty',
         (value) => value !== '' && !isNaN(Number(value))
       ),
-    equipmentId: yup.string().required('Equipment Id is required'),
+    equipmentId: yup.string(),
     sid: yup.string(),
     cid: yup.string(),
     userName: yup.string(),
