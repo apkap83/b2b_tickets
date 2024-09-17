@@ -64,128 +64,93 @@ export const NavBar = () => {
       p={1.3}
       className={`${styles.navBar}`}
     >
-      <Link href="/">
-        <Stack
-          sx={{
-            bgcolor: 'white',
-            paddingY: '5px',
-            paddingX: '10px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            borderRadius: '5px',
-            ml: 1,
+      <div>
+        <Link
+          href="/"
+          style={{
+            display: 'inline-block',
+            height: '100%',
           }}
         >
-          <Image priority src={NovaLogo} alt={'Nova Logo'} height={18} />
-          <Typography
-            component="p"
-            variant="myVariantTypo1"
-            sx={{
-              fontWeight: '700',
-              border: `1px dashed ${colors.grey[800]}`,
-              marginTop: '5px',
-              paddingY: '1px',
-              paddingX: '10px',
-            }}
-          >
-            B2B Tickets
-          </Typography>
-        </Stack>
-      </Link>
-      <div className="text-white text-xs flex flex-col justify-center items-center ">
-        {customerName !== 'Nova' ? (
-          <div className="text-lg">{customerName}</div>
-        ) : null}
+          <Stack>
+            <Stack
+              sx={{
+                bgcolor: 'white',
+                paddingY: '5px',
+                paddingX: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                borderTopLeftRadius: '5px',
+                borderTopRightRadius: '5px',
+              }}
+            >
+              <Image priority src={NovaLogo} alt={'Nova Logo'} height={18} />
+            </Stack>
+            <div className={`${styles.b2b_logo_text}`}>B2B Tickets</div>
+          </Stack>
+        </Link>
       </div>
-      {/* ICONS */}
+
       <Box className={`${styles.menuAndLoggedIndication}`}>
         <Box
           sx={{
-            bgcolor: colors.grey[900],
-            marginRight: '10px',
+            borderTop: '1px solid #5b5ea090',
+            borderBottom: '1px solid #5b5ea090',
           }}
-          className="rounded"
+          className={`rounded flex gap-5 ${styles.myMenu}`}
           px={2}
         >
-          {userHasRole(session, AppRoleTypes.SimpleUser) ? (
-            <>
-              {/* <IconButton
-                className="flex flex-col"
-                onClick={async () => {
-                  try {
-                    await syncDBAlterTrueAction();
-                    console.log('Sync DB Alter True Complete!');
-                  } catch (error: any) {
-                    toast.error(error.message);
-                  }
-                }}
-              >
-                <PublishedWithChangesIcon />
-                <span className="text-xs">Sync DB</span>
-              </IconButton>
-              <IconButton
-                className="flex flex-col"
-                onClick={async () => {
-                  try {
-                    await seedDB();
-                    console.log('Seed Database Complete!');
-                  } catch (error: any) {
-                    toast.error(error.message);
-                  }
-                }}
-              >
-                <DataSaverOnIcon />
-                <span className="text-xs">Seed DB</span>
-              </IconButton> */}
-              <IconButton
-                className="flex flex-col"
-                onClick={() => {
-                  router.push('/admin');
-                }}
-                style={{
-                  color: isAdminPath
-                    ? colors.blueAccent[500]
-                    : colors.grey[100], // Conditionally apply color
-                }}
-              >
-                <SettingsOutlinedIcon />
-                <span className="text-xs">Users List</span>
-              </IconButton>
-            </>
-          ) : null}
-
-          <IconButton
-            className="flex flex-col"
-            onClick={() => {
-              router.push('/tickets');
-            }}
+          <div
             style={{
-              color: isTicketsPath ? colors.blueAccent[500] : colors.grey[100], // Conditionally apply color
+              borderRight: '1px dashed #5b5ea090',
+              paddingRight: '1.25rem',
             }}
           >
-            <IoListSharp />
-            <span className="text-xs">Tickets</span>
-          </IconButton>
-          {/* <IconButton
-            className="flex flex-col"
-            onClick={colorMode.toggleColorMode}
-          >
-            {theme.palette.mode === 'dark' ? (
-              <LightModeOutlinedIcon />
-            ) : (
-              <DarkModeOutlinedIcon />
-            )}
-            <span className="text-xs">Theme</span>
-          </IconButton> */}
+            {userHasRole(session, AppRoleTypes.SimpleUser) ? (
+              <>
+                <IconButton
+                  className="flex flex-col"
+                  onClick={() => {
+                    router.push('/admin');
+                  }}
+                  sx={{
+                    color: isAdminPath
+                      ? colors.blueAccent[500]
+                      : colors.grey[800], // Conditionally apply color
+                    borderRadius: '5px',
+                    '&:hover': {
+                      backgroundColor: '#3d3d3f',
+                    },
+                  }}
+                >
+                  <SettingsOutlinedIcon />
+                  <span className="text-xs">Users List</span>
+                </IconButton>
+              </>
+            ) : null}
 
-          {/* <IconButton color="primary.main"> */}
-
-          {/* <IconButton>
-          <PersonOutlinedIcon />
-          </IconButton> */}
+            <IconButton
+              className="flex flex-col justify-center items-center"
+              onClick={() => {
+                router.push('/tickets');
+              }}
+              sx={{
+                color: isTicketsPath
+                  ? colors.blueAccent[500]
+                  : colors.grey[800], // Conditionally apply color
+                borderRadius: '5px',
+                '&:hover': {
+                  backgroundColor: '#3d3d3f',
+                },
+              }}
+            >
+              <IoListSharp />
+              <span className="text-xs">Tickets List</span>
+            </IconButton>
+          </div>
+          <LoggedInIndication session={session} customerName={customerName} />
         </Box>
-        <LoggedInIndication session={session} />
       </Box>
     </Box>
   );
