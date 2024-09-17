@@ -1,12 +1,8 @@
 'use server';
 
-// TODO
-// Prevent users from looking into other Customers' tickets by changing the URL
-// ReCheck reCAPTCHA validation
-
+import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
-import { redirect } from 'next/navigation';
 import * as yup from 'yup';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -16,15 +12,19 @@ import {
   setSchemaAndTimezone,
 } from '@b2b-tickets/db-access';
 import { config } from '@b2b-tickets/config';
-import { toFormState, fromErrorToFormState } from '@b2b-tickets/utils';
-import { getEnvVariable } from '@b2b-tickets/utils';
+import {
+  toFormState,
+  fromErrorToFormState,
+  userHasRole,
+} from '@b2b-tickets/utils';
 import {
   Ticket,
   TicketCategory,
   ServiceType,
   TicketFormState,
+  AppRoleTypes,
+  TicketStatus,
 } from '@b2b-tickets/shared-models';
-import { sequelize } from '@b2b-tickets/db-access';
 
 import {
   TicketDetail,
@@ -34,6 +34,8 @@ import {
 import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { populateDB } from '@b2b-tickets/db-access';
 import { convertTo24HourFormat } from '@b2b-tickets/utils';
+import { redirect } from 'next/navigation';
+import { QueryResult } from 'pg';
 
 export const seedDB = async () => {
   // TODO Session & Authorization Enabled Action
@@ -53,39 +55,25 @@ export const syncDBAlterTrueAction = async () => {
   await syncDatabaseAlterTrue();
 };
 
-export const getAllTicketsForCustomerId = async ({
-  userId,
-}: {
-  userId: number;
-}): Promise<Ticket[]> => {
-  // await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-  await setSchemaAndTimezone(
-    pgB2Bpool,
-    config.postgres_b2b_database.schemaName,
-    'EET'
-  );
+export const getAllTicketsForCustomer = async (): Promise<Ticket[]> => {
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+  //@ts-ignore
+  const session = await getServerSession(options);
+
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/`);
+  }
+  //@ts-ignore
+  const userId = session.user.user_id;
+
+  //@ts-ignore
+  const customerId = session.user.customer_id;
+
+  //@ts-ignore
+  const customerName = session.user.customer_name;
 
   try {
-    // const query =
-    //   'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
-    // const res = await pgB2Bpool.query(query, [userId]);
-
-    // Find Customer ID for User
-    const queryForCustomerId =
-      'SELECT customer_id FROM users WHERE user_id = $1';
-    const customerIdRes = await pgB2Bpool.query(queryForCustomerId, [userId]);
-
-    const customerId = customerIdRes.rows[0]['customer_id'];
-
-    // Find Customer Name from Customer ID
-    const queryForCustomerName =
-      'SELECT customer_name FROM customers WHERE customer_id = $1';
-    const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
-      customerId,
-    ]);
-
-    const customerName = customerNameRes.rows[0]['customer_name'];
-
     // Artificial Delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -93,15 +81,15 @@ export const getAllTicketsForCustomerId = async ({
     if (customerId === '-1') {
       const query = 'SELECT * FROM tickets_v order by "Opened" DESC';
       const res = await pgB2Bpool.query(query);
-      return res?.rows as Ticket[]; // Type assertion to ensure res.rows is of type Ticket[]
+      return res?.rows as Ticket[];
     }
 
     // Filter Tickets View by Customer Name
-    const finalQuery =
+    const query =
       'SELECT * FROM tickets_v where "Customer" = $1 order by "Opened" DESC';
-    const res = await pgB2Bpool.query(finalQuery, [customerName]);
+    const res = await pgB2Bpool.query(query, [customerName]);
 
-    return res?.rows as Ticket[]; // Type assertion to ensure res.rows is of type Ticket[]
+    return res?.rows as Ticket[];
   } catch (error) {
     throw error;
   }
@@ -113,6 +101,13 @@ export const getTicketDetailsForTicketId = async ({
   ticketNumber: string;
 }): Promise<TicketDetail[]> => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+  //@ts-ignore
+  const session = await getServerSession(options);
+
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/ticket/${ticketNumber}`);
+  }
 
   try {
     const queryForTicketsCategoriesAndTypes = `
@@ -184,6 +179,34 @@ export const getTicketDetailsForTicketId = async ({
     const queryRes1 = await pgB2Bpool.query(queryForTicketsCategoriesAndTypes, [
       ticketNumber,
     ]);
+
+    if (queryRes1.rows.length === 0) {
+      notFound();
+    }
+
+    // If Role is Admin or Ticket Handler you can see the details for every ticket
+    if (
+      userHasRole(session, AppRoleTypes.Admin) ||
+      userHasRole(session, AppRoleTypes.B2B_TicketHandler)
+    ) {
+      const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
+      queryRes1.rows[0]['comments'] = queryRes2.rows;
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      return queryRes1.rows;
+    }
+
+    // If Roles is not Ticket Creator Ticket Details cannot be seen
+    if (!userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
+      notFound();
+    }
+
+    // Check if the specific ticket belongs to the customer that requests it
+    // Compare session.user.customer_id with ticketDetails[0].customer_id
+    if (session?.user.customer_id !== queryRes1.rows[0].customer_id) {
+      notFound();
+    }
+
     const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
     queryRes1.rows[0]['comments'] = queryRes2.rows;
 
@@ -194,13 +217,19 @@ export const getTicketDetailsForTicketId = async ({
   }
 };
 
-export const getTicketCategoriesForUserId = async ({
-  userId,
-}: {
-  userId: number;
-}): Promise<TicketCategory[]> => {
+export const getTicketCategories = async (): Promise<TicketCategory[]> => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-  console.log('userId', userId);
+
+  //@ts-ignore
+  const session = await getServerSession(options);
+
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/`);
+  }
+
+  //@ts-ignore
+  const userId = session.user.user_id;
+
   try {
     const query =
       'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
@@ -213,6 +242,13 @@ export const getTicketCategoriesForUserId = async ({
 
 export const getServiceTypes = async (): Promise<ServiceType[]> => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+  //@ts-ignore
+  const session = await getServerSession(options);
+
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/`);
+  }
+
   try {
     const query =
       'SELECT service_id, "Service Name" from service_types_v where start_date < CURRENT_TIMESTAMP and end_date is null';
@@ -222,53 +258,6 @@ export const getServiceTypes = async (): Promise<ServiceType[]> => {
     throw error;
   }
 };
-
-const ticketSchema = yup.object().shape({
-  title: yup.string().required('Title is required'),
-  description: yup.string().required('Description is required'),
-  category: yup
-    .string()
-    .required('Category is required')
-    .test(
-      'is-valid-number',
-      'Category cannot be empty',
-      (value) => value !== '' && !isNaN(Number(value))
-    ),
-  service: yup
-    .string()
-    .required('Service name is required')
-    .test(
-      'is-valid-number',
-      'Service cannot be empty',
-      (value) => value !== '' && !isNaN(Number(value))
-    ),
-  equipmentId: yup.string().required('Equipment Id is required'),
-  sid: yup.string(),
-  cid: yup.string(),
-  userName: yup.string(),
-  cliValue: yup.string(),
-  contactPerson: yup.string().required('Contact Person is required'),
-  contactPhoneNum: yup
-    .string()
-    .required('Contact Phone Number is required')
-    .matches(/^[0-9]+$/, 'Contact Phone Number must be numeric')
-    .min(10, 'Contact Phone Number must be at least 10 characters long'),
-  occurrenceDate: yup
-    .string()
-    .required('Occurrence date is required')
-    .test(
-      'at-least-one',
-      'At least one of SID, CID, User Name, or CLI Value is required',
-      function (value) {
-        return (
-          this.parent.sid ||
-          this.parent.cid ||
-          this.parent.userName ||
-          this.parent.cliValue
-        );
-      }
-    ),
-});
 
 const ticketSchema_zod = z
   .object({
@@ -286,7 +275,7 @@ const ticketSchema_zod = z
       .refine((value) => value !== '' && !isNaN(Number(value)), {
         message: 'Service cannot be empty',
       }),
-    equipmentId: z.string().nonempty('Equipment Id is required'),
+    equipmentId: z.string(),
     sid: z.string().optional(),
     cid: z.string().optional(),
     userName: z.string().optional(),
@@ -309,10 +298,16 @@ export const createNewTicket = async (
   formData: FormData
 ): Promise<any> => {
   try {
+    //@ts-ignore
     const session = await getServerSession(options);
+
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    const {
+    let {
       title,
       description,
       category,
@@ -340,6 +335,9 @@ export const createNewTicket = async (
       occurrenceDate: formData.get('occurrenceDate'),
     });
 
+    if (equipmentId === '') {
+      equipmentId = '0';
+    }
     // const title = formData.get('title');
     // const description = formData.get('description');
     // const category = formData.get('category');
@@ -398,7 +396,6 @@ const commentSchema_zod = z.object({
   comment: z.string().min(1),
   ticketNumber: z.string(),
   modalAction: z.string(),
-  userId: z.string(),
 });
 
 export const createNewComment = async (
@@ -406,42 +403,61 @@ export const createNewComment = async (
   formData: FormData
 ): Promise<any> => {
   try {
+    //@ts-ignore
     const session = await getServerSession(options);
+
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    //@ts-ignore
+    const userId = session.user.user_id;
+
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    const { comment, ticketId, ticketNumber, modalAction, userId } =
+    const { comment, ticketId, ticketNumber, modalAction } =
       commentSchema_zod.parse({
         ticketId: formData.get('ticketId'),
         comment: formData.get('comment'),
         ticketNumber: formData.get('ticketNumber'),
         modalAction: formData.get('modalAction'),
-        userId: formData.get('userId'),
       });
 
     if (modalAction === TicketDetailsModalActions.CLOSE) {
-      const statusId = '4'; // Closed
+      const statusId = TicketStatus.CLOSED;
 
       const response = await updateTicketStatus({
         ticketId,
+        ticketNumber,
         statusId,
         userId,
         comment,
       });
+
+      if (response.status === 'ERROR') {
+        throw new Error(response.message);
+      }
 
       await new Promise((resolve) => setTimeout(resolve, 250));
       revalidatePath(`/ticket/${ticketNumber}`);
-      return toFormState('SUCCESS', 'Comment Created!');
+      return toFormState('SUCCESS', 'Ticket was closed');
     }
 
     if (modalAction === TicketDetailsModalActions.CANCEL) {
-      const statusId = '3'; // Cancel
+      const statusId = TicketStatus.CANCELLED;
 
-      const response = await updateTicketStatus({
-        ticketId,
-        statusId,
-        userId,
-        comment,
-      });
+      const response: { status: string; message: string } =
+        await updateTicketStatus({
+          ticketId,
+          ticketNumber,
+          statusId,
+          userId,
+          comment,
+        });
+
+      if (response.status === 'ERROR') {
+        throw new Error(response.message);
+      }
 
       const result = await pgB2Bpool.query(
         'CALL b2btickets_dev.cmt_insert($1, $2, $3, $4, $5, $6, $7)',
@@ -449,7 +465,7 @@ export const createNewComment = async (
           ticketId,
           comment,
           'y', // isClosure -> y for Cancel
-          session.user.user_id,
+          userId,
           //@ts-ignore
           config.api.user,
           config.api.process,
@@ -459,7 +475,7 @@ export const createNewComment = async (
 
       await new Promise((resolve) => setTimeout(resolve, 250));
       revalidatePath(`/ticket/${ticketNumber}`);
-      return toFormState('SUCCESS', 'Comment Created!');
+      return toFormState('SUCCESS', 'Ticket was Cancelled');
     }
 
     const result = await pgB2Bpool.query(
@@ -468,7 +484,7 @@ export const createNewComment = async (
         ticketId,
         comment,
         'n',
-        session.user.user_id,
+        userId,
         //@ts-ignore
         config.api.user,
         config.api.process,
@@ -487,21 +503,33 @@ export const createNewComment = async (
 
 export async function updateTicketStatus({
   ticketId,
+  ticketNumber,
   statusId,
-  userId,
   comment,
 }: {
   ticketId: string;
+  ticketNumber: string;
   statusId: string;
-  userId: string;
   comment: string;
 }) {
   try {
-    // TODO Enable below line
-    // await checkAuthenticationAndAdminRole();
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     const session = await getServerSession(options);
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    //@ts-ignore
+    const userId = session.user.user_id;
+
+    // Only Admin and Ticket Handler Can Update Status
+    if (
+      !userHasRole(session, AppRoleTypes.Admin) &&
+      !userHasRole(session, AppRoleTypes.B2B_TicketHandler)
+    ) {
+      redirect(`/api/auth/signin?callbackUrl=/ticket/${ticketNumber}`);
+    }
 
     const result = await pgB2Bpool.query(
       'CALL b2btickets_dev.tck_ticket_status_update($1, $2, $3, $4, $5, $6, $7)',
@@ -517,8 +545,7 @@ export async function updateTicketStatus({
       ]
     );
 
-    revalidatePath('/tickets');
-
+    revalidatePath(`/ticket/${ticketNumber}`);
     return {
       status: `SUCCESS`,
       message: `Ticket was updated successfuly`,

@@ -90,7 +90,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
         <TableHead>
           <TableRow sx={{ whiteSpace: 'nowrap' }}>
             {columnsArray.map((item: any, id: number) => (
-              <TableCell key={id} align="center">
+              <TableCell key={id} align="center" className="label">
                 {item}
               </TableCell>
             ))}
@@ -134,7 +134,13 @@ export const TicketsList: React.FC<TicketsListProps> = ({ tickets }) => {
             <TableCell data-label="Opened" align="center">
               {formatDate(item.Opened)}
             </TableCell>
-            <TableCell data-label="Title" align="center">
+            <TableCell
+              style={{
+                whiteSpace: 'normal',
+              }}
+              data-label="Title"
+              align="center"
+            >
               {item.Title}
             </TableCell>
             <TableCell data-label="Category" align="center">
