@@ -147,3 +147,9 @@ export const TicketStatusColors = {
   CANCELLED: '#dc5743',
   CLOSED: '#3d8d52',
 };
+
+export enum FilterTicketsStatus {
+  All = 'All Tickets',
+  Open = 'Open Tickets',
+  Closed = 'Resolved Tickets',
+}

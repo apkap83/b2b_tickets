@@ -39,12 +39,12 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
 
   const ticketStatus = ticketDetails[0].status_id;
 
-  console.log('ticketDetails', ticketDetails);
   // Custom Hook for ESC Key Press
   useEscKeyListener(() => setShowNewComment(false));
 
   if (ticketDetails.length === 0) return;
 
+  console.log('ticketDetails', ticketDetails);
   const ticketNumber = ticketDetails[0]['ticket_number'];
   const title = ticketDetails[0]['title'];
   const category = ticketDetails[0]['category_name'];
@@ -57,6 +57,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   const userName = ticketDetails[0]['username'];
   const cliValue = ticketDetails[0]['cli'];
   const occurrenceDate = ticketDetails[0]['occurrence_date'];
+  const greekOpenDate = getGreekDateFormat(ticketDetails[0]['open_date']);
   const greekOccurrenceDate = getGreekDateFormat(occurrenceDate);
   const problemDescription = ticketDetails[0]['description'];
   const commentsArray: TicketComment[] = ticketDetails[0]['comments'];
@@ -250,6 +251,14 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                   >
                     {ticketDetails[0].status_name}
                   </span>
+                </div>
+              </div>
+              <div className="w-full justify-center items-center gap-2.5 inline-flex">
+                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
+                  Ticket Creation
+                </div>
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                  {greekOpenDate}
                 </div>
               </div>
               <div className="w-full justify-center items-center gap-2.5 inline-flex">

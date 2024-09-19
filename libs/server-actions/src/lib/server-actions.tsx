@@ -24,6 +24,8 @@ import {
   TicketFormState,
   AppRoleTypes,
   TicketStatus,
+  TicketStatusName,
+  FilterTicketsStatus,
 } from '@b2b-tickets/shared-models';
 
 import {
@@ -90,6 +92,117 @@ export const getAllTicketsForCustomer = async (): Promise<Ticket[]> => {
     const res = await pgB2Bpool.query(query, [customerName]);
 
     return res?.rows as Ticket[];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getFilteredTicketsForCustomer = async (
+  query: string,
+  currentPage: number
+) => {
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+  const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
+
+  //@ts-ignore
+  const session = await getServerSession(options);
+
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/`);
+  }
+  //@ts-ignore
+  const userId = session.user.user_id;
+
+  //@ts-ignore
+  const customerId = session.user.customer_id;
+
+  //@ts-ignore
+  const customerName = session.user.customer_name;
+
+  try {
+    // Artificial Delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // In case there is no Customer Id then return all
+    if (customerId === '-1') {
+      let sqlExpression = '';
+      if (query === FilterTicketsStatus.Open)
+        sqlExpression = `WHERE "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
+      if (query === FilterTicketsStatus.Closed)
+        sqlExpression = `WHERE "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
+
+      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression} order by "Opened" DESC 
+      LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}
+      `;
+      const res = await pgB2Bpool.query(sqlQuery);
+      return res?.rows as Ticket[];
+    }
+
+    let sqlExpression = '';
+    if (query === FilterTicketsStatus.Open)
+      sqlExpression = `AND "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
+    if (query === FilterTicketsStatus.Closed)
+      sqlExpression = `AND "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
+
+    // Filter Tickets View by Customer Name
+    const sqlQuery = `SELECT * FROM tickets_v where "Customer" = $1 ${sqlExpression} order by "Opened" DESC 
+       LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}
+      `;
+
+    const res = await pgB2Bpool.query(sqlQuery, [customerName]);
+
+    return res?.rows as Ticket[];
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getNumOfTickets = async (query: string): Promise<number> => {
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+  //@ts-ignore
+  const session = await getServerSession(options);
+
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/`);
+  }
+  //@ts-ignore
+  const userId = session.user.user_id;
+
+  //@ts-ignore
+  const customerId = session.user.customer_id;
+
+  //@ts-ignore
+  const customerName = session.user.customer_name;
+
+  try {
+    // Artificial Delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // In case there is no Customer Id then return all
+    if (customerId === '-1') {
+      let sqlExpression = '';
+      if (query === FilterTicketsStatus.Open)
+        sqlExpression = `WHERE "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
+      if (query === FilterTicketsStatus.Closed)
+        sqlExpression = `WHERE "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
+
+      const sqlQuery = `SELECT count(*) FROM tickets_v ${sqlExpression}`;
+      const res = await pgB2Bpool.query(sqlQuery);
+      return res?.rows[0].count as number;
+    }
+
+    let sqlExpression = '';
+    if (query === FilterTicketsStatus.Open)
+      sqlExpression = `AND "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
+    if (query === FilterTicketsStatus.Closed)
+      sqlExpression = `AND "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
+
+    // Filter Tickets View by Customer Name
+    const sqlQuery = `SELECT count(*) FROM tickets_v where "Customer" = $1 ${sqlExpression}`;
+    const res = await pgB2Bpool.query(sqlQuery, [customerName]);
+
+    return res?.rows[0].count as number;
   } catch (error) {
     throw error;
   }

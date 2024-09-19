@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
-import { Pagination } from '@b2b-tickets/ui';
+import { PaginationOld } from '@b2b-tickets/ui';
 import { renderActiveness } from '@b2b-tickets/ui';
 import slice from 'lodash/slice';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
@@ -19,6 +19,7 @@ import { DisableUser } from './Buttons/DisableUser';
 import clsx from 'clsx';
 import { updateAuthMethodForUser } from '@b2b-tickets/admin-server-actions';
 import styles from './css/UsersTab.module.scss';
+import config from '@b2b-tickets/config';
 
 const userDetailsInitalState = {
   firstName: null,
@@ -45,7 +46,7 @@ export function UsersTab({ usersList, rolesList }) {
     userDetails: userDetailsInitalState,
   });
 
-  const itemsPerPage = 10;
+  const itemsPerPage = config.TICKET_ITEMS_PER_PAGE;
 
   const paginatedUsersList = slice(
     usersList,
@@ -186,7 +187,7 @@ export function UsersTab({ usersList, rolesList }) {
             Create User
           </button>
         </div>
-        <Pagination
+        <PaginationOld
           totalItems={usersList?.length || 0}
           pageSize={itemsPerPage}
           activePage={activePage}
