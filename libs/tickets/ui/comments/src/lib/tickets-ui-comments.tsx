@@ -66,26 +66,27 @@ export function TicketsUiComments({ comments }: { comments: TicketComment[] }) {
                         </div>
                       </div>
                       {item.is_closure === 'y' ? (
-                        <div className="inline text-right border p-1 text-[#3d8d52] text-sm">
-                          Closing Comment
+                        <div>
+                          <div className="inline text-right border p-1 text-[#3d8d52] text-xs whitespace-nowrap">
+                            Closing Comment
+                          </div>
+                          {userHasPermission(
+                            session,
+                            AppPermissionTypes.Delete_Comments
+                          ) ? (
+                            <IconButton
+                              onClick={() => {
+                                alert('Postgres Function not implemented yet');
+                              }}
+                              className="flex flex-col justify-center items-center"
+                            >
+                              <RiChatDeleteFill
+                                size="25"
+                                color="rgba(104, 112, 250, .75)"
+                              />
+                            </IconButton>
+                          ) : null}
                         </div>
-                      ) : null}
-
-                      {userHasPermission(
-                        session,
-                        AppPermissionTypes.Delete_Comments
-                      ) ? (
-                        <IconButton
-                          onClick={() => {
-                            alert('Postgres Function not implemented yet');
-                          }}
-                          className="flex flex-col justify-center items-center"
-                        >
-                          <RiChatDeleteFill
-                            size="25"
-                            color="rgba(104, 112, 250, .75)"
-                          />
-                        </IconButton>
                       ) : null}
                     </div>
                     <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">

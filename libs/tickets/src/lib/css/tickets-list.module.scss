@@ -13,6 +13,25 @@
   }
 }
 
+.dropDownMenuFilter {
+  padding: 0;
+  margin: 0;
+
+  div {
+    font-weight: 400;
+    color: rgb(15, 11, 11);
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin: 0;
+    height: 33px;
+    min-height: 0;
+    border-radius: 5px;
+    border: 1px solid #141b2d50;
+  }
+}
+
 @media only screen and (max-width: 1063px) {
   .ticketsList {
     thead {
