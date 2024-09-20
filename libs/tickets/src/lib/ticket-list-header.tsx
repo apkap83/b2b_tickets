@@ -1,15 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import { Typography } from '@mui/material';
-import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
-import {
-  Ticket,
-  TicketStatusName,
-  TicketStatusColors,
-  AppRoleTypes,
-  FilterTicketsStatus,
-} from '@/libs/shared-models/src';
+import { userHasRole } from '@b2b-tickets/utils';
+import { AppRoleTypes, FilterTicketsStatus } from '@/libs/shared-models/src';
 import { NewTicketModal } from './new-ticket-modal';
 
 import Button from '@mui/material/Button';
@@ -19,12 +13,15 @@ import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { VscFilterFilled } from 'react-icons/vsc';
 import styles from './css/tickets-list.module.scss';
 
+import clsx from 'clsx';
+
 export const TicketListHeader = () => {
   const [showCreateTicketModal, setShowCreateTicketModal] = useState(false);
   const { data: session, status } = useSession();
 
   return (
     <Box
+      className={clsx(styles.ticketDetailsContainer)}
       display="flex"
       justifyContent="space-between"
       alignItems="center"
@@ -78,10 +75,7 @@ const TicketFilter = () => {
   const pathname = usePathname();
   const { replace } = useRouter();
 
-  // Inside the Search Component...
   const handleFilter = (term: FilterTicketsStatus) => {
-    console.log(`Searching... ${term}`);
-
     const params = new URLSearchParams(searchParams);
     if (term) {
       if (term === FilterTicketsStatus.All) {
@@ -97,25 +91,53 @@ const TicketFilter = () => {
     replace(`${pathname}?${params.toString()}`);
   };
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside of it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setTicketFilterDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div
-      className={`${styles.dropDownMenuFilter} dropdown dropdown-end`}
+      ref={dropdownRef}
+      className={`${styles.dropDownMenuFilter} flow-root dropdown`}
       onClick={toggleDropDown}
     >
-      <div tabIndex={0} role="button" className="btn m-1">
-        {searchParams.get('query')?.toString() === FilterTicketsStatus.All ? (
+      <div
+        tabIndex={0}
+        role="button"
+        className={clsx('btn m-1 flex justify-center items-center shadow-md', {
+          [`${styles.myHover}`]: isTicketFilterDropdownOpen,
+        })}
+      >
+        {searchParams.get('query')?.toString() === FilterTicketsStatus.All ||
+        searchParams.get('query')?.toString() == undefined ? (
           <VscFilterFilled color="#514f4f" />
         ) : (
           <>
             <VscFilterFilled />
-            {searchParams.get('query')?.toString()}
+            <span>{searchParams.get('query')?.toString()}</span>
           </>
         )}
       </div>
       {isTicketFilterDropdownOpen ? (
         <ul
           tabIndex={0}
-          className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+          className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-lg"
         >
           <li
             onClick={() => {

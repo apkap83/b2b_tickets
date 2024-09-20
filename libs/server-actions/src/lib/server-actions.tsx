@@ -692,3 +692,20 @@ export const validateReCaptcha = async (token: string) => {
     throw error;
   }
 };
+
+// import { Server } from 'socket.io';
+// export const UpdateTicketStatus = async () => {
+//   const response = await fetch('http://localhost:3000/api/socket', {
+//     method: 'POST',
+//     body: JSON.stringify({}),
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//   });
+
+//   if (!response.ok) {
+//     throw new Error('Failed to trigger ticket update');
+//   }
+
+//   return await response.json();
+// };
