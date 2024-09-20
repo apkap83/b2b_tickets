@@ -34,10 +34,7 @@ const App: React.FC = async ({
       <TicketListHeader />
 
       <Suspense key={query + currentPage} fallback={<MyFallBack />}>
-        {/* <div> */}
         <TicketsList query={query} currentPage={currentPage} />
-        {/* <MyFallBack /> */}
-        {/* </div> */}
       </Suspense>
       <div className="pt-5 flex justify-between items-center">
         <div>Total Items: {totalTickets}</div>
@@ -53,10 +50,6 @@ const Skeleton = ({ className }: any) => (
     </span>
     <br />
   </div>
-);
-
-const SVGSkeleton = ({ className }: any) => (
-  <svg className={className + ' animate-pulse rounded bg-gray-300'} />
 );
 
 const MyFallBack = () => {
@@ -442,4 +435,5 @@ const MyFallBack = () => {
     </>
   );
 };
+
 export default App;

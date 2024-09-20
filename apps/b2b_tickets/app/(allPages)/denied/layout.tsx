@@ -6,11 +6,6 @@ export default function AllPagesLayout({ children }: { children: ReactNode }) {
     <>
       <NavBar />
       {children}
-      <div
-        className={`bg-gray-900 text-white text-center text-2xl py-3 z-10 fixed w-full bottom-0`}
-      >
-        NMS Team {new Date().getFullYear()}
-      </div>
     </>
   );
 }
