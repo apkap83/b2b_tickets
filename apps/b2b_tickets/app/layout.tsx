@@ -11,11 +11,11 @@ import '@fontsource/roboto/700.css';
 import './global.css';
 import './sass/main.scss';
 import { NavBar } from '@b2b-tickets/ui';
+import { Footer } from '@b2b-tickets/ui';
 
 import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
 import { AppThemeProvider } from '@b2b-tickets/ui-theme';
-import { Paper } from '@mui/material';
-import * as k from '@b2b-tickets/db-access';
+
 // TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
 
@@ -24,11 +24,15 @@ export const metadata = {
   description: 'NOVA B2B Ticketing System',
 };
 
-export default function RootLayout({
+import { getServerSession } from 'next-auth';
+import { options } from '@b2b-tickets/auth-options';
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(options);
   return (
     <html lang="en">
       <head>
@@ -45,8 +49,9 @@ export default function RootLayout({
             <AppThemeProvider>
               <ToastProvider>
                 <main>
-                  {/* <NavBar /> */}
+                  {session ? <NavBar /> : null}
                   {children}
+                  {session ? <Footer /> : null}
                 </main>
               </ToastProvider>
             </AppThemeProvider>

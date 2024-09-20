@@ -10,6 +10,9 @@ nx g @nrwl/js:lib config
 # Create NavBar component
 nx g component NavBar --project ui --export --tags type:ui,scope=b2b_tickets
 
+# Create Footer component
+nx g component Footer --project ui --export --tags type:ui,scope=b2b_tickets
+
 # Creating ui-theme library under libs folder
 nx g lib --directory libs --tags type:ui,scope:b2b_tickets
 
