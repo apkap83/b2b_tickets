@@ -20,8 +20,8 @@ import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 // import StyledComponentsRegistry from './lib/registry';
 
 export const metadata = {
-  title: 'NOVA - B2B Tickets',
-  description: 'NOVA B2B Ticketing System',
+  title: 'Nova - B2B Tickets',
+  description: 'Nova Business To Business Ticketing System',
 };
 
 import { getServerSession } from 'next-auth';
