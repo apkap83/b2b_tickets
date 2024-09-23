@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
+import { v4 as uuidv4 } from 'uuid';
 import { AppRoleTypes } from '@b2b-tickets/shared-models';
 
 // Helper function to get client IP
@@ -17,10 +18,13 @@ function logIpMiddleware(req) {
   const requestHeaders = new Headers(req.headers);
   const clientIp = getClientIp(req);
 
+  // Generate a session ID (UUID) for each request
+  const sessionId = uuidv4();
+
   // Add new request headers
   requestHeaders.set('request-ip', clientIp);
   requestHeaders.set('request-url', req.url);
-
+  requestHeaders.set('session-id', sessionId);
   // Log IP and URL
   //   console.log('*** IP MIDDLEWARE IS NOW EXECUTED');
   //   console.log('*** Request IP:', clientIp);
@@ -40,10 +44,10 @@ const authMiddleware = withAuth(
     const roles = req.nextauth.token.roles;
     const permissions = req.nextauth.token.permissions;
 
-    console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
-    console.log('*** pathName:', pathName);
-    console.log('*** roles:', roles);
-    console.log('*** permissions:', permissions);
+    // console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
+    // console.log('*** pathName:', pathName);
+    // console.log('*** roles:', roles);
+    // console.log('*** permissions:', permissions);
 
     if (!roles) {
       return NextResponse.rewrite(new URL('/signin', req.url));
@@ -115,7 +119,5 @@ export async function middleware(req) {
 
 // Config for applying middleware
 export const config = {
-  matcher: [
-    '/:path*', // Ensure IP logging applies to all paths
-  ],
+  matcher: ['/:path*'],
 };

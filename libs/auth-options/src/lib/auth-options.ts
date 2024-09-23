@@ -17,25 +17,29 @@ import { Client, SearchOptions } from 'ldapts';
 import { createUserIfNotExistsAfterLDAPSuccessfullAuth } from '@b2b-tickets/admin-server-actions';
 import { validateReCaptcha } from '@b2b-tickets/server-actions';
 
-// import { logAuth } from '@b2b-tickets/logging';
+import { logAuth } from '@b2b-tickets/logging';
 
 import { headers } from 'next/headers';
 import { strategy } from 'sharp';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 type CredentialsType = Record<'userName' | 'password', string> | undefined;
 
 const tryLocalAuthentication = async (credentials: CredentialsType) => {
   const headersList = headers();
   const reqIP = headersList.get('request-ip');
   const reqURL = headersList.get('request-url');
+  const sessionId = headersList.get('session-id');
   try {
-    // logAuth.info(
-    //   `Trying Local authentication for user name: ${credentials.userName}`,
-    //   {
-    //     reqIP,
-    //     reqURL,
-    //   }
-    // );
+    logAuth.info(
+      `Trying Local authentication for user name: ${
+        credentials ? credentials.userName : 'Not Given'
+      }`,
+      {
+        reqIP,
+        reqURL,
+        sessionId,
+      }
+    );
     const foundUser = (await B2BUser.scope('withPassword').findOne({
       where: {
         username: credentials!.userName,
@@ -48,15 +52,24 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
     })) as B2BUser & { AppRoles: AppRole[] };
 
     if (foundUser) {
-      // logAuth.debug(
-      //   `User with user name '${foundUser.userName}' was found in DB`,
-      //   {
-      //     reqIP,
-      //     reqURL,
-      //   }
-      // );
+      logAuth.info(
+        `User with user name '${foundUser.username}' was found in DB`,
+        {
+          reqIP,
+          reqURL,
+          sessionId,
+        }
+      );
 
       if (foundUser.is_locked === 'y') {
+        logAuth.info(
+          `User with user name '${foundUser.username}' is currently locked`,
+          {
+            reqIP,
+            reqURL,
+            sessionId,
+          }
+        );
         throw new Error('User is currently locked');
       }
 
@@ -66,11 +79,11 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
       );
 
       if (match) {
-        // logAuth.debug(`Given password and DB passwords match`, {
-        //   reqIP,
-        //   reqURL,
-        // });
-        delete foundUser.password;
+        logAuth.info(`Given password and DB passwords match`, {
+          reqIP,
+          reqURL,
+          sessionId,
+        });
 
         const roles = foundUser.AppRoles.map((role) => role.roleName);
 
@@ -82,13 +95,6 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
           }))
         );
 
-        const plainUser = foundUser.toJSON();
-        delete plainUser.password;
-        // logAuth.debug(`Found User in DB: ${JSON.stringify(plainUser)}`, {
-        //   reqIP,
-        //   reqURL,
-        // });
-
         // Find Customer Name from Customer ID
         await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
         const queryForCustomerName =
@@ -98,29 +104,51 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
         ]);
 
         const customer_name = customerNameRes.rows[0]['customer_name'];
-        return [
-          foundUser.is_active,
-          {
-            user_id: foundUser.user_id,
-            customer_id: foundUser.customer_id,
-            customer_name: customer_name,
-            firstName: foundUser.first_name,
-            lastName: foundUser.last_name,
-            userName: foundUser.username,
-            email: foundUser.email,
-            mobilePhone: foundUser.mobile_phone,
-            authenticationType: foundUser.authentication_type,
-            roles,
-            permissions,
+
+        const userDetails = {
+          user_id: foundUser.user_id,
+          customer_id: foundUser.customer_id,
+          customer_name: customer_name,
+          firstName: foundUser.first_name,
+          lastName: foundUser.last_name,
+          userName: foundUser.username,
+          email: foundUser.email,
+          mobilePhone: foundUser.mobile_phone,
+          authenticationType: foundUser.authentication_type,
+          roles,
+          permissions,
+
+          // Overwriting the toString method
+          toString: function () {
+            return `User ID: ${this.user_id}, Customer ID: ${this.customer_id}, Customer Name: ${this.customer_name}, Name: ${this.firstName} ${this.lastName}, Username: ${this.userName} Email: ${this.email}, Mobile Phone: ${this.mobilePhone}, Auth Type: ${this.authenticationType}`;
           },
-        ];
+        };
+
+        logAuth.info(`Logged In User Details: ${userDetails}`, {
+          reqIP,
+          reqURL,
+          sessionId,
+        });
+
+        return [foundUser.is_active, userDetails];
       }
     }
+    logAuth.error(
+      `Invalid Credentials Attempt for Username: ${
+        credentials ? credentials.userName : 'Not Given'
+      }`,
+      {
+        reqIP,
+        reqURL,
+        sessionId,
+      }
+    );
   } catch (error: any) {
-    // logAuth.error(error, {
-    //   reqIP,
-    //   reqURL,
-    // });
+    logAuth.error(error, {
+      reqIP,
+      reqURL,
+      sessionId,
+    });
     throw new Error(error);
   }
   return [undefined, null];
@@ -143,9 +171,34 @@ export const options = {
         const headersList = headers();
         const reqIP = headersList.get('request-ip');
         const reqURL = headersList.get('request-url');
+        const sessionId = headersList.get('session-id');
 
-        if (!credentials) return null;
+        if (!credentials) throw new Error('No credentials provided');
 
+        if (config.CaptchaIsActive) {
+          // reCAPTCHA VALIDATION FIRST
+          //@ts-ignore
+          const captchaToken = credentials.captchaToken;
+
+          try {
+            const reCaptchaResponse = await validateReCaptcha(captchaToken);
+            if (!reCaptchaResponse) {
+              throw new Error('reCAPTCHA backend validation failed');
+            }
+          } catch (error: any) {
+            logAuth.error(
+              `reCAPTCHA backend validation error: ${error.message}`,
+              {
+                reqIP,
+                reqURL,
+                sessionId,
+              }
+            );
+            throw new Error(error.errors.join(', '));
+          }
+        }
+
+        // CREDENTIALS VALIDATION
         try {
           const validationSchema = Yup.object({
             userName: Yup.string().required('User name is required'),
@@ -153,11 +206,12 @@ export const options = {
           });
           await validationSchema.validate(credentials, { abortEarly: false });
         } catch (error: any) {
-          // logAuth.error(error, {
-          //   reqIP,
-          //   reqURL,
-          // });
-          throw new Error(error.errors.join(', '));
+          logAuth.error(`Login Page yup validation Error: ${error}`, {
+            reqIP,
+            reqURL,
+            sessionId,
+          });
+          throw new Error(error);
         }
 
         // For Local Account (Authentication Type = LOCAL) - Try to authenticate
@@ -166,43 +220,23 @@ export const options = {
 
         if (localAuthUserDetails) {
           if (localAccountActive === 'n') {
-            // logAuth.info(`User '${credentials.userName}' is currently locked`, {
-            //   reqIP,
-            //   reqURL,
-            // });
+            logAuth.info(`User '${credentials.userName}' is currently locked`, {
+              reqIP,
+              reqURL,
+              sessionId,
+            });
             throw new Error('User is currently locked');
           }
 
-          // localAuthUserDetails
-          //   id: '2',
-          //   firstName: 'Administrator',
-          //   lastName: 'Administrator',
-          //   userName: 'admin',
-          //   email: 'nms_system_support@nova.gr',
-          //   authenticationType: 'LOCAL',
-          //   roles: [ 'Admin' ],
-          //   permissions: [
-          //     {
-          //       permissionName: 'API_Admin',
-          //       permissionEndPoint: null,
-          //       permissionDescription: 'Full Access for All API Endpoints'
-          //     },
-          //     {
-          //       permissionName: 'API_Security_Management',
-          //       permissionEndPoint: null,
-          //       permissionDescription: 'Full Access for All Security Endpoints'
-          //     }
-          //   ]
-          // }
-
           return new Promise((resolve, reject) => {
-            // logAuth.info(
-            //   `Local User '${credentials.userName}' has been successfully authanticated`,
-            //   {
-            //     reqIP,
-            //     reqURL,
-            //   }
-            // );
+            logAuth.info(
+              `Local User '${credentials.userName}' has been successfully authenticated`,
+              {
+                reqIP,
+                reqURL,
+                sessionId,
+              }
+            );
             resolve(localAuthUserDetails);
           });
         }
@@ -220,24 +254,26 @@ export const options = {
     updateAge: 5 * 60, // Session is refreshed every 5 minutes (in seconds)
   },
   callbacks: {
-    async signIn({ credentials }) {
-      // Get the reCAPTCHA token from the credentials
-      const captchaToken = credentials.captchaToken;
-
-      try {
-        const reCaptchaValidResponse = await validateReCaptcha(captchaToken);
-
-        if (!reCaptchaValidResponse) {
-          throw new Error('reCAPTCHA validation failed');
-        }
-
-        // Proceed with login after successful reCAPTCHA validation
-        return true;
-      } catch (error) {
-        console.error('reCAPTCHA validation error:', error);
-        return false;
-      }
-    },
+    // const headersList = headers();
+    // const reqIP = headersList.get('request-ip');
+    // const reqURL = headersList.get('request-url');
+    // // Get the reCAPTCHA token from the credentials
+    // const captchaToken = credentials.captchaToken;
+    // try {
+    //   const reCaptchaValidResponse = await validateReCaptcha(captchaToken);
+    //   if (!reCaptchaValidResponse) {
+    //     throw new Error('reCAPTCHA backend validation failed');
+    //   }
+    //   // Proceed with login after successful reCAPTCHA validation
+    //   return true;
+    // } catch (error: any) {
+    //   logAuth.error(`reCAPTCHA backend validation error: ${error.message}`, {
+    //     reqIP,
+    //     reqURL,
+    //   });
+    //   return false;
+    // }
+    // },
     async jwt({ token, user }) {
       if (user) {
         token.user_id = user.user_id;

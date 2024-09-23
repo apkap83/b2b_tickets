@@ -11,7 +11,11 @@ module.exports = {
     ...createGlobPatternsForDependencies(__dirname),
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        myCustomFont: ['FrederickaTheGreat', 'serif'], // Add your custom font here
+      },
+    },
   },
   plugins: [require('daisyui')],
 };

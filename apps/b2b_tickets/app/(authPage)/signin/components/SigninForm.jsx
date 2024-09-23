@@ -11,6 +11,7 @@ import * as Yup from 'yup';
 
 import { FaKey } from 'react-icons/fa';
 import clsx from 'clsx';
+import { config } from '@b2b-tickets/config';
 
 const FieldError = ({ formik, name }) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
@@ -61,11 +62,13 @@ export default function SignInForm({ providers, csrfToken }) {
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
-      if (!captcha) {
-        setError('Verify reCAPTCHA!');
-        setSubmitting(false);
+      if (config.CaptchaIsActive) {
+        if (!captcha) {
+          setError('Verify reCAPTCHA!');
+          setSubmitting(false);
 
-        return;
+          return;
+        }
       }
       setError(null);
       setIsLoading(true);
@@ -93,26 +96,44 @@ export default function SignInForm({ providers, csrfToken }) {
   return (
     <div
       className={`w-[500px] relative shadow-md rounded-2xl flex flex-col justify-center 
-      items-center p-5  backdrop-blur-lg bg-gray-100 opacity-95`}
+      items-center p-7  backdrop-blur-lg bg-gray-100 border border-[#26295375]
+
+      `}
       style={{
-        transform: 'translateY(-25%)',
+        transform: 'translateY(-20%)',
       }}
     >
-      <h1
-        className={`font-black text-2xl bg-gradient-to-r from-blue-900  to-green-700 inline-block text-transparent bg-clip-text mb-7`}
-        style={{
-          backgroundColor: 'red',
-          WebkitBackgroundClip: 'text',
-        }}
+      <div
+        // className={`font-black justify-center tracking-wider text-2xl bg-gradient-to-r from-[#262953] to-[#3f3d3d] inline-block text-transparent bg-clip-text mb-7`}
+        className={`w-[300px] mb-2`}
+        // style={{
+        //   fontFamily: 'Manrope, sans-serif',
+        //   textAlign: 'center',
+        // }}
       >
-        Nova B2B - Sign In
-      </h1>
+        <div
+          className={`text-3xl tracking-widest text-[#262953] font-bold
+                        border-[#7b7b7c] pb-5 mb-5
+              border-b p-1
+              font-myCustomFont
+              text-center
+          `}
+          // style={{
+          //   fontFamily: 'Courier New',
+          // }}
+        >
+          NOVA Platinum Support
+        </div>
+        <div className="text-xl text-left mt-[.75rem] text-[#1e225b] font-semibold">
+          Login
+        </div>
+      </div>
 
       <div className="w-[300px]">
         <form onSubmit={formik.handleSubmit}>
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
           <div className="mb-5">
-            <label className="input input-bordered flex items-center gap-2">
+            <label className="input input-bordered flex items-center gap-2 dark:bg-white ">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 16 16"
@@ -127,7 +148,7 @@ export default function SignInForm({ providers, csrfToken }) {
                 value={formik.values.userName}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="grow"
+                className="grow text-black"
                 placeholder="User Name"
               />
             </label>
@@ -135,7 +156,7 @@ export default function SignInForm({ providers, csrfToken }) {
           </div>
 
           <div className="mb-5">
-            <label className="input input-bordered flex items-center gap-2">
+            <label className="input input-bordered flex items-center gap-2 dark:bg-white dark:text-black">
               <FaKey className="w-4 h-4 opacity-70" />
               <input
                 type="password"
@@ -143,21 +164,29 @@ export default function SignInForm({ providers, csrfToken }) {
                 value={formik.values.password}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="grow"
+                className="grow text-black"
                 placeholder="Password"
               />
             </label>
             <FieldError formik={formik} name="password" />
           </div>
 
-          <div>
+          {config.CaptchaIsActive ? (
+            <div>
+              <ReCAPTCHA
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+                onChange={setCaptcha}
+              />
+            </div>
+          ) : null}
+          {/* <div>
             <ReCAPTCHA
               sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
               onChange={setCaptcha}
             />
-          </div>
+          </div> */}
           {error && <p className="text-red-500 text-center">{error}</p>}
-          <div className="mt-10 flex justify-around">
+          <div className="mt-5 flex justify-around">
             <SignInButton
               pending={formik.isSubmitting}
               label="Sign in"
@@ -177,9 +206,14 @@ export default function SignInForm({ providers, csrfToken }) {
 const SignInButton = ({ pending, label, loadingText, isValid, loading }) => {
   return (
     <button
-      className={clsx('btn btn-primary text-white shadow-lg', {
-        'text-white-500 cursor-not-allowed': pending || loading,
-      })}
+      className={clsx(
+        `btn btn-primary bg-[#262953] text-white shadow-md hover:bg-[#2a2c53] hover:cursor-pointer
+        border border-[#262953]
+        `,
+        {
+          'text-white-500 cursor-not-allowed': pending || loading,
+        }
+      )}
       style={{
         width: '105px',
       }}

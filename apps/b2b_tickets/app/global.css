@@ -1,3 +1,26 @@
+/* styles/globals.css */
+@font-face {
+  font-family: 'EncodeSans';
+  src: url('/fonts/EncodeSans/EncodeSans-ExtraBold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'EncodeSans_Condensed_ExtraBold';
+  src: url('/fonts/EncodeSans/EncodeSans-ExtraBold.woff2') format('woff2');
+  font-weight: 900;
+  font-style: bold;
+}
+
+@font-face {
+  font-family: 'FrederickaTheGreat';
+  src: url('/fonts/FrederickaTheGreat/FrederickatheGreat-Regular.woff2')
+    format('woff2');
+  font-weight: 300;
+  font-style: normal;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -39,6 +62,13 @@
 /* Bottom corner where two scrollbars meet */
 ::-webkit-scrollbar-corner {
   background: #000;
+}
+
+@media (prefers-color-scheme: dark) {
+  input {
+    color: white;
+    /* background-color: #222; */
+  }
 }
 
 /* html,
