@@ -4,6 +4,7 @@ import SignInForm from './components/SigninForm';
 import Image from 'next/image';
 
 import { background_nms_portal as imagePath } from '@b2b-tickets/assets';
+import { Footer } from '@b2b-tickets/ui';
 
 export default async function SignIn() {
   const providers = await getProviders();
@@ -20,6 +21,7 @@ export default async function SignIn() {
           style={{ objectFit: 'cover' }}
         />
         <SignInForm providers={providers} csrfToken={csrfToken} />
+        <Footer />
       </div>
     </>
   );
