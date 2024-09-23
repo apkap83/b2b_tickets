@@ -114,15 +114,18 @@ const TicketFilter = () => {
   return (
     <div
       ref={dropdownRef}
-      className={`${styles.dropDownMenuFilter} flow-root dropdown`}
+      className={`${styles.dropDownMenuFilter} flow-root dropdown dark:bg-white`}
       onClick={toggleDropDown}
     >
       <div
         tabIndex={0}
         role="button"
-        className={clsx('btn m-1 flex justify-center items-center shadow-md', {
-          [`${styles.myHover}`]: isTicketFilterDropdownOpen,
-        })}
+        className={clsx(
+          'btn m-1 flex justify-center items-center shadow-md dark:bg-white',
+          {
+            [`${styles.myHover}`]: isTicketFilterDropdownOpen,
+          }
+        )}
       >
         {searchParams.get('query')?.toString() === FilterTicketsStatus.All ||
         searchParams.get('query')?.toString() == undefined ? (
@@ -137,7 +140,7 @@ const TicketFilter = () => {
       {isTicketFilterDropdownOpen ? (
         <ul
           tabIndex={0}
-          className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-lg"
+          className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-lg dark:bg-white"
         >
           <li
             onClick={() => {

@@ -669,6 +669,9 @@ export async function updateTicketStatus({
 }
 
 export const validateReCaptcha = async (token: string) => {
+  // TODO - Production requires Internet for reCaptcha to work
+  // if (process.env.NODE_ENV !== 'production') return true;
+
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
   if (!secretKey) {
@@ -686,10 +689,12 @@ export const validateReCaptcha = async (token: string) => {
     );
 
     const data = await response.json();
+    console.log('data', data);
     return data.success;
   } catch (error) {
-    console.error('Error verifying reCAPTCHA', error);
-    throw error;
+    throw new Error(
+      'Cannot connect to https://www.google.com/recaptcha/api/siteverify for reCaptcha verification'
+    );
   }
 };
 

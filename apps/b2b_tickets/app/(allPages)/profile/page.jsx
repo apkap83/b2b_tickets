@@ -28,7 +28,7 @@ const MyProfile = () => {
 
   return (
     <div className="absolute inset-0 flex justify-center items-center -translate-y-5 bg-black bg-opacity-50">
-      <div className="card lg:card-side bg-base-100 shadow-xl p-10">
+      <div className="card lg:card-side bg-base-100 shadow-xl p-10 dark:bg-white">
         <div className="card-body py-1">
           <h2 className="card-title text-center">User Profile Details</h2>
           <label className="inline">
