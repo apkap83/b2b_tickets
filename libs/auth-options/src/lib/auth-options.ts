@@ -2,7 +2,7 @@ import * as Yup from 'yup';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { config } from '@b2b-tickets/config';
-import { AuthenticationTypes } from '@b2b-tickets/shared-models';
+import { AuthenticationTypes, ErrorCode } from '@b2b-tickets/shared-models';
 import {
   AppPermission,
   AppRole,
@@ -22,6 +22,7 @@ import { logAuth } from '@b2b-tickets/logging';
 import { headers } from 'next/headers';
 import { strategy } from 'sharp';
 import { signIn, signOut } from 'next-auth/react';
+
 type CredentialsType = Record<'userName' | 'password', string> | undefined;
 
 const tryLocalAuthentication = async (credentials: CredentialsType) => {
@@ -163,9 +164,9 @@ export const options = {
           label: 'User Name',
           type: 'text',
           placeholder: '',
-          value: 'admin',
         },
-        password: { label: 'Password', type: 'password', value: 'a12345' },
+        password: { label: 'Password', type: 'password' },
+        totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
       },
       async authorize(credentials, req) {
         const headersList = headers();
@@ -173,6 +174,7 @@ export const options = {
         const reqURL = headersList.get('request-url');
         const sessionId = headersList.get('session-id');
 
+        console.log('credentials', credentials);
         if (!credentials) throw new Error('No credentials provided');
 
         if (config.CaptchaIsActive) {
@@ -228,6 +230,30 @@ export const options = {
             throw new Error('User is currently locked');
           }
 
+          // If Two Factor Authentication is Enabled
+          if (config.TwoFactorEnabled) {
+            if (!credentials.totpCode) {
+              logAuth.info(`Requesting OTP Autentication`, {
+                reqIP,
+                reqURL,
+                sessionId,
+              });
+              throw new Error(ErrorCode.SecondFactorRequired);
+            }
+
+            return new Promise((resolve, reject) => {
+              logAuth.info(
+                `Local User '${credentials.userName}' has been successfully authenticated`,
+                {
+                  reqIP,
+                  reqURL,
+                  sessionId,
+                }
+              );
+              resolve(localAuthUserDetails);
+            });
+          }
+
           return new Promise((resolve, reject) => {
             logAuth.info(
               `Local User '${credentials.userName}' has been successfully authenticated`,
@@ -240,7 +266,7 @@ export const options = {
             resolve(localAuthUserDetails);
           });
         }
-        throw new Error('Invalid credentials');
+        throw new Error(ErrorCode.IncorrectPassword);
       },
     }),
   ],
