@@ -99,7 +99,8 @@ export const getAllTicketsForCustomer = async (): Promise<Ticket[]> => {
 
 export const getFilteredTicketsForCustomer = async (
   query: string,
-  currentPage: number
+  currentPage: number,
+  allPages: boolean = false
 ) => {
   await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
   const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
@@ -132,7 +133,9 @@ export const getFilteredTicketsForCustomer = async (
         sqlExpression = `WHERE "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
 
       const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression} order by "Opened" DESC 
-      LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}
+      ${
+        allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
+      }
       `;
       const res = await pgB2Bpool.query(sqlQuery);
       return res?.rows as Ticket[];
@@ -146,7 +149,7 @@ export const getFilteredTicketsForCustomer = async (
 
     // Filter Tickets View by Customer Name
     const sqlQuery = `SELECT * FROM tickets_v where "Customer" = $1 ${sqlExpression} order by "Opened" DESC 
-       LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}
+    ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
     const res = await pgB2Bpool.query(sqlQuery, [customerName]);

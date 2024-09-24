@@ -31,7 +31,7 @@ const App: React.FC = async ({
       }}
       className="relative"
     >
-      <TicketListHeader />
+      <TicketListHeader query={query} currentPage={currentPage} />
 
       <Suspense key={query + currentPage} fallback={<MyFallBack />}>
         <TicketsList query={query} currentPage={currentPage} />

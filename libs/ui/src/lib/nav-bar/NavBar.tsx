@@ -24,7 +24,7 @@ import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { toast } from 'react-hot-toast';
-import { syncDBAlterTrueAction, seedDB } from '@/libs/server-actions/src';
+// import { syncDBAlterTrueAction, seedDB } from '@/libs/server-actions/src';
 import { LoggedInIndication } from '@b2b-tickets/ui';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
@@ -133,7 +133,7 @@ export const NavBar = () => {
             <IconButton
               className="flex flex-col justify-center items-center"
               onClick={() => {
-                router.push('/tickets');
+                router.replace('/tickets');
               }}
               sx={{
                 color: isTicketsPath
