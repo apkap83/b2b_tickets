@@ -8,7 +8,7 @@ import {
   TicketStatusColors,
   AppRoleTypes,
   FilterTicketsStatus,
-} from '@/libs/shared-models/src';
+} from '@b2b-tickets/shared-models';
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 
@@ -20,10 +20,11 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import Button from '@mui/material/Button';
-
+import { TicketListHeader } from '@b2b-tickets/tickets';
 import { formatDate } from '@b2b-tickets/utils';
 import clsx from 'clsx';
 import styles from './css/tickets-list.module.scss';
+
 export const TicketsList = async ({
   query,
   currentPage,
@@ -44,6 +45,7 @@ export const TicketsList = async ({
 
   return (
     <>
+      {/* <TicketListHeader ticketsList={ticketsList} /> */}
       <Table
         sx={{
           width: '100%',

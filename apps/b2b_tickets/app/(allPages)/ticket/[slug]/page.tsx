@@ -4,7 +4,7 @@ import { TicketDetails } from '@b2b-tickets/tickets';
 
 import { getTicketDetailsForTicketId } from '@b2b-tickets/server-actions';
 
-import { TicketDetail } from '@/libs/shared-models/src';
+import { TicketDetail } from '@b2b-tickets/shared-models';
 import { redirect } from 'next/navigation';
 import { options } from '@b2b-tickets/auth-options';
 
