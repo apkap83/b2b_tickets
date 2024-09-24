@@ -12,6 +12,8 @@ import * as Yup from 'yup';
 import { FaKey } from 'react-icons/fa';
 import clsx from 'clsx';
 import { config } from '@b2b-tickets/config';
+import { TwoFactAuth } from './TwoFactAuth';
+import { ErrorCode } from '@b2b-tickets/shared-models';
 
 const FieldError = ({ formik, name }) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
@@ -24,11 +26,22 @@ const FieldError = ({ formik, name }) => {
 export default function SignInForm({ providers, csrfToken }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  const [showOTP, setShowOTP] = useState(false);
+  const [totpCode, setTotpCode] = useState('');
+
   const [error, setError] = useState(null);
   const [loading, setIsLoading] = useState(false);
 
   const [callbackUrl, setCallbackUrl] = useState('/');
 
+  const [submitButtonLabel, setSubmitButtonLabel] = useState('Sign in');
+  // Create references to User Name & Password fields
+  const userNameRef = useRef(null);
+  const userNameLabelRef = useRef(null);
+  const passwordRef = useRef(null);
+  const passwordLabelRef = useRef(null);
+  const userNamePasswordGroupRef = useRef(null);
   // Create a reference for reCAPTCHA
   const recaptchaRef = useRef(null); // New useRef for reCAPTCHA
 
@@ -57,8 +70,6 @@ export default function SignInForm({ providers, csrfToken }) {
     initialValues: {
       userName: '',
       password: '',
-      // userName: "",
-      // password: "",
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
@@ -73,21 +84,52 @@ export default function SignInForm({ providers, csrfToken }) {
       setError(null);
       setIsLoading(true);
 
-      const result = await signIn('credentials', {
+      const response = await signIn('credentials', {
         redirect: false,
         userName: values.userName,
         password: values.password,
         captchaToken: captcha,
+        totpCode,
       });
-      await new Promise((resolve) => setTimeout(resolve, 0));
 
-      if (result.error) {
-        setError(result.error);
-        setIsLoading(false);
-        recaptchaRef.current.reset(); // Reset reCAPTCHA on invalid credentials
+      if (response?.ok) {
+        window.location.href = callbackUrl;
         return;
       }
-      window.location.href = callbackUrl;
+
+      switch (response?.error) {
+        case ErrorCode.IncorrectPassword:
+          setError('Invalid user name or password');
+          setIsLoading(false);
+          if (config.CaptchaIsActive) recaptchaRef.current.reset();
+          return;
+        case ErrorCode.SecondFactorRequired:
+          setShowOTP(true);
+          setIsLoading(false);
+          setSubmitButtonLabel('Submit OTP');
+          if (userNameLabelRef.current) {
+            // userNameRef.current.style.backgroundColor = '#df9d9d';
+          }
+
+          if (passwordLabelRef.current) {
+            // passwordRef.current.style.backgroundColor = '#d4d0d0';
+          }
+
+          if (userNamePasswordGroupRef.current) {
+            userNamePasswordGroupRef.current.style.border = '1px dashed green';
+            userNamePasswordGroupRef.current.style.padding = '10px';
+          }
+
+          if (userNameRef.current) {
+            userNameRef.current.disabled = true;
+          }
+
+          if (passwordRef.current) {
+            passwordRef.current.disabled = true;
+          }
+
+          return;
+      }
     },
   });
 
@@ -132,45 +174,55 @@ export default function SignInForm({ providers, csrfToken }) {
       <div className="w-[300px]">
         <form onSubmit={formik.handleSubmit}>
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
-          <div className="mb-5">
-            <label className="input input-bordered flex items-center gap-2 dark:bg-white ">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                className="w-4 h-4 opacity-70"
+          <div ref={userNamePasswordGroupRef} className="mb-5">
+            {showOTP && <p className="text-xs text-center">Your Credentials</p>}
+            <div className="mb-5">
+              <label
+                ref={userNameLabelRef}
+                className="input input-bordered flex items-center gap-2 dark:bg-white "
               >
-                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-              </svg>
-              <input
-                type="text"
-                name="userName"
-                value={formik.values.userName}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow text-black"
-                placeholder="User Name"
-              />
-            </label>
-            <FieldError formik={formik} name="userName" />
-          </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  className="w-4 h-4 opacity-70"
+                >
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
+                </svg>
+                <input
+                  ref={userNameRef}
+                  type="text"
+                  name="userName"
+                  value={formik.values.userName}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className="grow text-black"
+                  placeholder="User Name"
+                />
+              </label>
+              <FieldError formik={formik} name="userName" />
+            </div>
 
-          <div className="mb-5">
-            <label className="input input-bordered flex items-center gap-2 dark:bg-white dark:text-black">
-              <FaKey className="w-4 h-4 opacity-70" />
-              <input
-                type="password"
-                name="password"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow text-black"
-                placeholder="Password"
-              />
-            </label>
-            <FieldError formik={formik} name="password" />
+            <div className="">
+              <label
+                ref={passwordLabelRef}
+                className="input input-bordered flex items-center gap-2 dark:bg-white dark:text-black"
+              >
+                <FaKey className="w-4 h-4 opacity-70" />
+                <input
+                  ref={passwordRef}
+                  type="password"
+                  name="password"
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className="grow text-black"
+                  placeholder="Password"
+                />
+              </label>
+              <FieldError formik={formik} name="password" />
+            </div>
           </div>
-
           {config.CaptchaIsActive ? (
             <div>
               <ReCAPTCHA
@@ -179,17 +231,22 @@ export default function SignInForm({ providers, csrfToken }) {
               />
             </div>
           ) : null}
-          {/* <div>
-            <ReCAPTCHA
-              sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-              onChange={setCaptcha}
-            />
-          </div> */}
+          {showOTP && (
+            <div>
+              <p className="text-xs pt-2 pb-2">
+                Please enter your OTP code that you received by SMS
+              </p>
+              <TwoFactAuth
+                value={totpCode}
+                onChange={(val) => setTotpCode(val)}
+              />
+            </div>
+          )}
           {error && <p className="text-red-500 text-center">{error}</p>}
           <div className="mt-5 flex justify-around">
             <SignInButton
               pending={formik.isSubmitting}
-              label="Sign in"
+              label={submitButtonLabel}
               loadingText="Loading ..."
               isValid={formik.isValid}
               isDirty={formik.dirty}
