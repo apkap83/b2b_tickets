@@ -254,26 +254,6 @@ export const options = {
     updateAge: 5 * 60, // Session is refreshed every 5 minutes (in seconds)
   },
   callbacks: {
-    // const headersList = headers();
-    // const reqIP = headersList.get('request-ip');
-    // const reqURL = headersList.get('request-url');
-    // // Get the reCAPTCHA token from the credentials
-    // const captchaToken = credentials.captchaToken;
-    // try {
-    //   const reCaptchaValidResponse = await validateReCaptcha(captchaToken);
-    //   if (!reCaptchaValidResponse) {
-    //     throw new Error('reCAPTCHA backend validation failed');
-    //   }
-    //   // Proceed with login after successful reCAPTCHA validation
-    //   return true;
-    // } catch (error: any) {
-    //   logAuth.error(`reCAPTCHA backend validation error: ${error.message}`, {
-    //     reqIP,
-    //     reqURL,
-    //   });
-    //   return false;
-    // }
-    // },
     async jwt({ token, user }) {
       if (user) {
         token.user_id = user.user_id;
