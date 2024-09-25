@@ -14,6 +14,7 @@ import clsx from 'clsx';
 import { config } from '@b2b-tickets/config';
 import { TwoFactAuth } from './TwoFactAuth';
 import { ErrorCode } from '@b2b-tickets/shared-models';
+import { authenticator } from 'otplib';
 
 const FieldError = ({ formik, name }) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
@@ -27,6 +28,7 @@ export default function SignInForm({ providers, csrfToken }) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const [captcha, setCaptcha] = useState();
   const [showOTP, setShowOTP] = useState(false);
   const [totpCode, setTotpCode] = useState('');
 
@@ -35,6 +37,12 @@ export default function SignInForm({ providers, csrfToken }) {
 
   const [callbackUrl, setCallbackUrl] = useState('/');
 
+  const [tokenTimeisRunning, setTokenTimeisRunning] = useState(false);
+  const [tokenTimeLeft, setTokenTimeLeft] = useState(
+    config.TwoFactorValiditySeconds -
+      (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
+  );
+
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Sign in');
   // Create references to User Name & Password fields
   const userNameRef = useRef(null);
@@ -42,10 +50,39 @@ export default function SignInForm({ providers, csrfToken }) {
   const passwordRef = useRef(null);
   const passwordLabelRef = useRef(null);
   const userNamePasswordGroupRef = useRef(null);
+  const captchaRef = useRef(null);
+
   // Create a reference for reCAPTCHA
   const recaptchaRef = useRef(null); // New useRef for reCAPTCHA
 
-  const [captcha, setCaptcha] = useState();
+  useEffect(() => {
+    let intervalId;
+    if (tokenTimeisRunning) {
+      // Create a timer that updates every second
+      intervalId = setInterval(() => {
+        setTokenTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
+      }, 1000);
+    }
+
+    // Clear the interval on component unmount or when the timer stops
+    return () => clearInterval(intervalId);
+  }, [tokenTimeisRunning]);
+
+  // Format the time left into MM:SS format
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(
+      2,
+      '0'
+    )}`;
+  };
+
+  // When the Token Remainng Time reaches 0, perform full web page refresh
+  if (tokenTimeLeft === 0 && tokenTimeisRunning) {
+    setTokenTimeisRunning(false); // Stop the timer
+    window.location.href = '/';
+  }
 
   useEffect(() => {
     // If user is already authenticated, redirect to the homepage
@@ -97,23 +134,36 @@ export default function SignInForm({ providers, csrfToken }) {
         return;
       }
 
-      switch (response?.error) {
-        case ErrorCode.IncorrectPassword:
+      console.log('response?.error', response?.error);
+      switch (response?.error.replace('Error: ', '')) {
+        case ErrorCode.UserIsLocked:
+          setError('User is currently locked');
+          setIsLoading(false);
+          break;
+
+        case ErrorCode.CaptchaValidationFailed:
+          setError('Invalid reCAPTCHA validation');
+          setIsLoading(false);
+          if (config.CaptchaIsActive) recaptchaRef.current.reset();
+          break;
+
+        case ErrorCode.IncorrectUsernameOrPassword:
+          console.log(147);
           setError('Invalid user name or password');
           setIsLoading(false);
           if (config.CaptchaIsActive) recaptchaRef.current.reset();
-          return;
+          break;
+
+        case ErrorCode.IncorrectTwoFactorCode:
+          setError('Invalid OTP Code provided');
+          setIsLoading(false);
+          break;
+
         case ErrorCode.SecondFactorRequired:
+          setTokenTimeisRunning(true);
           setShowOTP(true);
           setIsLoading(false);
           setSubmitButtonLabel('Submit OTP');
-          if (userNameLabelRef.current) {
-            // userNameRef.current.style.backgroundColor = '#df9d9d';
-          }
-
-          if (passwordLabelRef.current) {
-            // passwordRef.current.style.backgroundColor = '#d4d0d0';
-          }
 
           if (userNamePasswordGroupRef.current) {
             userNamePasswordGroupRef.current.style.border = '1px dashed green';
@@ -121,19 +171,28 @@ export default function SignInForm({ providers, csrfToken }) {
           }
 
           if (userNameRef.current) {
-            userNameRef.current.disabled = true;
+            userNameRef.current.readOnly = true;
           }
 
           if (passwordRef.current) {
-            passwordRef.current.disabled = true;
+            passwordRef.current.readOnly = true;
           }
 
+          if (captchaRef.current) {
+            captchaRef.current.disabled = true;
+          }
+
+          break;
+        case ErrorCode.InternalServerError:
+          setError('Internal Server Error');
+          setIsLoading(false);
+          break;
+
+        default:
           return;
       }
     },
   });
-
-  const handleSubmit = async (e) => {};
 
   return (
     <div
@@ -175,7 +234,9 @@ export default function SignInForm({ providers, csrfToken }) {
         <form onSubmit={formik.handleSubmit}>
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
           <div ref={userNamePasswordGroupRef} className="mb-5">
-            {showOTP && <p className="text-xs text-center">Your Credentials</p>}
+            {showOTP && (
+              <p className="text-xs text-center pb-2">Your Credentials</p>
+            )}
             <div className="mb-5">
               <label
                 ref={userNameLabelRef}
@@ -225,16 +286,22 @@ export default function SignInForm({ providers, csrfToken }) {
           </div>
           {config.CaptchaIsActive ? (
             <div>
-              <ReCAPTCHA
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-                onChange={setCaptcha}
-              />
+              {!showOTP ? (
+                <ReCAPTCHA
+                  ref={captchaRef}
+                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+                  onChange={setCaptcha}
+                />
+              ) : null}
             </div>
           ) : null}
           {showOTP && (
             <div>
-              <p className="text-xs pt-2 pb-2">
+              <p className="text-xs pt-2 pb-1 ">
                 Please enter your OTP code that you received by SMS
+              </p>
+              <p className="text-xs text-center pb-2">
+                Remaining time {formatTime(tokenTimeLeft)}
               </p>
               <TwoFactAuth
                 value={totpCode}
@@ -242,7 +309,7 @@ export default function SignInForm({ providers, csrfToken }) {
               />
             </div>
           )}
-          {error && <p className="text-red-500 text-center">{error}</p>}
+          {error && <p className="pt-2 text-red-500 text-center">{error}</p>}
           <div className="mt-5 flex justify-around">
             <SignInButton
               pending={formik.isSubmitting}

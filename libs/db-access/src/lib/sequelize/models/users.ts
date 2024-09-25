@@ -41,6 +41,7 @@ export class B2BUser extends Model<
   declare last_update_date?: Date;
   declare last_update_user?: string;
   declare last_update_process: string;
+  declare two_factor_secret?: string;
 
   // Association methods for AppUser
   declare getRoles: BelongsToManyGetAssociationsMixin<AppRole>;
@@ -153,6 +154,10 @@ export class B2BUser extends Model<
           type: DataTypes.STRING(250),
           allowNull: false,
         },
+        two_factor_secret: {
+          type: DataTypes.STRING(250),
+          allowNull: true,
+        },
       },
       {
         sequelize,
@@ -191,6 +196,7 @@ export class B2BUser extends Model<
               'is_active',
               'is_locked',
               'authentication_type',
+              'two_factor_secret',
             ],
           },
         },

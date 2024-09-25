@@ -1,3 +1,18 @@
+import { authenticator } from 'otplib';
+import { config } from '@b2b-tickets/config';
+import * as crypto from 'crypto';
+
+const ALGORITHM = 'aes256';
+const INPUT_ENCODING = 'utf8';
+const OUTPUT_ENCODING = 'hex';
+const IV_LENGTH = 16; // AES blocksize
+
+// Set the length to 4 digits and 120 seconds
+authenticator.options = {
+  digits: config.TwoFactorDigitsLength,
+  step: config.TwoFactorValiditySeconds,
+};
+
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 
 export const userHasPermission = (
@@ -112,4 +127,54 @@ export const convertTo24HourFormat = (dateStr: string): string | null => {
   )}:${minute}:00`;
 
   return formattedDate;
+};
+
+/**
+ *
+ * @param text Value to be encrypted
+ * @param key Key used to encrypt value must be 32 bytes for AES256 encryption algorithm
+ *
+ * @returns Encrypted value using key
+ */
+export const symmetricEncrypt = function (text: string, key: string) {
+  const _key = Buffer.from(key, 'hex');
+  const iv = crypto.randomBytes(IV_LENGTH);
+
+  const cipher = crypto.createCipheriv(ALGORITHM, _key, iv);
+  let ciphered = cipher.update(text, INPUT_ENCODING, OUTPUT_ENCODING);
+  ciphered += cipher.final(OUTPUT_ENCODING);
+  const ciphertext = iv.toString(OUTPUT_ENCODING) + ':' + ciphered;
+
+  return ciphertext;
+};
+
+/**
+ *
+ * @param text Value to decrypt
+ * @param key Key used to decrypt value must be 32 bytes for AES256 encryption algorithm
+ */
+export const symmetricDecrypt = function (text: string, key: string) {
+  const _key = Buffer.from(key, 'hex');
+
+  const components = text.split(':');
+  const iv_from_ciphertext = Buffer.from(
+    components.shift() || '',
+    OUTPUT_ENCODING
+  );
+  const decipher = crypto.createDecipheriv(ALGORITHM, _key, iv_from_ciphertext);
+  let deciphered = decipher.update(
+    components.join(':'),
+    OUTPUT_ENCODING,
+    INPUT_ENCODING
+  );
+  deciphered += decipher.final(INPUT_ENCODING);
+
+  return deciphered;
+};
+
+// Assuming the user's secret is stored and encrypted
+export const generateOtpCode = (encryptedSecret: string) => {
+  const secret = symmetricDecrypt(encryptedSecret, process.env.ENCRYPTION_KEY!);
+  const otpCode = authenticator.generate(secret);
+  return otpCode;
 };

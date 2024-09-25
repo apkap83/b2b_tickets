@@ -155,8 +155,10 @@ export enum FilterTicketsStatus {
 }
 
 export enum ErrorCode {
-  IncorrectUsernamePassword = 'incorrect-username-password',
+  IncorrectUsernameOrPassword = 'incorrect-username-or-password',
+  NoCredentialsProvided = 'no-credentials-provided',
   UserNotFound = 'user-not-found',
+  UserIsLocked = 'user-is-locked',
   IncorrectPassword = 'incorrect-password',
   UserMissingPassword = 'missing-password',
   TwoFactorDisabled = 'two-factor-disabled',
@@ -167,4 +169,5 @@ export enum ErrorCode {
   InternalServerError = 'internal-server-error',
   NewPasswordMatchesOld = 'new-password-matches-old',
   ThirdPartyIdentityProviderEnabled = 'third-party-identity-provider-enabled',
+  CaptchaValidationFailed = 'captcha-validation-failed',
 }
