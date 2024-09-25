@@ -1,5 +1,10 @@
-import * as Yup from 'yup';
 import Credentials from 'next-auth/providers/credentials';
+import {
+  symmetricEncrypt,
+  symmetricDecrypt,
+  generateOtpCode,
+} from '@b2b-tickets/utils';
+import { authenticator } from 'otplib';
 import bcrypt from 'bcryptjs';
 import { config } from '@b2b-tickets/config';
 import { AuthenticationTypes, ErrorCode } from '@b2b-tickets/shared-models';
@@ -11,19 +16,47 @@ import {
   setSchema,
 } from '@b2b-tickets/db-access';
 
-// import ldap from 'ldapjs'; // ME GAMHSES PATOKORFA LDAPJS!
-import { Client, SearchOptions } from 'ldapts';
-
-import { createUserIfNotExistsAfterLDAPSuccessfullAuth } from '@b2b-tickets/admin-server-actions';
 import { validateReCaptcha } from '@b2b-tickets/server-actions';
-
-import { logAuth } from '@b2b-tickets/logging';
-
+import { logAuth, logInfo } from '@b2b-tickets/logging';
 import { headers } from 'next/headers';
-import { strategy } from 'sharp';
-import { signIn, signOut } from 'next-auth/react';
+
+// Set the length to 4 digits and 120 seconds
+authenticator.options = {
+  digits: config.TwoFactorDigitsLength,
+  step: config.TwoFactorValiditySeconds,
+};
 
 type CredentialsType = Record<'userName' | 'password', string> | undefined;
+
+export const generateTwoFactorSecretForUserId = async (userId: number) => {
+  if (!process.env['ENCRYPTION_KEY']!) {
+    logAuth.error(
+      `Missing 'ENCRYPTION_KEY' environment variable, cannot proceed with two factor login.`
+    );
+    throw new Error(ErrorCode.InternalServerError);
+  }
+
+  const foundUser = (await B2BUser.scope('withPassword').findOne({
+    where: {
+      user_id: userId,
+    },
+  })) as B2BUser;
+
+  logAuth.info(
+    `Generating Random Two Factor Secret for user ${foundUser.username}`
+  );
+
+  const newSecret = authenticator.generateSecret();
+  const encryptedSecret = symmetricEncrypt(
+    newSecret,
+    process.env['ENCRYPTION_KEY']!
+  );
+
+  foundUser.two_factor_secret = encryptedSecret;
+  await foundUser.save();
+
+  return encryptedSecret;
+};
 
 const tryLocalAuthentication = async (credentials: CredentialsType) => {
   const headersList = headers();
@@ -52,9 +85,25 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
       },
     })) as B2BUser & { AppRoles: AppRole[] };
 
-    if (foundUser) {
+    if (!foundUser) {
+      throw new Error(ErrorCode.IncorrectUsernameOrPassword);
+    }
+
+    if (foundUser.is_locked === 'y') {
       logAuth.info(
-        `User with user name '${foundUser.username}' was found in DB`,
+        `User with user name '${foundUser.username}' is currently locked`,
+        {
+          reqIP,
+          reqURL,
+          sessionId,
+        }
+      );
+      throw new Error(ErrorCode.UserIsLocked);
+    }
+
+    if (foundUser.is_active !== 'y') {
+      logAuth.info(
+        `User with user name '${foundUser.username}' is not currently active`,
         {
           reqIP,
           reqURL,
@@ -62,88 +111,77 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
         }
       );
 
-      if (foundUser.is_locked === 'y') {
-        logAuth.info(
-          `User with user name '${foundUser.username}' is currently locked`,
-          {
-            reqIP,
-            reqURL,
-            sessionId,
-          }
-        );
-        throw new Error('User is currently locked');
-      }
-
-      const match = await bcrypt.compare(
-        credentials!.password,
-        foundUser.password
-      );
-
-      if (match) {
-        logAuth.info(`Given password and DB passwords match`, {
-          reqIP,
-          reqURL,
-          sessionId,
-        });
-
-        const roles = foundUser.AppRoles.map((role) => role.roleName);
-
-        const permissions = foundUser.AppRoles.flatMap((role) =>
-          role.AppPermissions.map((permission) => ({
-            permissionName: permission.permissionName,
-            permissionEndPoint: permission.endPoint,
-            permissionDescription: permission.description,
-          }))
-        );
-
-        // Find Customer Name from Customer ID
-        await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-        const queryForCustomerName =
-          'SELECT customer_name FROM customers WHERE customer_id = $1';
-        const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
-          foundUser.customer_id,
-        ]);
-
-        const customer_name = customerNameRes.rows[0]['customer_name'];
-
-        const userDetails = {
-          user_id: foundUser.user_id,
-          customer_id: foundUser.customer_id,
-          customer_name: customer_name,
-          firstName: foundUser.first_name,
-          lastName: foundUser.last_name,
-          userName: foundUser.username,
-          email: foundUser.email,
-          mobilePhone: foundUser.mobile_phone,
-          authenticationType: foundUser.authentication_type,
-          roles,
-          permissions,
-
-          // Overwriting the toString method
-          toString: function () {
-            return `User ID: ${this.user_id}, Customer ID: ${this.customer_id}, Customer Name: ${this.customer_name}, Name: ${this.firstName} ${this.lastName}, Username: ${this.userName} Email: ${this.email}, Mobile Phone: ${this.mobilePhone}, Auth Type: ${this.authenticationType}`;
-          },
-        };
-
-        logAuth.info(`Logged In User Details: ${userDetails}`, {
-          reqIP,
-          reqURL,
-          sessionId,
-        });
-
-        return [foundUser.is_active, userDetails];
-      }
+      throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
-    logAuth.error(
-      `Invalid Credentials Attempt for Username: ${
-        credentials ? credentials.userName : 'Not Given'
-      }`,
-      {
+
+    const match = await bcrypt.compare(
+      credentials!.password,
+      foundUser.password
+    );
+
+    if (!match) {
+      logAuth.info(`Incorrect password provided`, {
         reqIP,
         reqURL,
         sessionId,
-      }
+      });
+
+      throw new Error(ErrorCode.IncorrectUsernameOrPassword);
+    }
+
+    logAuth.debug(`Given password and DB passwords match`, {
+      reqIP,
+      reqURL,
+      sessionId,
+    });
+
+    const roles = foundUser.AppRoles.map((role) => role.roleName);
+
+    const permissions = foundUser.AppRoles.flatMap((role) =>
+      role.AppPermissions.map((permission) => ({
+        permissionName: permission.permissionName,
+        permissionEndPoint: permission.endPoint,
+        permissionDescription: permission.description,
+      }))
     );
+
+    // Find Customer Name from Customer ID
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    const queryForCustomerName =
+      'SELECT customer_name FROM customers WHERE customer_id = $1';
+    const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
+      foundUser.customer_id,
+    ]);
+
+    const customer_name = customerNameRes.rows[0]['customer_name'];
+
+    const userDetails = {
+      user_id: foundUser.user_id,
+      customer_id: foundUser.customer_id,
+      customer_name: customer_name,
+      firstName: foundUser.first_name,
+      lastName: foundUser.last_name,
+      userName: foundUser.username,
+      email: foundUser.email,
+      mobilePhone: foundUser.mobile_phone,
+      authenticationType: foundUser.authentication_type,
+      roles,
+      permissions,
+      two_factor_secret: foundUser.two_factor_secret,
+
+      // Overwriting the toString method
+      toString: function () {
+        return `User ID: ${this.user_id}, Customer ID: ${this.customer_id}, Customer Name: ${this.customer_name}, Name: ${this.firstName} ${this.lastName}, Username: ${this.userName} Email: ${this.email}, Mobile Phone: ${this.mobilePhone}, Auth Type: ${this.authenticationType}`;
+      },
+    };
+
+    logAuth.debug(`Logged In User Details: ${userDetails}`, {
+      reqIP,
+      reqURL,
+      sessionId,
+    });
+
+    return userDetails;
   } catch (error: any) {
     logAuth.error(error, {
       reqIP,
@@ -152,7 +190,6 @@ const tryLocalAuthentication = async (credentials: CredentialsType) => {
     });
     throw new Error(error);
   }
-  return [undefined, null];
 };
 
 export const options = {
@@ -166,6 +203,7 @@ export const options = {
           placeholder: '',
         },
         password: { label: 'Password', type: 'password' },
+        captchaToken: { label: 'captchaToken', type: 'text' },
         totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
       },
       async authorize(credentials, req) {
@@ -174,86 +212,40 @@ export const options = {
         const reqURL = headersList.get('request-url');
         const sessionId = headersList.get('session-id');
 
-        console.log('credentials', credentials);
-        if (!credentials) throw new Error('No credentials provided');
+        if (!credentials?.userName)
+          throw new Error(ErrorCode.NoCredentialsProvided);
+        if (!credentials?.password)
+          throw new Error(ErrorCode.NoCredentialsProvided);
 
-        if (config.CaptchaIsActive) {
-          // reCAPTCHA VALIDATION FIRST
-          //@ts-ignore
+        // reCAPTCHA VALIDATION FIRST
+        if (config.CaptchaIsActive && credentials.totpCode === '') {
           const captchaToken = credentials.captchaToken;
-
-          try {
-            const reCaptchaResponse = await validateReCaptcha(captchaToken);
-            if (!reCaptchaResponse) {
-              throw new Error('reCAPTCHA backend validation failed');
-            }
-          } catch (error: any) {
+          const reCaptchaSuccessResponse = await validateReCaptcha(
+            captchaToken
+          );
+          if (!reCaptchaSuccessResponse) {
             logAuth.error(
-              `reCAPTCHA backend validation error: ${error.message}`,
+              `reCAPTCHA backend validation error for user ${credentials.userName}`,
               {
                 reqIP,
                 reqURL,
                 sessionId,
               }
             );
-            throw new Error(error.errors.join(', '));
+            throw new Error(ErrorCode.CaptchaValidationFailed);
           }
         }
+        const localAuthUserDetails = await tryLocalAuthentication(credentials);
 
-        // CREDENTIALS VALIDATION
-        try {
-          const validationSchema = Yup.object({
-            userName: Yup.string().required('User name is required'),
-            password: Yup.string().required('Password is required'),
-          });
-          await validationSchema.validate(credentials, { abortEarly: false });
-        } catch (error: any) {
-          logAuth.error(`Login Page yup validation Error: ${error}`, {
-            reqIP,
-            reqURL,
-            sessionId,
-          });
-          throw new Error(error);
+        if (!localAuthUserDetails) {
+          logAuth.error(
+            'LocalAuthUserDetails object from Local Authentication is not valid'
+          );
+          throw new Error(ErrorCode.InternalServerError);
         }
 
-        // For Local Account (Authentication Type = LOCAL) - Try to authenticate
-        const [localAccountActive, localAuthUserDetails] =
-          await tryLocalAuthentication(credentials);
-
-        if (localAuthUserDetails) {
-          if (localAccountActive === 'n') {
-            logAuth.info(`User '${credentials.userName}' is currently locked`, {
-              reqIP,
-              reqURL,
-              sessionId,
-            });
-            throw new Error('User is currently locked');
-          }
-
-          // If Two Factor Authentication is Enabled
-          if (config.TwoFactorEnabled) {
-            if (!credentials.totpCode) {
-              logAuth.info(`Requesting OTP Autentication`, {
-                reqIP,
-                reqURL,
-                sessionId,
-              });
-              throw new Error(ErrorCode.SecondFactorRequired);
-            }
-
-            return new Promise((resolve, reject) => {
-              logAuth.info(
-                `Local User '${credentials.userName}' has been successfully authenticated`,
-                {
-                  reqIP,
-                  reqURL,
-                  sessionId,
-                }
-              );
-              resolve(localAuthUserDetails);
-            });
-          }
-
+        // Without Two Factor Authentication The User is Now Authenticated
+        if (!config.TwoFactorEnabled) {
           return new Promise((resolve, reject) => {
             logAuth.info(
               `Local User '${credentials.userName}' has been successfully authenticated`,
@@ -266,7 +258,88 @@ export const options = {
             resolve(localAuthUserDetails);
           });
         }
-        throw new Error(ErrorCode.IncorrectPassword);
+
+        if (!credentials.totpCode) {
+          logAuth.info(
+            `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`,
+            {
+              reqIP,
+              reqURL,
+              sessionId,
+            }
+          );
+
+          let newlyGeneratedSecret: string | undefined = undefined;
+          let correctOTPCode: string | undefined = undefined;
+          // if Two Factor Secret does not exist then generate it
+          if (!localAuthUserDetails.two_factor_secret) {
+            newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
+              localAuthUserDetails.user_id
+            );
+          }
+
+          // Secret Already Exists
+          if (newlyGeneratedSecret == undefined) {
+            correctOTPCode = generateOtpCode(
+              localAuthUserDetails.two_factor_secret!
+            );
+          }
+
+          // Secret was just created
+          if (newlyGeneratedSecret !== undefined) {
+            correctOTPCode = generateOtpCode(newlyGeneratedSecret);
+          }
+
+          // SEND SMS HERE
+          logAuth.info(`'*** OTP Code: ${correctOTPCode}`, {
+            reqIP,
+            reqURL,
+            sessionId,
+          });
+          console.log(292);
+          throw new Error(ErrorCode.SecondFactorRequired);
+        }
+
+        // TODO
+        // If User is 'admin' himself then allow ANY OTP Code
+        if (localAuthUserDetails.userName === 'admin') {
+          logAuth.info('Allowing admin user to have access with ANY OTP code');
+          return new Promise((resolve) => {
+            logAuth.info(
+              `Local User '${credentials.userName}' has been successfully authenticated`,
+              {
+                reqIP,
+                reqURL,
+                sessionId,
+              }
+            );
+            resolve(localAuthUserDetails);
+          });
+        }
+
+        // Validate OTP
+        const secret = symmetricDecrypt(
+          localAuthUserDetails.two_factor_secret!,
+          process.env.ENCRYPTION_KEY!
+        );
+
+        const isValidToken = authenticator.check(credentials.totpCode, secret);
+        if (!isValidToken) {
+          logInfo.error(`Invalid Token Provided`);
+          throw new Error(ErrorCode.IncorrectTwoFactorCode);
+        }
+
+        return new Promise((resolve) => {
+          logAuth.info(
+            `Local User '${credentials.userName}' has been successfully authenticated`,
+            {
+              reqIP,
+              reqURL,
+              sessionId,
+            }
+          );
+          resolve(localAuthUserDetails);
+        });
       },
     }),
   ],
