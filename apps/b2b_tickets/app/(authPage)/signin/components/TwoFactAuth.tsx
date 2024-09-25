@@ -1,6 +1,7 @@
 import { Box } from '@mui/material';
 import { MuiOtpInput } from 'mui-one-time-password-input';
 import React, { useEffect, useRef } from 'react';
+import { config } from '@b2b-tickets/config';
 
 export function TwoFactAuth({
   value,
@@ -9,12 +10,11 @@ export function TwoFactAuth({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const otpInputRef = useRef<HTMLInputElement | null>(null); // Create a ref
-
   return (
     <Box display="flex" justifyContent="center" alignItems="center">
       <MuiOtpInput
         autoFocus
+        length={config.TwoFactorDigitsLength}
         // ref={otpInputRef} // Attach ref to the MuiOtpInput
         value={value}
         onChange={onChange}
