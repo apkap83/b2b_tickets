@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { withAuth } from 'next-auth/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { AppRoleTypes } from '@b2b-tickets/shared-models';
+// import { logAuth, logInfo } from '@b2b-tickets/logging';
 
 // Helper function to get client IP
 function getClientIp(req) {
@@ -44,6 +45,15 @@ const authMiddleware = withAuth(
     const roles = req.nextauth.token.roles;
     const permissions = req.nextauth.token.permissions;
 
+    // const reqIP = request.headers.get('request-ip') || request.ip;
+    // const reqURL = request.headers.get('request-url') || request.url;
+    // const sessionId = request.headers.get('session-id') || 'N/A';
+
+    // logAuth.info('Logging request in middleware', {
+    //   ip: reqIP,
+    //   url: reqURL,
+    //   sessionId: sessionId,
+    // });
     // console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
     // console.log('*** pathName:', pathName);
     // console.log('*** roles:', roles);

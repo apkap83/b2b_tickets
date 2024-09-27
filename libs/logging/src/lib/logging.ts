@@ -1,8 +1,9 @@
-import path from 'path';
 import fs from 'fs';
-import { config } from '@b2b-tickets/config';
+import path from 'path';
 import winston from 'winston';
 import 'winston-daily-rotate-file';
+import { config } from '@b2b-tickets/config';
+import { TransportName } from '@b2b-tickets/shared-models';
 
 const { combine, timestamp, json, printf, colorize, align, errors } =
   winston.format;
@@ -22,15 +23,6 @@ const actionsLogFilePath = path.join(logPath, 'actions-%DATE%.log');
 const eventsLogFilePath = path.join(logPath, 'events-%DATE%.log');
 const combinedLogFilePath = path.join(logPath, 'combined-%DATE%.log');
 
-// Define transport names using TypeScript enum
-enum TransportName {
-  AUTH = 'auth',
-  ACTIONS = 'actions',
-  EVENTS = 'events',
-  ERROR = 'error',
-  COMBINED = 'combined',
-}
-
 // Create custom format to filter logs based on transportName
 const createFilter = (transportName: TransportName) => {
   return winston.format((info) => {
@@ -38,39 +30,51 @@ const createFilter = (transportName: TransportName) => {
   })();
 };
 
-const transports = [
-  new winston.transports.DailyRotateFile({
-    level: 'info',
-    filename: authLogFilePath,
-    datePattern: 'YYYY-MM-DD',
-    maxFiles: '14d',
-    format: combine(createFilter(TransportName.AUTH), json()),
-  }),
-  new winston.transports.DailyRotateFile({
-    level: 'info',
-    filename: actionsLogFilePath,
-    datePattern: 'YYYY-MM-DD',
-    maxFiles: '14d',
-    format: combine(createFilter(TransportName.ACTIONS), json()),
-  }),
-  new winston.transports.DailyRotateFile({
-    level: 'info',
-    filename: eventsLogFilePath,
-    datePattern: 'YYYY-MM-DD',
-    maxFiles: '14d',
-    format: combine(createFilter(TransportName.EVENTS), json()),
-  }),
-  new winston.transports.DailyRotateFile({
-    level: 'error',
-    filename: errorLogFilePath,
-    format: combine(json()),
-  }),
-  new winston.transports.DailyRotateFile({
-    level: 'info',
-    filename: combinedLogFilePath,
-    format: combine(json()),
-  }),
-];
+const transports = [];
+
+if (process.env.NODE_ENV !== 'test') {
+  transports.push(
+    new winston.transports.DailyRotateFile({
+      level: 'info',
+      filename: authLogFilePath,
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '14d',
+      format: combine(createFilter(TransportName.AUTH), json()),
+    }),
+    new winston.transports.DailyRotateFile({
+      level: 'info',
+      filename: actionsLogFilePath,
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '14d',
+      format: combine(createFilter(TransportName.ACTIONS), json()),
+    }),
+    new winston.transports.DailyRotateFile({
+      level: 'info',
+      filename: eventsLogFilePath,
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '14d',
+      format: combine(createFilter(TransportName.EVENTS), json()),
+    }),
+    new winston.transports.DailyRotateFile({
+      level: 'error',
+      filename: errorLogFilePath,
+      format: combine(json()),
+    }),
+    new winston.transports.DailyRotateFile({
+      level: 'info',
+      filename: combinedLogFilePath,
+      format: combine(json()),
+    })
+  );
+}
+
+if (process.env.NODE_ENV !== 'production') {
+  transports.push(
+    new winston.transports.Console({
+      format: combine(json()),
+    })
+  );
+}
 
 const logger = winston.createLogger({
   // level: process.env.LOG_LEVEL || 'info',
@@ -113,19 +117,26 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-class CustomLogger {
+export class CustomLogger {
   private logger: winston.Logger;
   private transportName: TransportName;
+  private defaultMeta: object;
 
-  constructor(logger: winston.Logger, transportName: TransportName) {
+  constructor(
+    logger: winston.Logger,
+    transportName: TransportName,
+    defaultMeta: object = {}
+  ) {
     this.logger = logger;
     this.transportName = transportName;
+    this.defaultMeta = defaultMeta;
   }
 
   log(level: string, message: string, meta: object = {}) {
     this.logger.log({
       level,
       message,
+      ...this.defaultMeta,
       ...meta,
       transportName: this.transportName,
     });
@@ -147,6 +158,17 @@ class CustomLogger {
     this.log('debug', message, meta);
   }
 }
+
+// Function to create a logger instance with reqIP, reqURL, and sessionId
+export const createRequestLogger = (
+  transportName: TransportName,
+  reqIP: string | null,
+  reqURL: string | null,
+  sessionId: string | null
+) => {
+  const defaultMeta = { reqIP, reqURL, sessionId };
+  return new CustomLogger(logger, transportName, defaultMeta);
+};
 
 const logAuth = new CustomLogger(logger, TransportName.AUTH);
 const logAction = new CustomLogger(logger, TransportName.ACTIONS);

@@ -1,30 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { useSession } from 'next-auth/react';
+import { useState, useContext } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-
+import { useSession } from 'next-auth/react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { Paper, Box, IconButton, useTheme, Typography } from '@mui/material';
-import { useContext } from 'react';
+
+import { IoListSharp } from 'react-icons/io5';
+import { Box, IconButton, useTheme } from '@mui/material';
 import Stack from '@mui/material/Stack';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
 import { ColorModeContext, tokens } from '@b2b-tickets/ui-theme';
-
-import InputBase from '@mui/material/InputBase';
-import { IoListSharp } from 'react-icons/io5';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
-import SearchIcon from '@mui/icons-material/Search';
-import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
-import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import { NovaLogo } from '@b2b-tickets/assets';
-import { toast } from 'react-hot-toast';
-// import { syncDBAlterTrueAction, seedDB } from '@/libs/server-actions/src';
 import { LoggedInIndication } from '@b2b-tickets/ui';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';

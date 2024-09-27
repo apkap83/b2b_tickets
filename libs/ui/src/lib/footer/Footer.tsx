@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import { united_group_member } from '@b2b-tickets/assets';
-import { NovaLogoSVG } from '@b2b-tickets/assets';
 
 export const Footer: React.FC = () => {
   return (

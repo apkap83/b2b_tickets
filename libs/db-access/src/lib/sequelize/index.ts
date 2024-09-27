@@ -8,16 +8,6 @@ import { AppPermission } from './models/Permission';
 import { Audit } from './models/Audit';
 import { B2BUser } from './models/users';
 
-import { initModels } from './models/sequelize_auto_generated/init-models';
-
-// import { sequelizeDBActionsLogger } from '@b2b-tickets/logging';
-
-// Custom logging function
-// function sequelizeLogging(msg: string) {
-//   sequelizeDBActionsLogger.info(msg);
-// }
-
-// const sequelize = new Sequelize("Sequelize_Example_DB", "root", "nsm055!3", {
 const sequelize = new Sequelize({
   host: config.postgres_b2b_database.host,
   port: config.postgres_b2b_database.port,
@@ -26,7 +16,7 @@ const sequelize = new Sequelize({
   database: config.postgres_b2b_database.db,
   dialect: 'postgres',
 
-  // REMEMBER This is required in NextJS environment - Please install mysql2 package manually problem
+  // REMEMBER This is required in NextJS environment
   dialectModule: require('pg'),
   dialectOptions: {
     charset: 'utf8',

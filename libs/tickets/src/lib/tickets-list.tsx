@@ -5,22 +5,16 @@ import Link from 'next/link';
 import {
   Ticket,
   TicketStatusName,
-  TicketStatusColors,
   AppRoleTypes,
-  FilterTicketsStatus,
 } from '@b2b-tickets/shared-models';
-import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
+import { userHasRole } from '@b2b-tickets/utils';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 
-import Box from '@mui/material/Box';
-import { Typography } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
-import Button from '@mui/material/Button';
-import { TicketListHeader } from '@b2b-tickets/tickets';
 import { formatDate } from '@b2b-tickets/utils';
 import clsx from 'clsx';
 import styles from './css/tickets-list.module.scss';

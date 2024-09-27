@@ -1,18 +1,9 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import { AnyNaptrRecord } from 'dns';
 import { usePathname, useSearchParams } from 'next/navigation';
-
-interface PaginationProps {
-  totalItems: number;
-  pageSize: number;
-  activePage: number;
-  onPageChange: (page: number) => void;
-}
 
 export const Pagination = ({ totalPages }: { totalPages: number }) => {
   const pathname = usePathname();
@@ -59,7 +50,7 @@ export const Pagination = ({ totalPages }: { totalPages: number }) => {
       <PaginationArrow
         direction="right"
         href={createPageURL(currentPage + 1)}
-        isDisabled={currentPage <= 1}
+        isDisabled={currentPage === totalPages}
       />
     </div>
   );
