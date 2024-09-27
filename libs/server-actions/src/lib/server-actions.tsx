@@ -3,14 +3,9 @@
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
-import * as yup from 'yup';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import {
-  pgB2Bpool,
-  setSchema,
-  setSchemaAndTimezone,
-} from '@b2b-tickets/db-access';
+import { pgB2Bpool, setSchema } from '@b2b-tickets/db-access';
 import { config } from '@b2b-tickets/config';
 import {
   toFormState,
@@ -33,69 +28,26 @@ import {
   TicketDetailsModalActions,
 } from '@b2b-tickets/shared-models';
 
-import { syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
-import { populateDB } from '@b2b-tickets/db-access';
 import { convertTo24HourFormat } from '@b2b-tickets/utils';
 import { redirect } from 'next/navigation';
-import { QueryResult } from 'pg';
 
-export const seedDB = async () => {
-  // TODO Session & Authorization Enabled Action
-  await populateDB();
-};
-export const syncDBAlterTrueAction = async () => {
-  // TODO Session & Authorization Enabled Action
-  // const session = await getServerSession(options);
-  // if (!session) {
-  //   throw new Error('Unauthenticated access: User is not authenticated');
-  // }
-  // if (!userHasPermission(session, 'Sync DB (Alter True)')) {
-  //   throw new Error(
-  //     'Unauthorized access: User is not authorized for this action (Sync DB (Alter True))'
-  //   );
-  // }
-  await syncDatabaseAlterTrue();
-};
-
-export const getAllTicketsForCustomer = async (): Promise<Ticket[]> => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
-  //@ts-ignore
-  const session = await getServerSession(options);
-
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/`);
-  }
-  //@ts-ignore
-  const userId = session.user.user_id;
-
-  //@ts-ignore
-  const customerId = session.user.customer_id;
-
-  //@ts-ignore
-  const customerName = session.user.customer_name;
-
-  try {
-    // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // In case there is no Customer Id then return all
-    if (customerId === '-1') {
-      const query = 'SELECT * FROM tickets_v order by "Opened" DESC';
-      const res = await pgB2Bpool.query(query);
-      return res?.rows as Ticket[];
-    }
-
-    // Filter Tickets View by Customer Name
-    const query =
-      'SELECT * FROM tickets_v where "Customer" = $1 order by "Opened" DESC';
-    const res = await pgB2Bpool.query(query, [customerName]);
-
-    return res?.rows as Ticket[];
-  } catch (error) {
-    throw error;
-  }
-};
+// export const seedDB = async () => {
+//   // TODO Session & Authorization Enabled Action
+//   await populateDB();
+// };
+// export const syncDBAlterTrueAction = async () => {
+//   // TODO Session & Authorization Enabled Action
+//   // const session = await getServerSession(options);
+//   // if (!session) {
+//   //   throw new Error('Unauthenticated access: User is not authenticated');
+//   // }
+//   // if (!userHasPermission(session, 'Sync DB (Alter True)')) {
+//   //   throw new Error(
+//   //     'Unauthorized access: User is not authorized for this action (Sync DB (Alter True))'
+//   //   );
+//   // }
+//   await syncDatabaseAlterTrue();
+// };
 
 export const getFilteredTicketsForCustomer = async (
   query: string,
@@ -107,13 +59,9 @@ export const getFilteredTicketsForCustomer = async (
 
   //@ts-ignore
   const session = await getServerSession(options);
-
   if (!session) {
     redirect(`/api/auth/signin?callbackUrl=/`);
   }
-  //@ts-ignore
-  const userId = session.user.user_id;
-
   //@ts-ignore
   const customerId = session.user.customer_id;
 
@@ -125,14 +73,14 @@ export const getFilteredTicketsForCustomer = async (
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // In case there is no Customer Id then return all
-    if (customerId === '-1') {
+    if (customerId === -1) {
       let sqlExpression = '';
       if (query === FilterTicketsStatus.Open)
         sqlExpression = `WHERE "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
       if (query === FilterTicketsStatus.Closed)
         sqlExpression = `WHERE "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
 
-      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression} order by "Opened" DESC 
+      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression} order by "Status Date" DESC 
       ${
         allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
       }
@@ -170,9 +118,6 @@ export const getNumOfTickets = async (query: string): Promise<number> => {
     redirect(`/api/auth/signin?callbackUrl=/`);
   }
   //@ts-ignore
-  const userId = session.user.user_id;
-
-  //@ts-ignore
   const customerId = session.user.customer_id;
 
   //@ts-ignore
@@ -183,7 +128,7 @@ export const getNumOfTickets = async (query: string): Promise<number> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     // In case there is no Customer Id then return all
-    if (customerId === '-1') {
+    if (customerId === -1) {
       let sqlExpression = '';
       if (query === FilterTicketsStatus.Open)
         sqlExpression = `WHERE "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
@@ -546,7 +491,6 @@ export const createNewComment = async (
         ticketId,
         ticketNumber,
         statusId,
-        userId,
         comment,
       });
 
@@ -567,7 +511,6 @@ export const createNewComment = async (
           ticketId,
           ticketNumber,
           statusId,
-          userId,
           comment,
         });
 

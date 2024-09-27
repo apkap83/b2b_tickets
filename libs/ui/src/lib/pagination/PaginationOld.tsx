@@ -1,7 +1,5 @@
-import React from 'react';
 import { clsx } from 'clsx';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import { AnyNaptrRecord } from 'dns';
 
 interface PaginationProps {
   totalItems: number;

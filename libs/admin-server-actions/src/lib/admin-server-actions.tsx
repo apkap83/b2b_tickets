@@ -65,18 +65,18 @@ const checkAuthenticationAndAdminRole = async () => {
   }
 };
 
-export const syncDBAlterTrueAction = async () => {
-  const session = await getServerSession(options);
-  if (!session) {
-    throw new Error('Unauthenticated access: User is not authenticated');
-  }
-  if (!userHasPermission(session, 'Sync DB (Alter True)')) {
-    throw new Error(
-      'Unauthorized access: User is not authorized for this action (Sync DB (Alter True))'
-    );
-  }
-  await syncDatabaseAlterTrue();
-};
+// export const syncDBAlterTrueAction = async () => {
+//   const session = await getServerSession(options);
+//   if (!session) {
+//     throw new Error('Unauthenticated access: User is not authenticated');
+//   }
+//   if (!userHasPermission(session, 'Sync DB (Alter True)')) {
+//     throw new Error(
+//       'Unauthorized access: User is not authorized for this action (Sync DB (Alter True))'
+//     );
+//   }
+//   await syncDatabaseAlterTrue();
+// };
 
 export const getCustomersList = async () => {
   try {

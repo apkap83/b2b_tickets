@@ -61,3 +61,6 @@ nx g component LoggedInIndication --project ui --export --tags type:ui,scope=b2b
 
 # Create Comments Component under tickets/ui library
 nx generate @nx/next:library comments --directory=tickets/ui --component
+
+# Add Jest to a project
+nx g @nx/jest:configuration --project=tickets

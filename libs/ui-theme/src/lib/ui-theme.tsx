@@ -1,23 +1,10 @@
 'use client';
 import { useState, useEffect, createContext, useMemo } from 'react';
 import { createTheme } from '@mui/material/styles';
-import { Roboto, Manrope } from 'next/font/google';
 import { PaletteMode } from '@mui/material';
 //@ts-ignore
 import { extendTheme } from '@mui/material/styles';
 import { blue } from '@mui/material/colors';
-
-const roboto = Roboto({
-  weight: ['300', '400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-});
-
-const manRope = Manrope({
-  weight: ['300', '400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-});
 
 // color design tokens export
 export const tokens = (mode: PaletteMode) => ({
@@ -181,34 +168,26 @@ export const themeSettings = (mode: PaletteMode) => {
           }),
     },
     typography: {
-      fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
       fontSize: 12,
       h1: {
-        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 40,
       },
       h2: {
-        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 32,
       },
       h3: {
-        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 24,
       },
       h4: {
-        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 20,
       },
       h5: {
-        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 16,
       },
       h6: {
-        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 14,
       },
       myVariantTypo1: {
-        fontFamily: [roboto.style.fontFamily, 'sans-serif'].join(','),
         fontSize: 8.5,
         letterSpacing: '1px',
       },

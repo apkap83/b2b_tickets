@@ -2,7 +2,7 @@
 import React from 'react';
 import Button from '@mui/material/Button';
 import { useFormStatus } from 'react-dom';
-import { Typography, useTheme } from '@mui/material';
+import { useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { TicketDetailsModalActions } from '@b2b-tickets/shared-models';
 import styled from 'styled-components';

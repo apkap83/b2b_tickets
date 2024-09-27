@@ -9,7 +9,7 @@ import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 
 export const LoggedInIndication = ({ session, customerName }: any) => {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const menuRef = useRef();
+  const menuRef = useRef<HTMLDivElement | null>();
 
   useEffect(() => {
     const handleClickOutside = (event: any) => {
