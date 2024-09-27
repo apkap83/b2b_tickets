@@ -45,7 +45,7 @@ import {
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { useFormik } from 'formik';
-import { SubmitButton } from '@b2b-tickets/ui';
+// import { SubmitButton } from '@b2b-tickets/ui';
 import { faker } from '@faker-js/faker';
 
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -54,6 +54,7 @@ import { useSession } from 'next-auth/react';
 
 import * as yup from 'yup';
 import styles from './css/new-ticket-modal.module.scss';
+import { useFormStatus } from 'react-dom';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -79,7 +80,6 @@ const FieldError = ({ formik, name }: any) => {
 export function NewTicketModal({ closeModal, userId }: any) {
   const autoComplete = 'off';
   const rightPanelMinWidthPx = '320px';
-  const minWidth = '550px';
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -241,14 +241,14 @@ export function NewTicketModal({ closeModal, userId }: any) {
           <form action={action} className={`${styles.formContainer}`}>
             <>
               <Typography
-                variant="h3"
+                variant="h4"
                 textAlign={'left'}
                 mb={'1.3rem'}
-                className="
-                bg-gradient-to-r from-[#020024] to-[rgba(55,55,66,0)]
+                className={`
+                bg-gradient-to-r from-[#0f0b58] to-[rgba(55,55,66,0)]
                 font-thin tracking-widest rounded-md py-2
                 text-gray-300 pl-3
-                "
+                `}
               >
                 B2B - New Ticket Form
               </Typography>
@@ -583,3 +583,51 @@ export function NewTicketModal({ closeModal, userId }: any) {
     </React.Fragment>
   );
 }
+
+type SubmitButtonProps = {
+  label: string;
+  loadingText: string;
+  isValid: boolean;
+};
+
+export const SubmitButton = ({
+  label,
+  loadingText,
+  isValid,
+}: SubmitButtonProps) => {
+  const { pending } = useFormStatus();
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (pending) {
+      event.preventDefault();
+    }
+  };
+
+  let letterColor = '#ddd7d7';
+  let backgroundColor = '#0f0b58';
+  let borderColor = '#141b2d';
+
+  if (!isValid || pending) {
+    backgroundColor = '#5b5b5d';
+  }
+
+  return (
+    <Button
+      variant="contained"
+      type="submit"
+      className="btn btn-primary"
+      disabled={!isValid || pending}
+      aria-disabled={pending}
+      onClick={handleClick}
+      style={{
+        color: `${letterColor}`,
+        backgroundColor: `${backgroundColor}`,
+        border: `1px solid ${borderColor}`,
+      }}
+    >
+      {pending ? loadingText : label}
+    </Button>
+  );
+};

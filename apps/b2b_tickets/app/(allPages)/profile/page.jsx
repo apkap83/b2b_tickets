@@ -6,7 +6,6 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
-import { FaUserLarge } from 'react-icons/fa6';
 
 const MyProfile = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState({

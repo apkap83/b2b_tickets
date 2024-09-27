@@ -1,6 +1,6 @@
-import dayjs, { Dayjs } from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
-dayjs.extend(customParseFormat);
+// import dayjs, { Dayjs } from 'dayjs';
+// import customParseFormat from 'dayjs/plugin/customParseFormat';
+// dayjs.extend(customParseFormat);
 
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 import { sequelize } from '../../sequelize';

@@ -1,10 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { getTicketDetailsForTicketId } from '@b2b-tickets/server-actions';
 import { getGreekDateFormat } from '@b2b-tickets/utils';
 import { TicketComment } from '@b2b-tickets/shared-models';
 import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
-import { revalidatePath } from 'next/cache';
 import { NewCommentModal } from './new-comment-modal';
 
 import Button from '@mui/material/Button';
@@ -12,9 +10,8 @@ import clsx from 'clsx';
 import { useSession } from 'next-auth/react';
 import { useEscKeyListener } from '@b2b-tickets/react-hooks';
 
-import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
+import { userHasRole } from '@b2b-tickets/utils';
 import {
-  AppPermissionTypes,
   AppRoleTypes,
   TicketDetailsModalActions,
   TicketStatus,
@@ -44,7 +41,6 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
 
   if (ticketDetails.length === 0) return;
 
-  console.log('ticketDetails', ticketDetails);
   const ticketNumber = ticketDetails[0]['ticket_number'];
   const title = ticketDetails[0]['title'];
   const category = ticketDetails[0]['category_name'];

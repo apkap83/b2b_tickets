@@ -6,7 +6,6 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useFormik } from 'formik';
-// import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import * as Yup from 'yup';
 
 import { FaKey } from 'react-icons/fa';
@@ -14,7 +13,6 @@ import clsx from 'clsx';
 import { config } from '@b2b-tickets/config';
 import { TwoFactAuth } from './TwoFactAuth';
 import { ErrorCode } from '@b2b-tickets/shared-models';
-import { authenticator } from 'otplib';
 
 const FieldError = ({ formik, name }) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
@@ -131,6 +129,7 @@ export default function SignInForm({ providers, csrfToken }) {
 
       if (response?.ok) {
         window.location.href = callbackUrl;
+        setTokenTimeisRunning(false);
         return;
       }
 
