@@ -26,8 +26,6 @@ export const TicketsList = async ({
   query: string;
   currentPage: number;
 }) => {
-  const itemsPerPage = 10;
-  const session = await getServerSession(options);
   const ticketsList: Ticket[] = await getFilteredTicketsForCustomer(
     query,
     currentPage

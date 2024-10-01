@@ -74,7 +74,7 @@ export const LoggedInIndication = ({ session, customerName }: any) => {
         onClick={() => setProfileMenuOpen(!profileMenuOpen)}
       >
         <PersonOutlinedIcon />
-        <span className="text-xs leading-3 ">
+        <span className="loggedInUserName text-xs leading-3 ">
           {session?.user?.userName || ''}
         </span>
         <div

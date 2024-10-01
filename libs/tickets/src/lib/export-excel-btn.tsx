@@ -8,9 +8,11 @@ import { SiMicrosoftexcel } from 'react-icons/si';
 import Tooltip from '@mui/material/Tooltip';
 
 export const ExportToExcelButton = ({
+  totalTickets,
   query,
   currentPage,
 }: {
+  totalTickets: number;
   query: string;
   currentPage: number;
 }) => {
@@ -36,6 +38,10 @@ export const ExportToExcelButton = ({
       setProducingExcelFile(false);
     }, 1000);
   };
+
+  if (totalTickets === 0) {
+    return null;
+  }
 
   return (
     <Tooltip title="Export list to Excel">

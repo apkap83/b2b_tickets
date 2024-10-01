@@ -2,7 +2,10 @@ import React, { Suspense } from 'react';
 import { TicketsList } from '@b2b-tickets/tickets';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import { getNumOfTickets } from '@b2b-tickets/server-actions';
+import {
+  getNumOfTickets,
+  getTotalNumOfTicketsForCustomer,
+} from '@b2b-tickets/server-actions';
 import { Pagination } from '@b2b-tickets/ui';
 import { config } from '@b2b-tickets/config';
 import { TicketListHeader } from '@b2b-tickets/tickets';
@@ -17,7 +20,10 @@ const App: React.FC = async ({
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
 
-  const totalTickets = await getNumOfTickets(query);
+  const totalTicketsForCustomer = Number(
+    await getTotalNumOfTicketsForCustomer()
+  );
+  const totalTickets = Number(await getNumOfTickets(query));
   const totalPages = Math.ceil(
     Number(totalTickets) / config.TICKET_ITEMS_PER_PAGE
   );
@@ -31,15 +37,29 @@ const App: React.FC = async ({
       }}
       className="relative"
     >
-      <TicketListHeader query={query} currentPage={currentPage} />
+      <TicketListHeader
+        totalTicketsForCustomer={totalTicketsForCustomer}
+        totalTickets={totalTickets}
+        query={query}
+        currentPage={currentPage}
+      />
 
-      <Suspense key={query + currentPage} fallback={<MyFallBack />}>
-        <TicketsList query={query} currentPage={currentPage} />
-      </Suspense>
-      <div className="pt-5 flex justify-between items-center">
-        <div>Total Items: {totalTickets}</div>
-        <Pagination totalPages={totalPages} />
-      </div>
+      {totalTickets > 0 && (
+        <Suspense key={query + currentPage} fallback={<MyFallBack />}>
+          <TicketsList query={query} currentPage={currentPage} />
+        </Suspense>
+      )}
+
+      {totalTickets === 0 && (
+        <p className="pt-5 text-center">No Tickets Currently Exist</p>
+      )}
+
+      {totalTickets > 0 && (
+        <div className="pt-5 flex justify-between items-center">
+          <div>Total Items: {totalTickets}</div>
+          {totalPages > 1 && <Pagination totalPages={totalPages} />}
+        </div>
+      )}
     </Container>
   );
 };

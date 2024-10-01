@@ -16,9 +16,13 @@ import { ExportToExcelButton } from './export-excel-btn';
 import { useEscKeyListener } from '@/libs/react-hooks/src';
 
 export const TicketListHeader = ({
+  totalTicketsForCustomer,
+  totalTickets,
   query,
   currentPage,
 }: {
+  totalTicketsForCustomer: number;
+  totalTickets: number;
   query: string;
   currentPage: number;
 }) => {
@@ -45,8 +49,12 @@ export const TicketListHeader = ({
       </Typography>
 
       <div className="flex gap-2">
-        <ExportToExcelButton query={query} currentPage={currentPage} />
-        <TicketFilter />
+        <ExportToExcelButton
+          totalTickets={totalTickets}
+          query={query}
+          currentPage={currentPage}
+        />
+        <TicketFilter totalTicketsForCustomer={totalTicketsForCustomer} />
         {!userHasRole(session, AppRoleTypes.B2B_TicketHandler) ||
         userHasRole(session, AppRoleTypes.Admin) ? (
           <Button

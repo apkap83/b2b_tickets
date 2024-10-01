@@ -5,12 +5,17 @@ import { FilterTicketsStatus } from '@b2b-tickets/shared-models';
 import { VscFilterFilled } from 'react-icons/vsc';
 import Button from '@mui/material/Button';
 
-export const TicketFilter = () => {
+export const TicketFilter = ({
+  totalTicketsForCustomer,
+}: {
+  totalTicketsForCustomer: number;
+}) => {
   const [isTicketFilterDropdownOpen, setTicketFilterDropdownOpen] =
     useState(false);
 
-  const toggleDropDown = () =>
+  const toggleDropDown = () => {
     setTicketFilterDropdownOpen(!isTicketFilterDropdownOpen);
+  };
   // const closeDropDown = () => setTicketFilterDropdownOpen(false);
 
   const searchParams = useSearchParams();
@@ -43,31 +48,35 @@ export const TicketFilter = () => {
     replace(`${pathname}?${params.toString()}`);
   };
 
-  const buttonRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  // const buttonRef = useRef<HTMLDivElement>(null);
+  // const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside of it and the button
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        setTicketFilterDropdownOpen(false);
-      }
-    };
+  // // Close dropdown when clicking outside of it and the button
+  // useEffect(() => {
+  //   const handleClickOutside = (event: MouseEvent) => {
+  //     if (
+  //       dropdownRef.current &&
+  //       !dropdownRef.current.contains(event.target as Node) &&
+  //       buttonRef.current &&
+  //       !buttonRef.current.contains(event.target as Node)
+  //     ) {
+  //       setTicketFilterDropdownOpen(false);
+  //     }
+  //   };
 
-    document.addEventListener('mousedown', handleClickOutside);
+  //   document.addEventListener('mousedown', handleClickOutside);
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  //   return () => {
+  //     document.removeEventListener('mousedown', handleClickOutside);
+  //   };
+  // }, []);
+
+  if (totalTicketsForCustomer === 0) {
+    return null;
+  }
 
   return (
-    <div ref={buttonRef}>
+    <div /*ref={buttonRef}*/>
       <Button
         variant="outlined"
         // ref={dropdownRef}
@@ -81,16 +90,6 @@ export const TicketFilter = () => {
         }}
         onClick={toggleDropDown}
       >
-        {/* <div
-        tabIndex={0}
-        role="button"
-        className={clsx(
-          'btn m-1 flex justify-center items-center shadow-md dark:bg-white',
-          {
-            [`${styles.myHover}`]: isTicketFilterDropdownOpen,
-          }
-        )}
-      > */}
         <div className="text-xs flex flex-col justify-center items-center">
           {searchParams.get('query')?.toString() === FilterTicketsStatus.All ||
           searchParams.get('query')?.toString() == undefined ? (
@@ -111,8 +110,8 @@ export const TicketFilter = () => {
         </div>
         {isTicketFilterDropdownOpen ? (
           <div
-            ref={dropdownRef}
-            className="absolute top-[34px] left-0 w-[160px] bg-white z-[15] text-[12px] border border-[#88888845] rounded-bl-[16px] rounded-br-[16px]"
+            // ref={dropdownRef}
+            className="absolute top-[34px] left-[-70px] w-[160px] bg-white z-[15] text-[12px] border border-[#88888845] rounded-bl-[16px] rounded-br-[16px]"
           >
             <ul
               tabIndex={0}
