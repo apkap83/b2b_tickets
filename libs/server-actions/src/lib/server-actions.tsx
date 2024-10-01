@@ -49,6 +49,41 @@ import { redirect } from 'next/navigation';
 //   await syncDatabaseAlterTrue();
 // };
 
+export const getTotalNumOfTicketsForCustomer = async (): Promise<number> => {
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+  //@ts-ignore
+  const session = await getServerSession(options);
+
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/`);
+  }
+  //@ts-ignore
+  const customerId = session.user.customer_id;
+
+  //@ts-ignore
+  const customerName = session.user.customer_name;
+
+  try {
+    // Artificial Delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // In case there is no Customer Id then return all
+    if (customerId === -1) {
+      const sqlQuery = `SELECT count(*) FROM tickets_v`;
+      const res = await pgB2Bpool.query(sqlQuery);
+      return res?.rows[0].count as number;
+    }
+    // Filter Tickets View by Customer Name
+    const sqlQuery = `SELECT count(*) FROM tickets_v where "Customer" = $1`;
+    const res = await pgB2Bpool.query(sqlQuery, [customerName]);
+
+    return res?.rows[0].count as number;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getFilteredTicketsForCustomer = async (
   query: string,
   currentPage: number,
@@ -174,7 +209,7 @@ export const getTicketDetailsForTicketId = async ({
     const queryForTicketsCategoriesAndTypes = `
     SELECT 
         ticket_id,
-        t.customer_id,
+        CAST(t.customer_id AS INTEGER) AS customer_id,
         ticket_number,
         title,
         description,
@@ -262,9 +297,10 @@ export const getTicketDetailsForTicketId = async ({
       notFound();
     }
 
-    // Check if the specific ticket belongs to the customer that requests it
+    // This check ensures that a customer cannot see other customers tickets
+    // Check if the specific ticket belongs to the customer ID that was requested it
     // Compare session.user.customer_id with ticketDetails[0].customer_id
-    if (session?.user.customer_id !== queryRes1.rows[0].customer_id) {
+    if (session?.user.customer_id !== Number(queryRes1.rows[0].customer_id)) {
       notFound();
     }
 

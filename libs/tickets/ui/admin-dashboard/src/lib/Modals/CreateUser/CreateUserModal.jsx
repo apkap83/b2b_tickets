@@ -68,7 +68,7 @@ function CreateUserModal({ closeModal }) {
   console.log('Formik errors', formik?.errors);
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white px-10 py-3 rounded-lg">
+      <div className="bg-white px-10 py-3 rounded-lg max-h-[600px] overflow-y-auto">
         <h3 className="font-bold text-lg text-center">Create User Form</h3>
 
         <form className="flex flex-col gap-3 pt-3" action={action}>
