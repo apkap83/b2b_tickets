@@ -31,7 +31,7 @@ export const PaginationOld = ({
   const allPages = generatePagination(activePage, numberOfPages);
 
   return (
-    <div className="join">
+    <div id="pagination" className="join">
       <PaginationArrow
         direction="left"
         isDisabled={activePage <= 1}
