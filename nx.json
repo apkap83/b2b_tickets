@@ -4,9 +4,9 @@
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
-      "!{projectRoot}/cypress/**/*",
-      "!{projectRoot}/**/*.cy.[jt]s?(x)",
-      "!{projectRoot}/cypress.config.[jt]s",
+      "!{projectRoot}/playwright/**/*",
+      "!{projectRoot}/**/*.spec.[jt]s?(x)",
+      "!{projectRoot}/playwright.config.[jt]s",
       "!{projectRoot}/.eslintrc.json",
       "!{projectRoot}/eslint.config.js",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
@@ -28,11 +28,9 @@
       }
     },
     {
-      "plugin": "@nx/cypress/plugin",
+      "plugin": "@nx/playwright/plugin",
       "options": {
         "targetName": "e2e",
-        "openTargetName": "open-cypress",
-        "componentTestingTargetName": "component-test",
         "ciTargetName": "e2e-ci"
       }
     },
@@ -77,6 +75,12 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
+    }
+  },
+  "@nx/playwright": {
+    "project": {
+      "style": "tailwind",
+      "linter": "eslint"
     }
   }
 }
