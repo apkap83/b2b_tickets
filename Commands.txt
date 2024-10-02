@@ -68,3 +68,6 @@ nx g @nx/jest:configuration --project=tickets
 # Test E2E 
 cd apps/b2b_tickets-e2e; 
 npx playwright test --project chromium
+
+# OR using nx
+nx run b2b_tickets-e2e:e2e  
