@@ -1,0 +1,21 @@
+{
+  "name": "b2b_tickets-e2e",
+  "sourceRoot": "apps/b2b_tickets-e2e",
+  "projectType": "application",
+  "targets": {
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx playwright test",
+        "cwd": "apps/b2b_tickets-e2e"
+      },
+      "configurations": {
+        "ci": {
+          "command": "npx playwright test --reporter=dot"
+        }
+      }
+    }
+  },
+  "implicitDependencies": ["b2b_tickets"],
+  "tags": []
+}
