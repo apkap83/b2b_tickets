@@ -132,7 +132,6 @@ const tryLocalAuthentication = async (
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
-    console.log('foundUser', foundUser);
     if (foundUser.is_locked === 'y') {
       logRequest.info(
         `User with user name '${foundUser.username}' is currently locked`

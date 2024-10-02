@@ -1,0 +1,15 @@
+{
+  "name": "init",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nx/playwright": "^19.4.2",
+    "@playwright/test": "^1.47.2",
+    "@types/node": "^22.7.4"
+  }
+}
