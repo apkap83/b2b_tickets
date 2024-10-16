@@ -188,7 +188,9 @@ export default function SignInForm({ providers, csrfToken }) {
           break;
 
         default:
-          return;
+          setError('Internal Server Error');
+          setIsLoading(false);
+          break;
       }
     },
   });

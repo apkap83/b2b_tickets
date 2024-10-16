@@ -54,10 +54,10 @@ const authMiddleware = withAuth(
     //   url: reqURL,
     //   sessionId: sessionId,
     // });
-    // console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
-    // console.log('*** pathName:', pathName);
-    // console.log('*** roles:', roles);
-    // console.log('*** permissions:', permissions);
+    console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
+    console.log('*** pathName:', pathName);
+    console.log('*** roles:', roles);
+    console.log('*** permissions:', permissions);
 
     if (!roles) {
       return NextResponse.rewrite(new URL('/signin', req.url));
@@ -67,9 +67,12 @@ const authMiddleware = withAuth(
       return NextResponse.next();
     }
 
-    const authorized = permissions.some((permission) =>
-      pathName.startsWith(permission.permissionEndPoint)
-    );
+    const authorized = permissions.some((permission) => {
+      const permissionEndPoint = permission.permissionEndPoint;
+      if (permissionEndPoint) {
+        if (pathName.startsWith(permissionEndPoint)) return true;
+      }
+    });
 
     if (!authorized) {
       return NextResponse.rewrite(new URL('/denied', req.url));

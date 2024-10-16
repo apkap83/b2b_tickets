@@ -1,5 +1,6 @@
 import { authenticator } from 'otplib';
 import { config } from '@b2b-tickets/config';
+import { TicketStatusColors } from '@b2b-tickets/shared-models';
 import * as crypto from 'crypto';
 
 const ALGORITHM = 'aes256';
@@ -177,4 +178,19 @@ export const generateOtpCode = (encryptedSecret: string) => {
   const secret = symmetricDecrypt(encryptedSecret, process.env.ENCRYPTION_KEY!);
   const otpCode = authenticator.generate(secret);
   return otpCode;
+};
+
+export const getStatusColor = (ticketStatus: any) => {
+  switch (ticketStatus) {
+    case '1':
+      return TicketStatusColors.NEW;
+    case '2':
+      return TicketStatusColors.WORKING;
+    case '3':
+      return TicketStatusColors.CANCELLED;
+    case '4':
+      return TicketStatusColors.CLOSED;
+    default:
+      return '#000'; // Fallback color
+  }
 };

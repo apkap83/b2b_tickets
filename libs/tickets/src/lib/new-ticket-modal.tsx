@@ -150,9 +150,28 @@ export function NewTicketModal({ closeModal, userId }: any) {
     contactPerson: yup.string().required('Contact Person is required'),
     contactPhoneNum: yup
       .string()
-      .required('Contact Phone Number is required')
-      .matches(/^[0-9]+$/, 'Contact Phone Number must be numeric')
-      .min(10, 'Contact Phone Number must be at least 10 characters long'),
+      .test(
+        'is-valid-phone-list',
+        'Must be a comma-separated list of valid Mobile Phone numbers',
+        (value) => {
+          if (!value) return true; // Allow empty since it is not required
+          const phones = value.split(',').map((phone) => phone.trim());
+          const phoneRegex = /^[0-9]{10,15}$/; // Adjust the regex as needed for your phone number format
+          return phones.every((phone) => phoneRegex.test(phone));
+        }
+      ),
+    ccUsers: yup
+      .string()
+      .test(
+        'is-valid-email-list',
+        'Must be a comma-separated list of valid email addresses',
+        (value) => {
+          if (!value) return true; // Allow empty since it is not required
+          const emails = value.split(',').map((email) => email.trim());
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
+          return emails.every((email) => emailRegex.test(email));
+        }
+      ),
     occurrenceDate: yup
       .string()
       .required('Occurrence date is required')
@@ -198,6 +217,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
       cliValue: '',
       contactPerson: '',
       contactPhoneNum: session?.user.mobilePhone || '',
+      ccUsers: '',
       occurrenceDate: dayjs().toISOString(),
       // occurrenceDate: '',
     },
@@ -308,6 +328,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                         style={{
                           backgroundColor: `${colors.grey[900]}`,
                           color: `${colors.grey[100]}`,
+                          minHeight: '240px',
                         }}
                       ></textarea>
                     </FormControl>
@@ -481,7 +502,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                       margin="dense"
                       id="equipmentId"
                       name="equipmentId"
-                      label="Equipment ID"
+                      label="Equipment ID (optional)"
                       fullWidth
                       variant="standard"
                       type="number"
@@ -516,7 +537,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                       margin="dense"
                       id="contactPhoneNum"
                       name="contactPhoneNum"
-                      label="Contact Phone Number"
+                      label="Contact Phones"
                       type="text"
                       variant="standard"
                       value={formik.values.contactPhoneNum}
@@ -524,8 +545,27 @@ export function NewTicketModal({ closeModal, userId }: any) {
                       onBlur={formik.handleBlur}
                       autoComplete={autoComplete}
                     />
+                    <ClarificationMessage msg="Comma separated list of Mobile Phones" />
                   </FormControl>
                   <FieldError formik={formik} name="contactPhoneNum" />
+
+                  <FormControl sx={{ minWidth: rightPanelMinWidthPx }}>
+                    <TextField
+                      margin="dense"
+                      id="ccUsers"
+                      name="ccUsers"
+                      label="Cc E-mails (optional)"
+                      type="text"
+                      variant="standard"
+                      value={formik.values.ccUsers}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      autoComplete={autoComplete}
+                    />
+                    <ClarificationMessage msg="Comma separated list of E-mails" />
+                  </FormControl>
+                  <FieldError formik={formik} name="ccUsers" />
+
                   <FormControl sx={{ mt: '.5rem' }}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <span
@@ -606,8 +646,8 @@ export const SubmitButton = ({
   };
 
   let letterColor = '#ddd7d7';
-  let backgroundColor = '#0f0b58';
-  let borderColor = '#141b2d';
+  let backgroundColor = '#1e197b';
+  let borderColor = '#1e197b';
 
   if (!isValid || pending) {
     backgroundColor = '#5b5b5d';
@@ -629,5 +669,18 @@ export const SubmitButton = ({
     >
       {pending ? loadingText : label}
     </Button>
+  );
+};
+
+const ClarificationMessage = ({ msg }: { msg: string }) => {
+  return (
+    <div
+      style={{
+        fontSize: '9px',
+        color: 'rgba(0,0,0,0.4)',
+      }}
+    >
+      {msg}
+    </div>
   );
 };

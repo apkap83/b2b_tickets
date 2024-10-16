@@ -8,9 +8,18 @@ import { FcVoicePresentation } from 'react-icons/fc';
 
 import { NovaLogo_49x49 as imagePath } from '@b2b-tickets/assets';
 import { RiChatDeleteFill } from 'react-icons/ri';
-import { Paper, Box, IconButton, useTheme, Typography } from '@mui/material';
+import {
+  Paper,
+  Box,
+  IconButton,
+  useTheme,
+  Typography,
+  Tooltip,
+} from '@mui/material';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { userHasPermission } from '@b2b-tickets/utils';
+import { deleteExistingComment } from '@b2b-tickets/server-actions';
+import toast from 'react-hot-toast';
 
 const getRightAvatar = (company: string) => {
   return company === 'Nova' ? (
@@ -30,7 +39,13 @@ const getRightCommentCreatorName = (comment: TicketComment) => {
   );
 };
 
-export function TicketsUiComments({ comments }: { comments: TicketComment[] }) {
+export function TicketsUiComments({
+  comments,
+  ticketNumber,
+}: {
+  comments: TicketComment[];
+  ticketNumber: string;
+}) {
   const { data: session, status } = useSession();
   return (
     <div className="rounded-t-md rounded-b-md shadow-lg self-stretch border border-[#d4d4d6] justify-start items-center gap-6 inline-flex">
@@ -66,28 +81,31 @@ export function TicketsUiComments({ comments }: { comments: TicketComment[] }) {
                         </div>
                       </div>
                       {item.is_closure === 'y' ? (
-                        <div>
-                          <div className="inline text-right border p-1 text-[#3d8d52] text-xs whitespace-nowrap">
-                            Closing Comment
-                          </div>
+                        <div className="inline text-right border p-1 text-[#3d8d52] text-xs whitespace-nowrap">
+                          Closing Comment
+                        </div>
+                      ) : (
+                        <>
                           {userHasPermission(
                             session,
                             AppPermissionTypes.Delete_Comments
                           ) ? (
-                            <IconButton
-                              onClick={() => {
-                                alert('Postgres Function not implemented yet');
-                              }}
-                              className="flex flex-col justify-center items-center"
-                            >
-                              <RiChatDeleteFill
-                                size="25"
-                                color="rgba(104, 112, 250, .75)"
-                              />
-                            </IconButton>
+                            <Tooltip title="Delete Comment">
+                              <IconButton
+                                onClick={() => {
+                                  handleDeleteComment({ item, ticketNumber });
+                                }}
+                                className="flex flex-col justify-center items-center"
+                              >
+                                <RiChatDeleteFill
+                                  size="25"
+                                  color="rgba(104, 112, 250, .75)"
+                                />
+                              </IconButton>
+                            </Tooltip>
                           ) : null}
-                        </div>
-                      ) : null}
+                        </>
+                      )}
                     </div>
                     <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">
                       <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
@@ -104,5 +122,37 @@ export function TicketsUiComments({ comments }: { comments: TicketComment[] }) {
     </div>
   );
 }
+
+const handleDeleteComment = async ({
+  item,
+  ticketNumber,
+}: {
+  item: TicketComment;
+  ticketNumber: string;
+}) => {
+  const confirmed = window.confirm(
+    'Are you sure you want to delete this comment?\n\n* This action will be recorded for accountability.'
+  );
+
+  if (!confirmed) {
+    return; // User canceled the deletion
+  }
+
+  const resp = await deleteExistingComment({
+    commentId: item.comment_id,
+    ticketNumber,
+  });
+
+  if (!resp) {
+    toast.error('An error occurred');
+    return;
+  }
+
+  if (resp?.status === 'ERROR') {
+    toast.error(resp.message);
+  } else {
+    toast.success(resp.message);
+  }
+};
 
 export default TicketsUiComments;

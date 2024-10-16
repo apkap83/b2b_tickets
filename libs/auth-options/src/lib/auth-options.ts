@@ -226,117 +226,124 @@ export const options: NextAuthOptions = {
         totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
       },
       async authorize(credentials, req) {
-        const headersList = headers();
-        const reqIP = headersList.get('request-ip');
-        const reqURL = headersList.get('request-url');
-        const sessionId = headersList.get('session-id');
+        try {
+          const headersList = headers();
+          const reqIP = headersList.get('request-ip');
+          const reqURL = headersList.get('request-url');
+          const sessionId = headersList.get('session-id');
 
-        // Create a logger that automatically includes reqIP, reqURL, and sessionId
-        const logRequest = createRequestLogger(
-          TransportName.AUTH,
-          reqIP,
-          reqURL,
-          sessionId
-        );
-
-        if (!credentials?.userName)
-          throw new Error(ErrorCode.NoCredentialsProvided);
-        if (!credentials?.password)
-          throw new Error(ErrorCode.NoCredentialsProvided);
-
-        // reCAPTCHA VALIDATION FIRST
-        if (config.CaptchaIsActive && credentials.totpCode === '') {
-          const captchaToken = credentials.captchaToken;
-          const reCaptchaSuccessResponse = await validateReCaptcha(
-            captchaToken
+          // Create a logger that automatically includes reqIP, reqURL, and sessionId
+          const logRequest = createRequestLogger(
+            TransportName.AUTH,
+            reqIP,
+            reqURL,
+            sessionId
           );
-          if (!reCaptchaSuccessResponse) {
+
+          if (!credentials?.userName)
+            throw new Error(ErrorCode.NoCredentialsProvided);
+          if (!credentials?.password)
+            throw new Error(ErrorCode.NoCredentialsProvided);
+
+          // reCAPTCHA VALIDATION FIRST
+          if (config.CaptchaIsActive && credentials.totpCode === '') {
+            const captchaToken = credentials.captchaToken;
+            const reCaptchaSuccessResponse = await validateReCaptcha(
+              captchaToken
+            );
+            if (!reCaptchaSuccessResponse) {
+              logRequest.error(
+                `reCAPTCHA backend validation error for user ${credentials.userName}`
+              );
+              throw new Error(ErrorCode.CaptchaValidationFailed);
+            }
+          }
+          const localAuthUserDetails = await tryLocalAuthentication(
+            credentials,
+            logRequest
+          );
+
+          if (!localAuthUserDetails) {
             logRequest.error(
-              `reCAPTCHA backend validation error for user ${credentials.userName}`
+              'LocalAuthUserDetails object from Local Authentication is not valid'
             );
-            throw new Error(ErrorCode.CaptchaValidationFailed);
+            throw new Error(ErrorCode.InternalServerError);
           }
-        }
-        const localAuthUserDetails = await tryLocalAuthentication(
-          credentials,
-          logRequest
-        );
 
-        if (!localAuthUserDetails) {
-          logRequest.error(
-            'LocalAuthUserDetails object from Local Authentication is not valid'
+          // Without Two Factor Authentication The User is Now Authenticated
+          if (!config.TwoFactorEnabled) {
+            logRequest.info(
+              `Local User '${credentials.userName}' has been successfully authenticated`
+            );
+            return localAuthUserDetails;
+          }
+
+          if (!credentials.totpCode) {
+            logRequest.info(
+              `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
+            );
+
+            let newlyGeneratedSecret: string | undefined = undefined;
+            let correctOTPCode: string | undefined = undefined;
+            // if Two Factor Secret does not exist then generate it
+            if (!localAuthUserDetails.two_factor_secret) {
+              newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
+                localAuthUserDetails.user_id,
+                logRequest
+              );
+            }
+
+            // Secret Already Exists
+            if (newlyGeneratedSecret == undefined) {
+              correctOTPCode = generateOtpCode(
+                localAuthUserDetails.two_factor_secret!
+              );
+            }
+
+            // Secret was just created
+            if (newlyGeneratedSecret !== undefined) {
+              correctOTPCode = generateOtpCode(newlyGeneratedSecret);
+            }
+
+            // SEND SMS HERE
+            logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
+            throw new Error(ErrorCode.SecondFactorRequired);
+          }
+
+          // TODO
+          // If User is 'admin' himself then allow ANY OTP Code
+          if (localAuthUserDetails.userName === 'admin') {
+            logRequest.info(
+              'Allowing admin user to have access with ANY OTP code'
+            );
+            logRequest.info(
+              `Local User '${credentials.userName}' has been successfully authenticated`
+            );
+            return localAuthUserDetails;
+          }
+
+          // Validate OTP
+          const secret = symmetricDecrypt(
+            localAuthUserDetails.two_factor_secret!,
+            process.env.ENCRYPTION_KEY!
           );
-          throw new Error(ErrorCode.InternalServerError);
-        }
 
-        // Without Two Factor Authentication The User is Now Authenticated
-        if (!config.TwoFactorEnabled) {
+          const isValidToken = authenticator.check(
+            credentials.totpCode,
+            secret
+          );
+          if (!isValidToken) {
+            logRequest.error(`Invalid Token Provided`);
+            throw new Error(ErrorCode.IncorrectTwoFactorCode);
+          }
+
           logRequest.info(
             `Local User '${credentials.userName}' has been successfully authenticated`
           );
           return localAuthUserDetails;
+        } catch (error) {
+          throw error;
         }
-
-        if (!credentials.totpCode) {
-          logRequest.info(
-            `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
-          );
-
-          let newlyGeneratedSecret: string | undefined = undefined;
-          let correctOTPCode: string | undefined = undefined;
-          // if Two Factor Secret does not exist then generate it
-          if (!localAuthUserDetails.two_factor_secret) {
-            newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
-              localAuthUserDetails.user_id,
-              logRequest
-            );
-          }
-
-          // Secret Already Exists
-          if (newlyGeneratedSecret == undefined) {
-            correctOTPCode = generateOtpCode(
-              localAuthUserDetails.two_factor_secret!
-            );
-          }
-
-          // Secret was just created
-          if (newlyGeneratedSecret !== undefined) {
-            correctOTPCode = generateOtpCode(newlyGeneratedSecret);
-          }
-
-          // SEND SMS HERE
-          logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
-          throw new Error(ErrorCode.SecondFactorRequired);
-        }
-
-        // TODO
-        // If User is 'admin' himself then allow ANY OTP Code
-        if (localAuthUserDetails.userName === 'admin') {
-          logRequest.info(
-            'Allowing admin user to have access with ANY OTP code'
-          );
-          logRequest.info(
-            `Local User '${credentials.userName}' has been successfully authenticated`
-          );
-          return localAuthUserDetails;
-        }
-
-        // Validate OTP
-        const secret = symmetricDecrypt(
-          localAuthUserDetails.two_factor_secret!,
-          process.env.ENCRYPTION_KEY!
-        );
-
-        const isValidToken = authenticator.check(credentials.totpCode, secret);
-        if (!isValidToken) {
-          logRequest.error(`Invalid Token Provided`);
-          throw new Error(ErrorCode.IncorrectTwoFactorCode);
-        }
-
-        logRequest.info(
-          `Local User '${credentials.userName}' has been successfully authenticated`
-        );
-        return localAuthUserDetails;
       },
     }),
   ],

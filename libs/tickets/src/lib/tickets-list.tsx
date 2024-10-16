@@ -6,6 +6,7 @@ import {
   Ticket,
   TicketStatusName,
   AppRoleTypes,
+  TicketStatusColors,
 } from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
@@ -87,6 +88,21 @@ const generateTableHeadAndColumns = async () => {
 };
 
 const generateTableBody = async (items: Ticket[]) => {
+  const getStatusColor = (ticketStatus: any) => {
+    switch (ticketStatus) {
+      case TicketStatusName.NEW:
+        return TicketStatusColors.NEW;
+      case TicketStatusName.WORKING:
+        return TicketStatusColors.WORKING;
+      case TicketStatusName.CANCELLED:
+        return TicketStatusColors.CANCELLED;
+      case TicketStatusName.CLOSED:
+        return TicketStatusColors.CLOSED;
+      default:
+        return '#000'; // Fallback color
+    }
+  };
+
   const session = await getServerSession(options);
   return (
     <TableBody>
@@ -140,19 +156,11 @@ const generateTableBody = async (items: Ticket[]) => {
           <TableCell data-label="Status" align="center">
             {
               <div
-                className={clsx(
-                  'px-1 py-1 rounded-md font-medium text-center',
-                  {
-                    [`text-[#ffffff]  border bg-[#6870fa]`]:
-                      item.Status === TicketStatusName.NEW,
-                    [`text-[#ffffff] border bg-[#916430]`]:
-                      item.Status === TicketStatusName.WORKING,
-                    [`text-[#ffffff] border bg-[#dc5743]`]:
-                      item.Status === TicketStatusName.CANCELLED,
-                    [`text-[#ffffff] border bg-[#3d8d52]`]:
-                      item.Status === TicketStatusName.CLOSED,
-                  }
-                )}
+                style={{
+                  backgroundColor: getStatusColor(item.Status),
+                  borderColor: getStatusColor(item.Status),
+                }}
+                className="text-white px-1 py-1 rounded-md font-medium text-center"
               >
                 {item.Status}
               </div>
