@@ -41,7 +41,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
 
   if (ticketDetails.length === 0) return;
 
-  const ticketNumber = ticketDetails[0]['ticket_number'];
+  const ticketNumber = ticketDetails[0]['ticket_number'] as string;
   const title = ticketDetails[0]['title'];
   const category = ticketDetails[0]['category_name'];
   const serviceName = ticketDetails[0]['service_name'];
@@ -203,6 +203,37 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
     }
   };
 
+  const StatusBadge = () => {
+    const getStatusColor = () => {
+      switch (ticketStatus) {
+        case '1':
+          return TicketStatusColors.NEW;
+        case '2':
+          return TicketStatusColors.WORKING;
+        case '3':
+          return TicketStatusColors.CANCELLED;
+        case '4':
+          return TicketStatusColors.CLOSED;
+        default:
+          return '#000'; // Fallback color
+      }
+    };
+
+    return (
+      <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+        <span
+          className="px-2 text-white border rounded-md p-1"
+          style={{
+            backgroundColor: getStatusColor(),
+            borderColor: getStatusColor(),
+          }}
+        >
+          {ticketDetails[0].status_name}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="w-full flex-col justify-start items-center gap-5 inline-flex mb-[75px]">
@@ -232,22 +263,7 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
                   Status
                 </div>
-                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  <span
-                    className={clsx(`px-2`, {
-                      [`text-[#ffffff] border border-[${TicketStatusColors.NEW}] bg-[#6870fa] rounded-md p-1`]:
-                        ticketStatus === '1',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.WORKING}] bg-[#916430] rounded-md p-1`]:
-                        ticketStatus === '2',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.CANCELLED}] bg-[#dc5743] rounded-md p-1`]:
-                        ticketStatus === '3',
-                      [`text-[#ffffff] border border-[${TicketStatusColors.CLOSED}] bg-[#3d8d52] rounded-md p-1`]:
-                        ticketStatus === '4',
-                    })}
-                  >
-                    {ticketDetails[0].status_name}
-                  </span>
-                </div>
+                <StatusBadge />
               </div>
               <div className="w-full justify-center items-center gap-2.5 inline-flex">
                 <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
@@ -369,13 +385,16 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
               </div>
             </div>
           </div>
-          <TicketsUiComments comments={commentsArray} />
+          <TicketsUiComments
+            comments={commentsArray}
+            ticketNumber={ticketNumber}
+          />
         </div>
       </div>
       {showNewComment ? (
         <NewCommentModal
           modalAction={modalAction}
-          userId={userId}
+          userId={String(userId)}
           closeModal={setShowNewComment}
           ticketDetail={ticketDetails}
         />

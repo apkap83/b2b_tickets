@@ -11,6 +11,7 @@ import {
   toFormState,
   fromErrorToFormState,
   userHasRole,
+  userHasPermission,
 } from '@b2b-tickets/utils';
 import {
   Ticket,
@@ -21,6 +22,7 @@ import {
   TicketStatus,
   TicketStatusName,
   FilterTicketsStatus,
+  AppPermissionTypes,
 } from '@b2b-tickets/shared-models';
 
 import {
@@ -269,7 +271,7 @@ export const getTicketDetailsForTicketId = async ({
       ON u.user_id = tc.comment_user_id
       INNER JOIN customers as c
       ON u.customer_id = c.customer_id
-      WHERE t.ticket_number = $1
+      WHERE t.ticket_number = $1 and tc.deletion_date is null
       ORDER BY tc.comment_date DESC
     `;
     const queryRes1 = await pgB2Bpool.query(queryForTicketsCategoriesAndTypes, [
@@ -381,8 +383,17 @@ const ticketSchema_zod = z
     contactPhoneNum: z
       .string()
       .nonempty('Contact Phone Number is required')
-      .regex(/^[0-9]+$/, 'Contact Phone Number must be numeric')
-      .min(10, 'Contact Phone Number must be at least 10 characters long'),
+      .refine((value) => {
+        const phones = value.split(',').map((phone) => phone.trim());
+        const phoneRegex = /^[0-9]{10,15}$/; // Adjust the regex as needed for your phone number format
+        return phones.every((phone) => phoneRegex.test(phone));
+      }, 'Must be a comma-separated list of valid Mobile Phone numbers'),
+    ccUsers: z.string().refine((value) => {
+      if (!value) return true; // Allow empty since it is not required
+      const emails = value.split(',').map((email) => email.trim());
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
+      return emails.every((email) => emailRegex.test(email));
+    }, 'Must be a comma-separated list of valid email addresses'),
     occurrenceDate: z.string().nonempty('Occurrence date is required'),
   })
   .refine((data) => data.sid || data.cid || data.userName || data.cliValue, {
@@ -416,6 +427,7 @@ export const createNewTicket = async (
       cliValue,
       contactPerson,
       contactPhoneNum,
+      ccUsers,
       occurrenceDate,
     } = ticketSchema_zod.parse({
       title: formData.get('title'),
@@ -429,29 +441,23 @@ export const createNewTicket = async (
       cliValue: formData.get('cliValue'),
       contactPerson: formData.get('contactPerson'),
       contactPhoneNum: formData.get('contactPhoneNum'),
+      ccUsers: formData.get('ccUsers'),
       occurrenceDate: formData.get('occurrenceDate'),
     });
 
     if (equipmentId === '') {
       equipmentId = '0';
     }
-    // const title = formData.get('title');
-    // const description = formData.get('description');
-    // const category = formData.get('category');
-    // const service = formData.get('service');
-    // const equipmentId = formData.get('equipmentId');
-    // const sid = formData.get('sid');
-    // const cid = formData.get('cid');
-    // const userName = formData.get('userName');
-    // const cliValue = formData.get('cliValue');
-    // const contactPerson = formData.get('contactPerson');
-    // const contactPhoneNum = formData.get('contactPhoneNum');
-    // const occurrenceDate = formData.get('occurrenceDate');
-
     const standardizedDate = convertTo24HourFormat(occurrenceDate);
 
-    // Validate input data with yup
-    // await ticketSchema.validate(ticketData, { abortEarly: false });
+    //     PROCEDURE tck_set_cc_users
+    // (
+    //    IN pnum_TICKET_ID NUMERIC,
+    //    IN pvch_CC_Users_List VARCHAR,
+    //    IN pvch_API_User VARCHAR,
+    //    IN pvch_API_Process VARCHAR,
+    //    IN pbln_Debug_Mode BOOLEAN DEFAULT FALSE
+    // )
 
     // TODO: Define proper user Id and api User from session
     const result = await pgB2Bpool.query(
@@ -479,6 +485,21 @@ export const createNewTicket = async (
       ]
     );
 
+    const newTicketId = result.rows[0].ticket_id;
+
+    if (!newTicketId) {
+      throw new Error('New Ticket Id cannot be retrieved during insertion');
+    }
+
+    await pgB2Bpool.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
+      newTicketId,
+      ccUsers,
+      //@ts-ignore
+      config.api.user,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
+    ]);
+
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
@@ -494,6 +515,104 @@ const commentSchema_zod = z.object({
   ticketNumber: z.string(),
   modalAction: z.string(),
 });
+
+export const setRemedyIDForTicket = async ({
+  commentId,
+  ticketNumber,
+}: {
+  commentId: string;
+  ticketNumber: string;
+}) => {
+  try {
+    const session = await getServerSession(options);
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    console.log({ commentId });
+    if (!userHasPermission(session, AppPermissionTypes.Delete_Comments)) {
+      return {
+        status: 'ERROR',
+        message: 'You do not have permission for this action',
+      };
+    }
+
+    //     call tck_set_rmd_inc
+    // (
+    //    pnum_ticket_id => 70,
+    //    pvch_Remedy_Ticket => 'inc000998',
+    //    pnum_Remedy_User_ID => 8,
+    //    pvch_api_user => 'dioan',
+    //    pvch_api_process => 'test',
+    //    pbln_debug_mode => false
+    // )
+
+    await pgB2Bpool.query('CALL tck_set_rmd_inc($1, $2, $3, $4, $5)', [
+      commentId,
+      session.user.user_id,
+      //@ts-ignore
+      config.api.user,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
+    ]);
+
+    revalidatePath(`/ticket/${ticketNumber}`);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Comment was deleted successfully',
+    };
+  } catch (error: any) {
+    return {
+      status: 'ERROR',
+      message: error?.message,
+    };
+  }
+};
+
+export const deleteExistingComment = async ({
+  commentId,
+  ticketNumber,
+}: {
+  commentId: string;
+  ticketNumber: string;
+}) => {
+  try {
+    const session = await getServerSession(options);
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    console.log({ commentId });
+    if (!userHasPermission(session, AppPermissionTypes.Delete_Comments)) {
+      return {
+        status: 'ERROR',
+        message: 'You do not have permission for this action',
+      };
+    }
+
+    await pgB2Bpool.query('CALL cmt_delete($1, $2, $3, $4, $5)', [
+      commentId,
+      session.user.user_id,
+      //@ts-ignore
+      config.api.user,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
+    ]);
+
+    revalidatePath(`/ticket/${ticketNumber}`);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Comment was deleted successfully',
+    };
+  } catch (error: any) {
+    return {
+      status: 'ERROR',
+      message: error?.message,
+    };
+  }
+};
 
 export const createNewComment = async (
   formState: TicketFormState,
