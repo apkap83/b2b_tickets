@@ -19,6 +19,7 @@ import TableCell from '@mui/material/TableCell';
 import { formatDate } from '@b2b-tickets/utils';
 import clsx from 'clsx';
 import styles from './css/tickets-list.module.scss';
+import { TicketRow } from './ticket-row';
 
 export const TicketsList = async ({
   query,
@@ -69,6 +70,7 @@ const generateTableHeadAndColumns = async () => {
   ];
 
   if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
+    columnsForTickets.unshift('Escalated');
     columnsForTickets.unshift('Customer');
   }
 
@@ -88,88 +90,12 @@ const generateTableHeadAndColumns = async () => {
 };
 
 const generateTableBody = async (items: Ticket[]) => {
-  const getStatusColor = (ticketStatus: any) => {
-    switch (ticketStatus) {
-      case TicketStatusName.NEW:
-        return TicketStatusColors.NEW;
-      case TicketStatusName.WORKING:
-        return TicketStatusColors.WORKING;
-      case TicketStatusName.CANCELLED:
-        return TicketStatusColors.CANCELLED;
-      case TicketStatusName.CLOSED:
-        return TicketStatusColors.CLOSED;
-      default:
-        return '#000'; // Fallback color
-    }
-  };
-
   const session = await getServerSession(options);
+  console.log({ items });
   return (
     <TableBody>
       {items.map((item: any) => (
-        <TableRow
-          key={item.ticket_id}
-          sx={{
-            whiteSpace: 'nowrap',
-
-            '&:hover': {
-              backgroundColor: 'rgba(0,0,0,.05)',
-              // cursor: 'pointer',
-            },
-          }}
-        >
-          {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
-            <TableCell data-label="Customer" align="center">
-              <span className="font-medium">{item.Customer}</span>
-            </TableCell>
-          ) : null}
-          <TableCell data-label="Ticket Number" align="center">
-            <Link href={`/ticket/${item.Ticket}`} className="text-blue-500">
-              {
-                <span className="font-medium tracking-wider">
-                  {item.Ticket}
-                </span>
-              }
-            </Link>
-          </TableCell>
-          <TableCell data-label="Opened" align="center">
-            {formatDate(item.Opened)}
-          </TableCell>
-          <TableCell
-            style={{
-              whiteSpace: 'normal',
-            }}
-            data-label="Title"
-            align="center"
-          >
-            {item.Title}
-          </TableCell>
-          <TableCell data-label="Category" align="center">
-            {item.Category}
-          </TableCell>
-          <TableCell data-label="Service" align="center">
-            {item.Service}
-          </TableCell>
-          <TableCell data-label="Opened By" align="center">
-            {formatDate(item['Opened By'])}
-          </TableCell>
-          <TableCell data-label="Status" align="center">
-            {
-              <div
-                style={{
-                  backgroundColor: getStatusColor(item.Status),
-                  borderColor: getStatusColor(item.Status),
-                }}
-                className="text-white px-1 py-1 rounded-md font-medium text-center"
-              >
-                {item.Status}
-              </div>
-            }
-          </TableCell>
-          <TableCell data-label="Status Date" align="center">
-            {formatDate(item['Status Date'])}
-          </TableCell>
-        </TableRow>
+        <TicketRow session={session} item={item} />
       ))}
     </TableBody>
   );

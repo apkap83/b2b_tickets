@@ -55,6 +55,8 @@ import { useSession } from 'next-auth/react';
 import * as yup from 'yup';
 import styles from './css/new-ticket-modal.module.scss';
 import { useFormStatus } from 'react-dom';
+import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
+import { Span } from 'next/dist/trace';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -88,6 +90,9 @@ export function NewTicketModal({ closeModal, userId }: any) {
     createNewTicket,
     EMPTY_FORM_STATE
   );
+
+  // State to toggle the visibility of the fields
+  const [showCcFields, setShowCcFields] = useState(false);
 
   const noScriptFallback = useToastMessage(formState);
 
@@ -160,7 +165,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
           return phones.every((phone) => phoneRegex.test(phone));
         }
       ),
-    ccUsers: yup
+    ccEmails: yup
       .string()
       .test(
         'is-valid-email-list',
@@ -170,6 +175,18 @@ export function NewTicketModal({ closeModal, userId }: any) {
           const emails = value.split(',').map((email) => email.trim());
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
           return emails.every((email) => emailRegex.test(email));
+        }
+      ),
+    ccPhones: yup
+      .string()
+      .test(
+        'is-valid-phone-list',
+        'Must be a comma-separated list of valid phone numbers',
+        (value) => {
+          if (!value) return true; // Allow empty since it is not required
+          const phones = value.split(',').map((phone) => phone.trim());
+          const phoneRegex = /^\d{10,12}$/; // Basic phone regex
+          return phones.every((phone) => phoneRegex.test(phone));
         }
       ),
     occurrenceDate: yup
@@ -215,11 +232,11 @@ export function NewTicketModal({ closeModal, userId }: any) {
       cid: '',
       userName: '',
       cliValue: '',
-      contactPerson: '',
+      contactPerson: `${session?.user.firstName} ${session?.user.lastName}`,
       contactPhoneNum: session?.user.mobilePhone || '',
-      ccUsers: '',
+      ccEmails: '',
+      ccPhones: '',
       occurrenceDate: dayjs().toISOString(),
-      // occurrenceDate: '',
     },
     validateOnMount: true,
     validationSchema: ticketSchema,
@@ -328,7 +345,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                         style={{
                           backgroundColor: `${colors.grey[900]}`,
                           color: `${colors.grey[100]}`,
-                          minHeight: '240px',
+                          minHeight: '275px',
                         }}
                       ></textarea>
                     </FormControl>
@@ -427,10 +444,10 @@ export function NewTicketModal({ closeModal, userId }: any) {
                 </div>
                 <div
                   className={`flex flex-col gap-1 
-                self-start bg-black 
+                 bg-black 
                  rounded-md px-2 pt-3 pb-2
                 shadow-lg
-                self-stretch
+                
                 `}
                   style={{
                     border: `1px solid ${colors.blueAccent[800]}`,
@@ -537,7 +554,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                       margin="dense"
                       id="contactPhoneNum"
                       name="contactPhoneNum"
-                      label="Contact Phones"
+                      label="Contact Phone"
                       type="text"
                       variant="standard"
                       value={formik.values.contactPhoneNum}
@@ -545,26 +562,17 @@ export function NewTicketModal({ closeModal, userId }: any) {
                       onBlur={formik.handleBlur}
                       autoComplete={autoComplete}
                     />
-                    <ClarificationMessage msg="Comma separated list of Mobile Phones" />
+                    {/* <ClarificationMessage msg="Comma separated list of Mobile Phones" /> */}
                   </FormControl>
                   <FieldError formik={formik} name="contactPhoneNum" />
 
-                  <FormControl sx={{ minWidth: rightPanelMinWidthPx }}>
-                    <TextField
-                      margin="dense"
-                      id="ccUsers"
-                      name="ccUsers"
-                      label="Cc E-mails (optional)"
-                      type="text"
-                      variant="standard"
-                      value={formik.values.ccUsers}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      autoComplete={autoComplete}
-                    />
-                    <ClarificationMessage msg="Comma separated list of E-mails" />
-                  </FormControl>
-                  <FieldError formik={formik} name="ccUsers" />
+                  <CcFields
+                    showCcFields={showCcFields}
+                    setShowCcFields={setShowCcFields}
+                    formik={formik}
+                    rightPanelMinWidthPx={rightPanelMinWidthPx}
+                    autoComplete={autoComplete}
+                  />
 
                   <FormControl sx={{ mt: '.5rem' }}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -681,6 +689,88 @@ const ClarificationMessage = ({ msg }: { msg: string }) => {
       }}
     >
       {msg}
+    </div>
+  );
+};
+
+const CcFields = ({
+  showCcFields,
+  setShowCcFields,
+  formik,
+  rightPanelMinWidthPx,
+  autoComplete,
+}: any) => {
+  // Function to toggle the state
+  const toggleFields = () => {
+    setShowCcFields(!showCcFields);
+  };
+  return (
+    <div className="flex-col">
+      <div>
+        <div
+          style={{
+            fontSize: '12px',
+            border: '1px solid rgba(0,0,0,.4)',
+            color: 'rgba(0,0,0,.5)',
+            textAlign: 'center',
+            paddingTop: '3px',
+            paddingBottom: '3px',
+            cursor: 'pointer',
+          }}
+          onClick={toggleFields}
+        >
+          {showCcFields ? (
+            <div className="flex justify-center items-center">
+              <span>Hide Cc Fields</span>
+              <RiArrowUpSLine size="20" />
+            </div>
+          ) : (
+            <div className="flex justify-center items-center">
+              <span>Show Extra Cc Fields</span>
+              <RiArrowDownSLine size="20" />
+            </div>
+          )}
+        </div>
+      </div>
+      {showCcFields && (
+        <div>
+          {/* Cc E-mails Field */}
+          <FormControl sx={{ width: '100%' }}>
+            <TextField
+              margin="dense"
+              id="ccEmails"
+              name="ccEmails"
+              label="Cc E-mails"
+              type="text"
+              variant="standard"
+              value={formik.values.ccEmails}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              autoComplete={autoComplete}
+            />
+            <ClarificationMessage msg="Comma separated list of E-mails" />
+          </FormControl>
+          <FieldError formik={formik} name="ccEmails" />
+
+          {/* Cc Phones Field */}
+          <FormControl sx={{ width: '100%' }}>
+            <TextField
+              margin="dense"
+              id="ccPhones"
+              name="ccPhones"
+              label="Cc Phones"
+              type="text"
+              variant="standard"
+              value={formik.values.ccPhones}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              autoComplete={autoComplete}
+            />
+            <ClarificationMessage msg="Comma separated list of phones" />
+          </FormControl>
+          <FieldError formik={formik} name="ccPhones" />
+        </div>
+      )}
     </div>
   );
 };

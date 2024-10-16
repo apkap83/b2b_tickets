@@ -4,8 +4,8 @@ import { getGreekDateFormat } from '@b2b-tickets/utils';
 import { TicketComment } from '@b2b-tickets/shared-models';
 import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
 import { NewCommentModal } from './new-comment-modal';
+import { EscalateModal } from './escalate-modal';
 
-import Button from '@mui/material/Button';
 import clsx from 'clsx';
 import { useSession } from 'next-auth/react';
 import { useEscKeyListener } from '@b2b-tickets/react-hooks';
@@ -20,8 +20,21 @@ import {
 import { updateTicketStatus } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import styles from './css/ticket-details.module.scss';
+import { Span } from 'next/dist/trace';
+import {
+  EscalationFillColor,
+  EscalationBorderColor,
+} from '@b2b-tickets/shared-models';
+import Button from '@mui/material/Button';
+
+const detailsRowClass =
+  'w-full justify-center items-center gap-2.5 inline-flex text-md';
+
+const detailsRowHeaderClass =
+  "grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-8";
 
 export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
+  console.log({ ticketDetails });
   // const theme = useTheme();
   // const colors = tokens(theme.palette.mode);
   const { data: session, status } = useSession();
@@ -29,13 +42,14 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
   const userId = session?.user.user_id;
 
   const [showNewComment, setShowNewComment] = useState(false);
+  const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   // const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
   const [modalAction, setModalAction] = useState<TicketDetailsModalActions>(
     TicketDetailsModalActions.NO_ACTION
   );
 
   const ticketStatus = ticketDetails[0].status_id;
-
+  const escalatedStatusDate = ticketDetails[0].escalation_date;
   // Custom Hook for ESC Key Press
   useEscKeyListener(() => setShowNewComment(false));
 
@@ -188,16 +202,51 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
         ticketStatus === TicketStatus.NEW ||
         ticketStatus === TicketStatus.WORKING
       ) {
+        if (escalatedStatusDate !== null) {
+          return (
+            <Button
+              onClick={() => {
+                setModalAction(TicketDetailsModalActions.NO_ACTION);
+                setShowNewComment(true);
+              }}
+              variant="outlined"
+            >
+              Add New Comment
+            </Button>
+          );
+        }
+
         return (
-          <Button
-            onClick={() => {
-              setModalAction(TicketDetailsModalActions.NO_ACTION);
-              setShowNewComment(true);
-            }}
-            variant="outlined"
-          >
-            Add New Comment
-          </Button>
+          <>
+            <Button
+              onClick={() => {
+                setModalAction(TicketDetailsModalActions.ESCALATE);
+                setShowEscalateDialog(true);
+              }}
+              variant="outlined"
+              sx={{
+                color: 'white',
+                backgroundColor: `${EscalationFillColor}`,
+                border: `1px solid ${EscalationBorderColor}`,
+
+                '&:hover': {
+                  backgroundColor: 'rgb(172, 74, 74)',
+                  border: '1px solid rgb(151, 52, 52)',
+                },
+              }}
+            >
+              Escalate Ticket
+            </Button>
+            <Button
+              onClick={() => {
+                setModalAction(TicketDetailsModalActions.NO_ACTION);
+                setShowNewComment(true);
+              }}
+              variant="outlined"
+            >
+              Add New Comment
+            </Button>
+          </>
         );
       }
     }
@@ -234,19 +283,53 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
     );
   };
 
+  const EscalationBadge = () => {
+    if (escalatedStatusDate == null) return;
+
+    const escalationDate = ticketDetails[0].escalation_date || 'Unknown';
+    const escalationUserFirstName = ticketDetails[0].first_name || 'Unknown';
+    const escalationUserLastName = ticketDetails[0].last_name || 'Unknown';
+
+    return (
+      <div className="text-black/90 mt-2 mb-2 text-right text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+        <div
+          className="text-white rounded-md px-1 py-2 shadow-md"
+          style={{
+            backgroundColor: `${EscalationFillColor}`,
+            border: `1px solid ${EscalationBorderColor}`,
+            fontSize: '16px',
+            lineHeight: '12px',
+            fontWeight: 100,
+          }}
+        >
+          <div>
+            &nbsp;
+            {escalationDate && (
+              <span>
+                {escalationUserFirstName} {escalationUserLastName}
+              </span>
+            )}
+          </div>
+          <br />
+          <div>{escalationDate && getGreekDateFormat(escalationDate)}</div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
-      <div className="w-full flex-col justify-start items-center gap-5 inline-flex mb-[75px]">
+      <div className="w-full flex-col justify-start items-center gap-2 inline-flex mb-[75px]">
         <div
-          className={`${styles.header} w-full h-[92px] px-6 pb-[9px] border-b border-black justify-between items-center inline-flex`}
+          className={`${styles.header} w-full h-[80px] px-6 border-b border-black justify-between items-center inline-flex`}
         >
-          <div className="self-stretch flex-col justify-center items-center inline-flex">
-            <div className="text-black/90 text-5xl font-bold leading-[57.60px]">
+          <div className="self-stretch mt-2 flex-col justify-center items-center inline-flex">
+            <div className="text-black/90 text-5xl font-bold ">
               Ticket Details
             </div>
-            <div className="pt-2 self-stretch h-[17px] text-center text-[#6870fa] text-[15px] font-medium font-['Roboto'] leading-[4px] tracking-widest">
+            {/* <div className="pt-2 self-stretch h-[17px] text-center text-[#6870fa] text-[15px] font-medium font-['Roboto'] leading-[4px] tracking-widest">
               {ticketNumber}
-            </div>
+            </div> */}
           </div>
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
         </div>
@@ -259,107 +342,95 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
             <div
               className={`${styles.statusDiv} shadow-lg p-2 bg-white rounded-lg border border-black/25 flex-col justify-start items-start inline-flex`}
             >
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Status
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Ticket</div>
+                {ticketNumber}
+              </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Status</div>
                 <StatusBadge />
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Ticket Creation
+              {escalatedStatusDate ? (
+                <div className={detailsRowClass}>
+                  <div className={detailsRowHeaderClass}>Escalated</div>
+                  <EscalationBadge />
                 </div>
+              ) : null}
+              <RemedyIncidentRow
+                session={session}
+                ticketDetails={ticketDetails}
+              />
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Ticket Creation</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {greekOpenDate}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Title
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Title</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight text-right">
                   {title}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Category
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Category</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {category}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Service Name
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Service Name</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {serviceName}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Equipment ID
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Equipment ID</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {equipment_id}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Contact Person
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Contact Person</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {contact_person}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Contact Phone
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Contact Phone</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {contact_phone}
                 </div>
               </div>
               <div className="w-full h-[0px] border border-black/20"></div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  SID
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>SID</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {sid}
                 </div>
               </div>
 
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  CID
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>CID</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {cid}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  User Name
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>User Name</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {userName}
                 </div>
               </div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  CLI Value
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>CLI Value</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {cliValue}
                 </div>
               </div>
               <div className="w-full h-[0px] border border-black/20"></div>
-              <div className="w-full justify-center items-center gap-2.5 inline-flex">
-                <div className="grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-9">
-                  Occurence Date
-                </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Occurence Date</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {greekOccurrenceDate}
                 </div>
@@ -391,14 +462,68 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
           />
         </div>
       </div>
-      {showNewComment ? (
-        <NewCommentModal
-          modalAction={modalAction}
-          userId={String(userId)}
-          closeModal={setShowNewComment}
-          ticketDetail={ticketDetails}
-        />
-      ) : null}
+      <>
+        {showNewComment ? (
+          <NewCommentModal
+            modalAction={modalAction}
+            userId={String(userId)}
+            closeModal={setShowNewComment}
+            ticketDetail={ticketDetails}
+          />
+        ) : null}
+        {showEscalateDialog ? (
+          <EscalateModal
+            modalAction={modalAction}
+            closeModal={setShowEscalateDialog}
+            ticketDetail={ticketDetails}
+          />
+        ) : null}
+      </>
     </>
   );
 }
+
+const RemedyIncidentRow = ({ session, ticketDetails }: any) => {
+  console.log({ ticketDetails });
+  if (ticketDetails[0].status_id === '1') return null;
+
+  if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
+    return (
+      <div className={detailsRowClass}>
+        <div className={detailsRowHeaderClass}>Remedy Incident</div>
+        <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+          {!ticketDetails.remedy_ticket_id ? (
+            <button
+              className="shadow-md border bg-[#4461ac] text-white px-2 py-1 rounded-md hover:bg-[#5c81e0]"
+              onClick={() => {
+                const remedyTicketId = window.prompt(
+                  'Please enter the Remedy Ticket ID:'
+                );
+
+                if (remedyTicketId) {
+                  console.log('Remedy Ticket ID:', remedyTicketId);
+                  // You can now handle the entered remedyTicketId, e.g., update ticketDetails or make an API call.
+                }
+              }}
+            >
+              Add Remedy Incident
+            </button>
+          ) : (
+            ticketDetails.remedy_ticket_id
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={detailsRowClass}>
+      <div className={detailsRowHeaderClass}>Remedy Incident</div>
+      <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+        {ticketDetails.remedy_ticket_id
+          ? ticketDetails.remedy_ticket_id
+          : 'Not Defined'}
+      </div>
+    </div>
+  );
+};

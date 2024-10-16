@@ -61,6 +61,15 @@ export function TicketsUiComments({
           ) : (
             <>
               {comments.map((item) => {
+                if (item.comment.startsWith('User [')) {
+                  return (
+                    <div className="rounded-md py-3 border border-gray-500 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 justify-start items-start gap-2.5 inline-flex">
+                      <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+                        {item.comment}
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <div
                     key={item.comment_id}
@@ -85,26 +94,11 @@ export function TicketsUiComments({
                           Closing Comment
                         </div>
                       ) : (
-                        <>
-                          {userHasPermission(
-                            session,
-                            AppPermissionTypes.Delete_Comments
-                          ) ? (
-                            <Tooltip title="Delete Comment">
-                              <IconButton
-                                onClick={() => {
-                                  handleDeleteComment({ item, ticketNumber });
-                                }}
-                                className="flex flex-col justify-center items-center"
-                              >
-                                <RiChatDeleteFill
-                                  size="25"
-                                  color="rgba(104, 112, 250, .75)"
-                                />
-                              </IconButton>
-                            </Tooltip>
-                          ) : null}
-                        </>
+                        <DeleteCommentButton
+                          session={session}
+                          item={item}
+                          ticketNumber={ticketNumber}
+                        />
                       )}
                     </div>
                     <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">
@@ -153,6 +147,25 @@ const handleDeleteComment = async ({
   } else {
     toast.success(resp.message);
   }
+};
+
+const DeleteCommentButton = ({ session, item, ticketNumber }: any) => {
+  return (
+    <>
+      {userHasPermission(session, AppPermissionTypes.Delete_Comments) ? (
+        <Tooltip title="Delete Comment">
+          <IconButton
+            onClick={() => {
+              handleDeleteComment({ item, ticketNumber });
+            }}
+            className="flex flex-col justify-center items-center"
+          >
+            <RiChatDeleteFill size="25" color="rgba(104, 112, 250, .75)" />
+          </IconButton>
+        </Tooltip>
+      ) : null}
+    </>
+  );
 };
 
 export default TicketsUiComments;
