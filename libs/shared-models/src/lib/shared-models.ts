@@ -63,7 +63,7 @@ export interface TicketFormState {
 }
 
 export interface TicketComment {
-  comment_id: number;
+  comment_id: string;
   ticket_id: number;
   comment_date: Date;
   comment_user_id: Date;
@@ -150,12 +150,12 @@ export enum TicketStatusName {
   CLOSED = 'Closed',
 }
 
-export const TicketStatusColors = {
-  NEW: '#6870fa',
-  WORKING: '#916430',
-  CANCELLED: '#dc5743',
-  CLOSED: '#3d8d52',
-};
+export enum TicketStatusColors {
+  NEW = '#6870fa',
+  WORKING = '#916430',
+  CANCELLED = '#dc5743',
+  CLOSED = '#3d8d52',
+}
 
 export enum FilterTicketsStatus {
   All = 'All Tickets',
