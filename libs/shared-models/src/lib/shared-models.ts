@@ -134,6 +134,7 @@ export enum TicketDetailsModalActions {
   NO_ACTION = 'No Action',
   CLOSE = 'Close',
   CANCEL = 'Cancel',
+  ESCALATE = 'Escalate',
 }
 
 export enum TicketStatus {
@@ -180,3 +181,10 @@ export enum ErrorCode {
   ThirdPartyIdentityProviderEnabled = 'third-party-identity-provider-enabled',
   CaptchaValidationFailed = 'captcha-validation-failed',
 }
+
+export enum EscalationStatus {
+  ESCALATED = 'Escalated',
+}
+
+export const EscalationFillColor = '#6a2424';
+export const EscalationBorderColor = '#6a2424';
