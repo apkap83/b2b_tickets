@@ -75,7 +75,7 @@ export const NavBar = () => {
             >
               <Image priority src={NovaLogo} alt={'Nova Logo'} height={18} />
             </Stack>
-            <div className={`${styles.b2b_logo_text}`}>B2B Tickets</div>
+            <div className={`${styles.b2b_logo_text}`}>Platinum Support</div>
           </Stack>
         </Link>
       </div>

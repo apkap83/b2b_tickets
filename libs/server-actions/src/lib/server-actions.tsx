@@ -220,7 +220,9 @@ export const getTicketDetailsForTicketId = async ({
         equipment_id,
         sid,
         cid,
-        username,
+        u.username,
+        u.first_name,
+        u.last_name,
         cli,
         contact_person,
         contact_phone_number,
@@ -239,7 +241,11 @@ export const getTicketDetailsForTicketId = async ({
         service_name,
         start_date,
         end_date,
-        statuses.status_name
+        statuses.status_name,
+        t.escalation_date,
+        t.escalation_user_id,
+        t.remedy_ticket_id
+
     FROM tickets as t
     INNER JOIN ticket_categories as tc
     ON t.category_id = tc.category_id
@@ -247,6 +253,8 @@ export const getTicketDetailsForTicketId = async ({
     ON t.service_id = s.service_id
     INNER JOIN statuses as statuses
     ON statuses.status_id = t.status_id
+    LEFT JOIN users as u
+    ON u.user_id = t.escalation_user_id
     WHERE t.ticket_number = $1
     
     `;
@@ -374,7 +382,7 @@ const ticketSchema_zod = z
       .refine((value) => value !== '' && !isNaN(Number(value)), {
         message: 'Service cannot be empty',
       }),
-    equipmentId: z.string(),
+    equipmentId: z.union([z.string(), z.null()]),
     sid: z.string().optional(),
     cid: z.string().optional(),
     userName: z.string().optional(),
@@ -388,12 +396,18 @@ const ticketSchema_zod = z
         const phoneRegex = /^[0-9]{10,15}$/; // Adjust the regex as needed for your phone number format
         return phones.every((phone) => phoneRegex.test(phone));
       }, 'Must be a comma-separated list of valid Mobile Phone numbers'),
-    ccUsers: z.string().refine((value) => {
+    ccEmails: z.union([z.string(), z.null()]).refine((value) => {
       if (!value) return true; // Allow empty since it is not required
       const emails = value.split(',').map((email) => email.trim());
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email regex
       return emails.every((email) => emailRegex.test(email));
     }, 'Must be a comma-separated list of valid email addresses'),
+    ccPhones: z.union([z.string(), z.null()]).refine((value) => {
+      if (!value) return true; // Allow empty since it is not required
+      const phones = value.split(',').map((phone) => phone.trim());
+      const phoneRegex = /^\d{10,12}$/; // Basic email regex
+      return phones.every((phone) => phoneRegex.test(phone));
+    }, 'Must be a comma-separated list of valid phone numbers'),
     occurrenceDate: z.string().nonempty('Occurrence date is required'),
   })
   .refine((data) => data.sid || data.cid || data.userName || data.cliValue, {
@@ -405,6 +419,7 @@ export const createNewTicket = async (
   formState: TicketFormState,
   formData: FormData
 ): Promise<any> => {
+  const client = await pgB2Bpool.connect(); // Acquire a client connection
   try {
     //@ts-ignore
     const session = await getServerSession(options);
@@ -427,7 +442,8 @@ export const createNewTicket = async (
       cliValue,
       contactPerson,
       contactPhoneNum,
-      ccUsers,
+      ccEmails,
+      ccPhones,
       occurrenceDate,
     } = ticketSchema_zod.parse({
       title: formData.get('title'),
@@ -441,26 +457,19 @@ export const createNewTicket = async (
       cliValue: formData.get('cliValue'),
       contactPerson: formData.get('contactPerson'),
       contactPhoneNum: formData.get('contactPhoneNum'),
-      ccUsers: formData.get('ccUsers'),
+      ccEmails: formData.get('ccEmails'),
+      ccPhones: formData.get('ccPhones'),
       occurrenceDate: formData.get('occurrenceDate'),
     });
 
-    if (equipmentId === '') {
-      equipmentId = '0';
-    }
     const standardizedDate = convertTo24HourFormat(occurrenceDate);
 
-    //     PROCEDURE tck_set_cc_users
-    // (
-    //    IN pnum_TICKET_ID NUMERIC,
-    //    IN pvch_CC_Users_List VARCHAR,
-    //    IN pvch_API_User VARCHAR,
-    //    IN pvch_API_Process VARCHAR,
-    //    IN pbln_Debug_Mode BOOLEAN DEFAULT FALSE
-    // )
-
+    if (equipmentId === '') equipmentId = null;
+    // Start a transaction
+    await client.query('BEGIN');
+    console.log({ equipmentId });
     // TODO: Define proper user Id and api User from session
-    const result = await pgB2Bpool.query(
+    const result = await client.query(
       'SELECT b2btickets_dev.tck_ticket_new($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)',
       [
         title,
@@ -485,27 +494,48 @@ export const createNewTicket = async (
       ]
     );
 
-    const newTicketId = result.rows[0].ticket_id;
-
+    const newTicketId = result.rows[0].tck_ticket_new;
     if (!newTicketId) {
       throw new Error('New Ticket Id cannot be retrieved during insertion');
     }
 
-    await pgB2Bpool.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
-      newTicketId,
-      ccUsers,
-      //@ts-ignore
-      config.api.user,
-      config.api.process,
-      config.postgres_b2b_database.debugMode,
-    ]);
+    if (ccEmails && ccEmails.length > 0) {
+      console.log(494);
+      await client.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
+        newTicketId,
+        ccEmails,
+        //@ts-ignore
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]);
+    }
+
+    if (ccPhones && ccPhones.length > 0) {
+      console.log(506);
+      await client.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
+        newTicketId,
+        ccPhones,
+        //@ts-ignore
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]);
+    }
+
+    // Commit the transaction
+    await client.query('COMMIT');
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
   } catch (error) {
+    // Rollback the transaction in case of an error
+    await client.query('ROLLBACK');
     console.log('ERROR', error);
     return fromErrorToFormState(error);
+  } finally {
+    client.release();
   }
 };
 
@@ -605,6 +635,53 @@ export const deleteExistingComment = async ({
     return {
       status: 'SUCCESS',
       message: 'Comment was deleted successfully',
+    };
+  } catch (error: any) {
+    return {
+      status: 'ERROR',
+      message: error?.message,
+    };
+  }
+};
+
+export const escalateTicket = async (formState: any, formData: FormData) => {
+  try {
+    const session = await getServerSession(options);
+    if (!session || !session.user) {
+      return redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    if (!userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
+      return {
+        status: 'ERROR',
+        message: 'You do not have permission for this action',
+      };
+    }
+
+    let ticketId = formData.get('ticketId') as string;
+    const ticketNumber = formData.get('ticketNumber');
+
+    if (!ticketId || !ticketNumber) {
+      return {
+        status: 'ERROR',
+        message: 'Ticket ID or Ticket Number is missing.',
+      };
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await pgB2Bpool.query('CALL tck_ticket_escalate($1, $2, $3, $4, $5)', [
+      parseInt(ticketId),
+      session.user.user_id,
+      //@ts-ignore
+      config.api.user,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
+    ]);
+
+    revalidatePath(`/ticket/${ticketNumber}`);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Ticket was escalated!',
     };
   } catch (error: any) {
     return {
