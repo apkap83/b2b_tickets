@@ -1,6 +1,5 @@
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 
-// @ts-ignore
 import CssBaseline from '@mui/material/CssBaseline';
 
 import '@fontsource/roboto/300.css';
@@ -15,6 +14,7 @@ import { Footer } from '@b2b-tickets/ui';
 
 import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
 import { AppThemeProvider } from '@b2b-tickets/ui-theme';
+import CookieConsentBanner from './CookieConsentBanner';
 
 // TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
@@ -53,6 +53,7 @@ export default async function RootLayout({
                   {children}
                   {session ? <Footer /> : null}
                 </main>
+                <CookieConsentBanner />
               </ToastProvider>
             </AppThemeProvider>
           </AppRouterCacheProvider>

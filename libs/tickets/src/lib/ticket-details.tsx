@@ -17,7 +17,7 @@ import {
   TicketStatus,
   TicketStatusColors,
 } from '@b2b-tickets/shared-models';
-import { updateTicketStatus } from '@b2b-tickets/server-actions';
+import { sendTestEmail, updateTicketStatus } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import styles from './css/ticket-details.module.scss';
 import { Span } from 'next/dist/trace';
@@ -331,6 +331,13 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
             </div> */}
           </div>
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
+          <button
+            onClick={async () => {
+              await sendTestEmail();
+            }}
+          >
+            Send E-mail
+          </button>
         </div>
         <div
           className={`self-stretch pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex`}
@@ -535,9 +542,13 @@ const RemedyIncidentRow = ({ session, ticketDetails }: any) => {
     <div className={detailsRowClass}>
       <div className={detailsRowHeaderClass}>Remedy Incident</div>
       <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-        {ticketDetails.remedy_ticket_id
-          ? ticketDetails.remedy_ticket_id
-          : 'Not Defined'}
+        {ticketDetails[0].remedy_ticket_id ? (
+          <span className="text-blue-600">
+            {ticketDetails[0].remedy_ticket_id}
+          </span>
+        ) : (
+          'Not Defined'
+        )}
       </div>
     </div>
   );

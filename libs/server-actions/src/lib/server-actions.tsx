@@ -52,14 +52,14 @@ import { redirect } from 'next/navigation';
 // };
 
 export const getTotalNumOfTicketsForCustomer = async (): Promise<number> => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
   //@ts-ignore
   const session = await getServerSession(options);
 
   if (!session) {
     redirect(`/api/auth/signin?callbackUrl=/`);
   }
+
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
   //@ts-ignore
   const customerId = session.user.customer_id;
 
@@ -91,7 +91,6 @@ export const getFilteredTicketsForCustomer = async (
   currentPage: number,
   allPages: boolean = false
 ) => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
   const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
 
   //@ts-ignore
@@ -99,6 +98,8 @@ export const getFilteredTicketsForCustomer = async (
   if (!session) {
     redirect(`/api/auth/signin?callbackUrl=/`);
   }
+
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
   //@ts-ignore
   const customerId = session.user.customer_id;
 
@@ -133,7 +134,7 @@ export const getFilteredTicketsForCustomer = async (
       sqlExpression = `AND "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
 
     // Filter Tickets View by Customer Name
-    const sqlQuery = `SELECT * FROM tickets_v where "Customer" = $1 ${sqlExpression} order by "Opened" DESC 
+    const sqlQuery = `SELECT * FROM tickets_v where "Customer" = $1 ${sqlExpression} order by "Status Date" DESC 
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
@@ -146,14 +147,14 @@ export const getFilteredTicketsForCustomer = async (
 };
 
 export const getNumOfTickets = async (query: string): Promise<number> => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
   //@ts-ignore
   const session = await getServerSession(options);
 
   if (!session) {
     redirect(`/api/auth/signin?callbackUrl=/`);
   }
+
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
   //@ts-ignore
   const customerId = session.user.customer_id;
 
@@ -325,14 +326,13 @@ export const getTicketDetailsForTicketId = async ({
 };
 
 export const getTicketCategories = async (): Promise<TicketCategory[]> => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
   //@ts-ignore
   const session = await getServerSession(options);
 
   if (!session) {
     redirect(`/api/auth/signin?callbackUrl=/`);
   }
+  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
   //@ts-ignore
   const userId = session.user.user_id;
@@ -419,7 +419,7 @@ export const createNewTicket = async (
   formState: TicketFormState,
   formData: FormData
 ): Promise<any> => {
-  const client = await pgB2Bpool.connect(); // Acquire a client connection
+  // const client = await pgB2Bpool.connect(); // Acquire a client connection
   try {
     //@ts-ignore
     const session = await getServerSession(options);
@@ -484,12 +484,13 @@ export const createNewTicket = async (
       config.postgres_b2b_database.debugMode, // pbln_debug_mode: boolean
     ];
 
+    console.log({ argsForTicketNew });
     // Start a transaction
-    await client.query('BEGIN');
+    // await client.query('BEGIN');
 
     console.log({ argsForTicketNew });
     // TODO: Define proper user Id and api User from session
-    const result = await client.query(
+    const result = await pgB2Bpool.query(
       `SELECT tck_ticket_new(
         pvch_title                => $1,
         pvch_description          => $2,
@@ -517,7 +518,7 @@ export const createNewTicket = async (
     }
 
     if (ccEmails && ccEmails.length > 0) {
-      await client.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
+      await pgB2Bpool.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
         newTicketId,
         ccEmails,
         //@ts-ignore
@@ -528,7 +529,7 @@ export const createNewTicket = async (
     }
 
     if (ccPhones && ccPhones.length > 0) {
-      await client.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
+      await pgB2Bpool.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
         newTicketId,
         ccPhones,
         //@ts-ignore
@@ -539,18 +540,18 @@ export const createNewTicket = async (
     }
 
     // Commit the transaction
-    await client.query('COMMIT');
+    // await client.query('COMMIT');
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
   } catch (error) {
     // Rollback the transaction in case of an error
-    await client.query('ROLLBACK');
+    // await client.query('ROLLBACK');
     console.log('ERROR', error);
     return fromErrorToFormState(error);
   } finally {
-    client.release();
+    // client.release();
   }
 };
 
@@ -575,7 +576,8 @@ export const setRemedyIncidentIDForTicket = async ({
     if (!session) {
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
-    console.log(563, ticketId);
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     if (!userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
       return {
@@ -596,16 +598,6 @@ export const setRemedyIncidentIDForTicket = async ({
         message: 'Invalid user ID',
       };
     }
-
-    console.log([
-      parseInt(ticketId),
-      remedyIncId,
-      session.user.user_id,
-      //@ts-ignore
-      config.api.user,
-      config.api.process,
-      config.postgres_b2b_database.debugMode,
-    ]);
 
     await pgB2Bpool.query(
       `CALL tck_set_rmd_inc(
@@ -641,6 +633,50 @@ export const setRemedyIncidentIDForTicket = async ({
   }
 };
 
+import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
+export const sendTestEmail = async () => {
+  try {
+    const session = await getServerSession(options);
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const mailerSend = new MailerSend({
+      apiKey: process.env.MAILERSEND_API_TOKEN as string,
+    });
+
+    const sentFrom = new Sender('you@mlsender.com', 'Your name');
+
+    const recipients = [
+      new Recipient('apostolos.kapetanios@nova.gr', 'Your Client'),
+    ];
+
+    const emailParams = new EmailParams()
+      .setFrom(sentFrom)
+      .setTo(recipients)
+      .setReplyTo(sentFrom)
+      .setSubject('This is a Subject')
+      .setHtml('<strong>This is the HTML content</strong>')
+      .setText('This is the text content');
+
+    console.log(664);
+    await mailerSend.email.send(emailParams);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Remedy Incident Id was set',
+    };
+  } catch (error: any) {
+    console.log(error);
+    return {
+      status: 'ERROR',
+      message: error?.message,
+    };
+  }
+};
+
 export const deleteExistingComment = async ({
   commentId,
   ticketNumber,
@@ -653,6 +689,8 @@ export const deleteExistingComment = async ({
     if (!session) {
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     if (!userHasPermission(session, AppPermissionTypes.Delete_Comments)) {
       return {
@@ -697,6 +735,8 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
         message: 'You do not have permission for this action',
       };
     }
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     let ticketId = formData.get('ticketId') as string;
     const ticketNumber = formData.get('ticketNumber');
