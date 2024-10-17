@@ -26,7 +26,7 @@ import {
   EscalationBorderColor,
 } from '@b2b-tickets/shared-models';
 import Button from '@mui/material/Button';
-
+import { setRemedyIncidentIDForTicket } from '@b2b-tickets/server-actions';
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
 
@@ -34,7 +34,6 @@ const detailsRowHeaderClass =
   "grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] leading-8";
 
 export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
-  console.log({ ticketDetails });
   // const theme = useTheme();
   // const colors = tokens(theme.palette.mode);
   const { data: session, status } = useSession();
@@ -484,7 +483,6 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
 }
 
 const RemedyIncidentRow = ({ session, ticketDetails }: any) => {
-  console.log({ ticketDetails });
   if (ticketDetails[0].status_id === '1') return null;
 
   if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
@@ -492,24 +490,41 @@ const RemedyIncidentRow = ({ session, ticketDetails }: any) => {
       <div className={detailsRowClass}>
         <div className={detailsRowHeaderClass}>Remedy Incident</div>
         <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-          {!ticketDetails.remedy_ticket_id ? (
+          {!ticketDetails[0].remedy_ticket_id ? (
             <button
               className="shadow-md border bg-[#4461ac] text-white px-2 py-1 rounded-md hover:bg-[#5c81e0]"
-              onClick={() => {
-                const remedyTicketId = window.prompt(
-                  'Please enter the Remedy Ticket ID:'
+              onClick={async () => {
+                const remedyIncId = window.prompt(
+                  'Please enter Remedy Ticket ID:'
                 );
 
-                if (remedyTicketId) {
-                  console.log('Remedy Ticket ID:', remedyTicketId);
-                  // You can now handle the entered remedyTicketId, e.g., update ticketDetails or make an API call.
+                if (remedyIncId) {
+                  const resp = await setRemedyIncidentIDForTicket({
+                    ticketId: ticketDetails[0].ticket_id,
+                    remedyIncId,
+                    ticketNumber: ticketDetails.ticket_number,
+                  });
+
+                  if (!resp) {
+                    toast.error('An error occurred');
+                    return;
+                  }
+
+                  if (resp?.status === 'ERROR') {
+                    toast.error(resp.message);
+                    return;
+                  }
+
+                  toast.success(resp.message);
                 }
               }}
             >
               Add Remedy Incident
             </button>
           ) : (
-            ticketDetails.remedy_ticket_id
+            <span className="text-blue-600">
+              {ticketDetails[0].remedy_ticket_id}
+            </span>
           )}
         </div>
       </div>
