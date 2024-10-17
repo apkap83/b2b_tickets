@@ -27,7 +27,6 @@ export const TicketRow = ({ session, item }: any) => {
     router.push(`/ticket/${item.Ticket}`);
   };
 
-  console.log({ item });
   return (
     <tr key={item.ticket_id} onClick={handleClick} className={styles.ticketRow}>
       {/* One More Column for Ticket Handlers */}
