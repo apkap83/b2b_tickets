@@ -68,7 +68,6 @@ export function EscalateModal({
   ticketDetail: TicketDetail[];
   closeModal: any;
 }) {
-  console.log({ ticketDetail });
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 

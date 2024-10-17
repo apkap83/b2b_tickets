@@ -61,7 +61,10 @@ export function TicketsUiComments({
           ) : (
             <>
               {comments.map((item) => {
-                if (item.comment.startsWith('User [')) {
+                if (
+                  item.comment.startsWith('User [') ||
+                  item.comment.startsWith('Remedy Ticket [')
+                ) {
                   return (
                     <div className="rounded-md py-3 border border-gray-500 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 justify-start items-start gap-2.5 inline-flex">
                       <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">

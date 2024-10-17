@@ -464,34 +464,51 @@ export const createNewTicket = async (
 
     const standardizedDate = convertTo24HourFormat(occurrenceDate);
 
-    if (equipmentId === '') equipmentId = null;
+    // Convert string to number where applicable and handle empty strings as null
+    const argsForTicketNew = [
+      title, // pvch_title: string
+      description, // pvch_description: string
+      category ? Number(category) : null, // pnum_category_id: number | null
+      service ? Number(service) : null, // pnum_service_id: number | null
+      equipmentId ? Number(equipmentId) : null, // pnum_equipment_id: number | null
+      sid || null, // pvch_sid: string | null
+      cid || null, // pvch_cid: string | null
+      userName || null, // pvch_username: string | null
+      cliValue || null, // pvch_cli: string | null
+      contactPerson, // pvch_contact_person: string
+      contactPhoneNum, // pvch_contact_phone_number: string
+      standardizedDate, // ptmsp_occurrence_date: timestamp
+      session?.user.user_id, // pnum_user_id: number
+      config.api.user, // pvch_api_user: string
+      config.api.process, // pvch_api_process: string
+      config.postgres_b2b_database.debugMode, // pbln_debug_mode: boolean
+    ];
+
     // Start a transaction
     await client.query('BEGIN');
-    console.log({ equipmentId });
+
+    console.log({ argsForTicketNew });
     // TODO: Define proper user Id and api User from session
     const result = await client.query(
-      'SELECT b2btickets_dev.tck_ticket_new($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)',
-      [
-        title,
-        description,
-        category,
-        service,
-        equipmentId,
-        sid,
-        cid,
-        userName,
-        cliValue,
-        contactPerson,
-        contactPhoneNum,
-        standardizedDate,
-        //@ts-ignore
-        session.user.user_id,
-        // TODO: What to set for config.api.user/process in production ?
-        //@ts-ignore
-        config.api.user,
-        config.api.process,
-        config.postgres_b2b_database.debugMode,
-      ]
+      `SELECT tck_ticket_new(
+        pvch_title                => $1,
+        pvch_description          => $2,
+        pnum_category_id          => $3,
+        pnum_service_id           => $4,
+        pnum_equipment_id         => $5,
+        pvch_sid                  => $6,
+        pvch_cid                  => $7,
+        pvch_username             => $8,
+        pvch_cli                  => $9,
+        pvch_contact_person       => $10,
+        pvch_contact_phone_number => $11,
+        ptmsp_occurrence_date     => $12,
+        pnum_user_id              => $13,
+        pvch_api_user             => $14,
+        pvch_api_process          => $15,
+        pbln_debug_mode           => $16
+      )`,
+      argsForTicketNew
     );
 
     const newTicketId = result.rows[0].tck_ticket_new;
@@ -500,7 +517,6 @@ export const createNewTicket = async (
     }
 
     if (ccEmails && ccEmails.length > 0) {
-      console.log(494);
       await client.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
         newTicketId,
         ccEmails,
@@ -512,7 +528,6 @@ export const createNewTicket = async (
     }
 
     if (ccPhones && ccPhones.length > 0) {
-      console.log(506);
       await client.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
         newTicketId,
         ccPhones,
@@ -546,11 +561,13 @@ const commentSchema_zod = z.object({
   modalAction: z.string(),
 });
 
-export const setRemedyIDForTicket = async ({
-  commentId,
+export const setRemedyIncidentIDForTicket = async ({
+  ticketId,
+  remedyIncId,
   ticketNumber,
 }: {
-  commentId: string;
+  ticketId: string;
+  remedyIncId: string;
   ticketNumber: string;
 }) => {
   try {
@@ -558,27 +575,31 @@ export const setRemedyIDForTicket = async ({
     if (!session) {
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
+    console.log(563, ticketId);
 
-    console.log({ commentId });
-    if (!userHasPermission(session, AppPermissionTypes.Delete_Comments)) {
+    if (!userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
       return {
         status: 'ERROR',
         message: 'You do not have permission for this action',
       };
     }
 
-    //     call tck_set_rmd_inc
-    // (
-    //    pnum_ticket_id => 70,
-    //    pvch_Remedy_Ticket => 'inc000998',
-    //    pnum_Remedy_User_ID => 8,
-    //    pvch_api_user => 'dioan',
-    //    pvch_api_process => 'test',
-    //    pbln_debug_mode => false
-    // )
+    // Ensure session.user.user_id is a number
+    const userId =
+      typeof session.user.user_id === 'string'
+        ? parseInt(session.user.user_id)
+        : session.user.user_id;
 
-    await pgB2Bpool.query('CALL tck_set_rmd_inc($1, $2, $3, $4, $5)', [
-      commentId,
+    if (isNaN(userId)) {
+      return {
+        status: 'ERROR',
+        message: 'Invalid user ID',
+      };
+    }
+
+    console.log([
+      parseInt(ticketId),
+      remedyIncId,
       session.user.user_id,
       //@ts-ignore
       config.api.user,
@@ -586,11 +607,31 @@ export const setRemedyIDForTicket = async ({
       config.postgres_b2b_database.debugMode,
     ]);
 
+    await pgB2Bpool.query(
+      `CALL tck_set_rmd_inc(
+        pnum_ticket_id      => $1,
+        pvch_Remedy_Ticket  => $2,
+        pnum_Remedy_User_ID => $3,
+        pvch_api_user       => $4,
+        pvch_api_process    => $5,
+        pbln_debug_mode     => $6
+      )`,
+      [
+        parseInt(ticketId),
+        remedyIncId,
+        session.user.user_id,
+        //@ts-ignore
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
     revalidatePath(`/ticket/${ticketNumber}`);
 
     return {
       status: 'SUCCESS',
-      message: 'Comment was deleted successfully',
+      message: 'Remedy Incident Id was set',
     };
   } catch (error: any) {
     return {
@@ -613,7 +654,6 @@ export const deleteExistingComment = async ({
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
 
-    console.log({ commentId });
     if (!userHasPermission(session, AppPermissionTypes.Delete_Comments)) {
       return {
         status: 'ERROR',
@@ -668,14 +708,17 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
       };
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
-    await pgB2Bpool.query('CALL tck_ticket_escalate($1, $2, $3, $4, $5)', [
-      parseInt(ticketId),
-      session.user.user_id,
-      //@ts-ignore
-      config.api.user,
-      config.api.process,
-      config.postgres_b2b_database.debugMode,
-    ]);
+
+    await pgB2Bpool.query(
+      'CALL tck_ticket_escalate($1::numeric, $2::numeric, $3::varchar, $4::varchar, $5::boolean)',
+      [
+        parseInt(ticketId),
+        session.user.user_id,
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
 
     revalidatePath(`/ticket/${ticketNumber}`);
 

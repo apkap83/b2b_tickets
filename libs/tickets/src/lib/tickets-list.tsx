@@ -91,7 +91,6 @@ const generateTableHeadAndColumns = async () => {
 
 const generateTableBody = async (items: Ticket[]) => {
   const session = await getServerSession(options);
-  console.log({ items });
   return (
     <TableBody>
       {items.map((item: any) => (
