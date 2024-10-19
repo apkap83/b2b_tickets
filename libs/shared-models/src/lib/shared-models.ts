@@ -180,6 +180,8 @@ export enum ErrorCode {
   NewPasswordMatchesOld = 'new-password-matches-old',
   ThirdPartyIdentityProviderEnabled = 'third-party-identity-provider-enabled',
   CaptchaValidationFailed = 'captcha-validation-failed',
+  CaptchaJWTTokenRequired = 'captcha-jwt-token-required',
+  CaptchaJWTTokenInvalid = 'captcha-jwt-token-invalid',
 }
 
 export enum EscalationStatus {

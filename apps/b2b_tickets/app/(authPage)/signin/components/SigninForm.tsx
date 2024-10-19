@@ -5,7 +5,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useFormik } from 'formik';
+import { useFormik, FormikTouched, FormikErrors } from 'formik';
 import * as Yup from 'yup';
 
 import { FaKey } from 'react-icons/fa';
@@ -13,74 +13,70 @@ import clsx from 'clsx';
 import { config } from '@b2b-tickets/config';
 import { TwoFactAuth } from './TwoFactAuth';
 import { ErrorCode } from '@b2b-tickets/shared-models';
+import { useCountdown } from '@b2b-tickets/react-hooks';
+import { formatTimeMMSS } from '@/libs/utils/src';
+import Cookies from 'js-cookie'; // Import the js-cookie library to manage cookies
 
-const FieldError = ({ formik, name }) => {
-  if (!formik?.touched[name] || !formik?.errors[name]) {
+interface FieldErrorProps {
+  formik: {
+    touched: FormikTouched<any>;
+    errors: FormikErrors<any>;
+  };
+  name: string;
+}
+
+const FieldError: React.FC<FieldErrorProps> = ({ formik, name }) => {
+  // Only return if touched and there is a string error for the field.
+  const error = formik.errors[name];
+
+  if (!formik?.touched[name] || typeof error !== 'string') {
     return null;
   }
 
-  return <p className="text-red-500 text-sm">{formik?.errors[name]}</p>;
+  return <p className="text-red-500 text-sm">{error}</p>;
 };
 
-export default function SignInForm({ providers, csrfToken }) {
+export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [captcha, setCaptcha] = useState();
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaVerified, setCaptchaVerified] = useState(false); // State to track if ReCAPTCHA is completed
+
   const [showOTP, setShowOTP] = useState(false);
   const [totpCode, setTotpCode] = useState('');
 
-  const [error, setError] = useState(null);
-  const [loading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [callbackUrl, setCallbackUrl] = useState('/');
 
-  const [tokenTimeisRunning, setTokenTimeisRunning] = useState(false);
-  const [tokenTimeLeft, setTokenTimeLeft] = useState(
-    config.TwoFactorValiditySeconds -
-      (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
-  );
-
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Sign in');
+
   // Create references to User Name & Password fields
-  const userNameRef = useRef(null);
+  const userNameRef = useRef<HTMLInputElement | null>(null);
   const userNameLabelRef = useRef(null);
-  const passwordRef = useRef(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
   const passwordLabelRef = useRef(null);
-  const userNamePasswordGroupRef = useRef(null);
-  const captchaRef = useRef(null);
+  const userNamePasswordGroupRef = useRef<HTMLDivElement | null>(null);
 
-  // Create a reference for reCAPTCHA
-  const recaptchaRef = useRef(null); // New useRef for reCAPTCHA
-
-  useEffect(() => {
-    let intervalId;
-    if (tokenTimeisRunning) {
-      // Create a timer that updates every second
-      intervalId = setInterval(() => {
-        setTokenTimeLeft((prevTime) => (prevTime > 0 ? prevTime - 1 : 0));
-      }, 1000);
-    }
-
-    // Clear the interval on component unmount or when the timer stops
-    return () => clearInterval(intervalId);
-  }, [tokenTimeisRunning]);
-
-  // Format the time left into MM:SS format
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(
-      2,
-      '0'
-    )}`;
+  // Assuming the type of the reCAPTCHA component has a 'reset' method.
+  type RecaptchaRefType = {
+    reset: () => void;
   };
 
-  // When the Token Remainng Time reaches 0, perform full web page refresh
-  if (tokenTimeLeft === 0 && tokenTimeisRunning) {
-    setTokenTimeisRunning(false); // Stop the timer
-    window.location.href = '/';
-  }
+  // Create a reference for reCAPTCHA
+  const recaptchaRef = useRef<RecaptchaRefType | null>(null); // New useRef for reCAPTCHA
+  // Handle the onChange event of the ReCAPTCHA
+  const handleCaptchaChange = (value: string | null) => {
+    setCaptcha(value);
+    // Set as verified when captcha value is present
+  };
+
+  const { timeLeft, isRunning, start, resetTimer } = useCountdown(0, () => {
+    // When the Token Remainng Time reaches 0, perform full web page refresh
+    window.location.reload();
+    // router.reload();
+  });
 
   useEffect(() => {
     // If user is already authenticated, redirect to the homepage
@@ -108,16 +104,8 @@ export default function SignInForm({ providers, csrfToken }) {
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
-      if (config.CaptchaIsActive) {
-        if (!captcha) {
-          setError('Verify reCAPTCHA!');
-          setSubmitting(false);
-
-          return;
-        }
-      }
+      setSubmitting(true); // Disable the submit button
       setError(null);
-      setIsLoading(true);
 
       const response = await signIn('credentials', {
         redirect: false,
@@ -127,41 +115,118 @@ export default function SignInForm({ providers, csrfToken }) {
         totpCode,
       });
 
-      if (response?.ok) {
+      if (!response) return;
+
+      if (response.ok) {
         window.location.href = callbackUrl;
-        setTokenTimeisRunning(false);
-        return;
       }
 
-      console.log('response?.error', response?.error);
-      switch (response?.error.replace('Error: ', '')) {
+      // Handle error cases
+      let error = response?.error?.replace('Error: ', '');
+
+      if (config.CaptchaIsActive && !captchaVerified) {
+        if (!captcha) {
+          setError('Verify reCAPTCHA!');
+          setSubmitting(false);
+          return;
+        }
+
+        try {
+          // Call your custom captcha validation API route
+          const captchaResponse = await fetch('/api/auth/captcha', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ captchaToken: captcha }),
+          });
+
+          const captchaResult = await captchaResponse.json();
+
+          if (!captchaResponse.ok) {
+            setError(captchaResult.message || 'Invalid reCAPTCHA');
+            setSubmitting(false);
+
+            // Reset the reCAPTCHA (if active)
+            if (config.CaptchaIsActive && recaptchaRef.current) {
+              recaptchaRef.current.reset();
+            }
+            return;
+          }
+
+          // Server Verified Captcha at this point
+          setCaptchaVerified(true);
+
+          const response = await signIn('credentials', {
+            redirect: false,
+            userName: values.userName,
+            password: values.password,
+            captchaToken: captcha,
+            totpCode,
+          });
+
+          error = response?.error?.replace('Error: ', '');
+        } catch (error) {
+          setError(
+            'An error occurred while validating reCAPTCHA. Please try again.'
+          );
+          setSubmitting(false);
+
+          // Reset the reCAPTCHA (if active)
+          if (config.CaptchaIsActive && recaptchaRef.current) {
+            recaptchaRef.current.reset();
+          }
+          return;
+        }
+      }
+
+      // If no error field exists or it's empty, return early
+      if (!error) return;
+
+      switch (error) {
+        case ErrorCode.CaptchaJWTTokenRequired:
+          setError('Captcha Verification is Required');
+          setSubmitting(false);
+          break;
+        case ErrorCode.CaptchaJWTTokenInvalid:
+          setError('Captcha JWT Token Invalid');
+          setSubmitting(false);
+          break;
         case ErrorCode.UserIsLocked:
           setError('User is currently locked');
-          setIsLoading(false);
+          setSubmitting(false);
           break;
-
         case ErrorCode.CaptchaValidationFailed:
           setError('Invalid reCAPTCHA validation');
-          setIsLoading(false);
-          if (config.CaptchaIsActive) recaptchaRef.current.reset();
-          break;
+          setSubmitting(false);
 
+          // Reset the reCAPTCHA (if active)
+          if (config.CaptchaIsActive)
+            if (recaptchaRef.current) {
+              recaptchaRef.current.reset();
+            }
+          break;
         case ErrorCode.IncorrectUsernameOrPassword:
-          console.log(147);
           setError('Invalid user name or password');
-          setIsLoading(false);
-          if (config.CaptchaIsActive) recaptchaRef.current.reset();
+          setSubmitting(false);
+          if (config.CaptchaIsActive) {
+            if (recaptchaRef.current) {
+              recaptchaRef.current.reset();
+            }
+          }
           break;
-
         case ErrorCode.IncorrectTwoFactorCode:
           setError('Invalid OTP Code provided');
-          setIsLoading(false);
+          setSubmitting(false);
           break;
-
         case ErrorCode.SecondFactorRequired:
-          setTokenTimeisRunning(true);
+          resetTimer(
+            config.TwoFactorValiditySeconds -
+              (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
+          );
+          start();
           setShowOTP(true);
-          setIsLoading(false);
+          setSubmitting(false);
           setSubmitButtonLabel('Submit OTP');
 
           if (userNamePasswordGroupRef.current) {
@@ -177,19 +242,14 @@ export default function SignInForm({ providers, csrfToken }) {
             passwordRef.current.readOnly = true;
           }
 
-          if (captchaRef.current) {
-            captchaRef.current.disabled = true;
-          }
-
           break;
         case ErrorCode.InternalServerError:
           setError('Internal Server Error');
-          setIsLoading(false);
+          setSubmitting(false);
           break;
-
         default:
           setError('Internal Server Error');
-          setIsLoading(false);
+          setSubmitting(false);
           break;
       }
     },
@@ -205,14 +265,7 @@ export default function SignInForm({ providers, csrfToken }) {
         transform: 'translateY(-20%)',
       }}
     >
-      <div
-        // className={`font-black justify-center tracking-wider text-2xl bg-gradient-to-r from-[#262953] to-[#3f3d3d] inline-block text-transparent bg-clip-text mb-7`}
-        className={`w-[300px] mb-2`}
-        // style={{
-        //   fontFamily: 'Manrope, sans-serif',
-        //   textAlign: 'center',
-        // }}
-      >
+      <div className={`w-[300px] mb-2`}>
         <div
           className={`text-3xl tracking-widest text-[#262953] font-bold
                         border-[#7b7b7c] pb-5 mb-5
@@ -220,9 +273,6 @@ export default function SignInForm({ providers, csrfToken }) {
               font-myCustomFont
               text-center
           `}
-          // style={{
-          //   fontFamily: 'Courier New',
-          // }}
         >
           NOVA Platinum Support
         </div>
@@ -286,14 +336,17 @@ export default function SignInForm({ providers, csrfToken }) {
             </div>
           </div>
           {config.CaptchaIsActive ? (
-            <div>
-              {!showOTP ? (
-                <ReCAPTCHA
-                  ref={captchaRef}
-                  sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-                  onChange={setCaptcha}
-                />
-              ) : null}
+            <div
+              style={
+                captchaVerified
+                  ? { pointerEvents: 'none', opacity: 0.6 } // Disable interaction and reduce opacity after verification
+                  : {}
+              }
+            >
+              <ReCAPTCHA
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                onChange={handleCaptchaChange}
+              />
             </div>
           ) : null}
           {showOTP && (
@@ -302,7 +355,7 @@ export default function SignInForm({ providers, csrfToken }) {
                 Please enter your OTP code that you received by SMS
               </p>
               <p className="text-xs text-center pb-2">
-                Remaining time {formatTime(tokenTimeLeft)}
+                Remaining time {formatTimeMMSS(timeLeft)}
               </p>
               <TwoFactAuth
                 value={totpCode}
@@ -317,9 +370,7 @@ export default function SignInForm({ providers, csrfToken }) {
               label={submitButtonLabel}
               loadingText="Loading ..."
               isValid={formik.isValid}
-              isDirty={formik.dirty}
-              className="btn btn-primary py-4 px-5 font-semibold text-white "
-              loading={loading}
+              // className="btn btn-primary py-4 px-5 font-semibold text-white "
             />
           </div>
         </form>
@@ -328,7 +379,17 @@ export default function SignInForm({ providers, csrfToken }) {
   );
 }
 
-const SignInButton = ({ pending, label, loadingText, isValid, loading }) => {
+const SignInButton = ({
+  pending,
+  label,
+  loadingText,
+  isValid,
+}: {
+  pending: boolean;
+  label: string;
+  loadingText: string;
+  isValid: boolean;
+}) => {
   return (
     <button
       className={clsx(
@@ -336,13 +397,13 @@ const SignInButton = ({ pending, label, loadingText, isValid, loading }) => {
         border border-[#262953]
         `,
         {
-          'text-white-500 cursor-not-allowed': pending || loading,
+          'text-white-500 cursor-not-allowed': pending,
         }
       )}
       style={{
         width: '105px',
       }}
-      disabled={pending || loading}
+      disabled={pending}
       type="submit"
       aria-disabled={pending}
     >

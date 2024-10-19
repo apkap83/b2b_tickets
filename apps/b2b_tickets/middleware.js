@@ -42,47 +42,53 @@ function logIpMiddleware(req) {
 const authMiddleware = withAuth(
   function middleware(req) {
     const pathName = req.nextUrl.pathname;
-    const roles = req.nextauth.token.roles;
-    const permissions = req.nextauth.token.permissions;
 
-    // const reqIP = request.headers.get('request-ip') || request.ip;
-    // const reqURL = request.headers.get('request-url') || request.url;
-    // const sessionId = request.headers.get('session-id') || 'N/A';
+    // Safely extract roles and permissions from the token
+    const roles = req.nextauth?.token?.roles || [];
+    const permissions = req.nextauth?.token?.permissions || [];
 
-    // logAuth.info('Logging request in middleware', {
-    //   ip: reqIP,
-    //   url: reqURL,
-    //   sessionId: sessionId,
-    // });
     console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
     console.log('*** pathName:', pathName);
     console.log('*** roles:', roles);
     console.log('*** permissions:', permissions);
 
-    if (!roles) {
+    // If no roles are present, redirect to the sign-in page
+    if (!roles.length) {
+      console.warn('No roles found, redirecting to sign-in');
       return NextResponse.rewrite(new URL('/signin', req.url));
     }
 
+    // Allow Admins to proceed directly
     if (roles.includes(AppRoleTypes.Admin)) {
+      console.log('Admin access granted');
       return NextResponse.next();
     }
-
+    // Check if the user has permission to access the requested path
     const authorized = permissions.some((permission) => {
       const permissionEndPoint = permission.permissionEndPoint;
-      if (permissionEndPoint) {
-        if (pathName.startsWith(permissionEndPoint)) return true;
-      }
+      return permissionEndPoint && pathName.startsWith(permissionEndPoint);
     });
 
+    // If not authorized, redirect to the access denied page
     if (!authorized) {
+      console.warn(`Access denied for path: ${pathName}`);
       return NextResponse.rewrite(new URL('/denied', req.url));
     }
 
+    // Proceed to the next middleware or route
+    console.log(`Access granted for path: ${pathName}`);
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ token }) => {
+        // Ensure token is present and contains roles
+        if (!token || !token.roles) {
+          console.warn('Unauthorized: No valid token or roles');
+          return false;
+        }
+        return true;
+      },
     },
   }
 );
@@ -92,34 +98,12 @@ export async function middleware(req) {
   // First, execute the IP logging middleware
   const ipResponse = logIpMiddleware(req);
 
-  // // Log Page Visits
-  // const headersList = req.headers;
-  // const reqIP = headersList.get('request-ip');
-  // const reqURL = headersList.get('request-url');
-
-  // const logMessage = {
-  //   reqIP,
-  //   reqURL,
-  //   message: 'Page accessed',
-  // };
-
-  // // Make sure to use an absolute URL for fetch
-  // const apiURL = `${process.env.NEXTAUTH_URL}/api/log`;
-
-  // await fetch(apiURL, {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify(logMessage),
-  // });
-
   // Pass the modified request to the authorization middleware if needed
   const requestForAuth = ipResponse?.request || req;
 
   // Execute the authorization middleware only for specific paths
   if (
-    ['/ClientMember', '/Member', '/tickets', '/ticket', '/admin'].some((path) =>
+    ['/tickets', '/ticket', '/admin'].some((path) =>
       req.nextUrl.pathname.startsWith(path)
     )
   ) {
