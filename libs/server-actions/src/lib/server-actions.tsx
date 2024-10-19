@@ -950,7 +950,6 @@ export const validateReCaptcha = async (token: string) => {
     );
 
     const data = await response.json();
-    console.log('data', data);
     return data.success;
   } catch (error) {
     throw new Error(
