@@ -194,3 +194,10 @@ export const getStatusColor = (ticketStatus: any) => {
       return '#000'; // Fallback color
   }
 };
+
+// Format the time left into MM:SS format
+export const formatTimeMMSS = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};

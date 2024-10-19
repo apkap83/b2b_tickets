@@ -1,4 +1,5 @@
 import Credentials from 'next-auth/providers/credentials';
+import { NextApiResponse } from 'next';
 import {
   symmetricEncrypt,
   symmetricDecrypt,
@@ -25,7 +26,9 @@ import { validateReCaptcha } from '@b2b-tickets/server-actions';
 import { createRequestLogger } from '@b2b-tickets/logging';
 import { headers } from 'next/headers';
 import { NextAuthOptions } from 'next-auth';
-
+import { serialize } from 'cookie';
+import jwt from 'jsonwebtoken';
+import { getRequestLogger } from '@/libs/server-actions/src/server';
 // Set the length to 4 digits and 120 seconds
 authenticator.options = {
   digits: config.TwoFactorDigitsLength,
@@ -104,13 +107,8 @@ export const generateTwoFactorSecretForUserId = async (
 
 const tryLocalAuthentication = async (
   credentials: CredentialsType,
-  logRequest: CustomLogger
+  logRequest: any
 ) => {
-  const headersList = headers();
-  const reqIP = headersList.get('request-ip');
-  const reqURL = headersList.get('request-url');
-  const sessionId = headersList.get('session-id');
-
   try {
     logRequest.info(
       `Trying Local authentication for user name: ${
@@ -225,39 +223,19 @@ export const options: NextAuthOptions = {
         captchaToken: { label: 'captchaToken', type: 'text' },
         totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
       },
-      async authorize(credentials, req) {
+      async authorize(credentials: any, req: any) {
         try {
-          const headersList = headers();
-          const reqIP = headersList.get('request-ip');
-          const reqURL = headersList.get('request-url');
-          const sessionId = headersList.get('session-id');
+          const logRequest = getRequestLogger(TransportName.AUTH);
 
-          // Create a logger that automatically includes reqIP, reqURL, and sessionId
-          const logRequest = createRequestLogger(
-            TransportName.AUTH,
-            reqIP,
-            reqURL,
-            sessionId
-          );
-
-          if (!credentials?.userName)
+          if (!credentials?.userName || !credentials?.password) {
             throw new Error(ErrorCode.NoCredentialsProvided);
-          if (!credentials?.password)
-            throw new Error(ErrorCode.NoCredentialsProvided);
-
-          // reCAPTCHA VALIDATION FIRST
-          if (config.CaptchaIsActive && credentials.totpCode === '') {
-            const captchaToken = credentials.captchaToken;
-            const reCaptchaSuccessResponse = await validateReCaptcha(
-              captchaToken
-            );
-            if (!reCaptchaSuccessResponse) {
-              logRequest.error(
-                `reCAPTCHA backend validation error for user ${credentials.userName}`
-              );
-              throw new Error(ErrorCode.CaptchaValidationFailed);
-            }
           }
+
+          // Validate JWT Token for Captcha Validation
+          if (config.CaptchaIsActive) {
+            verifyJWTCaptcha({ req });
+          }
+
           const localAuthUserDetails = await tryLocalAuthentication(
             credentials,
             logRequest
@@ -278,35 +256,37 @@ export const options: NextAuthOptions = {
             return localAuthUserDetails;
           }
 
-          if (!credentials.totpCode) {
-            logRequest.info(
-              `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
+          logRequest.info(
+            `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
+          );
+
+          let newlyGeneratedSecret: string | undefined = undefined;
+          let correctOTPCode: string | undefined = undefined;
+
+          // if Two Factor Secret does not exist then generate it
+          if (!localAuthUserDetails.two_factor_secret) {
+            newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
+              localAuthUserDetails.user_id,
+              logRequest
             );
+          }
 
-            let newlyGeneratedSecret: string | undefined = undefined;
-            let correctOTPCode: string | undefined = undefined;
-            // if Two Factor Secret does not exist then generate it
-            if (!localAuthUserDetails.two_factor_secret) {
-              newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
-                localAuthUserDetails.user_id,
-                logRequest
-              );
-            }
+          // Secret Already Exists
+          if (newlyGeneratedSecret == undefined) {
+            correctOTPCode = generateOtpCode(
+              localAuthUserDetails.two_factor_secret!
+            );
+          }
 
-            // Secret Already Exists
-            if (newlyGeneratedSecret == undefined) {
-              correctOTPCode = generateOtpCode(
-                localAuthUserDetails.two_factor_secret!
-              );
-            }
+          // Secret was just created
+          if (newlyGeneratedSecret !== undefined) {
+            correctOTPCode = generateOtpCode(newlyGeneratedSecret);
+          }
 
-            // Secret was just created
-            if (newlyGeneratedSecret !== undefined) {
-              correctOTPCode = generateOtpCode(newlyGeneratedSecret);
-            }
+          // SEND SMS HERE
+          logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
 
-            // SEND SMS HERE
-            logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
+          if (!credentials.totpCode) {
             throw new Error(ErrorCode.SecondFactorRequired);
           }
 
@@ -333,7 +313,9 @@ export const options: NextAuthOptions = {
             secret
           );
           if (!isValidToken) {
-            logRequest.error(`Invalid Token Provided`);
+            logRequest.error(
+              `Invalid Token Provided -> ${credentials.totpCode}`
+            );
             throw new Error(ErrorCode.IncorrectTwoFactorCode);
           }
 
@@ -342,6 +324,7 @@ export const options: NextAuthOptions = {
           );
           return localAuthUserDetails;
         } catch (error) {
+          console.log(error);
           throw error;
         }
       },
@@ -389,3 +372,23 @@ export const options: NextAuthOptions = {
     },
   },
 };
+
+function verifyJWTCaptcha({ req }: { req: any }) {
+  const cookies = req.headers?.cookie || '';
+  const captchaJWTToken = cookies.match(/captchaJWTToken=([^;]+)/)?.[1];
+
+  if (!captchaJWTToken) {
+    throw new Error(ErrorCode.CaptchaJWTTokenRequired);
+  }
+
+  // Verify the JWT token
+  try {
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    const decoded = jwt.verify(captchaJWTToken, JWT_SECRET);
+    if (!decoded.captchaValidated)
+      throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
+  } catch (error) {
+    // Handle invalid token error (expired, tampered with, etc.)
+    throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
+  }
+}
