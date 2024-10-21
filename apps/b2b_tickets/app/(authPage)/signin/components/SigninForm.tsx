@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 
+import Image from 'next/image';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useFormik, FormikTouched, FormikErrors } from 'formik';
@@ -15,7 +16,7 @@ import { TwoFactAuth } from './TwoFactAuth';
 import { ErrorCode } from '@b2b-tickets/shared-models';
 import { useCountdown } from '@b2b-tickets/react-hooks';
 import { formatTimeMMSS } from '@/libs/utils/src';
-import Cookies from 'js-cookie'; // Import the js-cookie library to manage cookies
+import { NovaLogo } from '@b2b-tickets/assets';
 
 interface FieldErrorProps {
   formik: {
@@ -261,16 +262,23 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
     >
       <div className={`w-[300px] mb-2`}>
         <div
-          className={`text-3xl tracking-widest text-[#262953] font-bold
-                        border-[#7b7b7c] pb-5 mb-5
+          /*  text-[#262953] */
+          className={`text-2xl tracking-widest text-[black] font-bold
+                        border-[#7b7b7c] pb-4 mb-5
               border-b p-1
               font-myCustomFont
               text-center
+              flex flex-col
+              justify-center
+              items-center
+              gap-3
+              bg-gradient-to-r from-gray-500 via-gray-600 to-gray-800 bg-clip-text text-transparent
           `}
         >
-          NOVA Platinum Support
+          <Image priority src={NovaLogo} alt={'Nova Logo'} height={32} />
+          <span>Platinum Support</span>
         </div>
-        <div className="text-xl text-left mt-[.75rem] text-[#1e225b] font-semibold">
+        <div className="text-xl text-left mt-[.75rem] text-[black] font-semibold">
           Login
         </div>
       </div>
@@ -387,11 +395,13 @@ const SignInButton = ({
   return (
     <button
       className={clsx(
-        `btn btn-primary bg-[#262953] text-white shadow-md hover:bg-[#2a2c53] hover:cursor-pointer
-        border border-[#262953]
+        `btn transition-all duration-300 ease-in-out bg-gradient-to-r from-gray-800 via-black to-gray-900
+         text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:from-gray-700 hover:via-gray-800 hover:to-gray-700 
+         hover:scale-105 transform border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 
+         focus:ring-gray-600 focus:ring-offset-gray-100
         `,
         {
-          'text-white-500 cursor-not-allowed': pending,
+          'cursor-not-allowed opacity-70': pending,
         }
       )}
       style={{
