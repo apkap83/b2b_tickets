@@ -92,6 +92,52 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
     }
   }, [status, router, callbackUrl]);
 
+  const getReCaptchaJWTToken = async ({ setSubmitting }: any) => {
+    if (!captcha) {
+      setError('Verify reCAPTCHA!');
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      // Call your custom captcha validation API route
+      const captchaResponse = await fetch('/api/auth/captcha', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ captchaToken: captcha }),
+      });
+
+      const captchaResult = await captchaResponse.json();
+
+      if (!captchaResponse.ok) {
+        setError(captchaResult.message || 'Invalid reCAPTCHA');
+        setSubmitting(false);
+
+        // Reset the reCAPTCHA (if active)
+        if (config.CaptchaIsActive && recaptchaRef.current) {
+          recaptchaRef.current.reset();
+        }
+        return;
+      }
+
+      // Server Verified Captcha at this point
+      setCaptchaVerified(true);
+    } catch (error) {
+      setError(
+        'An error occurred while validating reCAPTCHA. Please try again.'
+      );
+      setSubmitting(false);
+
+      // Reset the reCAPTCHA (if active)
+      if (config.CaptchaIsActive && recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      return;
+    }
+  };
+
   const validationSchema = Yup.object({
     userName: Yup.string().required('User name is required'),
     password: Yup.string().required('Password is required'),
@@ -107,6 +153,11 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       setSubmitting(true); // Disable the submit button
       setError(null);
 
+      // Get ReCaptcha JWT Token as a Secure & Http Only cookie
+      if (config.CaptchaIsActive && !captchaVerified) {
+        await getReCaptchaJWTToken({ setSubmitting });
+      }
+
       const response = await signIn('credentials', {
         redirect: false,
         userName: values.userName,
@@ -121,64 +172,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
         window.location.href = callbackUrl;
       }
 
-      // Handle error cases
       let error = response?.error?.replace('Error: ', '');
-
-      if (config.CaptchaIsActive && !captchaVerified) {
-        if (!captcha) {
-          setError('Verify reCAPTCHA!');
-          setSubmitting(false);
-          return;
-        }
-
-        try {
-          // Call your custom captcha validation API route
-          const captchaResponse = await fetch('/api/auth/captcha', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ captchaToken: captcha }),
-          });
-
-          const captchaResult = await captchaResponse.json();
-
-          if (!captchaResponse.ok) {
-            setError(captchaResult.message || 'Invalid reCAPTCHA');
-            setSubmitting(false);
-
-            // Reset the reCAPTCHA (if active)
-            if (config.CaptchaIsActive && recaptchaRef.current) {
-              recaptchaRef.current.reset();
-            }
-            return;
-          }
-
-          // Server Verified Captcha at this point
-          setCaptchaVerified(true);
-
-          const response = await signIn('credentials', {
-            redirect: false,
-            userName: values.userName,
-            password: values.password,
-            captchaToken: captcha,
-            totpCode,
-          });
-
-          error = response?.error?.replace('Error: ', '');
-        } catch (error) {
-          setError(
-            'An error occurred while validating reCAPTCHA. Please try again.'
-          );
-          setSubmitting(false);
-
-          // Reset the reCAPTCHA (if active)
-          if (config.CaptchaIsActive && recaptchaRef.current) {
-            recaptchaRef.current.reset();
-          }
-          return;
-        }
-      }
 
       // If no error field exists or it's empty, return early
       if (!error) return;
