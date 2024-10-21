@@ -150,8 +150,14 @@ export class CustomLogger {
     this.log('warn', message, meta);
   }
 
-  error(message: string, meta: object = {}) {
-    this.log('error', message, meta);
+  error(error: unknown, meta: object = {}) {
+    if (error instanceof Error) {
+      // Log the error message and stack trace
+      this.log('error', `${error.message}\n${error.stack}`, meta);
+    } else {
+      // Handle non-Error objects as strings
+      this.log('error', String(error), meta);
+    }
   }
 
   debug(message: string, meta: object = {}) {

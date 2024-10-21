@@ -20,7 +20,6 @@ import {
   pgB2Bpool,
   setSchema,
 } from '@b2b-tickets/db-access';
-import { CustomLogger } from '@b2b-tickets/logging';
 
 import { validateReCaptcha } from '@b2b-tickets/server-actions';
 import { createRequestLogger } from '@b2b-tickets/logging';
@@ -28,7 +27,10 @@ import { headers } from 'next/headers';
 import { NextAuthOptions } from 'next-auth';
 import { serialize } from 'cookie';
 import jwt from 'jsonwebtoken';
-import { getRequestLogger } from '@/libs/server-actions/src/server';
+import {
+  getRequestLogger,
+  CustomLogger,
+} from '@/libs/server-actions/src/server';
 // Set the length to 4 digits and 120 seconds
 authenticator.options = {
   digits: config.TwoFactorDigitsLength,
@@ -89,7 +91,7 @@ export const generateTwoFactorSecretForUserId = async (
     },
   })) as B2BUser;
 
-  logRequest.info(
+  logRequest.debug(
     `Generating Random Two Factor Secret for user ${foundUser.username}`
   );
 
@@ -107,10 +109,10 @@ export const generateTwoFactorSecretForUserId = async (
 
 const tryLocalAuthentication = async (
   credentials: CredentialsType,
-  logRequest: any
+  logRequest: CustomLogger
 ) => {
   try {
-    logRequest.info(
+    logRequest.debug(
       `Trying Local authentication for user name: ${
         credentials ? credentials.userName : 'Not Given'
       }`
@@ -127,18 +129,19 @@ const tryLocalAuthentication = async (
     })) as B2BUser & { AppRoles: AppRole[] };
 
     if (!foundUser) {
+      logRequest.error(`Incorrect user name provided`);
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
     if (foundUser.is_locked === 'y') {
-      logRequest.info(
+      logRequest.error(
         `User with user name '${foundUser.username}' is currently locked`
       );
       throw new Error(ErrorCode.UserIsLocked);
     }
 
     if (foundUser.is_active !== 'y') {
-      logRequest.info(
+      logRequest.error(
         `User with user name '${foundUser.username}' is not currently active`
       );
 
@@ -151,8 +154,7 @@ const tryLocalAuthentication = async (
     );
 
     if (!match) {
-      logRequest.info(`Incorrect password provided`);
-
+      logRequest.error(`Incorrect password provided`);
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
@@ -200,12 +202,12 @@ const tryLocalAuthentication = async (
       },
     };
 
-    logRequest.debug(`Logged In User Details: ${userDetails}`);
+    logRequest.debug(`Valid User Name/Password was provided`);
 
     return userDetails;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logRequest.error(error);
-    throw new Error(error);
+    throw error;
   }
 };
 
@@ -224,9 +226,8 @@ export const options: NextAuthOptions = {
         totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
       },
       async authorize(credentials: any, req: any) {
+        const logRequest: CustomLogger = getRequestLogger(TransportName.AUTH);
         try {
-          const logRequest = getRequestLogger(TransportName.AUTH);
-
           if (!credentials?.userName || !credentials?.password) {
             throw new Error(ErrorCode.NoCredentialsProvided);
           }
@@ -243,7 +244,7 @@ export const options: NextAuthOptions = {
 
           if (!localAuthUserDetails) {
             logRequest.error(
-              'LocalAuthUserDetails object from Local Authentication is not valid'
+              'LocalAuthUserDetails object from Local Authentication is faulty'
             );
             throw new Error(ErrorCode.InternalServerError);
           }
@@ -256,7 +257,7 @@ export const options: NextAuthOptions = {
             return localAuthUserDetails;
           }
 
-          logRequest.info(
+          logRequest.debug(
             `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
           );
 
@@ -323,8 +324,23 @@ export const options: NextAuthOptions = {
             `Local User '${credentials.userName}' has been successfully authenticated`
           );
           return localAuthUserDetails;
-        } catch (error) {
-          console.log(error);
+        } catch (error: unknown) {
+          const suppressErrorObjectForErrors: string[] = [
+            ErrorCode.SecondFactorRequired,
+            ErrorCode.IncorrectTwoFactorCode,
+            ErrorCode.IncorrectUsernameOrPassword,
+            ErrorCode.CaptchaValidationFailed,
+          ].map(String);
+
+          if (error instanceof Error) {
+            if (suppressErrorObjectForErrors.includes(error.message)) {
+              logRequest.error(error.message);
+            } else {
+              // Handle other errors
+              logRequest.error(error);
+            }
+          }
+
           throw error;
         }
       },

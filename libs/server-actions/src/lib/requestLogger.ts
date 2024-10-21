@@ -18,3 +18,5 @@ export function getRequestLogger(transportName: TransportName) {
 
   return logRequest;
 }
+
+export { CustomLogger } from '@b2b-tickets/logging';
