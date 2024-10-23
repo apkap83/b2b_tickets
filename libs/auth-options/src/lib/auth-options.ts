@@ -21,16 +21,13 @@ import {
   setSchema,
 } from '@b2b-tickets/db-access';
 
-import { validateReCaptcha } from '@b2b-tickets/server-actions';
-import { createRequestLogger } from '@b2b-tickets/logging';
-import { headers } from 'next/headers';
 import { NextAuthOptions } from 'next-auth';
-import { serialize } from 'cookie';
 import jwt from 'jsonwebtoken';
 import {
   getRequestLogger,
   CustomLogger,
-} from '@/libs/server-actions/src/server';
+} from '@b2b-tickets/server-actions/server';
+
 // Set the length to 4 digits and 120 seconds
 authenticator.options = {
   digits: config.TwoFactorDigitsLength,

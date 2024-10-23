@@ -32,8 +32,7 @@ export const fromErrorToFormState = (error: unknown) => {
   } else if (error instanceof Error) {
     return {
       status: 'ERROR' as const,
-      // message: error.message,
-      message: 'Internal Error',
+      message: error.message,
       fieldErrors: {},
       timestamp: Date.now(),
     };
