@@ -51,15 +51,21 @@ export const AdminDashboard = ({
         </div>
 
         {activeTab === 'Users' && (
-          <UsersTab usersList={usersList} rolesList={rolesList} />
+          <div className="mb-[2rem]">
+            <UsersTab usersList={usersList} rolesList={rolesList} />
+          </div>
         )}
 
         {activeTab === 'Roles' && (
-          <RolesTab rolesList={rolesList} permissionsList={permissionsList} />
+          <div className="mb-[2rem]">
+            <RolesTab rolesList={rolesList} permissionsList={permissionsList} />
+          </div>
         )}
 
         {activeTab === 'Permissions' && (
-          <PermissionsTab permissionsList={permissionsList} />
+          <div className="mb-[2rem]">
+            <PermissionsTab permissionsList={permissionsList} />
+          </div>
         )}
       </div>
     </div>

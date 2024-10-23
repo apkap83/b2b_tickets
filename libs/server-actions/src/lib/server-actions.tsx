@@ -32,7 +32,12 @@ import {
 
 import { convertTo24HourFormat } from '@b2b-tickets/utils';
 import { redirect } from 'next/navigation';
-
+import { execSync } from 'child_process';
+import {
+  CustomLogger,
+  getRequestLogger,
+} from '@b2b-tickets/server-actions/server';
+import { TransportName } from '@b2b-tickets/shared-models';
 // export const seedDB = async () => {
 //   // TODO Session & Authorization Enabled Action
 //   await populateDB();
@@ -51,22 +56,75 @@ import { redirect } from 'next/navigation';
 //   await syncDatabaseAlterTrue();
 // };
 
-export const getTotalNumOfTicketsForCustomer = async (): Promise<number> => {
-  //@ts-ignore
-  const session = await getServerSession(options);
-
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/`);
-  }
-
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-  //@ts-ignore
-  const customerId = session.user.customer_id;
-
-  //@ts-ignore
-  const customerName = session.user.customer_name;
-
+const verifySecurityPermission = async (permissionName: AppPermissionTypes) => {
   try {
+    const session = await getServerSession(options);
+
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    let authorized = false;
+
+    if (userHasPermission(session, permissionName)) {
+      authorized = true;
+    }
+
+    if (!authorized) {
+      throw new Error(
+        'Unauthorized access: User is not authorized for this action'
+      );
+    }
+
+    // Return the session if authorized
+    return session;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const verifySecurityRole = async (roleName: AppRoleTypes) => {
+  try {
+    const session = await getServerSession(options);
+
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    let authorized = false;
+
+    if (userHasRole(session, roleName)) {
+      authorized = true;
+    }
+
+    if (!authorized) {
+      throw new Error(
+        'Unauthorized access: User is not authorized for this action'
+      );
+    }
+
+    // Return the session if authorized
+    return session;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
+
+export const getTotalNumOfTicketsForCustomer = async () => {
+  try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    //@ts-ignore
+    const customerId = session.user.customer_id;
+
+    //@ts-ignore
+    const customerName = session.user.customer_name;
+
     // Artificial Delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -82,7 +140,8 @@ export const getTotalNumOfTicketsForCustomer = async (): Promise<number> => {
 
     return res?.rows[0].count as number;
   } catch (error) {
-    throw error;
+    // logRequest.error(error);
+    return fromErrorToFormState(error);
   }
 };
 
@@ -91,22 +150,20 @@ export const getFilteredTicketsForCustomer = async (
   currentPage: number,
   allPages: boolean = false
 ) => {
-  const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
-
-  //@ts-ignore
-  const session = await getServerSession(options);
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/`);
-  }
-
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-  //@ts-ignore
-  const customerId = session.user.customer_id;
-
-  //@ts-ignore
-  const customerName = session.user.customer_name;
-
   try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
+
+    //@ts-ignore
+    const customerId = session.user.customer_id;
+
+    //@ts-ignore
+    const customerName = session.user.customer_name;
+
     // Artificial Delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -147,21 +204,18 @@ export const getFilteredTicketsForCustomer = async (
 };
 
 export const getNumOfTickets = async (query: string): Promise<number> => {
-  //@ts-ignore
-  const session = await getServerSession(options);
-
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/`);
-  }
-
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-  //@ts-ignore
-  const customerId = session.user.customer_id;
-
-  //@ts-ignore
-  const customerName = session.user.customer_name;
-
   try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    //@ts-ignore
+    const customerId = session.user.customer_id;
+
+    //@ts-ignore
+    const customerName = session.user.customer_name;
+
     // Artificial Delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -199,16 +253,13 @@ export const getTicketDetailsForTicketId = async ({
 }: {
   ticketNumber: string;
 }): Promise<TicketDetail[]> => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
-  //@ts-ignore
-  const session = await getServerSession(options);
-
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/ticket/${ticketNumber}`);
-  }
-
   try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
     const queryForTicketsCategoriesAndTypes = `
     SELECT 
         ticket_id,
@@ -326,18 +377,16 @@ export const getTicketDetailsForTicketId = async ({
 };
 
 export const getTicketCategories = async (): Promise<TicketCategory[]> => {
-  //@ts-ignore
-  const session = await getServerSession(options);
-
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/`);
-  }
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
-  //@ts-ignore
-  const userId = session.user.user_id;
-
   try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    //@ts-ignore
+    const userId = session.user.user_id;
+
     const query =
       'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
     const res = await pgB2Bpool.query(query, [userId]);
@@ -348,15 +397,13 @@ export const getTicketCategories = async (): Promise<TicketCategory[]> => {
 };
 
 export const getServiceTypes = async (): Promise<ServiceType[]> => {
-  await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-  //@ts-ignore
-  const session = await getServerSession(options);
-
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/`);
-  }
-
   try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
     const query =
       'SELECT service_id, "Service Name" from service_types_v where start_date < CURRENT_TIMESTAMP and end_date is null';
     const res = await pgB2Bpool.query(query);
@@ -419,16 +466,14 @@ export const createNewTicket = async (
   formState: TicketFormState,
   formData: FormData
 ): Promise<any> => {
-  // const client = await pgB2Bpool.connect(); // Acquire a client connection
+  const client = await pgB2Bpool.connect(); // Acquire a client connection
+  client.query(`SET search_path TO ${config.postgres_b2b_database.schemaName}`);
   try {
-    //@ts-ignore
-    const session = await getServerSession(options);
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Create_New_Ticket
+    );
 
-    if (!session) {
-      redirect(`/api/auth/signin?callbackUrl=/`);
-    }
-
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    // await setSchema(client, config.postgres_b2b_database.schemaName);
 
     let {
       title,
@@ -484,13 +529,10 @@ export const createNewTicket = async (
       config.postgres_b2b_database.debugMode, // pbln_debug_mode: boolean
     ];
 
-    console.log({ argsForTicketNew });
-    // Start a transaction
-    // await client.query('BEGIN');
+    await client.query('BEGIN');
 
-    console.log({ argsForTicketNew });
     // TODO: Define proper user Id and api User from session
-    const result = await pgB2Bpool.query(
+    const result = await client.query(
       `SELECT tck_ticket_new(
         pvch_title                => $1,
         pvch_description          => $2,
@@ -518,7 +560,7 @@ export const createNewTicket = async (
     }
 
     if (ccEmails && ccEmails.length > 0) {
-      await pgB2Bpool.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
+      await client.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
         newTicketId,
         ccEmails,
         //@ts-ignore
@@ -529,7 +571,7 @@ export const createNewTicket = async (
     }
 
     if (ccPhones && ccPhones.length > 0) {
-      await pgB2Bpool.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
+      await client.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
         newTicketId,
         ccPhones,
         //@ts-ignore
@@ -540,18 +582,17 @@ export const createNewTicket = async (
     }
 
     // Commit the transaction
-    // await client.query('COMMIT');
+    await client.query('COMMIT');
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
   } catch (error) {
     // Rollback the transaction in case of an error
-    // await client.query('ROLLBACK');
-    console.log('ERROR', error);
+    await client.query('ROLLBACK');
     return fromErrorToFormState(error);
   } finally {
-    // client.release();
+    client.release();
   }
 };
 
@@ -572,10 +613,9 @@ export const setRemedyIncidentIDForTicket = async ({
   ticketNumber: string;
 }) => {
   try {
-    const session = await getServerSession(options);
-    if (!session) {
-      redirect(`/api/auth/signin?callbackUrl=/`);
-    }
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Set_Remedy_INC
+    );
 
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
@@ -685,19 +725,11 @@ export const deleteExistingComment = async ({
   ticketNumber: string;
 }) => {
   try {
-    const session = await getServerSession(options);
-    if (!session) {
-      redirect(`/api/auth/signin?callbackUrl=/`);
-    }
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Delete_Comments
+    );
 
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
-    if (!userHasPermission(session, AppPermissionTypes.Delete_Comments)) {
-      return {
-        status: 'ERROR',
-        message: 'You do not have permission for this action',
-      };
-    }
 
     await pgB2Bpool.query('CALL cmt_delete($1, $2, $3, $4, $5)', [
       commentId,
@@ -724,10 +756,9 @@ export const deleteExistingComment = async ({
 
 export const escalateTicket = async (formState: any, formData: FormData) => {
   try {
-    const session = await getServerSession(options);
-    if (!session || !session.user) {
-      return redirect(`/api/auth/signin?callbackUrl=/`);
-    }
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Escalate_Ticket
+    );
 
     if (!userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
       return {
@@ -779,12 +810,9 @@ export const createNewComment = async (
   formData: FormData
 ): Promise<any> => {
   try {
-    //@ts-ignore
-    const session = await getServerSession(options);
-
-    if (!session) {
-      redirect(`/api/auth/signin?callbackUrl=/`);
-    }
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Ticket_Details_Page
+    );
 
     //@ts-ignore
     const userId = session.user.user_id;
@@ -887,25 +915,13 @@ export async function updateTicketStatus({
   comment: string;
 }) {
   try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
+
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    const session = await getServerSession(options);
-    if (!session) {
-      redirect(`/api/auth/signin?callbackUrl=/`);
-    }
-
-    //@ts-ignore
     const userId = session.user.user_id;
 
-    // Only Admin and Ticket Handler Can Update Status
-    if (
-      !userHasRole(session, AppRoleTypes.Admin) &&
-      !userHasRole(session, AppRoleTypes.B2B_TicketHandler)
-    ) {
-      redirect(`/api/auth/signin?callbackUrl=/ticket/${ticketNumber}`);
-    }
-
-    const result = await pgB2Bpool.query(
+    await pgB2Bpool.query(
       'CALL b2btickets_dev.tck_ticket_status_update($1, $2, $3, $4, $5, $6, $7)',
       [
         ticketId,
@@ -920,6 +936,7 @@ export async function updateTicketStatus({
     );
 
     revalidatePath(`/ticket/${ticketNumber}`);
+
     return {
       status: `SUCCESS`,
       message: `Ticket was updated successfuly`,
@@ -930,9 +947,6 @@ export async function updateTicketStatus({
 }
 
 export const validateReCaptcha = async (token: string) => {
-  // TODO - Production requires Internet for reCaptcha to work
-  // if (process.env.NODE_ENV !== 'production') return true;
-
   const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
   if (!secretKey) {
@@ -952,25 +966,20 @@ export const validateReCaptcha = async (token: string) => {
     const data = await response.json();
     return data.success;
   } catch (error) {
-    throw new Error(
-      'Cannot connect to https://www.google.com/recaptcha/api/siteverify for reCaptcha verification'
-    );
+    throw error;
   }
 };
 
-// import { Server } from 'socket.io';
-// export const UpdateTicketStatus = async () => {
-//   const response = await fetch('http://localhost:3000/api/socket', {
-//     method: 'POST',
-//     body: JSON.stringify({}),
-//     headers: {
-//       'Content-Type': 'application/json',
-//     },
-//   });
+export const getAppVersion = async () => {
+  const session = await getServerSession(options);
 
-//   if (!response.ok) {
-//     throw new Error('Failed to trigger ticket update');
-//   }
+  if (!session) {
+    redirect(`/api/auth/signin?callbackUrl=/`);
+  }
 
-//   return await response.json();
-// };
+  // Run the git command to get the latest commit hash
+  const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+
+  // Send the commit hash as a response
+  return { commit: commitHash };
+};

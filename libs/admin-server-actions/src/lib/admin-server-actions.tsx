@@ -30,28 +30,28 @@ dayjs.extend(customParseFormat);
 
 import { syncDatabase, syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import { userHasPermission } from '@b2b-tickets/utils';
+import {
+  CustomLogger,
+  getRequestLogger,
+} from '@b2b-tickets/server-actions/server';
+import { TransportName } from '@b2b-tickets/shared-models';
 
-const checkAuthenticationAndAdminRole = async () => {
-  return;
+const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
+
+const verifySecurityPermission = async () => {
   try {
     const session = await getServerSession(options);
 
     if (!session) {
-      throw new Error('Unauthenticated access: User is not authenticated');
+      redirect(`/api/auth/signin?callbackUrl=/`);
     }
 
-    const roles = session.user.roles;
-    const permissions = session.user.permissions;
-
     let authorized = false;
-    for (let i = 0; i < permissions.length; i++) {
-      if (permissions[i].permissionName === AppPermissionTypes.API_Admin)
-        authorized = true;
-      if (
-        permissions[i].permissionName ===
-        AppPermissionTypes.API_Security_Management
-      )
-        authorized = true;
+
+    if (
+      userHasPermission(session, AppPermissionTypes.API_Security_Management)
+    ) {
+      authorized = true;
     }
 
     if (!authorized) {
@@ -59,27 +59,19 @@ const checkAuthenticationAndAdminRole = async () => {
         'Unauthorized access: User is not authorized for this action'
       );
     }
+
+    // Return the session if authorized
+    return session;
   } catch (error) {
-    console.log('ERROR', error);
-    redirect('/signin?callbackUrl=/admin');
+    throw error;
   }
 };
 
-// export const syncDBAlterTrueAction = async () => {
-//   const session = await getServerSession(options);
-//   if (!session) {
-//     throw new Error('Unauthenticated access: User is not authenticated');
-//   }
-//   if (!userHasPermission(session, 'Sync DB (Alter True)')) {
-//     throw new Error(
-//       'Unauthorized access: User is not authorized for this action (Sync DB (Alter True))'
-//     );
-//   }
-//   await syncDatabaseAlterTrue();
-// };
-
 export const getCustomersList = async () => {
   try {
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
+
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     const getList = 'SELECT customer_id, customer_name from customers';
@@ -93,6 +85,9 @@ export const getCustomersList = async () => {
 
 export const getAdminDashboardData = async () => {
   try {
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
+
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     // TODO Uncomment
@@ -159,10 +154,8 @@ const userSchema = yup.object().shape({
 
 export async function createUser(formState: any, formData: any) {
   try {
-    // TODO Enable below line
-    // await checkAuthenticationAndAdminRole();
-
-    console.log('formData', formData);
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
     const customerId = formData.get('company');
     const firstName = formData.get('first_name');
@@ -235,54 +228,32 @@ export async function createUser(formState: any, formData: any) {
       last_update_process: 'b2btickets',
     });
 
+    logRequest.info(
+      `A.F.: ${
+        session?.user.userName
+      } - Creating New user with details: ${JSON.stringify({
+        firstName,
+        lastName,
+        userName,
+        email,
+        mobilePhone,
+      })}`
+    );
+
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'User Created!');
   } catch (error) {
+    logRequest.error(error);
     return fromErrorToFormState(error);
-  }
-}
-
-export async function createUserIfNotExistsAfterLDAPSuccessfullAuth(user: any) {
-  try {
-    // await checkAuthenticationAndAdminRole();
-
-    const { firstName, lastName, userName, password, email, mobilePhone } =
-      user;
-
-    // Validate input data with yup
-    // await userSchema.validate(userData, { abortEarly: false });
-
-    // Check if the user already exists (optional step)
-    const existingUserName = await AppUser.findOne({ where: { userName } });
-
-    if (existingUserName) return;
-
-    //   // Create and save the new user
-    const newUser = await AppUser.create({
-      firstName,
-      lastName,
-      userName,
-      password,
-      email,
-      mobilePhone,
-      authenticationType: AuthenticationTypes.LDAP,
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    revalidatePath('/admin');
-
-    return { status: 'SUCCESS', message: 'User Created!' };
-  } catch (error) {
-    return { status: 'ERROR', message: 'Error using useCreated!' };
   }
 }
 
 export async function deleteUser({ userName }: any) {
   try {
-    // TODO Uncomment
-    // await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
     //  Delete User
     const deletedCount = await B2BUser.destroy({
@@ -298,16 +269,20 @@ export async function deleteUser({ userName }: any) {
       return { status: 'ERROR', message: 'User was not found!' };
     }
 
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Deleting user with username: ${userName}`
+    );
     return { status: 'SUCCESS', message: 'User Deleted!' };
-  } catch (error) {
-    return { status: 'ERROR', message: error.message };
+  } catch (error: unknown) {
+    logRequest.error(error);
+    return fromErrorToFormState(error);
   }
 }
 
 export async function lockorUnlockUser({ username }: any) {
   try {
-    // TODO Enable below line
-    // await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
     // Check if the user already exists
     const user = await B2BUser.findOne({ where: { username } });
@@ -317,6 +292,10 @@ export async function lockorUnlockUser({ username }: any) {
     //@ts-ignore
     user.is_locked === 'y' ? (user.is_locked = 'n') : (user.is_locked = 'y');
     user.save();
+
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Locking user with username: ${username}`
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
@@ -332,14 +311,15 @@ export async function lockorUnlockUser({ username }: any) {
       }`,
     };
   } catch (error: any) {
+    logRequest.error(error);
     return { status: 'ERROR', message: error.message };
   }
 }
 
 export async function activeorInactiveUser({ username }: any) {
   try {
-    // TODO Enable below line
-    // await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
     // Check if the user already exists
     const user = await B2BUser.findOne({ where: { username } });
@@ -350,6 +330,11 @@ export async function activeorInactiveUser({ username }: any) {
     user.is_active === 'y' ? (user.is_active = 'n') : (user.is_active = 'y');
     user.save();
 
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Performing ${
+        user.is_active === 'y' ? 'SUCCESS_UNLOCKED' : 'SUCCESS_LOCKED'
+      } for user: ${username}`
+    );
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
@@ -364,6 +349,7 @@ export async function activeorInactiveUser({ username }: any) {
       }`,
     };
   } catch (error: any) {
+    logRequest.error(error);
     return { status: 'ERROR', message: error.message };
   }
 }
@@ -390,8 +376,8 @@ function getRoleData(formData: any) {
 
 export async function editUser(formState: any, formData: any) {
   try {
-    // TODO Enable below line
-    // await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
     const firstName = formData.get('firstName');
     const lastName = formData.get('lastName');
@@ -442,11 +428,22 @@ export async function editUser(formState: any, formData: any) {
     }
     //
 
+    logRequest.info(
+      `A.F.: ${
+        session?.user.userName
+      } - Performing User Edit for user: ${userName} ${JSON.stringify(
+        userData,
+        null,
+        2
+      )}`
+    );
+
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'User Updated!');
   } catch (error) {
+    logRequest.error(error);
     return fromErrorToFormState(error);
   }
 }
@@ -471,7 +468,8 @@ function getPermissionData(formData: any) {
 
 export async function editRole(formState: any, formData: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
     const id = formData.get('roleId');
     const roleName = formData.get('roleName');
@@ -520,6 +518,7 @@ export async function editRole(formState: any, formData: any) {
 
     return toFormState('SUCCESS', 'Role Updated!');
   } catch (error) {
+    logRequest.error(error);
     return fromErrorToFormState(error);
   }
 }
@@ -537,9 +536,9 @@ const userSchema_updateUserPassword = yup.object().shape({
 
 export async function updateUserPassword(formState: any, formData: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
-    console.log('formData', formData);
     const userName = formData.get('username');
     const password = formData.get('password');
     const verifyPassword = formData.get('verifyPassword');
@@ -560,26 +559,39 @@ export async function updateUserPassword(formState: any, formData: any) {
     if (!user)
       throw new Error(`User with user name ${userName} was not found!`);
 
+    // Only admin can change the password of admin
+    if (userName === 'admin' && session?.user.userName !== 'admin') {
+      logRequest.info(
+        `A.F.: ${session?.user.userName} - Tried to change the password of admin user and was denied`
+      );
+
+      throw new Error(`You cannot change the password of admin user`);
+    }
+
     // @ts-ignore
     user.password = password;
 
     await user.save();
 
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Performing Password change for user: ${userName}`
+    );
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'User Updated!');
   } catch (error) {
+    logRequest.error(error);
     return fromErrorToFormState(error);
   }
 }
 
 export async function createPermission(formState: any, formData: any) {
   try {
-    // TODO Uncomment
-    // await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
-    const permissionName = formData.get('permissionName');
+    const permissionName = formData.get('permissionName') as string;
     const endPoint = formData.get('endPoint');
     const permissionDescription = formData.get('permissionDescription');
 
@@ -593,7 +605,11 @@ export async function createPermission(formState: any, formData: any) {
         message: 'Role Already Exists',
       };
 
-    const newRole = await AppPermission.create({
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Creating new App Permission named: ${permissionName}`
+    );
+
+    await AppPermission.create({
       permissionName,
       endPoint,
       description: permissionDescription,
@@ -604,13 +620,16 @@ export async function createPermission(formState: any, formData: any) {
 
     return toFormState('SUCCESS', 'Permission Created!');
   } catch (error) {
+    logRequest.error(error);
     return fromErrorToFormState(error);
   }
 }
 
 export async function createRole(formState: any, formData: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
+
     const roleName = formData.get('roleName');
     const roleDescription = formData.get('roleDescription');
 
@@ -622,7 +641,11 @@ export async function createRole(formState: any, formData: any) {
         message: 'Role Already Exists',
       };
 
-    const newRole = await AppRole.create({
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Creating new App Role named: ${roleName}`
+    );
+
+    await AppRole.create({
       roleName,
       description: roleDescription,
     });
@@ -632,14 +655,15 @@ export async function createRole(formState: any, formData: any) {
 
     return toFormState('SUCCESS', 'Role Created!');
   } catch (error) {
+    logRequest.error(error);
     return fromErrorToFormState(error);
   }
 }
 
 export async function deleteRole({ role }: any) {
   try {
-    // TODO Uncomment below line
-    // await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
 
     //  Delete User
     const deletedCount = await AppRole.destroy({
@@ -656,15 +680,22 @@ export async function deleteRole({ role }: any) {
       return { status: 'ERROR', message: 'Role was not found!' };
     }
 
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Deleting existing App Role named: ${role.roleName}`
+    );
+
     return { status: 'SUCCESS', message: 'Role Deleted!' };
-  } catch (error) {
-    return { status: 'ERROR', message: error.message };
+  } catch (error: unknown) {
+    logRequest.error(error);
+    return fromErrorToFormState(error);
   }
 }
 
 export async function updateAuthMethodForUser({ user, authType }: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
+
     //  Find User
     const foundUser = await AppUser.findOne({
       where: {
@@ -682,13 +713,16 @@ export async function updateAuthMethodForUser({ user, authType }: any) {
 
     return { status: 'SUCCESS', message: 'Auth type updated for User' };
   } catch (error) {
-    return { status: 'ERROR', message: error.message };
+    logRequest.error(error);
+    return fromErrorToFormState(error);
   }
 }
 
 export async function deletePermission({ permission }: any) {
   try {
-    await checkAuthenticationAndAdminRole();
+    // Verify Security Permission
+    const session = await verifySecurityPermission();
+
     //  Delete Permission
     const deletedCount = await AppPermission.destroy({
       where: {
@@ -704,8 +738,12 @@ export async function deletePermission({ permission }: any) {
       return { status: 'ERROR', message: 'Permission was not found!' };
     }
 
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Deleting existing App Permission named: ${permission.permissionName}`
+    );
     return { status: 'SUCCESS', message: 'Permission Deleted!' };
   } catch (error) {
-    return { status: 'ERROR', message: error.message };
+    logRequest.error(error);
+    return fromErrorToFormState(error);
   }
 }

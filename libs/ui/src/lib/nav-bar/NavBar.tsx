@@ -15,7 +15,7 @@ import { ColorModeContext, tokens } from '@b2b-tickets/ui-theme';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { LoggedInIndication } from '@b2b-tickets/ui';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
-import { userHasRole } from '@b2b-tickets/utils';
+import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 
 import styles from './css/NavBar.module.scss';
 
@@ -33,17 +33,6 @@ export const NavBar = () => {
 
   const isAdminPath = pathname === '/admin';
   const isTicketsPath = pathname === '/tickets';
-
-  const [companyName, setCompanyName] = useState('');
-
-  const userHasPermission = (session: any, permissionName: any) => {
-    if (!session) return false;
-    return session?.user?.permissions.some(
-      (permission: any) =>
-        permission.permissionName === permissionName ||
-        permission.permissionName === AppPermissionTypes.API_Admin
-    );
-  };
 
   return (
     <Box
@@ -95,7 +84,7 @@ export const NavBar = () => {
               paddingRight: '1.25rem',
             }}
           >
-            {userHasRole(session, AppRoleTypes.SimpleUser) ? (
+            {userHasPermission(session, AppPermissionTypes.Users_List_Page) ? (
               <>
                 <IconButton
                   className="flex flex-col"
@@ -143,5 +132,3 @@ export const NavBar = () => {
     </Box>
   );
 };
-
-// export default NavBar;

@@ -15,7 +15,7 @@ import { config } from '@b2b-tickets/config';
 import { TwoFactAuth } from './TwoFactAuth';
 import { ErrorCode } from '@b2b-tickets/shared-models';
 import { useCountdown } from '@b2b-tickets/react-hooks';
-import { formatTimeMMSS } from '@/libs/utils/src';
+import { formatTimeMMSS } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
 
 interface FieldErrorProps {
@@ -275,7 +275,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               bg-gradient-to-r from-gray-500 via-gray-600 to-gray-800 bg-clip-text text-transparent
           `}
         >
-          <Image priority src={NovaLogo} alt={'Nova Logo'} height={32} />
+          <Image priority src={NovaLogo} alt={'Nova Logo'} height={40} />
           <span>Platinum Support</span>
         </div>
         <div className="text-xl text-left mt-[.75rem] text-[black] font-semibold">
