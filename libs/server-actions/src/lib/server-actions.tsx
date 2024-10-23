@@ -617,6 +617,10 @@ export const setRemedyIncidentIDForTicket = async ({
       AppPermissionTypes.Set_Remedy_INC
     );
 
+    const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Setting Remedy Incident ${remedyIncId} for Ticket Number ${ticketNumber}`
+    );
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     if (!userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
@@ -665,11 +669,8 @@ export const setRemedyIncidentIDForTicket = async ({
       status: 'SUCCESS',
       message: 'Remedy Incident Id was set',
     };
-  } catch (error: any) {
-    return {
-      status: 'ERROR',
-      message: error?.message,
-    };
+  } catch (error) {
+    return fromErrorToFormState(error);
   }
 };
 
@@ -922,6 +923,7 @@ export async function updateTicketStatus({
     const userId = session.user.user_id;
 
     await pgB2Bpool.query(
+      //TODO: Shoud Call tck_ticket_working
       'CALL b2btickets_dev.tck_ticket_status_update($1, $2, $3, $4, $5, $6, $7)',
       [
         ticketId,
