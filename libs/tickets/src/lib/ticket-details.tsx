@@ -331,13 +331,13 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
             </div> */}
           </div>
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
-          <button
+          {/* <button
             onClick={async () => {
               await sendTestEmail();
             }}
           >
             Send E-mail
-          </button>
+          </button> */}
         </div>
         <div
           className={`self-stretch pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex`}
