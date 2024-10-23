@@ -1,16 +1,19 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
+import { getAppVersion } from '@b2b-tickets/server-actions';
 
 const MyProfile = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState({
     visible: false,
   });
+  const [gitVersion, setGitVersion] = useState(null);
+
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
@@ -24,6 +27,15 @@ const MyProfile = () => {
     userName: session?.user.userName,
     authenticationType: session?.user.authenticationType,
   };
+
+  useEffect(() => {
+    const getMyAppVersion = async () => {
+      const ver = await getAppVersion();
+      setGitVersion(ver);
+      console.log({ ver });
+    };
+    getMyAppVersion();
+  }, []);
 
   return (
     <div className="absolute inset-0 flex justify-center items-center -translate-y-5 bg-black bg-opacity-50">
@@ -41,6 +53,10 @@ const MyProfile = () => {
           </label>
           <label className="inline">
             Account Type: &nbsp;<span>{session?.user.authenticationType}</span>
+          </label>
+          <label className="inline">
+            App Version: &nbsp;
+            <span>{gitVersion && gitVersion.commit}</span>
           </label>
 
           <ProfilePageButtons

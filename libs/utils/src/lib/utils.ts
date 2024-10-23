@@ -16,13 +16,24 @@ authenticator.options = {
 
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 
+interface Permission {
+  permissionName: AppPermissionTypes;
+}
+
+interface SessionType {
+  user?: {
+    permissions: Permission[];
+  };
+}
+
 export const userHasPermission = (
-  session: any,
+  session: SessionType | null,
   permissionName: AppPermissionTypes
-) => {
-  if (!session) return false;
-  return session?.user?.permissions.some(
-    (permission: any) =>
+): boolean => {
+  if (!session || !session.user) return false; // Return false if session or user is missing
+
+  return session.user.permissions.some(
+    (permission) =>
       permission.permissionName === permissionName ||
       permission.permissionName === AppPermissionTypes.API_Admin
   );

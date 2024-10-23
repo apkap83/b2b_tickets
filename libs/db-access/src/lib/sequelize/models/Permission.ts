@@ -10,9 +10,21 @@ import {
   BelongsToManyGetAssociationsMixin,
 } from 'sequelize';
 
+// Make 'id' optional for creation
+interface AppPermissionAttributes {
+  id?: number; // Optional during creation
+  permissionName: string;
+  endPoint?: string;
+  description?: string;
+}
+
+// Define the creation attributes where 'id' is optional
+interface AppPermissionCreationAttributes
+  extends Omit<AppPermissionAttributes, 'id'> {}
+
 export class AppPermission extends Model<
-  InferAttributes<AppPermission>,
-  InferCreationAttributes<AppPermission>
+  AppPermissionAttributes,
+  AppPermissionCreationAttributes
 > {
   public id!: number;
   public permissionName!: string;

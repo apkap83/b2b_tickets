@@ -122,7 +122,13 @@ export enum AppRoleTypes {
 export enum AppPermissionTypes {
   API_Admin = 'API_Admin',
   API_Security_Management = 'API_Security_Management',
+  Tickets_Page = 'Tickets Page',
   Delete_Comments = 'Delete Comments',
+  Ticket_Details_Page = 'Ticket Details Page',
+  Users_List_Page = 'Users List Page',
+  Create_New_Ticket = 'Create New Ticket',
+  Set_Remedy_INC = 'Set Remedy INC',
+  Escalate_Ticket = 'Escalate Ticket',
 }
 
 export enum AuthenticationTypes {

@@ -349,12 +349,12 @@ export function TicketDetails({ ticketDetails }: { ticketDetails: any }) {
               className={`${styles.statusDiv} shadow-lg p-2 bg-white rounded-lg border border-black/25 flex-col justify-start items-start inline-flex`}
             >
               <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Ticket</div>
-                {ticketNumber}
-              </div>
-              <div className={detailsRowClass}>
                 <div className={detailsRowHeaderClass}>Status</div>
                 <StatusBadge />
+              </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Ticket</div>
+                {ticketNumber}
               </div>
               {escalatedStatusDate ? (
                 <div className={detailsRowClass}>

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { serialize } from 'cookie';
 import jwt from 'jsonwebtoken';
 import { validateReCaptcha } from '@b2b-tickets/server-actions';
-import { TransportName } from '@/libs/shared-models/src';
-import { getRequestLogger } from '@/libs/server-actions/src/server';
+import { TransportName } from '@b2b-tickets/shared-models';
+import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
