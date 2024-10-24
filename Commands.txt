@@ -52,6 +52,9 @@ nx g component Pagination --project ui --export --tags type:ui,scope=b2b_tickets
  # Logged In Indication component
 nx g component LoggedInIndication --project ui --export --tags type:ui,scope=b2b_tickets
 
+# Create Session Popup component
+nx g component Pagination --project ui --export --tags type:ui,scope=b2b_tickets
+
 # Sequelize-Auto - Create Models Automatically
     # Generate users model
     npx sequelize-auto -o "./models" -d postgres -h 127.0.0.1 -p 9002 -u postgres -x postgres -s 'b2btickets_dev' --dialect postgres -l tsnpx sequelize-auto -o "./models" -d postgres -h 127.0.0.1 -p 9002 -u postgres -x postgres -s 'b2btickets_dev' --dialect postgres -l ts

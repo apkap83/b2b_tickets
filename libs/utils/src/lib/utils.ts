@@ -78,12 +78,12 @@ export const getEnvVariable = (variableName: string): string => {
   return value;
 };
 
-export const getGreekDateFormat = (dateString: Date) => {
+export const getGreekDateFormat = (dateObj: Date) => {
   // Format the date as DD/MM/YYYY
-  const formattedDate = dateString.toLocaleDateString('el-GR');
+  const formattedDate = dateObj.toLocaleDateString('el-GR');
 
   // Format the time as HH:MM AM/PM in Greek (πμ for AM and μμ for PM)
-  const formattedTime = dateString.toLocaleTimeString('el-GR', {
+  const formattedTime = dateObj.toLocaleTimeString('el-GR', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit', // Include seconds

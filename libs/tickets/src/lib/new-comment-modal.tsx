@@ -69,7 +69,7 @@ export function NewCommentModal({
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  const { ticket_id, ticket_number } = ticketDetail[0];
+  const { ticket_id, Ticket } = ticketDetail[0];
 
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit Comment');
 
@@ -97,7 +97,7 @@ export function NewCommentModal({
         <div
           className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
         >
-          {`B2B - New Comment for Ticket  ${ticket_number}`}
+          {`B2B - New Comment for Ticket  ${Ticket}`}
         </div>
       );
     }
@@ -107,7 +107,7 @@ export function NewCommentModal({
         <div
           className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
         >
-          {`B2B - Closing Comment for Ticket ${ticket_number}`}
+          {`B2B - Closing Comment for Ticket ${Ticket}`}
         </div>
       );
     }
@@ -117,7 +117,7 @@ export function NewCommentModal({
         <div
           className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
         >
-          {`B2B - Cancel Comment for Ticket ${ticket_number}`}
+          {`B2B - Cancel Comment for Ticket ${Ticket}`}
         </div>
       );
     }
@@ -164,11 +164,7 @@ export function NewCommentModal({
                       }}
                     ></textarea>
                     <input type="hidden" name="ticketId" value={ticket_id} />
-                    <input
-                      type="hidden"
-                      name="ticketNumber"
-                      value={ticket_number}
-                    />
+                    <input type="hidden" name="ticketNumber" value={Ticket} />
                     <input
                       type="hidden"
                       name="modalAction"

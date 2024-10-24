@@ -20,7 +20,13 @@ import { useRouter } from 'next/navigation';
 import { getGreekDateFormat } from '@b2b-tickets/utils';
 import { EscalationFillColor } from '@b2b-tickets/shared-models';
 
-export const TicketRow = ({ session, item }: any) => {
+export const TicketRow = ({
+  session,
+  item,
+}: {
+  session: any;
+  item: Ticket;
+}) => {
   const router = useRouter();
 
   const handleClick = () => {
@@ -36,7 +42,7 @@ export const TicketRow = ({ session, item }: any) => {
             <span className="font-medium">{item.Customer}</span>
           </TableCell>
           <TableCell data-label="Escalated" align="center">
-            <span className="font-medium">
+            {/* <span className="font-medium">
               {item['Escalation Date'] ? (
                 <>
                   <div
@@ -59,7 +65,8 @@ export const TicketRow = ({ session, item }: any) => {
               ) : (
                 'No'
               )}
-            </span>
+            </span> */}
+            EMPTY
           </TableCell>
         </>
       ) : null}
@@ -87,7 +94,10 @@ export const TicketRow = ({ session, item }: any) => {
         {item.Service}
       </TableCell>
       <TableCell data-label="Opened By" align="center">
-        {formatDate(item['Opened By'])}
+        {item['Opened By']}
+      </TableCell>
+      <TableCell data-label="Serverity" align="center">
+        {item.Severity}
       </TableCell>
       <TableCell data-label="Status" align="center">
         {
