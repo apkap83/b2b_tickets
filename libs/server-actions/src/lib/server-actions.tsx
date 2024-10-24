@@ -260,80 +260,35 @@ export const getTicketDetailsForTicketId = async ({
 
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    const queryForTicketsCategoriesAndTypes = `
-    SELECT 
-        ticket_id,
-        CAST(t.customer_id AS INTEGER) AS customer_id,
-        ticket_number,
-        title,
-        description,
-        t.category_id,
-        t.service_id,
-        equipment_id,
-        sid,
-        cid,
-        u.username,
-        u.first_name,
-        u.last_name,
-        cli,
-        contact_person,
-        contact_phone_number,
-        occurrence_date,
-        open_date,
-        open_user_id,
-        t.status_id,
-        status_date,
-        status_user_id,
-        close_date,
-        close_user_id,
-        root_cause,
-        t.creation_date,
-        t.creation_user,
-        category_name,
-        service_name,
-        start_date,
-        end_date,
-        statuses.status_name,
-        t.escalation_date,
-        t.escalation_user_id,
-        t.remedy_ticket_id
+    const queryForTicketsCategoriesAndTypes = `SELECT * FROM tickets_v WHERE "Ticket" = $1`;
 
-    FROM tickets as t
-    INNER JOIN ticket_categories as tc
-    ON t.category_id = tc.category_id
-    INNER JOIN service_types as s
-    ON t.service_id = s.service_id
-    INNER JOIN statuses as statuses
-    ON statuses.status_id = t.status_id
-    LEFT JOIN users as u
-    ON u.user_id = t.escalation_user_id
-    WHERE t.ticket_number = $1
-    
-    `;
+    // const queryForComments = `
+    //   SELECT tc.comment_id,
+    //   tc.ticket_id,
+    //   tc.comment_date,
+    //   tc.comment_user_id,
+    //   tc.comment,
+    //   tc.is_closure,
+    //   tc.creation_date,
+    //   tc.creation_user,
+    //   u.username,
+    //   u.first_name,
+    //   u.last_name,
+    //   c.customer_name
+    //   FROM tickets as t
+    //   INNER JOIN ticket_comments as tc
+    //   ON t.ticket_id = tc.ticket_id
+    //   INNER JOIN users as u
+    //   ON u.user_id = tc.comment_user_id
+    //   INNER JOIN customers as c
+    //   ON u.customer_id = c.customer_id
+    //   WHERE t.ticket_number = $1 and tc.deletion_date is null
+    //   ORDER BY tc.comment_date DESC
+    // `;
 
-    const queryForComments = `
-      SELECT tc.comment_id,
-      tc.ticket_id,
-      tc.comment_date,
-      tc.comment_user_id,
-      tc.comment,
-      tc.is_closure,
-      tc.creation_date,
-      tc.creation_user,
-      u.username,
-      u.first_name,
-      u.last_name,
-      c.customer_name
-      FROM tickets as t
-      INNER JOIN ticket_comments as tc
-      ON t.ticket_id = tc.ticket_id
-      INNER JOIN users as u
-      ON u.user_id = tc.comment_user_id
-      INNER JOIN customers as c
-      ON u.customer_id = c.customer_id
-      WHERE t.ticket_number = $1 and tc.deletion_date is null
-      ORDER BY tc.comment_date DESC
-    `;
+    const queryForComments =
+      'SELECT * FROM ticket_comments_v WHERE "Ticket Number" = $1';
+
     const queryRes1 = await pgB2Bpool.query(queryForTicketsCategoriesAndTypes, [
       ticketNumber,
     ]);
@@ -358,6 +313,8 @@ export const getTicketDetailsForTicketId = async ({
     if (!userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
       notFound();
     }
+    console.log('session?.user.customer_id', session?.user.customer_id);
+    console.log('queryRes1.rows[0].customer_id', queryRes1.rows[0]);
 
     // This check ensures that a customer cannot see other customers tickets
     // Check if the specific ticket belongs to the customer ID that was requested it
@@ -644,12 +601,13 @@ export const setRemedyIncidentIDForTicket = async ({
     }
 
     await pgB2Bpool.query(
-      `CALL tck_set_rmd_inc(
-        pnum_ticket_id      => $1,
+      `call tck_set_rmd_inc
+      (
+        pnum_Ticket_ID      => $1,
         pvch_Remedy_Ticket  => $2,
-        pnum_Remedy_User_ID => $3,
-        pvch_api_user       => $4,
-        pvch_api_process    => $5,
+        pnum_User_ID        => $3,
+        pvch_API_User       => $4,
+        pvch_API_Process    => $5,
         pbln_debug_mode     => $6
       )`,
       [
@@ -817,7 +775,6 @@ export const createNewComment = async (
 
     //@ts-ignore
     const userId = session.user.user_id;
-
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     const { comment, ticketId, ticketNumber, modalAction } =
@@ -881,12 +838,19 @@ export const createNewComment = async (
       return toFormState('SUCCESS', 'Ticket was Cancelled');
     }
 
-    const result = await pgB2Bpool.query(
-      'CALL b2btickets_dev.cmt_insert($1, $2, $3, $4, $5, $6, $7)',
+    await pgB2Bpool.query(
+      `CALL cmt_add_simple
+      (
+          pnum_Ticket_ID   => $1,
+          pvch_Comment     => $2,
+          pnum_User_ID     => $3,
+          pvch_API_User    => $4,
+          pvch_API_Process => $5,
+          pbln_Debug_Mode  => $6
+      )`,
       [
         ticketId,
         comment,
-        'n',
         userId,
         //@ts-ignore
         config.api.user,
@@ -984,4 +948,27 @@ export const getAppVersion = async () => {
 
   // Send the commit hash as a response
   return { commit: commitHash };
+};
+
+export const extendSessionAction = async (): Promise<{
+  status: string;
+  message: string;
+}> => {
+  try {
+    const session = await getServerSession(options);
+
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    return {
+      status: 'SUCCESS',
+      message: 'Session Extended',
+    };
+  } catch (error: any) {
+    return {
+      status: 'ERROR',
+      message: error.message,
+    };
+  }
 };
