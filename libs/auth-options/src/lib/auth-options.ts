@@ -51,6 +51,7 @@ declare module 'next-auth' {
 
   interface Session {
     user: User;
+    expiresAt: number;
   }
 }
 
@@ -66,6 +67,7 @@ declare module 'next-auth/jwt' {
     roles: string[];
     permissions: any[];
     authenticationType: string;
+    exp: number;
   }
 }
 
@@ -348,8 +350,8 @@ export const options: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 60 * 60, // Session max age to 60 minutes (in seconds)
-    updateAge: 5 * 60, // Session is refreshed every 5 minutes (in seconds)
+    maxAge: config.SessionMaxAge, // Session max age to XX minutes (in seconds)
+    updateAge: config.SessionUpdateAge, // Session is refreshed every X minutes (in seconds)
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -364,6 +366,11 @@ export const options: NextAuthOptions = {
         token.roles = user.roles;
         token.permissions = user.permissions;
         token.authenticationType = user.authenticationType;
+      }
+
+      // Add expiration time to the token
+      if (token) {
+        token.exp = Math.floor(Date.now() / 1000) + config.SessionMaxAge; // 1 hour expiration
       }
       return token;
     },
@@ -380,6 +387,7 @@ export const options: NextAuthOptions = {
         session.user.roles = token.roles;
         session.user.permissions = token.permissions;
         session.user.authenticationType = token.authenticationType;
+        session.expiresAt = token.exp;
       }
       return session;
     },

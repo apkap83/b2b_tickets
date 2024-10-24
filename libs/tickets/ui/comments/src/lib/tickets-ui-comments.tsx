@@ -30,12 +30,12 @@ const getRightAvatar = (company: string) => {
 };
 
 const getRightCommentCreatorName = (comment: TicketComment) => {
-  if (comment.username === 'admin') return 'Administrator';
-  if (comment.customer_name === 'Nova')
-    return comment.first_name.concat(' ', comment.last_name);
-  return comment.customer_name.concat(
+  if (comment.Username === 'admin') return 'Administrator';
+  if (comment['User Customer Name'] === 'Nova')
+    return comment['First Name'].concat(' ', comment['Last Name']);
+  return comment['User Customer Name'].concat(
     ' - ',
-    comment.first_name.concat(' ', comment.last_name)
+    comment['First Name'].concat(' ', comment['Last Name'])
   );
 };
 
@@ -60,15 +60,15 @@ export function TicketsUiComments({
             <span>No comments yet</span>
           ) : (
             <>
-              {comments.map((item) => {
-                if (
-                  item.comment.startsWith('User [') ||
-                  item.comment.startsWith('Remedy Ticket [')
-                ) {
+              {comments.map((item: TicketComment) => {
+                if (item.by_system === 'y') {
                   return (
-                    <div className="rounded-md py-3 border border-gray-500 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 justify-start items-start gap-2.5 inline-flex">
+                    <div
+                      key={item.comment_id}
+                      className="rounded-md py-3 border border-gray-500 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 justify-start items-start gap-2.5 inline-flex"
+                    >
                       <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                        {item.comment}
+                        {item.Comment}
                       </div>
                     </div>
                   );
@@ -80,7 +80,7 @@ export function TicketsUiComments({
                   >
                     <div className="self-stretch justify-between items-center gap-2.5 inline-flex">
                       <div className="flex justify-center items-center gap-2">
-                        {getRightAvatar(item.customer_name)}
+                        {getRightAvatar(item['User Customer Name'])}
                         <div>
                           <span className="text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                             {getRightCommentCreatorName(item)}
@@ -88,7 +88,7 @@ export function TicketsUiComments({
                           <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
                             {' '}
                             added a comment at{' '}
-                            {getGreekDateFormat(item.comment_date)}
+                            {getGreekDateFormat(item['Comment Date'])}
                           </span>
                         </div>
                       </div>
@@ -106,7 +106,7 @@ export function TicketsUiComments({
                     </div>
                     <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">
                       <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                        {item.comment}
+                        {item.Comment}
                       </div>
                     </div>
                   </div>

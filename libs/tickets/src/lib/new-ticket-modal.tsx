@@ -124,8 +124,8 @@ export function NewTicketModal({ closeModal, userId }: any) {
       setServiceTypes(rows);
     };
 
-    getCategories();
-    getCurrentServiceTypes();
+    // getCategories();
+    // getCurrentServiceTypes();
   }, []);
 
   const ticketSchema = yup.object().shape({

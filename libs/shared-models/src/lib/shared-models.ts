@@ -19,6 +19,8 @@ export interface Ticket {
   Customer: string;
   Ticket: string;
   Title: string;
+  Description: string;
+  Severity: string;
   Category: string;
   Service: string;
   Equipment: string;
@@ -31,6 +33,7 @@ export interface Ticket {
   'Occurence date': Date;
   Opened: Date;
   'Opened By': string;
+  status_id: string;
   Status: string;
   'Status Date': Date;
   'Status User': string;
@@ -64,53 +67,63 @@ export interface TicketFormState {
 
 export interface TicketComment {
   comment_id: string;
-  ticket_id: number;
-  comment_date: Date;
-  comment_user_id: Date;
-  comment: string;
-  is_closure: string;
-  creation_user: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-  customer_name: string;
+  ticket_id: string;
+  'Ticket Number': string;
+  'Comment Date': Date;
+  Username: string;
+  'First Name': string;
+  'Last Name': string;
+  user_customer_id: string;
+  'User Customer Name': string;
+  Comment: string;
+  is_closure: string | null;
+  by_system: string | null;
+  escalation_level: string | null;
 }
 
 export interface TicketDetail {
   ticket_id: string;
-  customer_id: string;
-  ticket_number: string;
-  title: string;
-  description: string;
-  category_id: string;
-  service_id: string;
-  equipment_id: string;
-  sid: string;
-  cid: string;
-  username: string;
-  cli: string;
-  contact_person: string;
-  contact_phone_number: string;
-  occurrence_date: Date;
-  open_date: Date;
-  open_user_id: string;
+  Customer: string;
+  'Cust. Type': string;
+  Ticket: string;
+  Title: string;
+  Description: string;
+  Severity: string;
+  Category: string;
+  Service: string;
+  Equipment: string;
+  Sid: string;
+  Cid: string | null;
+  Username: string | null;
+  Cli: string | null;
+  'Contact person': string;
+  'Contact phone number': string;
+  'Occurence date': Date; // Changed to Date type
+  Opened: Date; // Changed to Date type
+  'Opened By': string;
+  Status: string;
   status_id: string;
-  status_date: Date;
-  status_user_id: string;
-  close_date: Date | null;
-  close_user_id: string | null;
-  root_cause: string | null;
-  record_version: string;
-  creation_date: Date;
-  creation_user: string;
-  last_update_date: Date | null;
-  last_update_user: string | null;
-  last_update_process: string;
-  category_name: string;
-  service_name: string;
-  start_date: Date;
-  end_date: Date | null;
+  'Status Date': Date; // Changed to Date type
+  'Status User': string;
+  Closed: Date | null; // Changed to Date type
+  'Closed By': string | null;
+  escalation_info: string | null;
+  last_comment_info: string;
+  'Hours Passed': number | null;
+  'Remedy Ticket': string | null;
+  Escalated: string;
+  'First Escalation User': string | null;
+  'First Escalation Date': Date | null; // Changed to Date type
+  'Last Escalation User': string | null;
+  'Last Escalation Date': Date | null; // Changed to Date type
+  'Curernt Escalation Level': number | null;
+  last_comment_customer_type_id: number;
+  'Last Comment Date': Date; // Changed to Date type
+  'Last Cust. Comment Date': Date | null; // Changed to Date type
+  'Hours Since Last Cust. Comment': number;
+  'Delayed Response': string | null;
   comments: TicketComment[];
+  'Is Final Status': string;
 }
 
 export enum AppRoleTypes {

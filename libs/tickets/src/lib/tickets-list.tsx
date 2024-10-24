@@ -33,13 +33,14 @@ export const TicketsList = async ({
     currentPage
   );
 
+  // console.log({ ticketsList });
+
   if (ticketsList.length === 0) {
     return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
   }
 
   return (
     <>
-      {/* <TicketListHeader ticketsList={ticketsList} /> */}
       <Table
         sx={{
           width: '100%',
@@ -65,6 +66,7 @@ const generateTableHeadAndColumns = async () => {
     'Category',
     'Service',
     'Opened By',
+    'Severity',
     'Status',
     'Status Date',
   ];
@@ -91,6 +93,7 @@ const generateTableHeadAndColumns = async () => {
 
 const generateTableBody = async (items: Ticket[]) => {
   const session = await getServerSession(options);
+
   return (
     <TableBody>
       {items.map((item: any) => (
