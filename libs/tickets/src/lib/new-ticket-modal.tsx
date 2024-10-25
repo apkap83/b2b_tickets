@@ -6,34 +6,18 @@ import { useState, useEffect } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
 
 import Box from '@mui/material/Box';
-import Backdrop from '@mui/material/Backdrop';
-import Modal from '@mui/material/Modal';
-import Fade from '@mui/material/Fade';
 import FormControl from '@mui/material/FormControl';
 
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 
-import { TransitionProps } from '@mui/material/transitions';
-
-import { DemoContainer, DemoItem } from '@mui/x-date-pickers/internals/demo';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import Divider from '@mui/material/Divider';
 
-import Tooltip from '@mui/material/Tooltip';
-import Stack from '@mui/material/Stack';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { Typography, useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
@@ -41,6 +25,8 @@ import {
   getTicketCategories,
   getServiceTypes,
   createNewTicket,
+  getTicketSeverities,
+  getServicesForCategorySelected,
 } from '@b2b-tickets/server-actions';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
@@ -57,23 +43,21 @@ import styles from './css/new-ticket-modal.module.scss';
 import { useFormStatus } from 'react-dom';
 import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { Span } from 'next/dist/trace';
+import {
+  TicketCategory,
+  ServiceType,
+  Severity,
+  TicketSeverityLevels,
+  TicketSeverityColors,
+} from '@b2b-tickets/shared-models';
 
-const Transition = React.forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement<any, any>;
-  },
-  ref: React.Ref<unknown>
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
-
-const FieldError = ({ formik, name }: any) => {
+const FieldError = ({ formik, name, ...rest }: any) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
     return null;
   }
 
   return (
-    <p className="text-wrap text-red-500 text-xs -mt-1">
+    <p className="text-wrap text-red-500 text-xs -mt-2" {...rest}>
       {formik?.errors[name]}
     </p>
   );
@@ -98,39 +82,34 @@ export function NewTicketModal({ closeModal, userId }: any) {
 
   const [open, setOpen] = React.useState(false);
 
-  type TicketCategory = { category_id: string; Category: string };
+  const [ticketCategories, setTicketCategories] = useState<TicketCategory[]>(
+    []
+  );
+  const [categoryIdSelected, setCategoryIdSelected] = useState('');
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
 
-  const [ticketCategories, setticketCategories] = useState<TicketCategory[]>([
-    { category_id: '', Category: '' },
-  ]);
+  const [severities, setSeverities] = useState<Severity[]>([]);
 
-  type ServiceCategory = { service_id: string; 'Service Name': string };
-
-  const [serviceTypes, setServiceTypes] = useState<ServiceCategory[]>([
-    {
-      service_id: '',
-      'Service Name': '',
-    },
-  ]);
-
+  // Get Severities
   useEffect(() => {
+    const getSeverities = async () => {
+      const rows = await getTicketSeverities();
+      setSeverities(rows);
+    };
+
     const getCategories = async () => {
       const rows = await getTicketCategories();
-      setticketCategories(rows);
+      setTicketCategories(rows);
     };
 
-    const getCurrentServiceTypes = async () => {
-      const rows = await getServiceTypes();
-      setServiceTypes(rows);
-    };
-
-    // getCategories();
-    // getCurrentServiceTypes();
+    getSeverities();
+    getCategories();
   }, []);
 
   const ticketSchema = yup.object().shape({
     title: yup.string().required('Title is required'),
     description: yup.string().required('Description is required'),
+    severity: yup.string().required('Severity is required'),
     category: yup
       .string()
       .required('Category is required')
@@ -225,6 +204,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
       // Final Initial Values
       title: '',
       description: '',
+      severity: '',
       category: '',
       service: '',
       equipmentId: '',
@@ -242,6 +222,19 @@ export function NewTicketModal({ closeModal, userId }: any) {
     validationSchema: ticketSchema,
     onSubmit: async (values, { setSubmitting }) => {},
   });
+
+  useEffect(() => {
+    const getServices = async () => {
+      const rows = await getServicesForCategorySelected({
+        category_id: formik.values['category'],
+      });
+      if (!rows) return;
+      setServiceTypes(rows);
+    };
+
+    const categoryIdSelected = formik.values['category'];
+    if (categoryIdSelected) getServices();
+  }, [formik.values['category']]);
 
   useEffect(() => {
     if (formState.status === 'SUCCESS') closeModal();
@@ -264,6 +257,23 @@ export function NewTicketModal({ closeModal, userId }: any) {
       LLLL: 'dddd, D MMMM YYYY h:mm A',
     },
   });
+
+  const getStatusColor = ({
+    severityDescriptive,
+  }: {
+    severityDescriptive: string;
+  }) => {
+    switch (severityDescriptive) {
+      case TicketSeverityLevels.Low:
+        return TicketSeverityColors.Low;
+      case TicketSeverityLevels.Medium:
+        return TicketSeverityColors.Medium;
+      case TicketSeverityLevels.High:
+        return TicketSeverityColors.High;
+      default:
+        return '#000'; // Fallback color
+    }
+  };
 
   return (
     <React.Fragment>
@@ -454,18 +464,102 @@ export function NewTicketModal({ closeModal, userId }: any) {
                     backgroundColor: `${colors.grey[900]}`,
                   }}
                 >
-                  <FormControl sx={{ minWidth: rightPanelMinWidthPx }}>
-                    <InputLabel id="category">Category</InputLabel>
+                  <FormControl
+                    sx={{
+                      marginBottom: '8px',
+                      minWidth: rightPanelMinWidthPx,
+                    }}
+                  >
+                    <InputLabel
+                      id="severity"
+                      sx={{
+                        top: '-7px',
+                      }}
+                    >
+                      Severity
+                    </InputLabel>
+                    <Select
+                      labelId="severity"
+                      id="severity"
+                      name="severity"
+                      value={formik.values.severity}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      autoWidth
+                      label="Severities *"
+                      required
+                      sx={{
+                        '& .MuiSelect-select': {
+                          paddingTop: '8px',
+                          paddingBottom: '8px',
+                        },
+                      }}
+                    >
+                      {severities.map((item: Severity) => {
+                        return (
+                          <MenuItem
+                            key={item.severity_id}
+                            value={item.severity_id}
+                            sx={{
+                              minWidth: rightPanelMinWidthPx,
+                            }}
+                          >
+                            {
+                              <span
+                                style={{
+                                  color: getStatusColor({
+                                    severityDescriptive: item.severity,
+                                  }),
+                                }}
+                              >
+                                {item.severity}
+                              </span>
+                            }
+                          </MenuItem>
+                        );
+                      })}
+                    </Select>
+                  </FormControl>
+                  <FieldError
+                    formik={formik}
+                    name="severity"
+                    style={{ marginTop: '-12px' }}
+                  />
+
+                  <FormControl
+                    sx={{
+                      marginTop: '10px',
+                      marginBottom: '3px',
+                      minWidth: rightPanelMinWidthPx,
+                    }}
+                  >
+                    <InputLabel
+                      id="category"
+                      sx={{
+                        top: '-7px',
+                      }}
+                    >
+                      Category
+                    </InputLabel>
                     <Select
                       labelId="category"
                       id="category"
                       name="category"
                       value={formik.values.category}
-                      onChange={formik.handleChange}
+                      onChange={(val) => {
+                        formik.handleChange(val);
+                        formik.setFieldValue('service', '');
+                      }}
                       onBlur={formik.handleBlur}
                       autoWidth
                       label="Categories *"
                       required
+                      sx={{
+                        '& .MuiSelect-select': {
+                          paddingTop: '8px',
+                          paddingBottom: '8px',
+                        },
+                      }}
                     >
                       {ticketCategories.map((item) => {
                         return (
@@ -483,38 +577,62 @@ export function NewTicketModal({ closeModal, userId }: any) {
                     </Select>
                   </FormControl>
                   <FieldError formik={formik} name="category" />
-                  <FormControl
-                    sx={{ mt: '.75rem', minWidth: rightPanelMinWidthPx }}
-                  >
-                    <InputLabel id="service">Service Name</InputLabel>
-                    <Select
-                      labelId="service"
-                      id="service"
-                      name="service"
-                      value={formik.values.service}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      autoWidth
-                      label="Service Name"
-                    >
-                      {serviceTypes.map((item) => {
-                        return (
-                          <MenuItem
-                            key={item.service_id}
-                            value={item.service_id}
-                            sx={{
-                              minWidth: rightPanelMinWidthPx,
-                            }}
-                          >
-                            {item['Service Name']}
-                          </MenuItem>
-                        );
-                      })}
-                    </Select>
-                  </FormControl>
-                  <FieldError formik={formik} name="service" />
 
-                  <FormControl sx={{ minWidth: rightPanelMinWidthPx }}>
+                  {formik.values['category'] && (
+                    <>
+                      <FormControl
+                        sx={{
+                          marginTop: '10px',
+                          marginBottom: '3px',
+                          minWidth: rightPanelMinWidthPx,
+                        }}
+                      >
+                        <InputLabel
+                          id="service"
+                          sx={{
+                            top: '-7px',
+                          }}
+                        >
+                          Service Name
+                        </InputLabel>
+                        <Select
+                          labelId="service"
+                          id="service"
+                          name="service"
+                          value={formik.values.service}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          autoWidth
+                          label="Service Name"
+                          sx={{
+                            '& .MuiSelect-select': {
+                              paddingTop: '8px',
+                              paddingBottom: '8px',
+                            },
+                          }}
+                        >
+                          {serviceTypes.map((item: ServiceType) => {
+                            return (
+                              <MenuItem
+                                key={item.service_type_id}
+                                value={item.service_type_id}
+                                sx={{
+                                  minWidth: rightPanelMinWidthPx,
+                                }}
+                              >
+                                {item.service_type_name}
+                              </MenuItem>
+                            );
+                          })}
+                        </Select>
+                      </FormControl>
+                      <FieldError formik={formik} name="service" />
+                    </>
+                  )}
+
+                  <FormControl
+                    sx={{ marginTop: '-12px', minWidth: rightPanelMinWidthPx }}
+                  >
                     <TextField
                       margin="dense"
                       id="equipmentId"

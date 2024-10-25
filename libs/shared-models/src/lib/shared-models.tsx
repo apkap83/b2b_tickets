@@ -47,8 +47,14 @@ export interface TicketCategory {
 }
 
 export interface ServiceType {
-  service_id: string;
-  'Service Name': string;
+  category_serivce_type_id: string;
+  service_type_id: string;
+  service_type_name: string;
+}
+
+export interface Severity {
+  severity_id: string;
+  severity: string;
 }
 
 export interface TicketFormState {
@@ -83,6 +89,7 @@ export interface TicketComment {
 
 export interface TicketDetail {
   ticket_id: string;
+  severity_id: string;
   Customer: string;
   'Cust. Type': string;
   Ticket: string;
@@ -142,6 +149,7 @@ export enum AppPermissionTypes {
   Create_New_Ticket = 'Create New Ticket',
   Set_Remedy_INC = 'Set Remedy INC',
   Escalate_Ticket = 'Escalate Ticket',
+  Alter_Ticket_Severity = 'Alter Ticket Severity',
 }
 
 export enum AuthenticationTypes {
@@ -175,6 +183,18 @@ export enum TicketStatusColors {
   WORKING = '#916430',
   CANCELLED = '#dc5743',
   CLOSED = '#3d8d52',
+}
+
+export enum TicketSeverityLevels {
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+}
+
+export enum TicketSeverityColors {
+  Low = '#28a745',
+  Medium = '#ffc107',
+  High = '#dc3545',
 }
 
 export enum FilterTicketsStatus {
