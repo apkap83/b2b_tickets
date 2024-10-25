@@ -65,10 +65,13 @@ export function TicketsUiComments({
                   return (
                     <div
                       key={item.comment_id}
-                      className="rounded-md py-3 border border-gray-500 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 justify-start items-start gap-2.5 inline-flex"
+                      className="rounded-md py-3 border flex justify-between border-gray-500 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 justify-start items-start gap-2.5 inline-flex"
                     >
                       <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                        {item.Comment}
+                        <span>{item.Comment}</span>
+                      </div>
+                      <div className="text-black text-xs text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+                        {getGreekDateFormat(item['Comment Date'])}
                       </div>
                     </div>
                   );

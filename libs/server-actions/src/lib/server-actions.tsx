@@ -23,6 +23,7 @@ import {
   TicketStatusName,
   FilterTicketsStatus,
   AppPermissionTypes,
+  Severity,
 } from '@b2b-tickets/shared-models';
 
 import {
@@ -287,7 +288,7 @@ export const getTicketDetailsForTicketId = async ({
     // `;
 
     const queryForComments =
-      'SELECT * FROM ticket_comments_v WHERE "Ticket Number" = $1';
+      'SELECT * FROM ticket_comments_v WHERE "Ticket Number" = $1 order by "Comment Date" DESC';
 
     const queryRes1 = await pgB2Bpool.query(queryForTicketsCategoriesAndTypes, [
       ticketNumber,
@@ -333,25 +334,25 @@ export const getTicketDetailsForTicketId = async ({
   }
 };
 
-export const getTicketCategories = async (): Promise<TicketCategory[]> => {
-  try {
-    const session = await verifySecurityPermission(
-      AppPermissionTypes.Tickets_Page
-    );
+// export const getTicketCategories = async (): Promise<TicketCategory[]> => {
+//   try {
+//     const session = await verifySecurityPermission(
+//       AppPermissionTypes.Tickets_Page
+//     );
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+//     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-    //@ts-ignore
-    const userId = session.user.user_id;
+//     //@ts-ignore
+//     const userId = session.user.user_id;
 
-    const query =
-      'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
-    const res = await pgB2Bpool.query(query, [userId]);
-    return res.rows;
-  } catch (error) {
-    throw error;
-  }
-};
+//     const query =
+//       'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
+//     const res = await pgB2Bpool.query(query, [userId]);
+//     return res.rows;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
 
 export const getServiceTypes = async (): Promise<ServiceType[]> => {
   try {
@@ -374,6 +375,7 @@ const ticketSchema_zod = z
   .object({
     title: z.string().nonempty('Title is required'),
     description: z.string().nonempty('Description is required'),
+    severity: z.string().nonempty('Severity is required'),
     category: z
       .string()
       .nonempty('Category is required')
@@ -424,17 +426,22 @@ export const createNewTicket = async (
   formData: FormData
 ): Promise<any> => {
   const client = await pgB2Bpool.connect(); // Acquire a client connection
-  client.query(`SET search_path TO ${config.postgres_b2b_database.schemaName}`);
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Create_New_Ticket
     );
+
+    await client.query(
+      `SET search_path TO ${config.postgres_b2b_database.schemaName}`
+    );
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     // await setSchema(client, config.postgres_b2b_database.schemaName);
 
     let {
       title,
       description,
+      severity,
       category,
       service,
       equipmentId,
@@ -450,6 +457,7 @@ export const createNewTicket = async (
     } = ticketSchema_zod.parse({
       title: formData.get('title'),
       description: formData.get('description'),
+      severity: formData.get('severity'),
       category: formData.get('category'),
       service: formData.get('service'),
       equipmentId: formData.get('equipmentId'),
@@ -465,13 +473,44 @@ export const createNewTicket = async (
     });
 
     const standardizedDate = convertTo24HourFormat(occurrenceDate);
+    // for (const [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
+    console.log({
+      title,
+      description,
+      severity,
+      category,
+      service,
+      equipmentId,
+      sid,
+      cid,
+      userName,
+      cliValue,
+      contactPerson,
+      contactPhoneNum,
+      ccEmails,
+      ccPhones,
+      occurrenceDate,
+    });
+    const res = await pgB2Bpool.query(
+      'SELECT category_service_type_id from ticket_category_service_types_v where category_id = $1 and service_type_id = $2',
+      [category, service]
+    );
 
+    const categoryServiceTypeId = res.rows[0].category_service_type_id;
+
+    if (!categoryServiceTypeId) {
+      throw new Error('Category Service Type ID was not found!');
+    }
     // Convert string to number where applicable and handle empty strings as null
     const argsForTicketNew = [
       title, // pvch_title: string
       description, // pvch_description: string
-      category ? Number(category) : null, // pnum_category_id: number | null
-      service ? Number(service) : null, // pnum_service_id: number | null
+      severity ? Number(severity) : null, // severity_id: number | null
+      // category ? Number(category) : null, // pnum_category_id: number | null
+      // service ? Number(service) : null, // pnum_service_id: number | null
+      categoryServiceTypeId,
       equipmentId ? Number(equipmentId) : null, // pnum_equipment_id: number | null
       sid || null, // pvch_sid: string | null
       cid || null, // pvch_cid: string | null
@@ -490,24 +529,26 @@ export const createNewTicket = async (
 
     // TODO: Define proper user Id and api User from session
     const result = await client.query(
-      `SELECT tck_ticket_new(
-        pvch_title                => $1,
-        pvch_description          => $2,
-        pnum_category_id          => $3,
-        pnum_service_id           => $4,
-        pnum_equipment_id         => $5,
-        pvch_sid                  => $6,
-        pvch_cid                  => $7,
-        pvch_username             => $8,
-        pvch_cli                  => $9,
-        pvch_contact_person       => $10,
-        pvch_contact_phone_number => $11,
-        ptmsp_occurrence_date     => $12,
-        pnum_user_id              => $13,
-        pvch_api_user             => $14,
-        pvch_api_process          => $15,
-        pbln_debug_mode           => $16
-      )`,
+      `SELECT tck_ticket_new
+        (
+          pvch_Title                    => $1,
+          pvch_Description              => $2,
+          pnum_Severity_ID              => $3,
+          pnum_Category_Service_Type_ID => $4,
+          pnum_Equipment_ID             => $5,
+          pvch_SID                      => $6,
+          pvch_CID                      => $7,
+          pvch_Username                 => $8,
+          pvch_CLI                      => $9,
+          pvch_Contact_Person           => $10,
+          pvch_Contact_Phone_Number     => $11,
+          pts_Occurrence_Date           => $12,
+          pnum_User_ID                  => $13,
+          pvch_API_User                 => $14,
+          pvch_API_Process              => $15,
+          pbln_Debug_Mode               => $16
+        )
+       `,
       argsForTicketNew
     );
 
@@ -764,6 +805,56 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
   }
 };
 
+export const alterTicketSeverity = async ({
+  ticketNumber,
+  ticketId,
+  newSeverityId,
+}: any) => {
+  try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Alter_Ticket_Severity
+    );
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    await pgB2Bpool.query(
+      `
+        CALL tck_ticket_change_severity
+        (
+          pnum_Ticket_ID   => $1,
+          pnum_User_ID     => $2,
+          pnum_Severity_ID => $3,
+          pvch_API_User    => $4,
+          pvch_API_Process => $5,
+          pbln_Debug_Mode  => $6
+        )
+      `,
+      [
+        parseInt(ticketId),
+        session.user.user_id,
+        newSeverityId,
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    revalidatePath(`/ticket/${ticketNumber}`);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Ticket was escalated!',
+    };
+  } catch (error: any) {
+    return {
+      status: 'ERROR',
+      message: error?.message,
+    };
+  }
+};
+
 export const createNewComment = async (
   formState: TicketFormState,
   formData: FormData
@@ -786,18 +877,29 @@ export const createNewComment = async (
       });
 
     if (modalAction === TicketDetailsModalActions.CLOSE) {
-      const statusId = TicketStatus.CLOSED;
-
-      const response = await updateTicketStatus({
-        ticketId,
-        ticketNumber,
-        statusId,
-        comment,
-      });
-
-      if (response.status === 'ERROR') {
-        throw new Error(response.message);
-      }
+      await pgB2Bpool.query(
+        `
+          CALL tck_ticket_close
+          (
+            pnum_Ticket_ID   => $1,
+            pnum_User_ID     => $2,
+            pvch_Comment     => $3,
+            pvch_Root_Cause  => $4,
+            pvch_API_User    => $5,
+            pvch_API_Process => $6,
+            pbln_Debug_Mode  => $7
+          )
+        `,
+        [
+          ticketId,
+          userId,
+          comment,
+          comment,
+          config.api.user,
+          config.api.process,
+          config.postgres_b2b_database.debugMode,
+        ]
+      );
 
       await new Promise((resolve) => setTimeout(resolve, 250));
       revalidatePath(`/ticket/${ticketNumber}`);
@@ -805,28 +907,20 @@ export const createNewComment = async (
     }
 
     if (modalAction === TicketDetailsModalActions.CANCEL) {
-      const statusId = TicketStatus.CANCELLED;
-
-      const response: { status: string; message: string } =
-        await updateTicketStatus({
-          ticketId,
-          ticketNumber,
-          statusId,
-          comment,
-        });
-
-      if (response.status === 'ERROR') {
-        throw new Error(response.message);
-      }
-
-      const result = await pgB2Bpool.query(
-        'CALL b2btickets_dev.cmt_insert($1, $2, $3, $4, $5, $6, $7)',
+      await pgB2Bpool.query(
+        `CALL tck_ticket_cancelled
+        (
+          pnum_Ticket_ID   => $1,
+          pnum_User_ID     => $2,
+          pvch_Comment     => $3,
+          pvch_API_User    => $4,
+          pvch_API_Process => $5,
+          pbln_Debug_Mode  => $6
+        )`,
         [
           ticketId,
-          comment,
-          'y', // isClosure -> y for Cancel
           userId,
-          //@ts-ignore
+          comment,
           config.api.user,
           config.api.process,
           config.postgres_b2b_database.debugMode,
@@ -970,5 +1064,56 @@ export const extendSessionAction = async (): Promise<{
       status: 'ERROR',
       message: error.message,
     };
+  }
+};
+
+export const getTicketSeverities = async (): Promise<Severity[]> => {
+  try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const queryForSeverities = `SELECT severity_id, severity FROM severities`;
+    const queryRes = await pgB2Bpool.query(queryForSeverities);
+    return queryRes.rows;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getTicketCategories = async (): Promise<TicketCategory[]> => {
+  try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const queryForSeverities = `SELECT category_id, "Category" FROM ticket_categories_v`;
+    const queryRes = await pgB2Bpool.query(queryForSeverities);
+    return queryRes.rows;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getServicesForCategorySelected = async ({
+  category_id,
+}: {
+  category_id: string;
+}): Promise<ServiceType[] | null> => {
+  try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+
+    if (!category_id) return null;
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const queryForSeverities = `
+    SELECT category_service_type_id, service_type_id, service_type_name 
+    from ticket_category_service_types_v where category_id = $1`;
+
+    const queryRes = await pgB2Bpool.query(queryForSeverities, [category_id]);
+    return queryRes.rows;
+  } catch (error: unknown) {
+    throw error;
   }
 };
