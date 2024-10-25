@@ -15,10 +15,10 @@ export const AdminDashboard = ({
   const [activeTab, setActiveTab] = useState('Users');
 
   return (
-    <div className="m-0 p-5 flex flex-col bg-gray-50 h-[850px]">
+    <div className="m-0 p-5 flex flex-col bg-gray-50 h-[850px] overflow-y-auto">
       <div className="text-center text-4xl"></div>
 
-      <div className="pt-5 flex flex-col flex-grow">
+      <div className="pt-5 flex flex-col flex-grow ">
         <div className="border-b">
           <div
             role="tablist"
