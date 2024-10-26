@@ -13,8 +13,12 @@ export const AppThemeProvider = ({ children }: any) => {
   return (
     //@ts-ignore
     <ColorModeContext.Provider value={contextValue}>
-      {/* //@ts-ignore */}
-      <ThemeProvider theme={theme}>{children}</ThemeProvider>
+      <ThemeProvider
+        //@ts-ignore
+        theme={theme}
+      >
+        {children}
+      </ThemeProvider>
     </ColorModeContext.Provider>
   );
 };

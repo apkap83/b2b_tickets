@@ -2,10 +2,10 @@
 
 import { useFormStatus } from 'react-dom';
 
-export const SubmitButton = ({ label, loading, isValid }) => {
+export const SubmitButton = ({ label, loading, isValid }: any) => {
   const { pending } = useFormStatus();
 
-  const handleClick = (event) => {
+  const handleClick = (event: any) => {
     if (pending) {
       event.preventDefault();
     }

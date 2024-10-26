@@ -92,7 +92,7 @@ const generateTableHeadAndColumns = async () => {
   );
 };
 
-const generateTableBody = async (items: Ticket[]) => {
+const generateTableBody = async (items: TicketDetail[]) => {
   const session = await getServerSession(options);
 
   return (

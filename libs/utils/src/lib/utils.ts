@@ -4,7 +4,6 @@ import {
   TicketStatusColors,
   TicketSeverityLevels,
   TicketSeverityColors,
-  SessionType,
   AppPermissionTypes,
   AppRoleTypes,
   AppPermissionType,

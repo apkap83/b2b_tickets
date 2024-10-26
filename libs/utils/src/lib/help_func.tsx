@@ -1,5 +1,4 @@
-import { AppRoleTypes } from "@/CommonLibraries/definitions";
-
+import React from 'react';
 export const renderActiveness = (active) => {
   return active ? (
     <span className="bg-green-400 p-2 rounded-lg text-white">Active</span>
