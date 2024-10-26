@@ -71,6 +71,7 @@ export function EscalateModal({
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
+  //@ts-ignore
   const { ticket_id, ticket_number } = ticketDetail[0];
 
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit Comment');

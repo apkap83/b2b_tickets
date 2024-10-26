@@ -63,13 +63,7 @@ const verifySecurityPermission = async (
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
 
-    let authorized = false;
-
-    if (userHasPermission(session, permissionName)) {
-      authorized = true;
-    }
-
-    if (!authorized) {
+    if (!userHasPermission(session, permissionName)) {
       throw new Error(
         'Unauthorized access: User is not authorized for this action'
       );
@@ -90,13 +84,7 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
 
-    let authorized = false;
-
     if (userHasRole(session, roleName)) {
-      authorized = true;
-    }
-
-    if (!authorized) {
       throw new Error(
         'Unauthorized access: User is not authorized for this action'
       );

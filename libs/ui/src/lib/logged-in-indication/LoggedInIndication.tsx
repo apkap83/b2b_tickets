@@ -9,10 +9,11 @@ import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 
 export const LoggedInIndication = ({ session, customerName }: any) => {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement | null>();
+  const menuRef = useRef();
 
   useEffect(() => {
     const handleClickOutside = (event: any) => {
+      //@ts-ignore
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setProfileMenuOpen(false);
       }
@@ -31,6 +32,7 @@ export const LoggedInIndication = ({ session, customerName }: any) => {
   const ProfileMenuContents = () => {
     return (
       <div
+        //@ts-ignore
         ref={menuRef}
         className="absolute z-10  bg-gray-50 w-auto border-gray-200 border-2 rounded-md text-gray-600"
         style={{

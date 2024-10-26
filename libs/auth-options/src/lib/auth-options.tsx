@@ -1,3 +1,5 @@
+export type { Session } from 'next-auth';
+import { User, DefaultUser } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { NextApiResponse } from 'next';
 import {
@@ -25,10 +27,38 @@ import {
 
 import { NextAuthOptions } from 'next-auth';
 import jwt from 'jsonwebtoken';
-import {
-  getRequestLogger,
-  CustomLogger,
-} from '@b2b-tickets/server-actions/server';
+
+// utils/requestLogger.ts - used for server-side only
+import { headers } from 'next/headers';
+import { createRequestLogger } from '@b2b-tickets/logging';
+import { CustomLogger } from '@b2b-tickets/logging';
+
+export function getRequestLogger(transportName: TransportName) {
+  // Ensure this is executed in a server-side context
+  try {
+    const headersList = headers(); // Server-side request headers
+    const reqIP = headersList.get('request-ip') || 'unknown-ip';
+    const reqURL = headersList.get('request-url') || 'unknown-url';
+    const sessionId = headersList.get('session-id') || 'unknown-session';
+
+    // Create the request logger with gathered headers
+    const logRequest = createRequestLogger(
+      transportName,
+      reqIP,
+      reqURL,
+      sessionId
+    );
+
+    return logRequest;
+  } catch (error) {
+    // Log or handle the error if this function is called outside server-side context
+    console.error(
+      'Failed to retrieve headers. Ensure this is used server-side:',
+      error
+    );
+    throw new Error('getRequestLogger must be used in a server-side context.');
+  }
+}
 
 // Set the length to 4 digits and 120 seconds
 authenticator.options = {
@@ -36,42 +66,42 @@ authenticator.options = {
   step: config.TwoFactorValiditySeconds,
 };
 
-// Extend User and JWT interfaces
-declare module 'next-auth' {
-  interface User {
-    user_id: number;
-    customer_id: number;
-    customer_name: string;
-    userName: string;
-    firstName: string;
-    lastName: string;
-    mobilePhone: string;
-    roles: AppRoleTypes[];
-    permissions: AppPermissionType[];
-    authenticationType: string;
-  }
+// // Extend User and JWT interfaces
+// declare module 'next-auth' {
+//   interface User {
+//     user_id: number;
+//     customer_id: number;
+//     customer_name: string;
+//     userName: string;
+//     firstName: string;
+//     lastName: string;
+//     mobilePhone: string;
+//     roles: AppRoleTypes[];
+//     permissions: AppPermissionType[];
+//     authenticationType: string;
+//   }
 
-  interface Session {
-    user: User;
-    expiresAt: number;
-  }
-}
+//   interface Session {
+//     user: User;
+//     expiresAt: number;
+//   }
+// }
 
-declare module 'next-auth/jwt' {
-  interface JWT {
-    user_id: number;
-    customer_id: number;
-    customer_name: string;
-    userName: string;
-    firstName: string;
-    lastName: string;
-    mobilePhone: string;
-    roles: string[];
-    permissions: any[];
-    authenticationType: string;
-    exp: number;
-  }
-}
+// declare module 'next-auth/jwt' {
+//   interface JWT {
+//     user_id: number;
+//     customer_id: number;
+//     customer_name: string;
+//     userName: string;
+//     firstName: string;
+//     lastName: string;
+//     mobilePhone: string;
+//     roles: string[];
+//     permissions: any[];
+//     authenticationType: string;
+//     exp: number;
+//   }
+// }
 
 type CredentialsType = Record<'userName' | 'password', string> | undefined;
 
@@ -161,15 +191,18 @@ const tryLocalAuthentication = async (
 
     logRequest.debug(`Given password and DB passwords match`);
 
-    const roles = foundUser.AppRoles.map((role) => role.roleName);
+    const roles = foundUser.AppRoles.map(
+      (role) => role.roleName as AppRoleTypes
+    );
 
-    const permissions = foundUser.AppRoles.flatMap((role) =>
-      //@ts-ignore
-      role.AppPermissions.map((permission) => ({
-        permissionName: permission.permissionName,
-        permissionEndPoint: permission.endPoint,
-        permissionDescription: permission.description,
-      }))
+    const permissions: AppPermissionType[] = foundUser.AppRoles.flatMap(
+      (role) =>
+        //@ts-ignore
+        role.AppPermissions.map((permission) => ({
+          permissionName: permission.permissionName,
+          permissionEndPoint: permission.endPoint,
+          permissionDescription: permission.description,
+        }))
     );
 
     // Find Customer Name from Customer ID
@@ -358,16 +391,17 @@ export const options: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.user_id = Number(user.user_id);
-        token.customer_id = Number(user.customer_id);
-        token.customer_name = user.customer_name;
-        token.userName = user.userName;
-        token.firstName = user.firstName;
-        token.lastName = user.lastName;
-        token.mobilePhone = user.mobilePhone;
-        token.roles = user.roles;
-        token.permissions = user.permissions;
-        token.authenticationType = user.authenticationType;
+        const customUser = user as User; // Explicitly cast to extended User type
+        token.user_id = Number(customUser.user_id);
+        token.customer_id = Number(customUser.customer_id);
+        token.customer_name = customUser.customer_name;
+        token.userName = customUser.userName;
+        token.firstName = customUser.firstName;
+        token.lastName = customUser.lastName;
+        token.mobilePhone = customUser.mobilePhone;
+        token.roles = customUser.roles;
+        token.permissions = customUser.permissions;
+        token.authenticationType = customUser.authenticationType;
       }
 
       // Add expiration time to the token
@@ -408,10 +442,48 @@ function verifyJWTCaptcha({ req }: { req: any }) {
   try {
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
     const decoded = jwt.verify(captchaJWTToken, JWT_SECRET);
+    //@ts-ignore
     if (!decoded.captchaValidated)
       throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
   } catch (error) {
     // Handle invalid token error (expired, tampered with, etc.)
     throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
+  }
+}
+
+// Extend User and JWT interfaces
+declare module 'next-auth' {
+  interface User extends DefaultUser {
+    user_id: number;
+    customer_id: number;
+    customer_name: string;
+    userName: string;
+    firstName: string;
+    lastName: string;
+    mobilePhone: string;
+    roles: AppRoleTypes[];
+    permissions: AppPermissionType[];
+    authenticationType: string;
+  }
+
+  interface Session {
+    user: User;
+    expiresAt: number;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    user_id: number;
+    customer_id: number;
+    customer_name: string;
+    userName: string;
+    firstName: string;
+    lastName: string;
+    mobilePhone: string;
+    roles: AppRoleTypes[];
+    permissions: AppPermissionType[];
+    authenticationType: string;
+    exp: number;
   }
 }

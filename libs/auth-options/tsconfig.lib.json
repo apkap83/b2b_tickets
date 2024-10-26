@@ -1,17 +1,15 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "declaration": true, // Enable declaration emit
-    "declarationMap": true, // Optional: generate source maps for declarations
+    "jsx": "react-jsx",
+    "declaration": true,
     "outDir": "../../dist/out-tsc",
-    "types": [
-      "node",
-      "@nx/react/typings/cssmodule.d.ts",
-      "@nx/react/typings/image.d.ts",
-      "next",
-      "@nx/next/typings/image.d.ts"
-    ]
+    "typeRoots": [
+      "../../node_modules/@types",
+      "node_modules/@types",
+      "./src/lib/types/*.d.ts"
+    ],
+    "types": ["node"]
   },
   "exclude": [
     "jest.config.ts",
