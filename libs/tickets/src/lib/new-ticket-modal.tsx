@@ -28,7 +28,7 @@ import {
   getTicketSeverities,
   getServicesForCategorySelected,
 } from '@b2b-tickets/server-actions';
-import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
+import { EMPTY_FORM_STATE, getSeverityStatusColor } from '@b2b-tickets/utils';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { useFormik } from 'formik';
 // import { SubmitButton } from '@b2b-tickets/ui';
@@ -257,23 +257,6 @@ export function NewTicketModal({ closeModal, userId }: any) {
       LLLL: 'dddd, D MMMM YYYY h:mm A',
     },
   });
-
-  const getStatusColor = ({
-    severityDescriptive,
-  }: {
-    severityDescriptive: string;
-  }) => {
-    switch (severityDescriptive) {
-      case TicketSeverityLevels.Low:
-        return TicketSeverityColors.Low;
-      case TicketSeverityLevels.Medium:
-        return TicketSeverityColors.Medium;
-      case TicketSeverityLevels.High:
-        return TicketSeverityColors.High;
-      default:
-        return '#000'; // Fallback color
-    }
-  };
 
   return (
     <React.Fragment>
@@ -507,9 +490,9 @@ export function NewTicketModal({ closeModal, userId }: any) {
                             {
                               <span
                                 style={{
-                                  color: getStatusColor({
-                                    severityDescriptive: item.severity,
-                                  }),
+                                  color: getSeverityStatusColor(
+                                    item.severity_id
+                                  ),
                                 }}
                               >
                                 {item.severity}

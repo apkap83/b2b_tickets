@@ -15,7 +15,12 @@ import {
   setSchema,
 } from '@b2b-tickets/db-access';
 import { revalidatePath } from 'next/cache';
-import { fromErrorToFormState, toFormState } from '@b2b-tickets/utils';
+import {
+  fromErrorToFormState,
+  toFormState,
+  userHasPermission,
+  userHasRole,
+} from '@b2b-tickets/utils';
 import { config } from '@b2b-tickets/config';
 
 import {
@@ -29,7 +34,6 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
 import { syncDatabase, syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
-import { userHasPermission } from '@b2b-tickets/utils';
 import {
   CustomLogger,
   getRequestLogger,
@@ -38,7 +42,9 @@ import { TransportName } from '@b2b-tickets/shared-models';
 
 const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
 
-const verifySecurityPermission = async () => {
+const verifySecurityPermission = async (
+  permissionName: AppPermissionTypes | AppPermissionTypes[]
+) => {
   try {
     const session = await getServerSession(options);
 
@@ -48,9 +54,34 @@ const verifySecurityPermission = async () => {
 
     let authorized = false;
 
-    if (
-      userHasPermission(session, AppPermissionTypes.API_Security_Management)
-    ) {
+    if (userHasPermission(session, permissionName)) {
+      authorized = true;
+    }
+
+    if (!authorized) {
+      throw new Error(
+        'Unauthorized access: User is not authorized for this action'
+      );
+    }
+
+    // Return the session if authorized
+    return session;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
+  try {
+    const session = await getServerSession(options);
+
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    let authorized = false;
+
+    if (userHasRole(session, roleName)) {
       authorized = true;
     }
 
@@ -70,7 +101,10 @@ const verifySecurityPermission = async () => {
 export const getCustomersList = async () => {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Create_New_App_User,
+    ]);
 
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
@@ -86,7 +120,10 @@ export const getCustomersList = async () => {
 export const getAdminDashboardData = async () => {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Create_New_App_User,
+    ]);
 
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
@@ -155,7 +192,10 @@ const userSchema = yup.object().shape({
 export async function createUser(formState: any, formData: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Create_New_App_User,
+    ]);
 
     const customerId = formData.get('company');
     const firstName = formData.get('first_name');
@@ -253,7 +293,9 @@ export async function createUser(formState: any, formData: any) {
 export async function deleteUser({ userName }: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Security_Management
+    );
 
     //  Delete User
     const deletedCount = await B2BUser.destroy({
@@ -282,7 +324,9 @@ export async function deleteUser({ userName }: any) {
 export async function lockorUnlockUser({ username }: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Security_Management
+    );
 
     // Check if the user already exists
     const user = await B2BUser.findOne({ where: { username } });
@@ -319,7 +363,9 @@ export async function lockorUnlockUser({ username }: any) {
 export async function activeorInactiveUser({ username }: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Security_Management
+    );
 
     // Check if the user already exists
     const user = await B2BUser.findOne({ where: { username } });
@@ -377,7 +423,9 @@ function getRoleData(formData: any) {
 export async function editUser(formState: any, formData: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Security_Management
+    );
 
     const firstName = formData.get('firstName');
     const lastName = formData.get('lastName');
@@ -469,7 +517,9 @@ function getPermissionData(formData: any) {
 export async function editRole(formState: any, formData: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Admin
+    );
 
     const id = formData.get('roleId');
     const roleName = formData.get('roleName');
@@ -506,7 +556,9 @@ export async function editRole(formState: any, formData: any) {
     for (let i = 0; i < permissionIDs.length; i++) {
       const permission = await AppPermission.findByPk(permissionIDs[i]);
       if (!permission)
-        throw new Error(`Permission with id ${permission[i]} was not found!`);
+        throw new Error(
+          `Permission with id ${permission && permission[i]} was not found!`
+        );
 
       //@ts-ignore
       await role.addAppPermission(permission);
@@ -530,14 +582,16 @@ const userSchema_updateUserPassword = yup.object().shape({
     .required('Password is required'),
   verifyPassword: yup
     .string()
-    .oneOf([yup.ref('password'), null], 'Passwords must match')
+    .oneOf([yup.ref('password'), undefined], 'Passwords must match')
     .required('Verify Password is required'),
 });
 
 export async function updateUserPassword(formState: any, formData: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Security_Management
+    );
 
     const userName = formData.get('username');
     const password = formData.get('password');
@@ -589,7 +643,9 @@ export async function updateUserPassword(formState: any, formData: any) {
 export async function createPermission(formState: any, formData: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Admin
+    );
 
     const permissionName = formData.get('permissionName') as string;
     const endPoint = formData.get('endPoint');
@@ -628,7 +684,9 @@ export async function createPermission(formState: any, formData: any) {
 export async function createRole(formState: any, formData: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Admin
+    );
 
     const roleName = formData.get('roleName');
     const roleDescription = formData.get('roleDescription');
@@ -663,7 +721,9 @@ export async function createRole(formState: any, formData: any) {
 export async function deleteRole({ role }: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Admin
+    );
 
     //  Delete User
     const deletedCount = await AppRole.destroy({
@@ -694,7 +754,9 @@ export async function deleteRole({ role }: any) {
 export async function updateAuthMethodForUser({ user, authType }: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Admin
+    );
 
     //  Find User
     const foundUser = await AppUser.findOne({
@@ -721,7 +783,9 @@ export async function updateAuthMethodForUser({ user, authType }: any) {
 export async function deletePermission({ permission }: any) {
   try {
     // Verify Security Permission
-    const session = await verifySecurityPermission();
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Admin
+    );
 
     //  Delete Permission
     const deletedCount = await AppPermission.destroy({

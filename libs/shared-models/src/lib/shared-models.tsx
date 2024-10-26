@@ -1,3 +1,16 @@
+export interface AppPermissionType {
+  permissionName: AppPermissionTypes;
+  permissionEndPoint: string;
+  permissionDescription: string;
+}
+
+export interface SessionType {
+  user?: {
+    permissions: AppPermissionType[];
+    roles: AppRoleTypes[];
+  };
+}
+
 export type FormState = {
   status: 'UNSET' | 'SUCCESS' | 'ERROR';
   message: string;
@@ -14,32 +27,32 @@ export enum TransportName {
   COMBINED = 'combined',
 }
 
-export interface Ticket {
-  ticket_id: string;
-  Customer: string;
-  Ticket: string;
-  Title: string;
-  Description: string;
-  Severity: string;
-  Category: string;
-  Service: string;
-  Equipment: string;
-  Sid: string;
-  Cid: string;
-  Username: string;
-  Cli: string;
-  'Contact person': string;
-  'Contact phone number': string;
-  'Occurence date': Date;
-  Opened: Date;
-  'Opened By': string;
-  status_id: string;
-  Status: string;
-  'Status Date': Date;
-  'Status User': string;
-  Closed: Date | null;
-  'Closed By': string | null;
-}
+// export interface Ticket {
+//   ticket_id: string;
+//   Customer: string;
+//   Ticket: string;
+//   Title: string;
+//   Description: string;
+//   Severity: string;
+//   Category: string;
+//   Service: string;
+//   Equipment: string;
+//   Sid: string;
+//   Cid: string;
+//   Username: string;
+//   Cli: string;
+//   'Contact person': string;
+//   'Contact phone number': string;
+//   'Occurence date': Date;
+//   Opened: Date;
+//   'Opened By': string;
+//   status_id: string;
+//   Status: string;
+//   'Status Date': Date;
+//   'Status User': string;
+//   Closed: Date | null;
+//   'Closed By': string | null;
+// }
 
 export interface TicketCategory {
   category_id: string;
@@ -135,8 +148,10 @@ export interface TicketDetail {
 
 export enum AppRoleTypes {
   Admin = 'Admin',
+  Security_Admin = 'Security Admin',
   B2B_TicketHandler = 'B2B Ticket Handler',
   B2B_TicketCreator = 'B2B Ticket Creator',
+  User_Creator = 'User Creator',
 }
 
 export enum AppPermissionTypes {
@@ -150,6 +165,7 @@ export enum AppPermissionTypes {
   Set_Remedy_INC = 'Set Remedy INC',
   Escalate_Ticket = 'Escalate Ticket',
   Alter_Ticket_Severity = 'Alter Ticket Severity',
+  Create_New_App_User = 'Create New App User',
 }
 
 export enum AuthenticationTypes {
@@ -186,9 +202,9 @@ export enum TicketStatusColors {
 }
 
 export enum TicketSeverityLevels {
-  Low = 'Low',
-  Medium = 'Medium',
-  High = 'High',
+  Low = '1',
+  Medium = '2',
+  High = '3',
 }
 
 export enum TicketSeverityColors {

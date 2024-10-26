@@ -2,8 +2,8 @@
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import { Typography } from '@mui/material';
-import { userHasRole } from '@b2b-tickets/utils';
-import { AppRoleTypes } from '@b2b-tickets/shared-models';
+import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
+import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { NewTicketModal } from './new-ticket-modal';
 
 import Button from '@mui/material/Button';
@@ -55,8 +55,7 @@ export const TicketListHeader = ({
           currentPage={currentPage}
         />
         <TicketFilter totalTicketsForCustomer={totalTicketsForCustomer} />
-        {!userHasRole(session, AppRoleTypes.B2B_TicketHandler) ||
-        userHasRole(session, AppRoleTypes.Admin) ? (
+        {userHasPermission(session, AppPermissionTypes.Create_New_Ticket) && (
           <Button
             variant="contained"
             onClick={() => setShowCreateTicketModal(true)}
@@ -69,7 +68,7 @@ export const TicketListHeader = ({
           >
             Create New Ticket
           </Button>
-        ) : null}
+        )}
       </div>
 
       {showCreateTicketModal && (
