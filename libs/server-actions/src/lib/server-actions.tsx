@@ -14,7 +14,6 @@ import {
   userHasPermission,
 } from '@b2b-tickets/utils';
 import {
-  Ticket,
   TicketCategory,
   ServiceType,
   TicketFormState,
@@ -24,9 +23,6 @@ import {
   FilterTicketsStatus,
   AppPermissionTypes,
   Severity,
-} from '@b2b-tickets/shared-models';
-
-import {
   TicketDetail,
   TicketDetailsModalActions,
 } from '@b2b-tickets/shared-models';
@@ -57,7 +53,9 @@ import { TransportName } from '@b2b-tickets/shared-models';
 //   await syncDatabaseAlterTrue();
 // };
 
-const verifySecurityPermission = async (permissionName: AppPermissionTypes) => {
+const verifySecurityPermission = async (
+  permissionName: AppPermissionTypes | AppPermissionTypes[]
+) => {
   try {
     const session = await getServerSession(options);
 
@@ -84,7 +82,7 @@ const verifySecurityPermission = async (permissionName: AppPermissionTypes) => {
   }
 };
 
-const verifySecurityRole = async (roleName: AppRoleTypes) => {
+const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
   try {
     const session = await getServerSession(options);
 
@@ -182,7 +180,7 @@ export const getFilteredTicketsForCustomer = async (
       }
       `;
       const res = await pgB2Bpool.query(sqlQuery);
-      return res?.rows as Ticket[];
+      return res?.rows as TicketDetail[];
     }
 
     let sqlExpression = '';
@@ -198,7 +196,7 @@ export const getFilteredTicketsForCustomer = async (
 
     const res = await pgB2Bpool.query(sqlQuery, [customerName]);
 
-    return res?.rows as Ticket[];
+    return res?.rows as TicketDetail[];
   } catch (error) {
     throw error;
   }
@@ -473,26 +471,7 @@ export const createNewTicket = async (
     });
 
     const standardizedDate = convertTo24HourFormat(occurrenceDate);
-    // for (const [key, value] of formData.entries()) {
-    //   console.log(key, value);
-    // }
-    console.log({
-      title,
-      description,
-      severity,
-      category,
-      service,
-      equipmentId,
-      sid,
-      cid,
-      userName,
-      cliValue,
-      contactPerson,
-      contactPhoneNum,
-      ccEmails,
-      ccPhones,
-      occurrenceDate,
-    });
+
     const res = await pgB2Bpool.query(
       'SELECT category_service_type_id from ticket_category_service_types_v where category_id = $1 and service_type_id = $2',
       [category, service]

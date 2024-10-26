@@ -12,6 +12,8 @@ import {
   AuthenticationTypes,
   ErrorCode,
   TransportName,
+  AppPermissionType,
+  AppRoleTypes,
 } from '@b2b-tickets/shared-models';
 import {
   AppPermission,
@@ -44,8 +46,8 @@ declare module 'next-auth' {
     firstName: string;
     lastName: string;
     mobilePhone: string;
-    roles: string[];
-    permissions: any[];
+    roles: AppRoleTypes[];
+    permissions: AppPermissionType[];
     authenticationType: string;
   }
 
