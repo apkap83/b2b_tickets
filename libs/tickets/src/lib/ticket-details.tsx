@@ -1,6 +1,10 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { getGreekDateFormat } from '@b2b-tickets/utils';
+import {
+  getGreekDateFormat,
+  getSeverityStatusColor,
+  getStatusColor,
+} from '@b2b-tickets/utils';
 import { TicketComment, TicketDetail } from '@b2b-tickets/shared-models';
 import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
 import { NewCommentModal } from './new-comment-modal';
@@ -272,28 +276,13 @@ export function TicketDetails({
   };
 
   const StatusBadge = () => {
-    const getStatusColor = () => {
-      switch (ticketStatus) {
-        case '1':
-          return TicketStatusColors.NEW;
-        case '2':
-          return TicketStatusColors.WORKING;
-        case '3':
-          return TicketStatusColors.CANCELLED;
-        case '4':
-          return TicketStatusColors.CLOSED;
-        default:
-          return '#000'; // Fallback color
-      }
-    };
-
     return (
       <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
         <span
           className="px-2 text-white border rounded-md p-1"
           style={{
-            backgroundColor: getStatusColor(),
-            borderColor: getStatusColor(),
+            backgroundColor: getStatusColor(ticketStatus),
+            borderColor: getStatusColor(ticketStatus),
           }}
         >
           {ticketDetails[0].Status}
@@ -796,24 +785,7 @@ const SeverityRow = ({
   ticketDetails: TicketDetail[];
   setShowSeverityDialog: (a: boolean) => void;
 }) => {
-  if (ticketDetails[0].status_id === '1') return null;
-
   const severityDescriptive = ticketDetails[0].Severity || '';
-
-  const getStatusColor = () => {
-    switch (severityDescriptive) {
-      case TicketSeverityLevels.Low:
-        return TicketSeverityColors.Low;
-      case TicketSeverityLevels.Medium:
-        return TicketSeverityColors.Medium;
-      case TicketSeverityLevels.High:
-        return TicketSeverityColors.High;
-      default:
-        return '#000'; // Fallback color
-    }
-  };
-
-  getStatusColor();
 
   return (
     <div className={detailsRowClass}>
@@ -828,8 +800,10 @@ const SeverityRow = ({
           setShowSeverityDialog={setShowSeverityDialog}
           //@ts-ignore
           style={{
-            backgroundColor: getStatusColor(),
-            borderColor: getStatusColor(),
+            backgroundColor: getSeverityStatusColor(
+              ticketDetails[0].severity_id
+            ),
+            borderColor: getSeverityStatusColor(ticketDetails[0].severity_id),
           }}
         />
       </div>

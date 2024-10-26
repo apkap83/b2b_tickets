@@ -1,6 +1,15 @@
 import { authenticator } from 'otplib';
 import { config } from '@b2b-tickets/config';
-import { TicketStatusColors } from '@b2b-tickets/shared-models';
+import {
+  TicketStatusColors,
+  TicketSeverityLevels,
+  TicketSeverityColors,
+  SessionType,
+  AppPermissionTypes,
+  AppRoleTypes,
+  AppPermissionType,
+} from '@b2b-tickets/shared-models';
+import { Session } from 'next-auth';
 import * as crypto from 'crypto';
 
 const ALGORITHM = 'aes256';
@@ -14,27 +23,20 @@ authenticator.options = {
   step: config.TwoFactorValiditySeconds,
 };
 
-import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
-
-interface Permission {
-  permissionName: AppPermissionTypes;
-}
-
-interface SessionType {
-  user?: {
-    permissions: Permission[];
-  };
-}
-
 export const userHasPermission = (
-  session: SessionType | null,
-  permissionName: AppPermissionTypes
+  session: Session | null,
+  permissionName: AppPermissionTypes | AppPermissionTypes[]
 ): boolean => {
   if (!session || !session.user) return false; // Return false if session or user is missing
 
+  // Normalize permissionName to an array for consistent handling
+  const permissionsToCheck = Array.isArray(permissionName)
+    ? permissionName
+    : [permissionName];
+
   return session.user.permissions.some(
-    (permission) =>
-      permission.permissionName === permissionName ||
+    (permission: AppPermissionType) =>
+      permissionsToCheck.includes(permission.permissionName) ||
       permission.permissionName === AppPermissionTypes.API_Admin
   );
 };
@@ -47,10 +49,18 @@ export const endPointPermitted = (session: any, endpoint: any) => {
   );
 };
 
-export const userHasRole = (session: any, roleName: AppRoleTypes) => {
+export const userHasRole = (
+  session: Session | null,
+  roleName: AppRoleTypes | AppRoleTypes[]
+) => {
   if (!session) return false;
+
+  // Normalize roleName to an array for consistent handling
+  const rolesToCheck = Array.isArray(roleName) ? roleName : [roleName];
+
   return session?.user?.roles.some(
-    (role: any) => role === AppRoleTypes.Admin || role === roleName
+    (role: AppRoleTypes) =>
+      rolesToCheck.includes(role) || role === AppRoleTypes.Admin
   );
 };
 
@@ -186,13 +196,16 @@ export const symmetricDecrypt = function (text: string, key: string) {
 
 // Assuming the user's secret is stored and encrypted
 export const generateOtpCode = (encryptedSecret: string) => {
-  const secret = symmetricDecrypt(encryptedSecret, process.env.ENCRYPTION_KEY!);
+  const secret = symmetricDecrypt(
+    encryptedSecret,
+    process.env['ENCRYPTION_KEY']!
+  );
   const otpCode = authenticator.generate(secret);
   return otpCode;
 };
 
-export const getStatusColor = (ticketStatus: any) => {
-  switch (ticketStatus) {
+export const getStatusColor = (status_id: string) => {
+  switch (status_id) {
     case '1':
       return TicketStatusColors.NEW;
     case '2':
@@ -206,9 +219,37 @@ export const getStatusColor = (ticketStatus: any) => {
   }
 };
 
+// export const getStatusColorDesc = (ticketStatus: string) => {
+//   switch (ticketStatus) {
+//     case TicketStatusName.NEW:
+//       return TicketStatusColors.NEW;
+//     case TicketStatusName.WORKING:
+//       return TicketStatusColors.WORKING;
+//     case TicketStatusName.CANCELLED:
+//       return TicketStatusColors.CANCELLED;
+//     case TicketStatusName.CLOSED:
+//       return TicketStatusColors.CLOSED;
+//     default:
+//       return '#000'; // Fallback color
+//   }
+// };
+
 // Format the time left into MM:SS format
 export const formatTimeMMSS = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+};
+
+export const getSeverityStatusColor = (severityId: string) => {
+  switch (severityId) {
+    case TicketSeverityLevels.Low:
+      return TicketSeverityColors.Low;
+    case TicketSeverityLevels.Medium:
+      return TicketSeverityColors.Medium;
+    case TicketSeverityLevels.High:
+      return TicketSeverityColors.High;
+    default:
+      return '#000'; // Fallback color
+  }
 };

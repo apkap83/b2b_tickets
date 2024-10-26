@@ -10,11 +10,11 @@ import {
   TicketStatusName,
   AppRoleTypes,
   TicketStatusColors,
+  TicketDetail,
 } from '@b2b-tickets/shared-models';
 import Link from 'next/link';
 import clsx from 'clsx';
-import { formatDate } from '@b2b-tickets/utils';
-import { userHasRole } from '@b2b-tickets/utils';
+import { formatDate, userHasRole, getStatusColor } from '@b2b-tickets/utils';
 import styles from './css/ticker-row.module.scss';
 import { useRouter } from 'next/navigation';
 import { getGreekDateFormat } from '@b2b-tickets/utils';
@@ -25,7 +25,7 @@ export const TicketRow = ({
   item,
 }: {
   session: any;
-  item: Ticket;
+  item: TicketDetail;
 }) => {
   const router = useRouter();
 
@@ -40,6 +40,9 @@ export const TicketRow = ({
         <>
           <TableCell data-label="Customer" align="center">
             <span className="font-medium">{item.Customer}</span>
+          </TableCell>
+          <TableCell data-label="Type" align="center">
+            <span className="font-medium">{item['Cust. Type']}</span>
           </TableCell>
           <TableCell data-label="Escalated" align="center">
             {/* <span className="font-medium">
@@ -103,8 +106,8 @@ export const TicketRow = ({
         {
           <div
             style={{
-              backgroundColor: getStatusColor(item.Status),
-              borderColor: getStatusColor(item.Status),
+              backgroundColor: getStatusColor(item.status_id),
+              borderColor: getStatusColor(item.status_id),
             }}
             className="text-white px-1 py-1 rounded-md font-medium text-center"
           >
@@ -117,19 +120,4 @@ export const TicketRow = ({
       </TableCell>
     </tr>
   );
-};
-
-const getStatusColor = (ticketStatus: any) => {
-  switch (ticketStatus) {
-    case TicketStatusName.NEW:
-      return TicketStatusColors.NEW;
-    case TicketStatusName.WORKING:
-      return TicketStatusColors.WORKING;
-    case TicketStatusName.CANCELLED:
-      return TicketStatusColors.CANCELLED;
-    case TicketStatusName.CLOSED:
-      return TicketStatusColors.CLOSED;
-    default:
-      return '#000'; // Fallback color
-  }
 };

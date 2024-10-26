@@ -3,10 +3,10 @@ import { options } from '@b2b-tickets/auth-options';
 import Link from 'next/link';
 
 import {
-  Ticket,
   TicketStatusName,
   AppRoleTypes,
   TicketStatusColors,
+  TicketDetail,
 } from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
@@ -28,7 +28,7 @@ export const TicketsList = async ({
   query: string;
   currentPage: number;
 }) => {
-  const ticketsList: Ticket[] = await getFilteredTicketsForCustomer(
+  const ticketsList: TicketDetail[] = await getFilteredTicketsForCustomer(
     query,
     currentPage
   );
@@ -74,6 +74,7 @@ const generateTableHeadAndColumns = async () => {
   if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
     columnsForTickets.unshift('Escalated');
     columnsForTickets.unshift('Customer');
+    columnsForTickets.unshift('Type');
   }
 
   return (
