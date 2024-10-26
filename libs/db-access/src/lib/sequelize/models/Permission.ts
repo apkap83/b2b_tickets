@@ -9,6 +9,7 @@ import {
   BelongsToManyAddAssociationMixin,
   BelongsToManyGetAssociationsMixin,
 } from 'sequelize';
+export type { AppPermissionAttributes };
 
 // Make 'id' optional for creation
 interface AppPermissionAttributes {

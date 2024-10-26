@@ -26,13 +26,13 @@ const combinedLogFilePath = path.join(logPath, 'combined-%DATE%.log');
 // Create custom format to filter logs based on transportName
 const createFilter = (transportName: TransportName) => {
   return winston.format((info) => {
-    return info.transportName === transportName ? info : false;
+    return info['transportName'] === transportName ? info : false;
   })();
 };
 
 const transports = [];
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env['NODE_ENV'] !== 'test') {
   transports.push(
     new winston.transports.DailyRotateFile({
       level: 'info',
@@ -68,7 +68,7 @@ if (process.env.NODE_ENV !== 'test') {
   );
 }
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env['NODE_ENV'] !== 'production') {
   transports.push(
     new winston.transports.Console({
       format: combine(json()),
@@ -105,11 +105,11 @@ const simpleLogFormat = combine(
   errors({ stack: true }),
   timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   align(),
-  printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`)
+  printf((info) => `[${info['timestamp']}] ${info.level}: ${info.message}`)
 );
 
 // Console Logging
-if (process.env.NODE_ENV !== 'production') {
+if (process.env['NODE_ENV'] !== 'production') {
   logger.add(
     new winston.transports.Console({
       format: simpleLogFormat,

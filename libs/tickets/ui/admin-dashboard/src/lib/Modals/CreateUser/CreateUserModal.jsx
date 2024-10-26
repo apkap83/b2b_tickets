@@ -76,7 +76,7 @@ function CreateUserModal({ closeModal }) {
             <span className={styles.inputDescription}>Company Name</span>
             <select
               name="company"
-              className="text-left select max-w-xs"
+              // className="text-left select max-w-xs"
               value={formik.values.company}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}

@@ -4,13 +4,6 @@ export interface AppPermissionType {
   permissionDescription: string;
 }
 
-export interface SessionType {
-  user?: {
-    permissions: AppPermissionType[];
-    roles: AppRoleTypes[];
-  };
-}
-
 export type FormState = {
   status: 'UNSET' | 'SUCCESS' | 'ERROR';
   message: string;
