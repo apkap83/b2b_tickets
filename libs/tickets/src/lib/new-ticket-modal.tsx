@@ -50,7 +50,7 @@ import {
   TicketSeverityLevels,
   TicketSeverityColors,
 } from '@b2b-tickets/shared-models';
-
+import toast from 'react-hot-toast';
 const FieldError = ({ formik, name, ...rest }: any) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
     return null;
@@ -225,13 +225,14 @@ export function NewTicketModal({ closeModal, userId }: any) {
 
   useEffect(() => {
     const getServices = async () => {
-      const rows = await getServicesForCategorySelected({
+      const result = await getServicesForCategorySelected({
         category_id: formik.values['category'],
       });
-      if (!rows) return;
-      setServiceTypes(rows);
-    };
 
+      if (result.error) return toast.error(result.error);
+
+      setServiceTypes(result.data);
+    };
     const categoryIdSelected = formik.values['category'];
     if (categoryIdSelected) getServices();
   }, [formik.values['category']]);
