@@ -84,7 +84,7 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
 
-    if (userHasRole(session, roleName)) {
+    if (!userHasRole(session, roleName)) {
       throw new Error(
         'Unauthorized access: User is not authorized for this action'
       );
@@ -1066,12 +1066,11 @@ export const getServicesForCategorySelected = async ({
   category_id,
 }: {
   category_id: string;
-}): Promise<ServiceType[] | null> => {
+}): Promise<{ data: ServiceType[]; error?: string }> => {
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
 
-    if (!category_id) return null;
-
+    if (!category_id) return { data: [], error: 'No category_id was provided' };
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     const queryForSeverities = `
@@ -1079,8 +1078,11 @@ export const getServicesForCategorySelected = async ({
     from ticket_category_service_types_v where category_id = $1`;
 
     const queryRes = await pgB2Bpool.query(queryForSeverities, [category_id]);
-    return queryRes.rows;
+    return { data: queryRes.rows };
   } catch (error: unknown) {
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 };
