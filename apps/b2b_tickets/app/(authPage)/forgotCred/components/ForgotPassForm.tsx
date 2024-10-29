@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
-
+import Cookies from 'js-cookie';
 import Image from 'next/image';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -17,7 +17,7 @@ import { ErrorCode } from '@b2b-tickets/shared-models';
 import { useCountdown } from '@b2b-tickets/react-hooks';
 import { formatTimeMMSS } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
-import Link from 'next/link';
+import { MdOutlineMailLock } from 'react-icons/md';
 
 interface FieldErrorProps {
   formik: {
@@ -38,27 +38,30 @@ const FieldError: React.FC<FieldErrorProps> = ({ formik, name }) => {
   return <p className="text-red-500 text-sm">{error}</p>;
 };
 
-export default function SignInForm({ csrfToken }: { csrfToken: string }) {
+export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false); // State to track if ReCAPTCHA is completed
+  const [totpVerified, setTotpVerified] = useState(false);
+
+  const [totpCode, setTotpCode] = useState('');
 
   const [showOTP, setShowOTP] = useState(false);
-  const [totpCode, setTotpCode] = useState('');
+  const [showEmailTokenField, setShowEmailTokenField] = useState(false);
+
+  const [emailFieldIsReadOnly, setEmailFieldIsReadOnly] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
   const [callbackUrl, setCallbackUrl] = useState('/');
 
-  const [submitButtonLabel, setSubmitButtonLabel] = useState('Sign in');
+  const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit');
 
   // Create references to User Name & Password fields
-  const userNameRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
   const userNameLabelRef = useRef(null);
-  const passwordRef = useRef<HTMLInputElement | null>(null);
-  const passwordLabelRef = useRef(null);
   const userNamePasswordGroupRef = useRef<HTMLDivElement | null>(null);
 
   // Assuming the type of the reCAPTCHA component has a 'reset' method.
@@ -67,7 +70,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   };
 
   // Create a reference for reCAPTCHA
-  const recaptchaRef = useRef<any>(null); // New useRef for reCAPTCHA
+  const recaptchaRef = useRef<any>(); // New useRef for reCAPTCHA
   // Handle the onChange event of the ReCAPTCHA
   const handleCaptchaChange = (value: string | null) => {
     setCaptcha(value);
@@ -79,6 +82,13 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
     window.location.reload();
     // router.reload();
   });
+
+  // Remove 2 Cookies on Page load
+  useEffect(() => {
+    // Remove cookies on page load
+    Cookies.remove('captchaJWTToken');
+    Cookies.remove('totpJWTToken');
+  }, []);
 
   useEffect(() => {
     // If user is already authenticated, redirect to the homepage
@@ -118,7 +128,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
         setSubmitting(false);
 
         // Reset the reCAPTCHA (if active)
-        if (config.CaptchaIsActive && recaptchaRef.current) {
+        if (config.CaptchaIsActiveForPasswordReset && recaptchaRef.current) {
           recaptchaRef.current.reset();
         }
         return;
@@ -133,39 +143,82 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       setSubmitting(false);
 
       // Reset the reCAPTCHA (if active)
-      if (config.CaptchaIsActive && recaptchaRef.current) {
+      if (config.CaptchaIsActiveForPasswordReset && recaptchaRef.current) {
         recaptchaRef.current.reset();
       }
       return;
     }
   };
 
+  const getTotpJWTToken = async ({ setSubmitting }: any) => {
+    if (!totpCode) {
+      setError('Verify TOTP Code!');
+      setSubmitting(false);
+      return;
+    }
+    try {
+      // Call your custom captcha validation API route
+      const totpResponse = await fetch('/api/auth/totp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: formik.values.email, totpCode }),
+      });
+
+      const totpResult = await totpResponse.json();
+
+      if (!totpResponse.ok) {
+        setError(totpResult.message || 'Invalid TOTP Code');
+        setSubmitting(false);
+        return;
+      }
+
+      // Server Verified Totp at this point
+      setTotpVerified(true);
+    } catch (error) {
+      setError('An error occurred while validating TOTP. Please try again.');
+      setSubmitting(false);
+      return;
+    }
+  };
+
   const validationSchema = Yup.object({
-    userName: Yup.string().required('User name is required'),
-    password: Yup.string().required('Password is required'),
+    email: Yup.string().required('Email is required'),
+    emailToken: Yup.string(),
   });
 
   const formik = useFormik({
     initialValues: {
-      userName: '',
-      password: '',
+      email: '',
+      tokenForEmail: '',
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
       setSubmitting(true); // Disable the submit button
       setError(null);
 
-      // Get ReCaptcha JWT Token as a Secure & Http Only cookie
-      if (config.CaptchaIsActive && !captchaVerified) {
-        await getReCaptchaJWTToken({ setSubmitting });
+      if (config.CaptchaIsActiveForPasswordReset) {
+        if (!captcha) {
+          setError('Verify reCAPTCHA!');
+          return;
+        }
+
+        if (!captchaVerified) {
+          await getReCaptchaJWTToken({ setSubmitting });
+        }
       }
 
-      const response = await signIn('credentials-login', {
+      if (config.TwoFactorEnabledForPasswordReset && totpCode) {
+        await getTotpJWTToken({ setSubmitting });
+      }
+
+      const response = await signIn('credentials-password-reset', {
         redirect: false,
-        userName: values.userName,
-        password: values.password,
+        email: values.email,
         captchaToken: captcha,
         totpCode,
+        tokenForEmail: formik.values.tokenForEmail,
       });
 
       if (!response) return;
@@ -180,68 +233,51 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       if (!error) return;
 
       switch (error) {
-        case ErrorCode.CaptchaJWTTokenRequired:
-          setError('Captcha Verification is Required');
+        case ErrorCode.EmailIsRequired:
+          setError('Email is Required');
           setSubmitting(false);
           break;
-        case ErrorCode.CaptchaJWTTokenInvalid:
-          setError('Captcha JWT Token Invalid');
+        case ErrorCode.IncorrectEmailProvided:
+          setError('Email is incorrect');
           setSubmitting(false);
+          if (config.CaptchaIsActiveForPasswordReset) {
+            setCaptchaVerified(false);
+            if (recaptchaRef.current) {
+              recaptchaRef.current.reset();
+            }
+          }
           break;
-        case ErrorCode.UserIsLocked:
-          setError('User is currently locked');
+        case ErrorCode.TotpJWTTokenRequired:
+          setShowOTP(true);
           setSubmitting(false);
+          setEmailFieldIsReadOnly(true);
           break;
         case ErrorCode.CaptchaValidationFailed:
           setError('Invalid reCAPTCHA validation');
           setSubmitting(false);
 
           // Reset the reCAPTCHA (if active)
-          if (config.CaptchaIsActive)
-            if (recaptchaRef.current) {
-              recaptchaRef.current.reset();
-            }
-          break;
-        case ErrorCode.IncorrectUsernameOrPassword:
-          setError('Invalid user name or password');
-          setSubmitting(false);
-          if (config.CaptchaIsActive) {
+          if (config.CaptchaIsActiveForPasswordReset) {
+            setCaptchaVerified(false);
             if (recaptchaRef.current) {
               recaptchaRef.current.reset();
             }
           }
           break;
-        case ErrorCode.IncorrectTwoFactorCode:
-          setError('Invalid OTP Code provided');
-          setSubmitting(false);
+        case ErrorCode.CaptchaJWTTokenRequired:
+          window.location.reload();
           break;
-        case ErrorCode.SecondFactorRequired:
-          resetTimer(
-            config.TwoFactorValiditySeconds -
-              (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
-          );
-          start();
-          setShowOTP(true);
+        case ErrorCode.TokenForEmailRequired:
           setSubmitting(false);
-          setSubmitButtonLabel('Submit OTP');
-
-          if (userNamePasswordGroupRef.current) {
-            userNamePasswordGroupRef.current.style.border = '1px dashed green';
-            userNamePasswordGroupRef.current.style.padding = '10px';
-          }
-
-          if (userNameRef.current) {
-            userNameRef.current.readOnly = true;
-          }
-
-          if (passwordRef.current) {
-            passwordRef.current.readOnly = true;
-          }
+          setCaptchaVerified(true);
+          setEmailFieldIsReadOnly(true);
+          setShowEmailTokenField(true);
 
           break;
-        case ErrorCode.InternalServerError:
-          setError('Internal Server Error');
+        case ErrorCode.IncorrectPassResetTokenProvided:
           setSubmitting(false);
+          setEmailFieldIsReadOnly(true);
+          setError('Incorrect Token provided');
           break;
         default:
           setError('Internal Server Error');
@@ -279,8 +315,8 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           <Image priority src={NovaLogo} alt={'Nova Logo'} height={40} />
           <span>Platinum Support</span>
         </div>
-        <div className="text-xl text-left mt-[.75rem] text-[black] font-semibold">
-          Login
+        <div className="text-center text-xl text-left mt-[.75rem] text-[#142d50] font-medium my-5">
+          Forgot Password Form
         </div>
       </div>
 
@@ -288,63 +324,34 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
         <form onSubmit={formik.handleSubmit}>
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
           <div ref={userNamePasswordGroupRef} className="mb-5">
-            {showOTP && (
-              <p className="text-xs text-center pb-2">Your Credentials</p>
-            )}
+            {showOTP && <p className="text-xs text-center pb-2">Your Email</p>}
             <div className="mb-5">
-              <label
-                ref={userNameLabelRef}
-                className="input input-bordered flex items-center gap-2 dark:bg-white "
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                  className="w-4 h-4 opacity-70"
-                >
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-                </svg>
+              <label className="input input-bordered flex items-center gap-2 dark:bg-white ">
+                <MdOutlineMailLock />
                 <input
-                  ref={userNameRef}
+                  ref={emailRef}
                   type="text"
-                  name="userName"
-                  value={formik.values.userName}
+                  name="email"
+                  value={formik.values.email}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className="grow text-black"
-                  placeholder="User Name"
+                  className={clsx('grow text-black', {
+                    'text-white bg-black': emailFieldIsReadOnly === true,
+                  })}
+                  placeholder="Your Email Address"
+                  disabled={emailFieldIsReadOnly}
                 />
               </label>
-              <FieldError formik={formik} name="userName" />
-            </div>
-
-            <div className="">
-              <label
-                ref={passwordLabelRef}
-                className="input input-bordered flex items-center gap-2 dark:bg-white dark:text-black"
-              >
-                <FaKey className="w-4 h-4 opacity-70" />
-                <input
-                  ref={passwordRef}
-                  type="password"
-                  name="password"
-                  value={formik.values.password}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className="grow text-black"
-                  placeholder="Password"
-                />
-              </label>
-              <FieldError formik={formik} name="password" />
+              <FieldError formik={formik} name="email" />
             </div>
           </div>
-          {config.CaptchaIsActive ? (
+          {config.CaptchaIsActiveForPasswordReset && !captchaVerified && (
             <div
-              style={
-                captchaVerified
-                  ? { pointerEvents: 'none', opacity: 0.6 } // Disable interaction and reduce opacity after verification
-                  : {}
-              }
+            // style={
+            //   captchaVerified
+            //     ? { pointerEvents: 'none', opacity: 0.6 } // Disable interaction and reduce opacity after verification
+            //     : {}
+            // }
             >
               <ReCAPTCHA
                 ref={recaptchaRef}
@@ -352,8 +359,8 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                 onChange={handleCaptchaChange}
               />
             </div>
-          ) : null}
-          {showOTP && (
+          )}
+          {showOTP && !totpVerified && (
             <div>
               <p className="text-xs pt-2 pb-1 ">
                 Please enter your OTP code that you received by SMS
@@ -367,12 +374,28 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               />
             </div>
           )}
+          {showEmailTokenField && (
+            <div className="my-5 border p-3">
+              <p className="text-sm text-center mb-3">
+                Please provide the token that you have received in your e-mail
+                address
+              </p>
+              <label className="input input-bordered flex items-center gap-2 dark:bg-white ">
+                <FaKey />
+                <input
+                  type="text"
+                  name="tokenForEmail"
+                  value={formik.values.tokenForEmail}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className="grow text-black"
+                  placeholder="Your Token"
+                />
+              </label>
+              <FieldError formik={formik} name="tokenForEmail" />
+            </div>
+          )}
           {error && <p className="pt-2 text-red-500 text-center">{error}</p>}
-          <div className="my-3">
-            <Link className="text-xs text-blue-800" href="/forgotCred">
-              Forgot Your Password ?
-            </Link>
-          </div>
           <div className="mt-5 flex justify-around">
             <SignInButton
               pending={formik.isSubmitting}
