@@ -93,13 +93,20 @@ export function NewTicketModal({ closeModal, userId }: any) {
   // Get Severities
   useEffect(() => {
     const getSeverities = async () => {
-      const rows = await getTicketSeverities();
-      setSeverities(rows);
+      const result = await getTicketSeverities();
+
+      if (result.error) return toast.error(result.error);
+
+      setSeverities(result.data);
     };
 
     const getCategories = async () => {
-      const rows = await getTicketCategories();
-      setTicketCategories(rows);
+      const result = await getTicketCategories();
+
+      if (result.error) return toast.error(result.error);
+
+      // If no error, set the ticket categories with the returned data
+      setTicketCategories(result.data);
     };
 
     getSeverities();

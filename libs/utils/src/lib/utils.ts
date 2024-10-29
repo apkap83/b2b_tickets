@@ -252,3 +252,24 @@ export const getSeverityStatusColor = (severityId: string) => {
       return '#000'; // Fallback color
   }
 };
+
+// utils/handleServerAction.ts
+export const handleServerAction = async <T>(
+  action: Promise<{ data: T; error?: string }>
+): Promise<T | undefined> => {
+  const result = await action;
+
+  if (result.error) {
+    // Display the error globally using toast or any other method
+    toast.error(result.error);
+
+    // Optionally log the error or handle it in other ways
+    console.error('Server action error:', result.error);
+
+    // Return `undefined` to signify an error, so we don’t proceed with invalid data
+    return undefined;
+  }
+
+  // Return the data if there’s no error
+  return result.data;
+};

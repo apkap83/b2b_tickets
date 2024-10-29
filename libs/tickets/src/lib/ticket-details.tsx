@@ -149,12 +149,10 @@ export function TicketDetails({
                 statusId,
                 comment: `Started Working On Ticket: ${ticketNumber}`,
               });
+              if (response.status === 'ERROR')
+                return toast.error(response.message);
 
-              if (response.status === 'SUCCESS') {
-                toast.success(response.message);
-                await new Promise((res) => setTimeout(res, 500));
-              }
-              if (response.status === 'ERROR') toast.error(response.message);
+              toast.success(response.message);
             }}
             sx={{
               backgroundColor: '#474cae',

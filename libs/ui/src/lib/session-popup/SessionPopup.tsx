@@ -26,22 +26,14 @@ const SessionPopup = () => {
   }, [timeLeftInSeconds]);
 
   const extendSession = async () => {
-    try {
-      const resp = await extendSessionAction();
+    const result = await extendSessionAction();
 
-      if (resp.status === 'SUCCESS') {
-        await refreshSession();
-        toast.success(
-          `Session Extended for ${Math.floor(
-            config.SessionMaxAge / 60
-          )} minutes`
-        );
-      } else {
-        console.error('Error extending session:', resp.message);
-      }
-    } catch (error) {
-      console.error('Failed to extend session:', error);
-    }
+    if (result.error) return toast.error(result.error);
+
+    await refreshSession();
+    toast.success(
+      `Session Extended for ${Math.floor(config.SessionMaxAge / 60)} minutes`
+    );
   };
 
   const performLogOut = () => {

@@ -230,6 +230,12 @@ export enum ErrorCode {
   CaptchaValidationFailed = 'captcha-validation-failed',
   CaptchaJWTTokenRequired = 'captcha-jwt-token-required',
   CaptchaJWTTokenInvalid = 'captcha-jwt-token-invalid',
+  EmailIsRequired = 'email-is-required',
+  IncorrectEmailProvided = 'incorrect-email-provided',
+  IncorrectPassResetTokenProvided = 'incorrect-pass-reset-token-provided',
+  TotpJWTTokenRequired = 'totp-jwt-token-required',
+  TotpJWTTokenInvalid = 'totp-jwt-token-invalid',
+  TokenForEmailRequired = 'token-for-email-required',
 }
 
 export enum EscalationStatus {
