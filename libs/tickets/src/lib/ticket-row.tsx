@@ -18,6 +18,7 @@ import styles from './css/ticker-row.module.scss';
 import { useRouter } from 'next/navigation';
 import { getGreekDateFormat } from '@b2b-tickets/utils';
 import { EscalationFillColor } from '@b2b-tickets/shared-models';
+import { getSeverityStatusColor } from '@b2b-tickets/utils';
 
 export const TicketRow = ({
   session,

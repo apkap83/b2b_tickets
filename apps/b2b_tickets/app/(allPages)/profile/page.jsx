@@ -7,12 +7,13 @@ import Link from 'next/link';
 import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 import { getAppVersion } from '@b2b-tickets/server-actions';
+import toast from 'react-hot-toast';
 
 const MyProfile = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState({
     visible: false,
   });
-  const [gitVersion, setGitVersion] = useState(null);
+  const [gitVersion, setGitVersion] = useState('');
 
   const { data: session } = useSession({
     required: true,
@@ -28,11 +29,13 @@ const MyProfile = () => {
     authenticationType: session?.user.authenticationType,
   };
 
+  console.log('gitVersion', gitVersion);
   useEffect(() => {
     const getMyAppVersion = async () => {
-      const ver = await getAppVersion();
-      setGitVersion(ver);
-      console.log({ ver });
+      const resp = await getAppVersion();
+      if (resp.error) toast.error(error.message);
+      console.log(36, resp);
+      setGitVersion(resp.data);
     };
     getMyAppVersion();
   }, []);
@@ -55,8 +58,8 @@ const MyProfile = () => {
             Account Type: &nbsp;<span>{session?.user.authenticationType}</span>
           </label>
           <label className="inline">
-            App Version: &nbsp;
-            <span>{gitVersion && gitVersion.commit}</span>
+            Git Commit: &nbsp;
+            <span>{gitVersion}</span>
           </label>
 
           <ProfilePageButtons

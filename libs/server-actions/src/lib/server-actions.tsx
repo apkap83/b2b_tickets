@@ -556,6 +556,7 @@ export const createNewTicket = async (
     // Rollback the transaction in case of an error
     await client.query('ROLLBACK');
     return fromErrorToFormState(error);
+    console.log(error);
   } finally {
     client.release();
   }
@@ -969,7 +970,7 @@ export async function updateTicketStatus({
       message: `Ticket was updated successfuly`,
     };
   } catch (error: any) {
-    return { status: 'ERROR', message: error.message };
+    return fromErrorToFormState(error);
   }
 }
 
@@ -997,23 +998,33 @@ export const validateReCaptcha = async (token: string) => {
   }
 };
 
-export const getAppVersion = async () => {
-  const session = await getServerSession(options);
+export const getAppVersion = async (): Promise<{
+  data: string;
+  error?: string;
+}> => {
+  try {
+    const session = await getServerSession(options);
 
-  if (!session) {
-    redirect(`/api/auth/signin?callbackUrl=/`);
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    // Run the git command to get the latest commit hash
+    const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
+
+    // Send the commit hash as a response
+    return { data: commitHash };
+  } catch (error: unknown) {
+    return {
+      data: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
-
-  // Run the git command to get the latest commit hash
-  const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
-
-  // Send the commit hash as a response
-  return { commit: commitHash };
 };
 
 export const extendSessionAction = async (): Promise<{
-  status: string;
-  message: string;
+  data: string;
+  error?: string;
 }> => {
   try {
     const session = await getServerSession(options);
@@ -1023,18 +1034,20 @@ export const extendSessionAction = async (): Promise<{
     }
 
     return {
-      status: 'SUCCESS',
-      message: 'Session Extended',
+      data: 'Session Extended',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
-      status: 'ERROR',
-      message: error.message,
+      data: '',
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 };
 
-export const getTicketSeverities = async (): Promise<Severity[]> => {
+export const getTicketSeverities = async (): Promise<{
+  data: Severity[];
+  error?: string;
+}> => {
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
 
@@ -1042,13 +1055,19 @@ export const getTicketSeverities = async (): Promise<Severity[]> => {
 
     const queryForSeverities = `SELECT severity_id, severity FROM severities`;
     const queryRes = await pgB2Bpool.query(queryForSeverities);
-    return queryRes.rows;
+    return { data: queryRes.rows };
   } catch (error: unknown) {
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 };
 
-export const getTicketCategories = async (): Promise<TicketCategory[]> => {
+export const getTicketCategories = async (): Promise<{
+  data: TicketCategory[];
+  error?: string;
+}> => {
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
 
@@ -1056,9 +1075,12 @@ export const getTicketCategories = async (): Promise<TicketCategory[]> => {
 
     const queryForSeverities = `SELECT category_id, "Category" FROM ticket_categories_v`;
     const queryRes = await pgB2Bpool.query(queryForSeverities);
-    return queryRes.rows;
+    return { data: queryRes.rows };
   } catch (error: unknown) {
-    throw error;
+    return {
+      data: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 };
 
