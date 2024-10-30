@@ -9,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import { useFormik, FormikTouched, FormikErrors } from 'formik';
 import * as Yup from 'yup';
 
-import { FaKey } from 'react-icons/fa';
 import clsx from 'clsx';
 import { config } from '@b2b-tickets/config';
 import { TwoFactAuth } from './TwoFactAuth';
@@ -18,6 +17,9 @@ import { useCountdown } from '@b2b-tickets/react-hooks';
 import { formatTimeMMSS } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { MdOutlineMailLock } from 'react-icons/md';
+import { FaKey } from 'react-icons/fa';
+import { IoKeyOutline } from 'react-icons/io5';
+import { GoKey } from 'react-icons/go';
 
 interface FieldErrorProps {
   formik: {
@@ -50,6 +52,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
 
   const [showOTP, setShowOTP] = useState(false);
   const [showEmailTokenField, setShowEmailTokenField] = useState(false);
+  const [showNewPasswordFields, setShowNewPasswordFields] = useState(false);
 
   const [emailFieldIsReadOnly, setEmailFieldIsReadOnly] = useState(false);
 
@@ -84,10 +87,22 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
   });
 
   // Remove 2 Cookies on Page load
+  // useEffect(() => {
+  //   // Remove cookies on page load
+  //   Cookies.remove('captchaJWTToken', { path: '/' });
+  //   Cookies.remove('totpJWTToken', { path: '/' });
+  //   Cookies.remove('emailJWTToken', { path: '/' });
+  // }, []);
+
   useEffect(() => {
-    // Remove cookies on page load
-    Cookies.remove('captchaJWTToken');
-    Cookies.remove('totpJWTToken');
+    // Call the API route to clear HTTP-only cookies
+    const clearCookies = async () => {
+      await fetch('/api/auth/clear', {
+        method: 'POST',
+      });
+    };
+
+    clearCookies();
   }, []);
 
   useEffect(() => {
@@ -175,6 +190,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
       }
 
       // Server Verified Totp at this point
+      resetTimer(300);
       setTotpVerified(true);
     } catch (error) {
       setError('An error occurred while validating TOTP. Please try again.');
@@ -183,18 +199,97 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
     }
   };
 
+  const getEmailJWTToken = async ({ setSubmitting }: any) => {
+    try {
+      // Call your custom token validation API route
+      const tokenResponse = await fetch('/api/auth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: formik.values.email }),
+      });
+
+      const tokenResult = await tokenResponse.json();
+
+      if (!tokenResponse.ok) {
+        setError(tokenResult.message || 'Invalid Email Token Code');
+        setSubmitting(false);
+        return;
+      }
+    } catch (error) {
+      setError('An error occurred while validating TOTP. Please try again.');
+      setSubmitting(false);
+      return;
+    }
+  };
+
+  const PasswordComplexityAnnouncement = () => {
+    return (
+      <div className="text-xs border p-2">
+        <p className="text-center mb-2">Password Complexity Rules</p>
+        <ol className="font-light">
+          <li>At least 8 characters long</li>
+          <li>At least one uppercase letter</li>
+          <li>At least one lowercase letter</li>
+          <li>At least one number</li>
+          <li>
+            At least one special character [&#33; &#64; &#35; &#36; &#37; &#94;
+            &#38; &#42; &#40; &#41; &#44; &#46; &#63; &#58; &#34; &#123; &#125;
+            &#124; &#60; &#62;]
+          </li>
+        </ol>
+      </div>
+    );
+  };
+
+  const passwordComplexitySchema = Yup.string()
+    .min(8, 'Password must be at least 8 characters long')
+    .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .matches(/\d/, 'Password must contain at least one number')
+    .matches(
+      /[!@#$%^&*(),.?":{}|<>]/,
+      'Password must contain at least one special character'
+    )
+    .required('Password is required');
+
   const validationSchema = Yup.object({
     email: Yup.string().required('Email is required'),
     emailToken: Yup.string(),
+    newPassword: !showNewPasswordFields
+      ? Yup.string()
+      : config.PasswordComplexityActive
+      ? passwordComplexitySchema
+      : Yup.string().required('Password is required'),
   });
 
   const formik = useFormik({
     initialValues: {
       email: '',
       tokenForEmail: '',
+      newPassword: '',
     },
     validationSchema: validationSchema,
+    validate: async (values) => {
+      try {
+        // Validate with abortEarly: false to gather all errors
+        await validationSchema.validate(values, { abortEarly: false });
+      } catch (err) {
+        // Explicitly define err as Yup.ValidationError
+        if (err instanceof Yup.ValidationError) {
+          const errors: Record<string, string> = {};
+          err.inner.forEach((validationError) => {
+            if (validationError.path) {
+              errors[validationError.path] = validationError.message;
+            }
+          });
+          return errors;
+        }
+      }
+    },
     onSubmit: async (values, { setSubmitting }) => {
+      console.log(251);
       setSubmitting(true); // Disable the submit button
       setError(null);
 
@@ -209,16 +304,20 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
         }
       }
 
-      if (config.TwoFactorEnabledForPasswordReset && totpCode) {
+      if (
+        config.TwoFactorEnabledForPasswordReset &&
+        !totpVerified &&
+        totpCode
+      ) {
         await getTotpJWTToken({ setSubmitting });
       }
 
       const response = await signIn('credentials-password-reset', {
         redirect: false,
         email: values.email,
-        captchaToken: captcha,
-        totpCode,
         tokenForEmail: formik.values.tokenForEmail,
+        newPassword: formik.values.newPassword,
+        newPasswordRepeat: formik.values.newPasswordRepeat,
       });
 
       if (!response) return;
@@ -247,11 +346,6 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
             }
           }
           break;
-        case ErrorCode.TotpJWTTokenRequired:
-          setShowOTP(true);
-          setSubmitting(false);
-          setEmailFieldIsReadOnly(true);
-          break;
         case ErrorCode.CaptchaValidationFailed:
           setError('Invalid reCAPTCHA validation');
           setSubmitting(false);
@@ -264,6 +358,22 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
             }
           }
           break;
+        case ErrorCode.TotpJWTTokenRequired:
+          resetTimer(
+            config.TwoFactorValiditySeconds -
+              (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
+          );
+          start();
+
+          setShowOTP(true);
+          setSubmitting(false);
+          setEmailFieldIsReadOnly(true);
+          break;
+        case ErrorCode.TotpJWTTokenInvalid:
+          setShowOTP(true);
+          setSubmitting(false);
+          setError('Token Invalid');
+          break;
         case ErrorCode.CaptchaJWTTokenRequired:
           window.location.reload();
           break;
@@ -272,12 +382,27 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
           setCaptchaVerified(true);
           setEmailFieldIsReadOnly(true);
           setShowEmailTokenField(true);
-
+          getEmailJWTToken({ setSubmitting });
           break;
         case ErrorCode.IncorrectPassResetTokenProvided:
           setSubmitting(false);
           setEmailFieldIsReadOnly(true);
           setError('Incorrect Token provided');
+          break;
+        case ErrorCode.SetNewPassword:
+          console.log(326);
+          setError('');
+          setShowNewPasswordFields(true);
+          setShowEmailTokenField(false);
+          break;
+        case ErrorCode.RepeatPasswordMismatch:
+          setError('Passwords do not match');
+          break;
+        case ErrorCode.PasswordDoesNotMeetComplexity:
+          setError('Password does not meet complexity requirements');
+          break;
+        case ErrorCode.SuccessfullyUpdatedPassword:
+          setError('Password Successfully updated!');
           break;
         default:
           setError('Internal Server Error');
@@ -287,47 +412,50 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
     },
   });
 
+  console.log(formik);
   return (
     <div
-      className={`w-[500px] relative shadow-md rounded-2xl flex flex-col justify-center 
-      items-center p-7  backdrop-blur-lg bg-gray-100 border border-[#26295375]
-
-      `}
-      style={{
-        transform: 'translateY(-20%)',
-      }}
+      className={`w-[450px] relative shadow-md rounded-2xl flex flex-col justify-center items-center p-6  backdrop-blur-lg bg-gray-100 border border-[#26295375]`}
+      style={{ transform: 'translateY(-20%)' }}
     >
-      <div className={`w-[300px] mb-2`}>
+      <div className={`w-[350px] mb-2`}>
         <div
-          /*  text-[#262953] */
           className={`text-2xl tracking-widest text-[black] font-bold
-                        border-[#7b7b7c] pb-4 mb-5
-              border-b p-1
-              font-myCustomFont
-              text-center
-              flex flex-col
-              justify-center
-              items-center
-              gap-3
-              bg-gradient-to-r from-gray-500 via-gray-600 to-gray-800 bg-clip-text text-transparent
-          `}
+                      border-[#7b7b7c] pb-4 mb-5
+                      border-b p-1
+                      font-myCustomFont
+                      text-center
+                      flex flex-col
+                      justify-center
+                      items-center
+                      gap-3
+                      bg-gradient-to-r from-gray-500 via-gray-600 to-gray-800 bg-clip-text text-transparent
+                    `}
         >
-          <Image priority src={NovaLogo} alt={'Nova Logo'} height={40} />
+          <Image
+            priority
+            src={NovaLogo}
+            alt={'Nova Logo'}
+            height={40}
+            width={245}
+          />
           <span>Platinum Support</span>
         </div>
-        <div className="text-center text-xl text-left mt-[.75rem] text-[#142d50] font-medium my-5">
+        <div className="text-center text-xl mt-[.75rem] text-[#142d50] font-medium my-5">
           Forgot Password Form
         </div>
       </div>
 
-      <div className="w-[300px]">
+      <div className="w-[350px]">
         <form onSubmit={formik.handleSubmit}>
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
           <div ref={userNamePasswordGroupRef} className="mb-5">
-            {showOTP && <p className="text-xs text-center pb-2">Your Email</p>}
+            {showOTP && (
+              <p className="text-xs text-center pb-2">Email Provided</p>
+            )}
             <div className="mb-5">
-              <label className="input input-bordered flex items-center gap-2 dark:bg-white ">
-                <MdOutlineMailLock />
+              <label className="input input-bordered flex items-center gap-2 ">
+                <MdOutlineMailLock size={25} />
                 <input
                   ref={emailRef}
                   type="text"
@@ -335,25 +463,64 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
                   value={formik.values.email}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className={clsx('grow text-black', {
-                    'text-white bg-black': emailFieldIsReadOnly === true,
-                  })}
+                  className="w-full pl-2 text-left"
+                  // className={clsx('grow text-black', {
+                  //   // 'text-white bg-black': emailFieldIsReadOnly === true,
+                  // })}
                   placeholder="Your Email Address"
-                  disabled={emailFieldIsReadOnly}
+                  // disabled={emailFieldIsReadOnly}
+                  readOnly={emailFieldIsReadOnly}
                 />
               </label>
               <FieldError formik={formik} name="email" />
             </div>
+            {showNewPasswordFields && (
+              <>
+                <PasswordComplexityAnnouncement />
+                <div className="mb-5 border p-2">
+                  <label className="input input-bordered flex items-center gap-2 dark:bg-white ">
+                    <FaKey />
+                    <input
+                      type="password"
+                      name="newPassword"
+                      value={formik.values.newPassword}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={clsx('grow text-black', {})}
+                      placeholder="New Password"
+                    />
+                  </label>
+                  {/* <label className="input mt-2 input-bordered flex items-center gap-2 dark:bg-white ">
+                    <GoKey />
+                    <input
+                      type="password"
+                      name="newPasswordRepeat"
+                      value={formik.values.newPasswordRepeat}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={clsx('grow text-black', {})}
+                      placeholder="Repeat Password"
+                    />
+                  </label>
+                  <FieldError formik={formik} name="newPasswordRepeat" /> */}
+                  <div className="text-xs text-red-900 mt-1">
+                    {formik.errors['newPassword']}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           {config.CaptchaIsActiveForPasswordReset && !captchaVerified && (
             <div
-            // style={
-            //   captchaVerified
-            //     ? { pointerEvents: 'none', opacity: 0.6 } // Disable interaction and reduce opacity after verification
-            //     : {}
-            // }
+              style={{
+                transform: 'scale(1.15)',
+                WebkitTransform: 'scale(1.15)',
+                transformOrigin: '0 0',
+                WebkitTransformOrigin: '0 0',
+              }}
             >
               <ReCAPTCHA
+                className="w-full"
                 ref={recaptchaRef}
                 sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
                 onChange={handleCaptchaChange}
@@ -395,8 +562,9 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
               <FieldError formik={formik} name="tokenForEmail" />
             </div>
           )}
-          {error && <p className="pt-2 text-red-500 text-center">{error}</p>}
-          <div className="mt-5 flex justify-around">
+
+          {error && <p className="mt-3 text-red-500 text-center">{error}</p>}
+          <div className="mt-10 flex justify-around">
             <SignInButton
               pending={formik.isSubmitting}
               label={submitButtonLabel}

@@ -581,14 +581,20 @@ const userSchema_updateUserPassword = yup.object().shape({
 
 export async function updateUserPassword(formState: any, formData: any) {
   try {
-    // Verify Security Permission
-    const session = (await verifySecurityPermission(
-      AppPermissionTypes.API_Security_Management
-    )) as Session;
+    const session = await getServerSession(options);
 
     const userName = formData.get('username');
     const password = formData.get('password');
     const verifyPassword = formData.get('verifyPassword');
+
+    // If the userName provided in this function is different from the logged in user name
+    // then you have to belong to API_Security_Management Role to proceed with Password Reset
+    if (session?.user.userName !== userName) {
+      // Verify Security Permission
+      await verifySecurityPermission(
+        AppPermissionTypes.API_Security_Management
+      );
+    }
 
     const userData = {
       userName,

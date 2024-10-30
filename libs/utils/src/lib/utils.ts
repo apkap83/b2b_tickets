@@ -273,3 +273,8 @@ export const handleServerAction = async <T>(
   // Return the data if there’s no error
   return result.data;
 };
+
+export function generateResetToken() {
+  const buffer = crypto.randomBytes(18); // generates 18 random bytes
+  return buffer.toString('base64').replace(/[/+=]/g, '').substring(0, 25); // convert to base64, remove non-alphanumeric characters, and trim to 25 chars
+}

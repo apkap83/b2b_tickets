@@ -66,7 +66,13 @@ export const NavBar = () => {
                   borderTopRightRadius: '5px',
                 }}
               >
-                <Image priority src={NovaLogo} alt={'Nova Logo'} height={18} />
+                <Image
+                  priority
+                  src={NovaLogo}
+                  alt={'Nova Logo'}
+                  height={18}
+                  width={110}
+                />
               </Stack>
               <div className={`${styles.b2b_logo_text}`}>Platinum Support</div>
             </Stack>
