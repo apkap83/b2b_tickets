@@ -467,18 +467,20 @@ export const options: NextAuthOptions = {
           });
 
           if (!newPassword) {
-            throw new Error(ErrorCode.SetNewPassword);
+            throw new Error(ErrorCode.NewPasswordRequired);
           }
 
           // Verify Complexity
-          try {
-            // @ts-ignore
-            foundUser.password = newPassword;
+          // try {
+          // @ts-ignore
+          foundUser.password = newPassword;
 
-            await foundUser.save();
-          } catch (error) {
-            throw new Error(ErrorCode.PasswordDoesNotMeetComplexity);
-          }
+          await foundUser.save();
+
+          throw new Error(ErrorCode.PasswordSuccesffullyChanged);
+          // } catch (error) {
+          //   throw new Error(ErrorCode.PasswordDoesNotMeetComplexity);
+          // }
 
           const roles = foundUser.AppRoles.map(
             (role) => role.roleName as AppRoleTypes
@@ -498,6 +500,7 @@ export const options: NextAuthOptions = {
           await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
           const queryForCustomerName =
             'SELECT customer_name FROM customers WHERE customer_id = $1';
+
           const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
             foundUser.customer_id,
           ]);
@@ -536,9 +539,10 @@ export const options: NextAuthOptions = {
             ErrorCode.TokenForEmailRequired,
             ErrorCode.IncorrectPassResetTokenProvided,
             ErrorCode.NewPasswordMatchesOld,
-            ErrorCode.SuccessfullyUpdatedPassword,
-            ErrorCode.SetNewPassword,
+            ErrorCode.NoPasswordProvided,
             ErrorCode.PasswordDoesNotMeetComplexity,
+            ErrorCode.NewPasswordRequired,
+            ErrorCode.PasswordSuccesffullyChanged,
           ].map(String);
 
           if (error instanceof Error) {
@@ -679,8 +683,6 @@ function verifyJWTTokenForEmail({
 
     if (decryptedToken !== tokenProvidedFromUser)
       throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
-
-    console.log('**** 680 SUCCESS!');
   } catch (error) {
     // Handle invalid token error (expired, tampered with, etc.)
     throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
