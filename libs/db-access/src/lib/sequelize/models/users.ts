@@ -10,9 +10,8 @@ import {
   BelongsToManyGetAssociationsMixin,
 } from 'sequelize';
 import bcrypt from 'bcryptjs';
-import { AuthenticationTypes } from '@b2b-tickets/shared-models';
-import App from 'next/app';
 import { AppRole } from './Role';
+import config from '@b2b-tickets/config';
 
 export class B2BUser extends Model<
   InferAttributes<B2BUser>,
@@ -50,7 +49,7 @@ export class B2BUser extends Model<
 
   // Define an instance method to compare passwords
   public async comparePassword(password: string): Promise<boolean> {
-    return bcrypt.compare(password, this.password);
+    return await bcrypt.compare(password, this.password);
   }
 
   // Static method to initialize the model
@@ -203,11 +202,19 @@ export class B2BUser extends Model<
         hooks: {
           beforeCreate: async (user) => {
             if (user.password) {
+              if (!B2BUser.isPasswordComplex(user.password)) {
+                throw new Error(
+                  'Password does not meet complexity requirements'
+                );
+              }
               const salt = await bcrypt.genSalt(10);
               user.password = await bcrypt.hash(user.password, salt);
             }
           },
           beforeUpdate: async (user) => {
+            if (!B2BUser.isPasswordComplex(user.password)) {
+              throw new Error('Password does not meet complexity requirements');
+            }
             if (user.changed('password')) {
               const salt = await bcrypt.genSalt(10);
               user.password = await bcrypt.hash(user.password, salt);
@@ -215,6 +222,26 @@ export class B2BUser extends Model<
           },
         },
       }
+    );
+  }
+
+  // Static method to check password complexity
+  static isPasswordComplex(password: string) {
+    // Check if Password Complexity is activated
+    if (!config.PasswordComplexityActive) return true;
+
+    const minLength = /.{8,}/;
+    const hasUpperCase = /[A-Z]/;
+    const hasLowerCase = /[a-z]/;
+    const hasNumber = /\d/;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
+
+    return (
+      minLength.test(password) &&
+      hasUpperCase.test(password) &&
+      hasLowerCase.test(password) &&
+      hasNumber.test(password) &&
+      hasSpecialChar.test(password)
     );
   }
 }
