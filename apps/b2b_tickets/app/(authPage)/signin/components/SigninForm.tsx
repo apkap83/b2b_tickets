@@ -291,7 +291,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       </div>
 
       <div className="w-[300px]">
-        <form onSubmit={formik.handleSubmit}>
+        <form onSubmit={formik.handleSubmit} autoComplete="off">
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
           <div ref={userNamePasswordGroupRef} className="mb-5">
             {showOTP && (
@@ -343,8 +343,8 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               </label>
               <FieldError formik={formik} name="password" />
             </div>
-            <div className="my-1">
-              <Link className="text-xs text-blue-900" href="/forgotCred">
+            <div className="my-1 text-center">
+              <Link className="text-xs text-[#667395]" href="/forgotCred">
                 Forgot Your Password ?
               </Link>
             </div>

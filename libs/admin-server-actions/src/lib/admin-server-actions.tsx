@@ -635,7 +635,7 @@ export async function updateUserPassword(formState: any, formData: any) {
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
-    return toFormState('SUCCESS', 'User Updated!');
+    return toFormState('SUCCESS', 'Password Updated!');
   } catch (error) {
     logRequest.error(error);
     return fromErrorToFormState(error);

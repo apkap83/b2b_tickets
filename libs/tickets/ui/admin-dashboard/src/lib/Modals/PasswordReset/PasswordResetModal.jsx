@@ -11,11 +11,10 @@ import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { SubmitButton } from '../../common/SubmitButton';
 import { FaUserLarge } from 'react-icons/fa6';
+import { passwordComplexitySchema } from '@b2b-tickets/utils';
 
 const validationSchema = Yup.object({
-  password: Yup.string()
-    .min(8, 'Password must be at least 8 characters long')
-    .required('Password is required'),
+  password: passwordComplexitySchema,
   verifyPassword: Yup.string()
     .oneOf([Yup.ref('password'), null], 'Passwords must match')
     .required('Verify Password is required'),
@@ -35,7 +34,23 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
       verifyPassword: '',
     },
     validationSchema: validationSchema,
-    // onSubmit: async (values, { setSubmitting }) => {},
+    validate: async (values) => {
+      try {
+        // Validate with abortEarly: false to gather all errors
+        await validationSchema.validate(values, { abortEarly: false });
+      } catch (err) {
+        // Explicitly define err as Yup.ValidationError
+        if (err instanceof Yup.ValidationError) {
+          const errors = {};
+          err.inner.forEach((validationError) => {
+            if (validationError.path) {
+              errors[validationError.path] = validationError.message;
+            }
+          });
+          return errors;
+        }
+      }
+    },
   });
 
   useEffect(() => {

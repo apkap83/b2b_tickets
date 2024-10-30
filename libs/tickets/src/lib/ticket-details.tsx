@@ -823,7 +823,6 @@ const SeverityPopup = ({
   const inputSelect = useRef<any>();
   const severityId = ticketDetails[0].severity_id;
 
-  console.log(ticketDetails[0]);
   return (
     <>
       <div
@@ -873,11 +872,6 @@ const SeverityPopup = ({
                   }}
                   onClick={async () => {
                     if (inputSelect && inputSelect.current.value) {
-                      console.log(
-                        'inputSelect.current.value',
-                        inputSelect.current.value
-                      );
-
                       const resp = await alterTicketSeverity({
                         ticketNumber: ticketDetails[0].Ticket,
                         ticketId: ticketDetails[0].ticket_id,

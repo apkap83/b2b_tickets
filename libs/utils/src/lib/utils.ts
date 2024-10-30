@@ -10,7 +10,7 @@ import {
 } from '@b2b-tickets/shared-models';
 import { Session } from 'next-auth';
 import * as crypto from 'crypto';
-
+import * as Yup from 'yup';
 const ALGORITHM = 'aes256';
 const INPUT_ENCODING = 'utf8';
 const OUTPUT_ENCODING = 'hex';
@@ -278,3 +278,17 @@ export function generateResetToken() {
   const buffer = crypto.randomBytes(18); // generates 18 random bytes
   return buffer.toString('base64').replace(/[/+=]/g, '').substring(0, 25); // convert to base64, remove non-alphanumeric characters, and trim to 25 chars
 }
+
+export const passwordComplexitySchema = Yup.string()
+  .min(
+    config.MinimumPasswordCharacters,
+    `Password must be at least ${config.MinimumPasswordCharacters} characters long`
+  )
+  .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .matches(/\d/, 'Password must contain at least one number')
+  .matches(
+    /[!@#$%^&*(),.?":{}|<>]/,
+    'Password must contain at least one special character'
+  )
+  .required('Password is required');

@@ -300,8 +300,6 @@ export const getTicketDetailsForTicketId = async ({
     if (!userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
       notFound();
     }
-    console.log('session?.user.customer_id', session?.user.customer_id);
-    console.log('queryRes1.rows[0].customer_id', queryRes1.rows[0]);
 
     // This check ensures that a customer cannot see other customers tickets
     // Check if the specific ticket belongs to the customer ID that was requested it
@@ -556,7 +554,6 @@ export const createNewTicket = async (
     // Rollback the transaction in case of an error
     await client.query('ROLLBACK');
     return fromErrorToFormState(error);
-    console.log(error);
   } finally {
     client.release();
   }
@@ -669,7 +666,6 @@ export const sendTestEmail = async () => {
       .setHtml('<strong>This is the HTML content</strong>')
       .setText('This is the text content');
 
-    console.log(664);
     await mailerSend.email.send(emailParams);
 
     return {
@@ -677,7 +673,6 @@ export const sendTestEmail = async () => {
       message: 'Remedy Incident Id was set',
     };
   } catch (error: any) {
-    console.log(error);
     return {
       status: 'ERROR',
       message: error?.message,
