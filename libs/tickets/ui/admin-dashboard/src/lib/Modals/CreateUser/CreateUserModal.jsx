@@ -65,7 +65,6 @@ function CreateUserModal({ closeModal }) {
     getCustList();
   }, []);
 
-  console.log('Formik errors', formik?.errors);
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white px-10 py-3 rounded-lg max-h-[600px] overflow-y-auto">

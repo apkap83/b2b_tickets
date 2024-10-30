@@ -230,7 +230,9 @@ export class B2BUser extends Model<
     // Check if Password Complexity is activated
     if (!config.PasswordComplexityActive) return true;
 
-    const minLength = /.{8,}/;
+    const minCharacters = config.MinimumPasswordCharacters;
+
+    const minLength = new RegExp(`.{${minCharacters},}`);
     const hasUpperCase = /[A-Z]/;
     const hasLowerCase = /[a-z]/;
     const hasNumber = /\d/;

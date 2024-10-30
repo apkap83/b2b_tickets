@@ -29,12 +29,10 @@ const MyProfile = () => {
     authenticationType: session?.user.authenticationType,
   };
 
-  console.log('gitVersion', gitVersion);
   useEffect(() => {
     const getMyAppVersion = async () => {
       const resp = await getAppVersion();
       if (resp.error) toast.error(error.message);
-      console.log(36, resp);
       setGitVersion(resp.data);
     };
     getMyAppVersion();

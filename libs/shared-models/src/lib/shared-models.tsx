@@ -238,10 +238,11 @@ export enum ErrorCode {
   TokenForEmailRequired = 'token-for-email-required',
   EmailJWTTokenRequired = 'email-jwt-token-required',
   EmailJWTTokenInvalid = 'email-jwt-token-invalid',
-  SetNewPassword = 'set-new-password',
-  SuccessfullyUpdatedPassword = 'successfully-updated-password',
+  NoPasswordProvided = 'no-password-provided',
   RepeatPasswordMismatch = 'repeat-password-mismatch',
   PasswordDoesNotMeetComplexity = 'password-does-not-meet-complexity',
+  NewPasswordRequired = 'new-password-required',
+  PasswordSuccesffullyChanged = 'password-successfully-changed',
 }
 
 export enum EscalationStatus {
