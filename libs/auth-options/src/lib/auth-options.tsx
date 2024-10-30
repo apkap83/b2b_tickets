@@ -32,6 +32,7 @@ import jwt from 'jsonwebtoken';
 import { headers } from 'next/headers';
 import { createRequestLogger } from '@b2b-tickets/logging';
 import { CustomLogger } from '@b2b-tickets/logging';
+import { generateResetToken } from '@b2b-tickets/utils';
 
 export function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
@@ -59,6 +60,7 @@ export function getRequestLogger(transportName: TransportName) {
     throw new Error('getRequestLogger must be used in a server-side context.');
   }
 }
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
 // Set the length to 4 digits and 120 seconds
 authenticator.options = {
@@ -389,20 +391,18 @@ export const options: NextAuthOptions = {
           type: 'email',
           placeholder: 'Your email',
         },
-        captchaToken: { label: 'captchaToken', type: 'text' },
-        totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
         tokenForEmail: {
           label: 'Token',
           type: 'text',
           placeholder: 'Your token',
         },
+        newPassword: { label: 'newPassword', type: 'text' },
       },
       async authorize(credentials: any, req: any) {
         const logRequest: CustomLogger = getRequestLogger(TransportName.AUTH);
         try {
-          const { email, captchaToken, totpCode, tokenForEmail } = credentials;
+          const { email, tokenForEmail, newPassword } = credentials;
 
-          console.log({ email, captchaToken, totpCode, tokenForEmail });
           if (!email) {
             throw new Error(ErrorCode.EmailIsRequired);
           }
@@ -461,67 +461,71 @@ export const options: NextAuthOptions = {
             throw new Error(ErrorCode.TokenForEmailRequired);
           }
 
-          if (tokenForEmail) {
-            console.log('**** TOKEN FOR EMAIL:', tokenForEmail);
+          verifyJWTTokenForEmail({
+            req,
+            tokenProvidedFromUser: tokenForEmail,
+          });
 
-            if (tokenForEmail === 'apostolis') {
-              logRequest.info(
-                `Local User '${credentials.userName}' has been successfully authenticated`
-              );
-
-              const roles = foundUser.AppRoles.map(
-                (role) => role.roleName as AppRoleTypes
-              );
-
-              const permissions: AppPermissionType[] =
-                foundUser.AppRoles.flatMap((role) =>
-                  //@ts-ignore
-                  role.AppPermissions.map((permission) => ({
-                    permissionName: permission.permissionName,
-                    permissionEndPoint: permission.endPoint,
-                    permissionDescription: permission.description,
-                  }))
-                );
-
-              // Find Customer Name from Customer ID
-              await setSchema(
-                pgB2Bpool,
-                config.postgres_b2b_database.schemaName
-              );
-              const queryForCustomerName =
-                'SELECT customer_name FROM customers WHERE customer_id = $1';
-              const customerNameRes = await pgB2Bpool.query(
-                queryForCustomerName,
-                [foundUser.customer_id]
-              );
-
-              const customer_name = customerNameRes.rows[0]['customer_name'];
-
-              const userDetails = {
-                id: String(foundUser.user_id),
-                user_id: foundUser.user_id,
-                customer_id: Number(foundUser.customer_id),
-                customer_name: customer_name,
-                firstName: foundUser.first_name,
-                lastName: foundUser.last_name,
-                userName: foundUser.username,
-                email: foundUser.email,
-                mobilePhone: foundUser.mobile_phone || '',
-                authenticationType: foundUser.authentication_type,
-                roles,
-                permissions,
-                two_factor_secret: foundUser.two_factor_secret,
-
-                // Overwriting the toString method
-                toString: function () {
-                  return `User ID: ${this.user_id}, Customer ID: ${this.customer_id}, Customer Name: ${this.customer_name}, Name: ${this.firstName} ${this.lastName}, Username: ${this.userName} Email: ${this.email}, Mobile Phone: ${this.mobilePhone}, Auth Type: ${this.authenticationType}`;
-                },
-              };
-
-              return userDetails;
-            }
+          if (!newPassword) {
+            throw new Error(ErrorCode.SetNewPassword);
           }
-          throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
+
+          // Verify Complexity
+          try {
+            // @ts-ignore
+            foundUser.password = newPassword;
+
+            await foundUser.save();
+          } catch (error) {
+            throw new Error(ErrorCode.PasswordDoesNotMeetComplexity);
+          }
+
+          const roles = foundUser.AppRoles.map(
+            (role) => role.roleName as AppRoleTypes
+          );
+
+          const permissions: AppPermissionType[] = foundUser.AppRoles.flatMap(
+            (role) =>
+              //@ts-ignore
+              role.AppPermissions.map((permission) => ({
+                permissionName: permission.permissionName,
+                permissionEndPoint: permission.endPoint,
+                permissionDescription: permission.description,
+              }))
+          );
+
+          // Find Customer Name from Customer ID
+          await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+          const queryForCustomerName =
+            'SELECT customer_name FROM customers WHERE customer_id = $1';
+          const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
+            foundUser.customer_id,
+          ]);
+
+          const customer_name = customerNameRes.rows[0]['customer_name'];
+
+          const userDetails = {
+            id: String(foundUser.user_id),
+            user_id: foundUser.user_id,
+            customer_id: Number(foundUser.customer_id),
+            customer_name: customer_name,
+            firstName: foundUser.first_name,
+            lastName: foundUser.last_name,
+            userName: foundUser.username,
+            email: foundUser.email,
+            mobilePhone: foundUser.mobile_phone || '',
+            authenticationType: foundUser.authentication_type,
+            roles,
+            permissions,
+            two_factor_secret: foundUser.two_factor_secret,
+
+            // Overwriting the toString method
+            toString: function () {
+              return `User ID: ${this.user_id}, Customer ID: ${this.customer_id}, Customer Name: ${this.customer_name}, Name: ${this.firstName} ${this.lastName}, Username: ${this.userName} Email: ${this.email}, Mobile Phone: ${this.mobilePhone}, Auth Type: ${this.authenticationType}`;
+            },
+          };
+
+          return userDetails;
         } catch (error: unknown) {
           const suppressErrorObjectForErrors: string[] = [
             ErrorCode.EmailIsRequired,
@@ -531,6 +535,10 @@ export const options: NextAuthOptions = {
             ErrorCode.CaptchaJWTTokenRequired,
             ErrorCode.TokenForEmailRequired,
             ErrorCode.IncorrectPassResetTokenProvided,
+            ErrorCode.NewPasswordMatchesOld,
+            ErrorCode.SuccessfullyUpdatedPassword,
+            ErrorCode.SetNewPassword,
+            ErrorCode.PasswordDoesNotMeetComplexity,
           ].map(String);
 
           if (error instanceof Error) {
@@ -636,6 +644,46 @@ function verifyJWTTotp({ req }: { req: any }) {
   } catch (error) {
     // Handle invalid token error (expired, tampered with, etc.)
     throw new Error(ErrorCode.TotpJWTTokenInvalid);
+  }
+}
+
+function verifyJWTTokenForEmail({
+  req,
+  tokenProvidedFromUser,
+}: {
+  req: any;
+  tokenProvidedFromUser: string;
+}) {
+  const cookies = req.headers?.cookie || '';
+  const emailJWTToken = cookies.match(/emailJWTToken=([^;]+)/)?.[1];
+
+  if (!emailJWTToken) {
+    throw new Error(ErrorCode.EmailJWTTokenRequired);
+  }
+
+  // Verify the JWT token
+  try {
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    const decoded = jwt.verify(emailJWTToken, JWT_SECRET);
+    //@ts-ignore
+    if (!decoded.token)
+      throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
+
+    // Decrypt token in JWT
+    const decryptedToken = symmetricDecrypt(
+      //@ts-ignore
+      decoded.token,
+      //@ts-ignore
+      process.env['ENCRYPTION_KEY']
+    );
+
+    if (decryptedToken !== tokenProvidedFromUser)
+      throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
+
+    console.log('**** 680 SUCCESS!');
+  } catch (error) {
+    // Handle invalid token error (expired, tampered with, etc.)
+    throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
   }
 }
 

@@ -276,7 +276,13 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               bg-gradient-to-r from-gray-500 via-gray-600 to-gray-800 bg-clip-text text-transparent
           `}
         >
-          <Image priority src={NovaLogo} alt={'Nova Logo'} height={40} />
+          <Image
+            priority
+            src={NovaLogo}
+            alt={'Nova Logo'}
+            height={40}
+            width={245}
+          />
           <span>Platinum Support</span>
         </div>
         <div className="text-xl text-left mt-[.75rem] text-[black] font-semibold">
@@ -337,6 +343,11 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               </label>
               <FieldError formik={formik} name="password" />
             </div>
+            <div className="my-1">
+              <Link className="text-xs text-blue-900" href="/forgotCred">
+                Forgot Your Password ?
+              </Link>
+            </div>
           </div>
           {config.CaptchaIsActive ? (
             <div
@@ -367,12 +378,8 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               />
             </div>
           )}
+
           {error && <p className="pt-2 text-red-500 text-center">{error}</p>}
-          <div className="my-3">
-            <Link className="text-xs text-blue-800" href="/forgotCred">
-              Forgot Your Password ?
-            </Link>
-          </div>
           <div className="mt-5 flex justify-around">
             <SignInButton
               pending={formik.isSubmitting}
