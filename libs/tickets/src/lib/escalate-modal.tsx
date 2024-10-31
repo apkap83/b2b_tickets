@@ -61,18 +61,20 @@ import styles from './css/new-comment-modal.module.scss';
 
 export function EscalateModal({
   modalAction = TicketDetailsModalActions.ESCALATE,
-  ticketDetail,
+  ticketDetails,
   closeModal,
+  escalationLevel,
 }: {
   modalAction: TicketDetailsModalActions;
-  ticketDetail: TicketDetail[];
+  ticketDetails: TicketDetail[];
   closeModal: any;
+  escalationLevel: string;
 }) {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
-  //@ts-ignore
-  const { ticket_id, ticket_number } = ticketDetail[0];
+  const ticketId = ticketDetails[0].ticket_id;
+  const ticketNumber = ticketDetails[0]['Ticket'] as string;
 
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit Comment');
 
@@ -89,7 +91,7 @@ export function EscalateModal({
 
   useEffect(() => {
     if (modalAction === TicketDetailsModalActions.ESCALATE)
-      setSubmitButtonLabel('Escalate Now');
+      setSubmitButtonLabel(`Escalate Level ${escalationLevel}`);
   }, [modalAction]);
 
   const getCorrectTitle = () => {
@@ -98,7 +100,7 @@ export function EscalateModal({
         <div
           className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
         >
-          {`B2B - Escalate Ticket ${ticket_number}`}
+          {`B2B - Escalate Ticket ${ticketNumber}`}
         </div>
       );
     }
@@ -111,10 +113,10 @@ export function EscalateModal({
        bg-black bg-opacity-50"
       >
         <div
-          className={`${styles.mainDiv} px-8 pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex`}
+          className={`${styles.mainDiv} max-w-[700px] px-8 pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex`}
         >
           <div className="w-full self-stretch flex-col justify-start items-start gap-[20.80px] inline-flex">
-            <div className="self-stretch  pl-3 py-2 bg-gradient-to-r from-[#020024] to-[#373742] rounded-md flex-col justify-start items-start flex">
+            <div className="self-stretch pl-3 py-2 bg-gradient-to-r from-[#020024] to-[#373742] rounded-md flex-col justify-start items-start flex">
               {getCorrectTitle()}
             </div>
             <form
@@ -126,12 +128,32 @@ export function EscalateModal({
                 <div className="w-full pt-2 flex-col justify-center items-center flex">
                   <span>Are you sure you want to Escalate this ticket ?</span>
 
+                  <textarea
+                    id="comment"
+                    name="comment"
+                    placeholder="Add your comment here..."
+                    required
+                    // value={formik.values.description}
+                    // onChange={formik.handleChange}
+                    // onBlur={formik.handleBlur}
+                    className="border mt-4 mb-2 p-2 max-w-[600px] min-h-[200px]"
+                    style={{
+                      backgroundColor: `${colors.grey[900]}`,
+                      color: `${colors.grey[100]}`,
+                      width: '100%',
+                      height: '100%',
+                      resize: 'none',
+                      boxSizing: 'border-box',
+                      padding: '10px',
+                      outline: 'none',
+                    }}
+                  ></textarea>
                   <input
                     type="hidden"
                     name="ticketNumber"
-                    value={ticket_number}
+                    value={ticketNumber}
                   />
-                  <input type="hidden" name="ticketId" value={ticket_id} />
+                  <input type="hidden" name="ticketId" value={ticketId} />
                 </div>
               </div>
               {/* </div> */}

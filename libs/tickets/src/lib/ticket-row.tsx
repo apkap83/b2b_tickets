@@ -1,24 +1,12 @@
 'use client';
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
-import {
-  TicketStatusName,
-  AppRoleTypes,
-  TicketStatusColors,
-  TicketDetail,
-} from '@b2b-tickets/shared-models';
+import { AppRoleTypes, TicketDetail } from '@b2b-tickets/shared-models';
 import Link from 'next/link';
-import clsx from 'clsx';
+
 import { formatDate, userHasRole, getStatusColor } from '@b2b-tickets/utils';
 import styles from './css/ticker-row.module.scss';
 import { useRouter } from 'next/navigation';
-import { getGreekDateFormat } from '@b2b-tickets/utils';
-import { EscalationFillColor } from '@b2b-tickets/shared-models';
-import { getSeverityStatusColor } from '@b2b-tickets/utils';
 
 export const TicketRow = ({
   session,
@@ -33,6 +21,7 @@ export const TicketRow = ({
     router.push(`/ticket/${item.Ticket}`);
   };
 
+  const lastCustCommentDate = formatDate(item['Last Cust. Comment Date']);
   return (
     <tr key={item.ticket_id} onClick={handleClick} className={styles.ticketRow}>
       {/* One More Column for Ticket Handlers */}
@@ -43,33 +32,6 @@ export const TicketRow = ({
           </TableCell>
           <TableCell data-label="Type" align="center">
             <span className="font-medium">{item['Cust. Type']}</span>
-          </TableCell>
-          <TableCell data-label="Escalated" align="center">
-            {/* <span className="font-medium">
-              {item['Escalation Date'] ? (
-                <>
-                  <div
-                    className="text-left"
-                    style={{
-                      color: `${EscalationFillColor}`,
-                    }}
-                  >
-                    By {item['Escalated By']}
-                  </div>
-                  <div
-                    className="text-left"
-                    style={{
-                      color: `${EscalationFillColor}`,
-                    }}
-                  >
-                    {getGreekDateFormat(item['Escalation Date'])}
-                  </div>
-                </>
-              ) : (
-                'No'
-              )}
-            </span> */}
-            EMPTY
           </TableCell>
         </>
       ) : null}
@@ -90,10 +52,22 @@ export const TicketRow = ({
       >
         {item.Title}
       </TableCell>
-      <TableCell data-label="Category" align="center">
+      <TableCell
+        style={{
+          whiteSpace: 'normal',
+        }}
+        data-label="Category"
+        align="center"
+      >
         {item.Category}
       </TableCell>
-      <TableCell data-label="Service" align="center">
+      <TableCell
+        style={{
+          whiteSpace: 'normal',
+        }}
+        data-label="Service"
+        align="center"
+      >
         {item.Service}
       </TableCell>
       <TableCell data-label="Opened By" align="center">
@@ -115,9 +89,31 @@ export const TicketRow = ({
           </div>
         }
       </TableCell>
-      <TableCell data-label="Status Date" align="center">
+      <TableCell
+        data-label="Status Date"
+        align="center"
+        style={{
+          whiteSpace: 'normal',
+        }}
+      >
         {formatDate(item['Status Date'])}
       </TableCell>
+      {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
+        <>
+          <TableCell data-label="Escalated" align="center">
+            No
+          </TableCell>
+          <TableCell>
+            <span className="text-red-900">
+              {lastCustCommentDate ? (
+                <span>{lastCustCommentDate} &gt; 2h</span>
+              ) : (
+                ''
+              )}
+            </span>
+          </TableCell>
+        </>
+      ) : null}
     </tr>
   );
 };

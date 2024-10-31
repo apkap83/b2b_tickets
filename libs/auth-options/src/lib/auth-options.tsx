@@ -362,23 +362,22 @@ export const options: NextAuthOptions = {
           );
           return localAuthUserDetails;
         } catch (error: unknown) {
-          const suppressErrorObjectForErrors: string[] = [
+          const permittedErrorsToFrontEnd: string[] = [
             ErrorCode.SecondFactorRequired,
             ErrorCode.IncorrectTwoFactorCode,
             ErrorCode.IncorrectUsernameOrPassword,
-            ErrorCode.CaptchaValidationFailed,
           ].map(String);
 
-          if (error instanceof Error) {
-            if (suppressErrorObjectForErrors.includes(error.message)) {
-              logRequest.error(error.message);
-            } else {
-              // Handle other errors
-              logRequest.error(error);
-            }
+          if (
+            error instanceof Error &&
+            permittedErrorsToFrontEnd.includes(error.message)
+          ) {
+            logRequest.error(error.message);
+            throw error;
           }
-
-          throw error;
+          // Handle other errors privately
+          logRequest.error(error);
+          throw new Error(ErrorCode.InternalServerError);
         }
       },
     }),
@@ -463,6 +462,7 @@ export const options: NextAuthOptions = {
 
           verifyJWTTokenForEmail({
             req,
+            email,
             tokenProvidedFromUser: tokenForEmail,
           });
 
@@ -476,11 +476,6 @@ export const options: NextAuthOptions = {
           foundUser.password = newPassword;
 
           await foundUser.save();
-
-          throw new Error(ErrorCode.PasswordSuccesffullyChanged);
-          // } catch (error) {
-          //   throw new Error(ErrorCode.PasswordDoesNotMeetComplexity);
-          // }
 
           const roles = foundUser.AppRoles.map(
             (role) => role.roleName as AppRoleTypes
@@ -530,31 +525,26 @@ export const options: NextAuthOptions = {
 
           return userDetails;
         } catch (error: unknown) {
-          const suppressErrorObjectForErrors: string[] = [
+          const permittedErrorsToFrontEnd: string[] = [
             ErrorCode.EmailIsRequired,
             ErrorCode.IncorrectEmailProvided,
             ErrorCode.TotpJWTTokenRequired,
             ErrorCode.IncorrectPassResetTokenProvided,
             ErrorCode.CaptchaJWTTokenRequired,
             ErrorCode.TokenForEmailRequired,
-            ErrorCode.IncorrectPassResetTokenProvided,
-            ErrorCode.NewPasswordMatchesOld,
-            ErrorCode.NoPasswordProvided,
-            ErrorCode.PasswordDoesNotMeetComplexity,
             ErrorCode.NewPasswordRequired,
-            ErrorCode.PasswordSuccesffullyChanged,
           ].map(String);
 
-          if (error instanceof Error) {
-            if (suppressErrorObjectForErrors.includes(error.message)) {
-              logRequest.error(error.message);
-            } else {
-              // Handle other errors
-              logRequest.error(error);
-            }
+          if (
+            error instanceof Error &&
+            permittedErrorsToFrontEnd.includes(error.message)
+          ) {
+            logRequest.error(error.message);
+            throw error;
           }
-
-          throw error;
+          // Handle other errors privately
+          logRequest.error(error);
+          throw new Error(ErrorCode.InternalServerError);
         }
       },
     }),
@@ -620,13 +610,15 @@ function verifyJWTCaptcha({ req }: { req: any }) {
   // Verify the JWT token
   try {
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-    const decoded = jwt.verify(captchaJWTToken, JWT_SECRET);
-    //@ts-ignore
+    const decoded = jwt.verify(captchaJWTToken, JWT_SECRET) as {
+      captchaValidated: boolean;
+    };
+
     if (!decoded.captchaValidated)
       throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
   } catch (error) {
     // Handle invalid token error (expired, tampered with, etc.)
-    throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
+    throw error;
   }
 }
 
@@ -647,15 +639,17 @@ function verifyJWTTotp({ req }: { req: any }) {
       throw new Error(ErrorCode.TotpJWTTokenInvalid);
   } catch (error) {
     // Handle invalid token error (expired, tampered with, etc.)
-    throw new Error(ErrorCode.TotpJWTTokenInvalid);
+    throw error;
   }
 }
 
 function verifyJWTTokenForEmail({
   req,
+  email,
   tokenProvidedFromUser,
 }: {
   req: any;
+  email: string;
   tokenProvidedFromUser: string;
 }) {
   const cookies = req.headers?.cookie || '';
@@ -668,10 +662,18 @@ function verifyJWTTokenForEmail({
   // Verify the JWT token
   try {
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-    const decoded = jwt.verify(emailJWTToken, JWT_SECRET);
-    //@ts-ignore
-    if (!decoded.token)
-      throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
+    const decoded = jwt.verify(emailJWTToken, JWT_SECRET) as {
+      emailProvided: string;
+      token: string;
+    };
+
+    if (email !== decoded.emailProvided) {
+      throw new Error(ErrorCode.EmailJWTTokenInvalid);
+    }
+
+    if (!decoded.token) {
+      throw new Error(ErrorCode.EmailJWTTokenInvalid);
+    }
 
     // Decrypt token in JWT
     const decryptedToken = symmetricDecrypt(
@@ -681,11 +683,12 @@ function verifyJWTTokenForEmail({
       process.env['ENCRYPTION_KEY']
     );
 
-    if (decryptedToken !== tokenProvidedFromUser)
+    if (decryptedToken !== tokenProvidedFromUser) {
       throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
+    }
   } catch (error) {
     // Handle invalid token error (expired, tampered with, etc.)
-    throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
+    throw error;
   }
 }
 

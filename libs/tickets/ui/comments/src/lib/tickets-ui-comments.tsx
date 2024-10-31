@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { TicketComment } from '@b2b-tickets/shared-models';
-import { getGreekDateFormat } from '@b2b-tickets/utils';
+import { formatDate, getGreekDateFormat } from '@b2b-tickets/utils';
 import { CgProfile } from 'react-icons/cg';
 import { FcBusinessman } from 'react-icons/fc';
 import { FcVoicePresentation } from 'react-icons/fc';
@@ -62,57 +62,15 @@ export function TicketsUiComments({
             <>
               {comments.map((item: TicketComment) => {
                 if (item.by_system === 'y') {
-                  return (
-                    <div
-                      key={item.comment_id}
-                      className="rounded-md py-3 border flex justify-between border-gray-500 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 justify-start items-start gap-2.5 inline-flex"
-                    >
-                      <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                        <span>{item.Comment}</span>
-                      </div>
-                      <div className="text-black text-xs text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                        {getGreekDateFormat(item['Comment Date'])}
-                      </div>
-                    </div>
-                  );
+                  return <SystemComment key={item.comment_id} item={item} />;
                 }
                 return (
-                  <div
+                  <UserComment
                     key={item.comment_id}
-                    className="self-stretch h-[205px] p-4 bg-white rounded-lg flex-col justify-start items-start gap-2.5 flex"
-                  >
-                    <div className="self-stretch justify-between items-center gap-2.5 inline-flex">
-                      <div className="flex justify-center items-center gap-2">
-                        {getRightAvatar(item['User Customer Name'])}
-                        <div>
-                          <span className="text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                            {getRightCommentCreatorName(item)}
-                          </span>
-                          <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                            {' '}
-                            added a comment at{' '}
-                            {getGreekDateFormat(item['Comment Date'])}
-                          </span>
-                        </div>
-                      </div>
-                      {item.is_closure === 'y' ? (
-                        <div className="inline text-right border p-1 text-[#3d8d52] text-xs whitespace-nowrap">
-                          Closing Comment
-                        </div>
-                      ) : (
-                        <DeleteCommentButton
-                          session={session}
-                          item={item}
-                          ticketNumber={ticketNumber}
-                        />
-                      )}
-                    </div>
-                    <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">
-                      <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-                        {item.Comment}
-                      </div>
-                    </div>
-                  </div>
+                    item={item}
+                    session={session}
+                    ticketNumber={ticketNumber}
+                  />
                 );
               })}
             </>
@@ -122,6 +80,66 @@ export function TicketsUiComments({
     </div>
   );
 }
+
+const UserComment = ({
+  item,
+  session,
+  ticketNumber,
+}: {
+  key: string;
+  item: TicketComment;
+  session: any;
+  ticketNumber: string;
+}) => {
+  return (
+    <div className="self-stretch shadow-sm h-[205px] p-4 bg-white rounded-lg flex-col justify-start items-start gap-2.5 flex">
+      <div className="self-stretch justify-between items-center gap-2.5 inline-flex">
+        <div className="flex justify-center items-center gap-2">
+          {getRightAvatar(item['User Customer Name'])}
+          <div>
+            <span className="text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+              {getRightCommentCreatorName(item)}
+            </span>
+            <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+              {' '}
+              added a comment at {getGreekDateFormat(item['Comment Date'])}
+            </span>
+          </div>
+        </div>
+        {item.is_closure === 'y' ? (
+          <div className="inline text-right border p-1 text-[#3d8d52] text-xs whitespace-nowrap">
+            Closing Comment
+          </div>
+        ) : (
+          <DeleteCommentButton
+            session={session}
+            item={item}
+            ticketNumber={ticketNumber}
+          />
+        )}
+      </div>
+      <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">
+        <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+          {item.Comment}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SystemComment = ({ item }: { key: string; item: TicketComment }) => {
+  return (
+    <div className="rounded-md py-3 shadow-sm border flex justify-between border-gray-300 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 items-start gap-2.5">
+      <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+        <span>{item.Comment}</span>
+      </div>
+      <div className="text-black text-xs text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+        {item.Username}&nbsp;-&nbsp;
+        {formatDate(item['Comment Date'])}
+      </div>
+    </div>
+  );
+};
 
 const handleDeleteComment = async ({
   item,

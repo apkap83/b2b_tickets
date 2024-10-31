@@ -25,8 +25,10 @@ import {
 } from '@b2b-tickets/shared-models';
 import {
   sendTestEmail,
-  updateTicketStatus,
+  setTicketWorking,
   alterTicketSeverity,
+  setRemedyIncidentIDForTicket,
+  getNextEscalationLevel,
 } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import styles from './css/ticket-details.module.scss';
@@ -36,10 +38,10 @@ import {
   EscalationBorderColor,
 } from '@b2b-tickets/shared-models';
 import Button from '@mui/material/Button';
-import { setRemedyIncidentIDForTicket } from '@b2b-tickets/server-actions';
 import { Typography, useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { SubmitButton } from '@b2b-tickets/ui';
+import { formatDate } from '@b2b-tickets/utils';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -68,6 +70,8 @@ export function TicketDetails({
     TicketDetailsModalActions.NO_ACTION
   );
 
+  const [nextEscalationLevel, setNextEscalationLevel] = useState<string>('');
+
   // Custom Hook for ESC Key Press
   useEscKeyListener(() => setShowNewComment(false));
 
@@ -76,6 +80,7 @@ export function TicketDetails({
 
   if (ticketDetails.length === 0) return;
 
+  const ticketId = ticketDetails[0].ticket_id;
   const ticketNumber = ticketDetails[0]['Ticket'] as string;
   const title = ticketDetails[0]['Title'];
   // const category = ticketDetails[0]['category_name'];
@@ -92,50 +97,22 @@ export function TicketDetails({
   const greekOccurrenceDate = getGreekDateFormat(occurrenceDate);
   const problemDescription = ticketDetails[0]['Description'];
   const commentsArray: TicketComment[] = ticketDetails[0]['comments'];
-  const ticketId = ticketDetails[0].ticket_id;
   const severity = ticketDetails[0].Severity;
   const customerType = ticketDetails[0]['Cust. Type'];
 
+  useEffect(() => {
+    const nextEscLevel = async () => {
+      const resp = await getNextEscalationLevel({
+        ticketId,
+        ticketNumber,
+      });
+      setNextEscalationLevel(resp.data);
+    };
+
+    nextEscLevel();
+  }, []);
+
   const customButtonBasedOnTicketStatus = () => {
-    // if (userHasRole(session, AppRoleTypes.Admin)) {
-    //   if (
-    //     ticketStatus === TicketStatus.CLOSED ||
-    //     ticketStatus === TicketStatus.CANCELLED
-    //   ) {
-    //     return (
-    //       <Button
-    //         onClick={async () => {
-    //           const statusId = '1'; // Working
-
-    //           const response = await updateTicketStatus({
-    //             ticketId,
-    //             ticketNumber,
-    //             statusId,
-    //             comment: `Re-Openning Ticket`,
-    //           });
-
-    //           if (response.status === 'SUCCESS') {
-    //             toast.success(response.message);
-    //             await new Promise((res) => setTimeout(res, 500));
-    //           }
-    //           if (response.status === 'ERROR') toast.error(response.message);
-    //         }}
-    //         sx={{
-    //           backgroundColor: '#474cae',
-    //           color: 'white',
-    //           paddingLeft: '1.2rem',
-    //           paddingRight: '1.2rem',
-    //           '&:hover': {
-    //             backgroundColor: '#585ed6',
-    //           },
-    //         }}
-    //       >
-    //         ADMINISTRATIVE <br />
-    //         ReOpen Ticket
-    //       </Button>
-    //     );
-    //   }
-    // }
     if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
       if (ticketStatus === TicketStatus.NEW) {
         return (
@@ -143,7 +120,7 @@ export function TicketDetails({
             onClick={async () => {
               const statusId = TicketStatus.WORKING;
 
-              const response = await updateTicketStatus({
+              const response = await setTicketWorking({
                 ticketId,
                 ticketNumber,
                 statusId,
@@ -223,41 +200,11 @@ export function TicketDetails({
         ticketStatus === TicketStatus.NEW ||
         ticketStatus === TicketStatus.WORKING
       ) {
-        // if (escalatedStatusDate !== null) {
-        //   return (
-        //     <Button
-        //       onClick={() => {
-        //         setModalAction(TicketDetailsModalActions.NO_ACTION);
-        //         setShowNewComment(true);
-        //       }}
-        //       variant="outlined"
-        //     >
-        //       Add New Comment
-        //     </Button>
-        //   );
-        // }
-
         return (
           <>
-            <Button
-              onClick={() => {
-                setModalAction(TicketDetailsModalActions.ESCALATE);
-                setShowEscalateDialog(true);
-              }}
-              variant="outlined"
-              sx={{
-                color: 'white',
-                backgroundColor: `${EscalationFillColor}`,
-                border: `1px solid ${EscalationBorderColor}`,
-
-                '&:hover': {
-                  backgroundColor: 'rgb(172, 74, 74)',
-                  border: '1px solid rgb(151, 52, 52)',
-                },
-              }}
-            >
-              Escalate Ticket
-            </Button>
+            {nextEscalationLevel && (
+              <EscalateButton nextEscalationLevel={nextEscalationLevel} />
+            )}
             <Button
               onClick={() => {
                 setModalAction(TicketDetailsModalActions.NO_ACTION);
@@ -271,6 +218,34 @@ export function TicketDetails({
         );
       }
     }
+  };
+
+  const EscalateButton = ({
+    nextEscalationLevel,
+  }: {
+    nextEscalationLevel: string;
+  }) => {
+    return (
+      <Button
+        onClick={() => {
+          setModalAction(TicketDetailsModalActions.ESCALATE);
+          setShowEscalateDialog(true);
+        }}
+        variant="outlined"
+        sx={{
+          color: 'white',
+          backgroundColor: `${EscalationFillColor}`,
+          border: `1px solid ${EscalationBorderColor}`,
+
+          '&:hover': {
+            backgroundColor: 'rgb(172, 74, 74)',
+            border: '1px solid rgb(151, 52, 52)',
+          },
+        }}
+      >
+        Escalate Level {nextEscalationLevel}
+      </Button>
+    );
   };
 
   const StatusBadge = () => {
@@ -461,7 +436,7 @@ export function TicketDetails({
               <div className={detailsRowClass}>
                 <div className={detailsRowHeaderClass}>Occurence Date</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {greekOccurrenceDate}
+                  {formatDate(occurrenceDate)}
                 </div>
               </div>
             </div>
@@ -472,16 +447,16 @@ export function TicketDetails({
                 </div>
               </div>
               <div className="w-full rounded-b-md h-full overflow-y-auto font-['Roboto'] px-[13px] py-[17px] bg-white border border-[#ebebeb]">
-                {/* <div className="overflow-y-auto self-stretch text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight"> */}
-                <pre
-                  style={{
-                    fontFamily: 'Roboto',
-                    whiteSpace: 'break-spaces',
-                  }}
-                >
-                  {problemDescription}
-                </pre>
-                {/* </div> */}
+                <div className="overflow-y-auto self-stretch text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                  <pre
+                    style={{
+                      fontFamily: 'Roboto',
+                      whiteSpace: 'break-spaces',
+                    }}
+                  >
+                    {problemDescription}
+                  </pre>
+                </div>
               </div>
             </div>
           </div>
@@ -504,7 +479,8 @@ export function TicketDetails({
           <EscalateModal
             modalAction={modalAction}
             closeModal={setShowEscalateDialog}
-            ticketDetail={ticketDetails}
+            ticketDetails={ticketDetails}
+            escalationLevel={nextEscalationLevel}
           />
         ) : null}
         {showRemedyIncDialog && (

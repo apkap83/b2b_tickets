@@ -192,16 +192,6 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           setError('User is currently locked');
           setSubmitting(false);
           break;
-        case ErrorCode.CaptchaValidationFailed:
-          setError('Invalid reCAPTCHA validation');
-          setSubmitting(false);
-
-          // Reset the reCAPTCHA (if active)
-          if (config.CaptchaIsActive)
-            if (recaptchaRef.current) {
-              recaptchaRef.current.reset();
-            }
-          break;
         case ErrorCode.IncorrectUsernameOrPassword:
           setError('Invalid user name or password');
           setSubmitting(false);
@@ -343,8 +333,11 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               </label>
               <FieldError formik={formik} name="password" />
             </div>
-            <div className="my-1 text-center">
-              <Link className="text-xs text-[#667395]" href="/forgotCred">
+            <div className="my-1 text-right">
+              <Link
+                className="text-xs text-[#6C757D] hover:text-[#4A90E2]"
+                href="/forgotCred"
+              >
                 Forgot Your Password ?
               </Link>
             </div>

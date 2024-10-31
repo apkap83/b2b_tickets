@@ -20,12 +20,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json(); // Extract JSON from request
-    const { email, totpCode } = body;
+    const { emailProvided, totpCode } = body;
 
     // Find User By email address
     const foundUser = (await B2BUser.findOne({
       where: {
-        email,
+        email: emailProvided,
       },
     })) as B2BUser;
 
@@ -55,16 +55,16 @@ export async function POST(req: NextRequest) {
 
     // Generate a JWT token after successful captcha validation
     const token = jwt.sign(
-      { otpValidatedForEmailAddress: true }, // Payload
+      { emailProvided, otpValidatedForEmailAddress: true }, // Payload
       JWT_SECRET, // Secret key
       { expiresIn: '5m' } // Token is valid for 5 minutes
     );
 
-    logRequest.info(`OTP Validated for E-mail address ${email}`);
+    logRequest.info(`OTP Validated for E-mail address ${emailProvided}`);
 
     // Set the token in an httpOnly cookie
     const response = NextResponse.json(
-      { message: `OTP Validated for E-mail address ${email}` },
+      { message: `OTP Validated for E-mail address ${emailProvided}` },
       { status: 200 }
     );
 
@@ -81,7 +81,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     // Catch any unexpected errors and return a JSON response
-    console.error('Server error in captchaHandler:', error);
     return NextResponse.json(
       { message: 'Internal Server Error' },
       { status: 500 }

@@ -162,7 +162,7 @@ export const getFilteredTicketsForCustomer = async (
       if (query === FilterTicketsStatus.Closed)
         sqlExpression = `WHERE "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
 
-      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression} order by "Status Date" DESC 
+      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression}
       ${
         allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
       }
@@ -178,7 +178,7 @@ export const getFilteredTicketsForCustomer = async (
       sqlExpression = `AND "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
 
     // Filter Tickets View by Customer Name
-    const sqlQuery = `SELECT * FROM tickets_v where "Customer" = $1 ${sqlExpression} order by "Status Date" DESC 
+    const sqlQuery = `SELECT * FROM tickets_v where "Customer" = $1 ${sqlExpression}
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
@@ -415,6 +415,11 @@ export const createNewTicket = async (
       AppPermissionTypes.Create_New_Ticket
     );
 
+    // Using entries() to get both key and value
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
     await client.query(
       `SET search_path TO ${config.postgres_b2b_database.schemaName}`
     );
@@ -494,7 +499,7 @@ export const createNewTicket = async (
 
     // TODO: Define proper user Id and api User from session
     const result = await client.query(
-      `SELECT tck_ticket_new
+      `SELECT tck_new
         (
           pvch_Title                    => $1,
           pvch_Description              => $2,
@@ -551,6 +556,7 @@ export const createNewTicket = async (
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
   } catch (error) {
+    console.log(error);
     // Rollback the transaction in case of an error
     await client.query('ROLLBACK');
     return fromErrorToFormState(error);
@@ -722,32 +728,30 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Escalate_Ticket
     );
-
-    if (!userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
-      return {
-        status: 'ERROR',
-        message: 'You do not have permission for this action',
-      };
-    }
+    const userId = session.user.user_id;
 
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
     let ticketId = formData.get('ticketId') as string;
     const ticketNumber = formData.get('ticketNumber');
+    const comment = formData.get('comment');
 
-    if (!ticketId || !ticketNumber) {
-      return {
-        status: 'ERROR',
-        message: 'Ticket ID or Ticket Number is missing.',
-      };
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    await pgB2Bpool.query(
-      'CALL tck_ticket_escalate($1::numeric, $2::numeric, $3::varchar, $4::varchar, $5::boolean)',
+    const escalation_id = await pgB2Bpool.query(
+      `
+        SELECT tck_escalate
+        (
+          pnum_Ticket_ID   => $1,
+          pnum_User_ID     => $2,
+          pvch_Comment     => $3,
+          pvch_API_User    => $4,
+          pvch_API_Process => $5,
+          pbln_Debug_Mode  => $6
+        )
+      `,
       [
-        parseInt(ticketId),
-        session.user.user_id,
+        ticketId,
+        userId,
+        comment,
         config.api.user,
         config.api.process,
         config.postgres_b2b_database.debugMode,
@@ -784,7 +788,7 @@ export const alterTicketSeverity = async ({
 
     await pgB2Bpool.query(
       `
-        CALL tck_ticket_change_severity
+        CALL tck_change_severity
         (
           pnum_Ticket_ID   => $1,
           pnum_User_ID     => $2,
@@ -842,7 +846,7 @@ export const createNewComment = async (
     if (modalAction === TicketDetailsModalActions.CLOSE) {
       await pgB2Bpool.query(
         `
-          CALL tck_ticket_close
+          CALL tck_close
           (
             pnum_Ticket_ID   => $1,
             pnum_User_ID     => $2,
@@ -925,7 +929,7 @@ export const createNewComment = async (
   }
 };
 
-export async function updateTicketStatus({
+export async function setTicketWorking({
   ticketId,
   ticketNumber,
   statusId,
@@ -944,14 +948,19 @@ export async function updateTicketStatus({
     const userId = session.user.user_id;
 
     await pgB2Bpool.query(
-      //TODO: Shoud Call tck_ticket_working
-      'CALL b2btickets_dev.tck_ticket_status_update($1, $2, $3, $4, $5, $6, $7)',
+      `
+        CALL tck_working
+        (
+          pnum_Ticket_ID   => $1,
+          pnum_User_ID     => $2,
+          pvch_API_User    => $3,
+          pvch_API_Process => $4,
+          pbln_Debug_Mode  => $5
+        )
+      `,
       [
         ticketId,
-        statusId,
         userId,
-        comment,
-        //@ts-ignore
         config.api.user,
         config.api.process,
         config.postgres_b2b_database.debugMode,
@@ -1103,3 +1112,94 @@ export const getServicesForCategorySelected = async ({
     };
   }
 };
+
+export async function getNextEscalationLevel({
+  ticketId,
+  ticketNumber,
+}: {
+  ticketId: string;
+  ticketNumber: string;
+}): Promise<{ data: string; error?: string }> {
+  try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const nextEscalationLevel = await pgB2Bpool.query(
+      `
+        select tck_get_next_escalation_level
+        (
+          pnum_Ticket_ID    => $1,
+          pvch_API_User     => $2,
+          pvch_API_Process  => $3,
+          pbln_Debug_Mode   => $4
+        )
+      `,
+      [
+        ticketId,
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    const { tck_get_next_escalation_level } = nextEscalationLevel.rows[0];
+
+    revalidatePath(`/ticket/${ticketNumber}`);
+    return { data: tck_get_next_escalation_level as string };
+  } catch (error: any) {
+    return {
+      data: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+// export async function escalateTicket({
+//   ticketId,
+//   ticketNumber,
+//   comment
+// }: {
+//   ticketId: string;
+//   ticketNumber: string;
+//   comment: string;
+// }): Promise<{ data: string; error?: string }> {
+//   try {
+//     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+//     const userId = session.user.user_id;
+
+//     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+//     const nextEscalationLevel = await pgB2Bpool.query(
+//       `
+//         SELECT tck_escalate
+//         (
+//           pnum_Ticket_ID   => $1,
+//           pnum_User_ID     => $2,
+//           pvch_Comment     => $3,
+//           pvch_API_User    => $4,
+//           pvch_API_Process => $5,
+//           pbln_Debug_Mode  => $6
+//         )
+//       `,
+//       [
+//         ticketId,
+//         userId,
+//         comment,
+//         config.api.user,
+//         config.api.process,
+//         config.postgres_b2b_database.debugMode,
+//       ]
+//     );
+
+//     const { tck_get_next_escalation_level } = nextEscalationLevel.rows[0];
+
+//     revalidatePath(`/ticket/${ticketNumber}`);
+//     return { data: tck_get_next_escalation_level as string };
+//   } catch (error: any) {
+//     return {
+//       data: '',
+//       error: error instanceof Error ? error.message : String(error),
+//     };
+//   }
+// }

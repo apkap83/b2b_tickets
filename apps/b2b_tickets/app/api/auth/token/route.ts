@@ -21,12 +21,12 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json(); // Extract JSON from request
-    const { email } = body;
+    const { emailProvided } = body;
 
     // Find User By email address
     const foundUser = (await B2BUser.findOne({
       where: {
-        email,
+        email: emailProvided,
       },
     })) as B2BUser;
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const emailToken = generateResetToken();
     // SEND EMAIL HERE to email
     logRequest.info(
-      `'*** Emai: ${email} - Token Code for Pass Reset: ${emailToken}`
+      `'*** Emai: ${emailProvided} - Token Code for Pass Reset: ${emailToken}`
     );
 
     const encryptedSecret = symmetricEncrypt(
@@ -50,14 +50,14 @@ export async function POST(req: NextRequest) {
 
     // Generate a JWT token
     const token = jwt.sign(
-      { token: encryptedSecret }, // Payload
+      { emailProvided, token: encryptedSecret }, // Payload
       JWT_SECRET, // Secret key
       { expiresIn: '5m' } // Token is valid for 5 minutes
     );
 
     // Set the token in an httpOnly cookie
     const response = NextResponse.json(
-      { message: `Token For E-mail address ${email}` },
+      { message: `Token For E-mail address ${emailProvided}` },
       { status: 200 }
     );
 
