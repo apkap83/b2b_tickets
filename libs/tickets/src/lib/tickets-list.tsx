@@ -70,9 +70,10 @@ const generateTableHeadAndColumns = async () => {
   ];
 
   if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
-    columnsForTickets.unshift('Escalated');
+    columnsForTickets.unshift('Cust. Type');
     columnsForTickets.unshift('Customer');
-    columnsForTickets.unshift('Type');
+    columnsForTickets.push('Escalated');
+    columnsForTickets.push('Cust. Last Comment');
   }
 
   return (

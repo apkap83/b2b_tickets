@@ -51,6 +51,10 @@ import {
   TicketSeverityColors,
 } from '@b2b-tickets/shared-models';
 import toast from 'react-hot-toast';
+
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+
 const FieldError = ({ formik, name, ...rest }: any) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
     return null;
@@ -66,6 +70,8 @@ const FieldError = ({ formik, name, ...rest }: any) => {
 export function NewTicketModal({ closeModal, userId }: any) {
   const autoComplete = 'off';
   const rightPanelMinWidthPx = '320px';
+  const [value, setValue] = useState('');
+
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -266,6 +272,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
     },
   });
 
+  console.log({ formik });
   return (
     <React.Fragment>
       <div

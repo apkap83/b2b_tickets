@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json(); // Extract JSON from request
-    const { captchaToken } = body;
+    const { emailProvided, captchaToken } = body;
 
     // Validate the captcha token
     const reCaptchaSuccessResponse = await validateReCaptcha(captchaToken);
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     logRequest.info('Trying to validate ReCaptcha in Google..');
     // Generate a JWT token after successful captcha validation
     const token = jwt.sign(
-      { captchaValidated: true }, // Payload
+      { emailProvided, captchaValidated: true }, // Payload
       JWT_SECRET, // Secret key
       { expiresIn: '5m' } // Token is valid for 5 minutes
     );

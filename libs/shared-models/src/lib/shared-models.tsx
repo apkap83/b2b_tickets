@@ -225,24 +225,26 @@ export enum ErrorCode {
   SecondFactorRequired = 'second-factor-required',
   IncorrectTwoFactorCode = 'incorrect-two-factor-code',
   InternalServerError = 'internal-server-error',
+
   NewPasswordMatchesOld = 'new-password-matches-old',
-  ThirdPartyIdentityProviderEnabled = 'third-party-identity-provider-enabled',
-  CaptchaValidationFailed = 'captcha-validation-failed',
+
   CaptchaJWTTokenRequired = 'captcha-jwt-token-required',
   CaptchaJWTTokenInvalid = 'captcha-jwt-token-invalid',
+
   EmailIsRequired = 'email-is-required',
+
   IncorrectEmailProvided = 'incorrect-email-provided',
-  IncorrectPassResetTokenProvided = 'incorrect-pass-reset-token-provided',
+
   TotpJWTTokenRequired = 'totp-jwt-token-required',
   TotpJWTTokenInvalid = 'totp-jwt-token-invalid',
+
   TokenForEmailRequired = 'token-for-email-required',
+
+  IncorrectPassResetTokenProvided = 'incorrect-pass-reset-token-provided',
   EmailJWTTokenRequired = 'email-jwt-token-required',
   EmailJWTTokenInvalid = 'email-jwt-token-invalid',
-  NoPasswordProvided = 'no-password-provided',
-  RepeatPasswordMismatch = 'repeat-password-mismatch',
-  PasswordDoesNotMeetComplexity = 'password-does-not-meet-complexity',
+
   NewPasswordRequired = 'new-password-required',
-  PasswordSuccesffullyChanged = 'password-successfully-changed',
 }
 
 export enum EscalationStatus {
