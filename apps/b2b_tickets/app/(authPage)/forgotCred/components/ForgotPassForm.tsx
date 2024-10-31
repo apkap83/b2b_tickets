@@ -1,22 +1,24 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import ReCAPTCHA from 'react-google-recaptcha';
-import Image from 'next/image';
 import { signIn, useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import ReCAPTCHA from 'react-google-recaptcha';
+
 import { useFormik, FormikTouched, FormikErrors } from 'formik';
 import * as Yup from 'yup';
-import Link from 'next/link';
 import clsx from 'clsx';
+import { MdOutlineMailLock } from 'react-icons/md';
+import { FaKey } from 'react-icons/fa';
+
 import { config } from '@b2b-tickets/config';
 import { TwoFactAuth } from './TwoFactAuth';
 import { ErrorCode } from '@b2b-tickets/shared-models';
 import { useCountdown } from '@b2b-tickets/react-hooks';
 import { formatTimeMMSS, passwordComplexitySchema } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
-import { MdOutlineMailLock } from 'react-icons/md';
-import { FaKey } from 'react-icons/fa';
 
 interface FieldErrorProps {
   formik: {
@@ -42,25 +44,20 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
   const router = useRouter();
 
   const [captcha, setCaptcha] = useState<string | null>(null);
-  const [captchaVerified, setCaptchaVerified] = useState(false); // State to track if ReCAPTCHA is completed
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+
   const [totpVerified, setTotpVerified] = useState(false);
-
   const [totpCode, setTotpCode] = useState('');
-
   const [showOTP, setShowOTP] = useState(false);
+
   const [showEmailTokenField, setShowEmailTokenField] = useState(false);
   const [showNewPasswordField, setShowNewPasswordField] = useState(false);
 
   const [emailFieldIsReadOnly, setEmailFieldIsReadOnly] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
-
-  const [callbackUrl, setCallbackUrl] = useState('/');
-
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit');
-
   const successMessage = 'Password Successfully updated!';
-  // Create a reference for reCAPTCHA
+
   const recaptchaRef = useRef<any>(); // New useRef for reCAPTCHA
 
   // Handle the onChange event of the ReCAPTCHA
@@ -73,6 +70,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
     window.location.reload();
   });
 
+  // Clear Old Cookies for this procedure
   useEffect(() => {
     // Call the API route to clear HTTP-only cookies
     const clearCookies = async () => {
@@ -85,13 +83,16 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
   }, []);
 
   // If user is already authenticated, redirect to the homepage
-  useEffect(() => {
-    if (status === 'authenticated') {
-      router.push('/');
-    }
-  }, [status, router]);
+  // useEffect(() => {
+  //   if (status === 'authenticated') {
+  //     router.push('/');
+  //   }
+  // }, [status, router]);
 
-  const getReCaptchaJWTToken = async ({ setSubmitting }: any) => {
+  const getReCaptchaJWTToken = async ({
+    emailProvided,
+    setSubmitting,
+  }: any) => {
     if (!captcha) {
       setError('Verify reCAPTCHA!');
       setSubmitting(false);
@@ -105,7 +106,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ captchaToken: captcha }),
+        body: JSON.stringify({ emailProvided, captchaToken: captcha }),
       });
 
       const captchaResult = await captchaResponse.json();
@@ -137,7 +138,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
     }
   };
 
-  const getTotpJWTToken = async ({ setSubmitting }: any) => {
+  const getTotpJWTToken = async ({ emailProvided, setSubmitting }: any) => {
     if (!totpCode) {
       setError('Verify TOTP Code!');
       setSubmitting(false);
@@ -150,7 +151,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: formik.values.email, totpCode }),
+        body: JSON.stringify({ emailProvided, totpCode }),
       });
 
       const totpResult = await totpResponse.json();
@@ -171,7 +172,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
     }
   };
 
-  const getEmailJWTToken = async ({ setSubmitting }: any) => {
+  const getEmailJWTToken = async ({ emailProvided, setSubmitting }: any) => {
     try {
       // Call your custom token validation API route
       const tokenResponse = await fetch('/api/auth/token', {
@@ -179,7 +180,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: formik.values.email }),
+        body: JSON.stringify({ emailProvided }),
       });
 
       const tokenResult = await tokenResponse.json();
@@ -260,7 +261,10 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
         }
 
         if (!captchaVerified) {
-          await getReCaptchaJWTToken({ setSubmitting });
+          await getReCaptchaJWTToken({
+            emailProvided: formik.values.email,
+            setSubmitting,
+          });
         }
       }
 
@@ -269,7 +273,10 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
         !totpVerified &&
         totpCode
       ) {
-        await getTotpJWTToken({ setSubmitting });
+        await getTotpJWTToken({
+          emailProvided: formik.values.email,
+          setSubmitting,
+        });
       }
 
       const response = await signIn('credentials-password-reset', {
@@ -282,7 +289,8 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
       if (!response) return;
 
       if (response.ok) {
-        window.location.href = callbackUrl;
+        setError(successMessage);
+        // window.location.href = '/';
       }
 
       let error = response?.error?.replace('Error: ', '');
@@ -298,18 +306,6 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
         case ErrorCode.IncorrectEmailProvided:
           setError('Email is incorrect');
           setSubmitting(false);
-          if (config.CaptchaIsActiveForPasswordReset) {
-            setCaptchaVerified(false);
-            if (recaptchaRef.current) {
-              recaptchaRef.current.reset();
-            }
-          }
-          break;
-        case ErrorCode.CaptchaValidationFailed:
-          setError('Invalid reCAPTCHA validation');
-          setSubmitting(false);
-
-          // Reset the reCAPTCHA (if active)
           if (config.CaptchaIsActiveForPasswordReset) {
             setCaptchaVerified(false);
             if (recaptchaRef.current) {
@@ -341,7 +337,10 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
           setCaptchaVerified(true);
           setEmailFieldIsReadOnly(true);
           setShowEmailTokenField(true);
-          getEmailJWTToken({ setSubmitting });
+          getEmailJWTToken({
+            emailProvided: formik.values.email,
+            setSubmitting,
+          });
           break;
         case ErrorCode.IncorrectPassResetTokenProvided:
           setSubmitting(false);
@@ -353,22 +352,9 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
           setShowNewPasswordField(true);
           setError('');
           break;
-        case ErrorCode.NoPasswordProvided:
-          setShowEmailTokenField(false);
-          setShowNewPasswordField(true);
-          setError('No Password provided');
-          break;
-        case ErrorCode.RepeatPasswordMismatch:
-          setError('Passwords do not match');
-          break;
-        case ErrorCode.PasswordDoesNotMeetComplexity:
-          setError('Password does not meet complexity requirements');
-          break;
-        case ErrorCode.PasswordSuccesffullyChanged:
-          setError(successMessage);
-          break;
         default:
           setError('Internal Server Error');
+          console.log('357', error);
           setSubmitting(false);
           break;
       }
@@ -404,7 +390,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
           />
           <span>Platinum Support</span>
         </div>
-        <div className="text-center text-xl mt-[.75rem] text-[#687991] font-medium my-5">
+        <div className="text-center text-xl mt-[.75rem] text-[#6C757D] font-medium my-5">
           Forgot Password Form
         </div>
       </div>
@@ -528,7 +514,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
           )}
 
           {error !== successMessage ? (
-            <div className="mt-10 flex justify-around">
+            <div className="mt-5 flex justify-around">
               <SignInButton
                 pending={formik.isSubmitting}
                 label={submitButtonLabel}
@@ -538,8 +524,8 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
               />
             </div>
           ) : (
-            <div className="mt-5 mb-2 flex justify-around border bg-blue-500 text-white rounded-md">
-              <Link href="/">Login Page</Link>
+            <div className="mt-5 mb-2 flex justify-around border bg-[#2b2b44] py-1 text-white rounded-md">
+              <Link href="/">Proceed To Home Page</Link>
             </div>
           )}
         </form>

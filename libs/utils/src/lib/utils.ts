@@ -63,16 +63,16 @@ export const userHasRole = (
   );
 };
 
-export function formatDate(date: Date) {
+export function formatDate(date: Date | null) {
   if (!date) return null;
   return date
     .toLocaleString('en-GB', {
       day: '2-digit',
-      month: 'short',
-      year: 'numeric',
+      month: 'numeric',
+      year: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
+      // second: '2-digit',
       hour12: false,
     })
     .replace(',', '');
