@@ -74,6 +74,7 @@ const generateTableHeadAndColumns = async () => {
     columnsForTickets.unshift('Customer');
     columnsForTickets.push('Escalated');
     columnsForTickets.push('Cust. Last Comment');
+    columnsForTickets.push('Delayed Resp');
   }
 
   return (

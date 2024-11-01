@@ -29,6 +29,7 @@ import {
   alterTicketSeverity,
   setRemedyIncidentIDForTicket,
   getNextEscalationLevel,
+  getCategoryAndServiceTypeById,
 } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import styles from './css/ticket-details.module.scss';
@@ -98,7 +99,12 @@ export function TicketDetails({
   const problemDescription = ticketDetails[0]['Description'];
   const commentsArray: TicketComment[] = ticketDetails[0]['comments'];
   const severity = ticketDetails[0].Severity;
+  const categoryServiceTypeId = ticketDetails[0].category_service_type_id;
   const customerType = ticketDetails[0]['Cust. Type'];
+  const customer = ticketDetails[0].Customer;
+
+  const [category, setCategory] = useState('');
+  const [serviceType, setServiceType] = useState('');
 
   useEffect(() => {
     const nextEscLevel = async () => {
@@ -109,7 +115,20 @@ export function TicketDetails({
       setNextEscalationLevel(resp.data);
     };
 
+    const getCategAndServiceType = async () => {
+      console.log(118);
+      const resp = await getCategoryAndServiceTypeById({
+        categoryServiceTypeId,
+      });
+
+      console.log({ resp });
+      setCategory(resp.data?.category_name as string);
+      setServiceType(resp.data?.service_type_name as string);
+    };
+
     nextEscLevel();
+    getCategAndServiceType();
+    console.log(127);
   }, []);
 
   const customButtonBasedOnTicketStatus = () => {
@@ -330,35 +349,21 @@ export function TicketDetails({
             <div
               className={`${styles.statusDiv} min-h-full shadow-lg px-2 py-2 bg-white rounded-lg border border-black/25 flex-col justify-start items-start inline-flex`}
             >
-              <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Status</div>
-                <StatusBadge />
-              </div>
-              <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Ticket</div>
-                {ticketNumber}
-              </div>
-              <SeverityRow
-                session={session}
-                ticketDetails={ticketDetails}
-                setShowSeverityDialog={setShowSeverityDialog}
-              />
+              {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
+                <div className={detailsRowClass}>
+                  <div className={detailsRowHeaderClass}>Customer</div>
+                  {customer}
+                </div>
+              )}
               {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
                 <div className={detailsRowClass}>
                   <div className={detailsRowHeaderClass}>Customer Type</div>
                   {customerType}
                 </div>
               )}
-              <RemedyIncidentRow
-                session={session}
-                ticketDetails={ticketDetails}
-                setShowRemedyIncDialog={setShowRemedyIncDialog}
-              />
               <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Ticket Creation</div>
-                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {greekOpenDate}
-                </div>
+                <div className={detailsRowHeaderClass}>Ticket</div>
+                {ticketNumber}
               </div>
               <div className={detailsRowClass}>
                 <div className={detailsRowHeaderClass}>Title</div>
@@ -367,35 +372,25 @@ export function TicketDetails({
                 </div>
               </div>
               <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Status</div>
+                <StatusBadge />
+              </div>
+
+              <SeverityRow
+                session={session}
+                ticketDetails={ticketDetails}
+                setShowSeverityDialog={setShowSeverityDialog}
+              />
+              <div className={detailsRowClass}>
                 <div className={detailsRowHeaderClass}>Category</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {/* {category} */}
+                  {category}
                 </div>
               </div>
               <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Service Name</div>
+                <div className={detailsRowHeaderClass}>Service Type</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {/* {serviceName} */}
-                </div>
-              </div>
-              {equipment_id && (
-                <div className={detailsRowClass}>
-                  <div className={detailsRowHeaderClass}>Equipment ID</div>
-                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                    {equipment_id}
-                  </div>
-                </div>
-              )}
-              <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Contact Person</div>
-                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {contact_person}
-                </div>
-              </div>
-              <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Contact Phone</div>
-                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {contact_phone}
+                  {serviceType}
                 </div>
               </div>
               <div className="w-full h-[0px] border border-black/20"></div>
@@ -434,11 +429,55 @@ export function TicketDetails({
               )}
               <div className="w-full h-[0px] border border-black/20"></div>
               <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Contact Person</div>
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                  {contact_person}
+                </div>
+              </div>
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Contact Phone</div>
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                  {contact_phone}
+                </div>
+              </div>
+
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>CC Users</div>
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight"></div>
+              </div>
+
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>CC Phones</div>
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight"></div>
+              </div>
+
+              <RemedyIncidentRow
+                session={session}
+                ticketDetails={ticketDetails}
+                setShowRemedyIncDialog={setShowRemedyIncDialog}
+              />
+              <div className={detailsRowClass}>
                 <div className={detailsRowHeaderClass}>Occurence Date</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {formatDate(occurrenceDate)}
                 </div>
               </div>
+
+              <div className={detailsRowClass}>
+                <div className={detailsRowHeaderClass}>Ticket Creation</div>
+                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                  {formatDate(ticketDetails[0]['Opened'])}
+                </div>
+              </div>
+
+              {equipment_id && (
+                <div className={detailsRowClass}>
+                  <div className={detailsRowHeaderClass}>Equipment ID</div>
+                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                    {equipment_id}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="shadow-lg grow shrink basis-0 rounded-md self-stretch bg-[#6870fa]/0 flex-col justify-start items-center gap-4 inline-flex">
               <div className="self-stretch p-2.5 border rounded-t-md border-black/20 justify-center items-center gap-2.5 inline-flex">
@@ -480,7 +519,8 @@ export function TicketDetails({
             modalAction={modalAction}
             closeModal={setShowEscalateDialog}
             ticketDetails={ticketDetails}
-            escalationLevel={nextEscalationLevel}
+            nextEscalationLevel={nextEscalationLevel}
+            setNextEscalationLevel={setNextEscalationLevel}
           />
         ) : null}
         {showRemedyIncDialog && (
@@ -617,6 +657,31 @@ const RemedyIncPopup = ({
   const ticketNumber = ticketDetails[0].Ticket;
   const remedyInc = ticketDetails[0]['Remedy Ticket'];
   const inputBox = useRef<any>();
+
+  const handleSubmit = async () => {
+    if (inputBox && inputBox.current.value) {
+      const remedyIncId = inputBox.current.value;
+      const resp = await setRemedyIncidentIDForTicket({
+        ticketId: ticketDetails[0].ticket_id,
+        remedyIncId,
+        ticketNumber: ticketDetails[0].Ticket,
+      });
+
+      if (!resp) {
+        toast.error('An error occurred');
+        return;
+      }
+
+      if (resp?.status === 'ERROR') {
+        toast.error(resp.message);
+        return;
+      }
+
+      toast.success(resp.message);
+      setShowRemedyIncDialog(false);
+    }
+  };
+
   return (
     <>
       <div
@@ -639,6 +704,11 @@ const RemedyIncPopup = ({
                   placeholder="Remedy Inc ID"
                   defaultValue={remedyInc ? remedyInc : ''}
                   ref={inputBox}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSubmit();
+                    }
+                  }}
                 />
               </div>
 
@@ -660,29 +730,7 @@ const RemedyIncPopup = ({
                       transform: 'scale(1.05)', // Scale effect on hover
                     },
                   }}
-                  onClick={async () => {
-                    if (inputBox && inputBox.current.value) {
-                      const remedyIncId = inputBox.current.value;
-                      const resp = await setRemedyIncidentIDForTicket({
-                        ticketId: ticketDetails[0].ticket_id,
-                        remedyIncId,
-                        ticketNumber: ticketDetails[0].Ticket,
-                      });
-
-                      if (!resp) {
-                        toast.error('An error occurred');
-                        return;
-                      }
-
-                      if (resp?.status === 'ERROR') {
-                        toast.error(resp.message);
-                        return;
-                      }
-
-                      toast.success(resp.message);
-                      setShowRemedyIncDialog(false);
-                    }
-                  }}
+                  onClick={handleSubmit}
                 >
                   SUBMIT
                 </Button>

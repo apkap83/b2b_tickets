@@ -102,6 +102,7 @@ export interface TicketDetail {
   Title: string;
   Description: string;
   Severity: string;
+  category_service_type_id: string;
   Category: string;
   Service: string;
   Equipment: string;
@@ -159,6 +160,7 @@ export enum AppPermissionTypes {
   Escalate_Ticket = 'Escalate Ticket',
   Alter_Ticket_Severity = 'Alter Ticket Severity',
   Create_New_App_User = 'Create New App User',
+  Edit_User = 'Edit User',
 }
 
 export enum AuthenticationTypes {
