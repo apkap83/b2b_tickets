@@ -133,7 +133,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
       ),
     service: yup
       .string()
-      .required('Service name is required')
+      .required('Service type is required')
       .test(
         'is-valid-number',
         'Service cannot be empty',
@@ -591,7 +591,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                             top: '-7px',
                           }}
                         >
-                          Service Name
+                          Service Type
                         </InputLabel>
                         <Select
                           labelId="service"
@@ -601,7 +601,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           autoWidth
-                          label="Service Name"
+                          label="Service Type"
                           sx={{
                             '& .MuiSelect-select': {
                               paddingTop: '8px',
