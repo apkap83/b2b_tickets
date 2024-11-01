@@ -3,7 +3,7 @@
 import TableCell from '@mui/material/TableCell';
 import { AppRoleTypes, TicketDetail } from '@b2b-tickets/shared-models';
 import Link from 'next/link';
-
+import clsx from 'clsx';
 import { formatDate, userHasRole, getStatusColor } from '@b2b-tickets/utils';
 import styles from './css/ticker-row.module.scss';
 import { useRouter } from 'next/navigation';
@@ -22,8 +22,18 @@ export const TicketRow = ({
   };
 
   const lastCustCommentDate = formatDate(item['Last Cust. Comment Date']);
+  const delayedResponse = item['Delayed Response'];
   return (
-    <tr key={item.ticket_id} onClick={handleClick} className={styles.ticketRow}>
+    // <tr key={item.ticket_id} onClick={handleClick} className={styles.ticketRow}>
+    <tr
+      key={item.ticket_id}
+      onClick={handleClick}
+      className={clsx({
+        'bg-red-100':
+          userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+          item['Delayed Response'] === 'Yes',
+      })}
+    >
       {/* One More Column for Ticket Handlers */}
       {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
         <>
@@ -104,13 +114,12 @@ export const TicketRow = ({
             No
           </TableCell>
           <TableCell>
-            <span className="text-red-900">
-              {lastCustCommentDate ? (
-                <span>{lastCustCommentDate} &gt; 2h</span>
-              ) : (
-                ''
-              )}
+            <span>
+              {lastCustCommentDate ? <span>{lastCustCommentDate}</span> : ''}
             </span>
+          </TableCell>
+          <TableCell>
+            <span>{delayedResponse ? <span>{delayedResponse}</span> : ''}</span>
           </TableCell>
         </>
       ) : null}

@@ -282,9 +282,9 @@ export async function createUser(formState: any, formData: any) {
 export async function deleteUser({ userName }: any) {
   try {
     // Verify Security Permission
-    const session = (await verifySecurityPermission(
-      AppPermissionTypes.API_Security_Management
-    )) as Session;
+    const session = (await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+    ])) as Session;
 
     //  Delete User
     const deletedCount = await B2BUser.destroy({
@@ -415,9 +415,9 @@ function getRoleData(formData: any) {
 export async function editUser(formState: any, formData: any) {
   try {
     // Verify Security Permission
-    const session = (await verifySecurityPermission(
-      AppPermissionTypes.API_Security_Management
-    )) as Session;
+    const session = (await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+    ])) as Session;
 
     const firstName = formData.get('firstName');
     const lastName = formData.get('lastName');

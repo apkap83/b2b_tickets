@@ -178,11 +178,11 @@ export const getFilteredTicketsForCustomer = async (
       sqlExpression = `AND "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
 
     // Filter Tickets View by Customer Name
-    const sqlQuery = `SELECT * FROM tickets_v where "Customer" = $1 ${sqlExpression}
+    const sqlQuery = `SELECT * FROM tickets_v where "customer_id" = $1 ${sqlExpression}
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
-    const res = await pgB2Bpool.query(sqlQuery, [customerName]);
+    const res = await pgB2Bpool.query(sqlQuery, [customerId]);
 
     return res?.rows as TicketDetail[];
   } catch (error) {
@@ -522,7 +522,7 @@ export const createNewTicket = async (
       argsForTicketNew
     );
 
-    const newTicketId = result.rows[0].tck_ticket_new;
+    const newTicketId = result.rows[0].tck_new;
     if (!newTicketId) {
       throw new Error('New Ticket Id cannot be retrieved during insertion');
     }
@@ -1155,51 +1155,38 @@ export async function getNextEscalationLevel({
   }
 }
 
-// export async function escalateTicket({
-//   ticketId,
-//   ticketNumber,
-//   comment
-// }: {
-//   ticketId: string;
-//   ticketNumber: string;
-//   comment: string;
-// }): Promise<{ data: string; error?: string }> {
-//   try {
-//     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
-//     const userId = session.user.user_id;
+export async function getCategoryAndServiceTypeById({
+  categoryServiceTypeId,
+}: {
+  categoryServiceTypeId: string;
+}): Promise<{
+  data?: { category_name: string; service_type_name: string };
+  error?: string;
+}> {
+  try {
+    const session = await verifySecurityRole([
+      AppRoleTypes.B2B_TicketCreator,
+      AppRoleTypes.B2B_TicketHandler,
+    ]);
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
-//     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    // Filter Tickets View by Customer Name
+    const sqlQuery = `SELECT * FROM ticket_category_service_types_v where "category_service_type_id" = $1`;
 
-//     const nextEscalationLevel = await pgB2Bpool.query(
-//       `
-//         SELECT tck_escalate
-//         (
-//           pnum_Ticket_ID   => $1,
-//           pnum_User_ID     => $2,
-//           pvch_Comment     => $3,
-//           pvch_API_User    => $4,
-//           pvch_API_Process => $5,
-//           pbln_Debug_Mode  => $6
-//         )
-//       `,
-//       [
-//         ticketId,
-//         userId,
-//         comment,
-//         config.api.user,
-//         config.api.process,
-//         config.postgres_b2b_database.debugMode,
-//       ]
-//     );
+    const res = await pgB2Bpool.query(sqlQuery, [categoryServiceTypeId]);
 
-//     const { tck_get_next_escalation_level } = nextEscalationLevel.rows[0];
+    if (res.rows.length === 0) {
+      throw new Error('No data found for the given categoryServiceTypeId.');
+    }
 
-//     revalidatePath(`/ticket/${ticketNumber}`);
-//     return { data: tck_get_next_escalation_level as string };
-//   } catch (error: any) {
-//     return {
-//       data: '',
-//       error: error instanceof Error ? error.message : String(error),
-//     };
-//   }
-// }
+    const { category_name, service_type_name } = res.rows[0]; // Access properties directly
+
+    return {
+      data: { category_name, service_type_name },
+    };
+  } catch (error: any) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}

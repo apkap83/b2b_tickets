@@ -212,9 +212,9 @@ export class B2BUser extends Model<
             }
           },
           beforeUpdate: async (user) => {
-            if (!B2BUser.isPasswordComplex(user.password)) {
-              throw new Error('Password does not meet complexity requirements');
-            }
+            // if (!B2BUser.isPasswordComplex(user.password)) {
+            //   throw new Error('Password does not meet complexity requirements');
+            // }
             if (user.changed('password')) {
               const salt = await bcrypt.genSalt(10);
               user.password = await bcrypt.hash(user.password, salt);

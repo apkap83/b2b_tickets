@@ -47,12 +47,13 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import * as yup from 'yup';
 import { useFormStatus } from 'react-dom';
-import { escalateTicket } from '@b2b-tickets/server-actions';
+import {
+  escalateTicket,
+  getNextEscalationLevel,
+} from '@b2b-tickets/server-actions';
 import {
   EscalationFillColor,
   EscalationBorderColor,
-} from '@b2b-tickets/shared-models';
-import {
   TicketDetail,
   TicketDetailsModalActions,
 } from '@b2b-tickets/shared-models';
@@ -63,12 +64,14 @@ export function EscalateModal({
   modalAction = TicketDetailsModalActions.ESCALATE,
   ticketDetails,
   closeModal,
-  escalationLevel,
+  nextEscalationLevel,
+  setNextEscalationLevel,
 }: {
   modalAction: TicketDetailsModalActions;
   ticketDetails: TicketDetail[];
   closeModal: any;
-  escalationLevel: string;
+  nextEscalationLevel: string;
+  setNextEscalationLevel: any;
 }) {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -86,12 +89,22 @@ export function EscalateModal({
   const noScriptFallback = useToastMessage(formState);
 
   useEffect(() => {
+    const nextEscLevel = async () => {
+      const resp = await getNextEscalationLevel({
+        ticketId,
+        ticketNumber,
+      });
+      setNextEscalationLevel(resp.data);
+    };
+
+    nextEscLevel();
+
     if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
   useEffect(() => {
     if (modalAction === TicketDetailsModalActions.ESCALATE)
-      setSubmitButtonLabel(`Escalate Level ${escalationLevel}`);
+      setSubmitButtonLabel(`Escalate Level ${nextEscalationLevel}`);
   }, [modalAction]);
 
   const getCorrectTitle = () => {

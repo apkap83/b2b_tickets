@@ -61,9 +61,21 @@ export function TicketsUiComments({
           ) : (
             <>
               {comments.map((item: TicketComment) => {
-                if (item.by_system === 'y') {
+                if (item.by_system === 'y' && !item.escalation_level) {
                   return <SystemComment key={item.comment_id} item={item} />;
                 }
+                if (item.by_system === 'y' && item.escalation_level) {
+                  return (
+                    <EscalationComment
+                      key={item.comment_id}
+                      item={item}
+                      session={session}
+                      ticketNumber={ticketNumber}
+                      escalationLevel={item.escalation_level}
+                    />
+                  );
+                }
+
                 return (
                   <UserComment
                     key={item.comment_id}
@@ -80,6 +92,55 @@ export function TicketsUiComments({
     </div>
   );
 }
+
+const EscalationComment = ({
+  item,
+  session,
+  ticketNumber,
+  escalationLevel,
+}: {
+  key: string;
+  item: TicketComment;
+  session: any;
+  ticketNumber: string;
+  escalationLevel: string;
+}) => {
+  return (
+    <div className="self-stretch shadow-sm h-[205px] p-4 bg-white rounded-lg flex-col justify-start items-start gap-2.5 flex">
+      <div className="self-stretch justify-between items-center gap-2.5 inline-flex">
+        <div className="flex justify-center items-center gap-2">
+          {getRightAvatar(item['User Customer Name'])}
+          <div>
+            <span className="text-black text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+              {getRightCommentCreatorName(item)}
+            </span>
+            <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+              &nbsp; escalated this Ticket to <b>Level {escalationLevel}</b>{' '}
+              at&nbsp;
+              {getGreekDateFormat(item['Comment Date'])}
+            </span>
+          </div>
+        </div>
+        {item.is_closure === 'y' ? (
+          <div className="inline text-right border p-1 text-[#3d8d52] text-xs whitespace-nowrap">
+            Closing Comment
+          </div>
+        ) : (
+          <DeleteCommentButton
+            session={session}
+            item={item}
+            ticketNumber={ticketNumber}
+          />
+        )}
+      </div>
+      <div className="self-stretch grow shrink basis-0 p-2.5 bg-[#e6e6f3]/50 justify-start items-start gap-2.5 inline-flex">
+        <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+          {item.Comment}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const UserComment = ({
   item,
