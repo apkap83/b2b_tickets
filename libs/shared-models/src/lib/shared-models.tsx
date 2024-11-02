@@ -53,7 +53,7 @@ export interface TicketCategory {
 }
 
 export interface ServiceType {
-  category_serivce_type_id: string;
+  category_service_type_id: string;
   service_type_id: string;
   service_type_name: string;
 }

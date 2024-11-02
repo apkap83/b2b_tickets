@@ -1190,3 +1190,59 @@ export async function getCategoryAndServiceTypeById({
     };
   }
 }
+
+export const setNewCategoryServiceTypeForTicket = async (
+  formState: any,
+  formData: FormData
+) => {
+  try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+
+    const ticketId = formData.get('ticketId') as string;
+    const categoryServiceTypeId = formData.get('categoryServiceTypeId');
+    const ticketNumber = formData.get('ticketNumber');
+
+    console.log({
+      ticketId,
+      categoryServiceTypeId,
+    });
+    await pgB2Bpool.query(
+      `
+        CALL tck_change_category_service_type
+        (
+          pnum_Ticket_ID                => $1,
+          pnum_Category_Service_Type_ID => $2,
+          pnum_User_ID                  => $3,
+          pvch_API_User                 => $4,
+          pvch_API_Process              => $5,
+          pbln_Debug_Mode               => $6
+        )
+      `,
+      [
+        parseInt(ticketId),
+        categoryServiceTypeId,
+        session.user.user_id,
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    revalidatePath(`/ticket/${ticketNumber}`);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Ticket category/service type was updated!',
+    };
+  } catch (error: any) {
+    console.error(error);
+    // Optionally revalidate on error as well, if you expect data might change
+    revalidatePath(`/ticket/${formData.get('ticketNumber')}`);
+    return {
+      status: 'ERROR',
+      message: error?.message,
+    };
+  }
+};

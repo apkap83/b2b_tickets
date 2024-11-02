@@ -111,7 +111,7 @@ export const TicketRow = ({
       {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
         <>
           <TableCell data-label="Escalated" align="center">
-            No
+            {item['Curernt Escalation Level']}
           </TableCell>
           <TableCell>
             <span>
