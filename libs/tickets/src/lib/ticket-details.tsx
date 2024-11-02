@@ -1,11 +1,18 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import { useFormState } from 'react-dom';
 import {
   getGreekDateFormat,
   getSeverityStatusColor,
   getStatusColor,
+  EMPTY_FORM_STATE,
 } from '@b2b-tickets/utils';
-import { TicketComment, TicketDetail } from '@b2b-tickets/shared-models';
+import {
+  TicketComment,
+  TicketDetail,
+  TicketCategory,
+  ServiceType,
+} from '@b2b-tickets/shared-models';
 import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
 import { NewCommentModal } from './new-comment-modal';
 import { EscalateModal } from './escalate-modal';
@@ -30,6 +37,9 @@ import {
   setRemedyIncidentIDForTicket,
   getNextEscalationLevel,
   getCategoryAndServiceTypeById,
+  getTicketCategories,
+  getServicesForCategorySelected,
+  setNewCategoryServiceTypeForTicket,
 } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import styles from './css/ticket-details.module.scss';
@@ -43,6 +53,16 @@ import { Typography, useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { SubmitButton } from '@b2b-tickets/ui';
 import { formatDate } from '@b2b-tickets/utils';
+
+import Box from '@mui/material/Box';
+import FormControl from '@mui/material/FormControl';
+
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import { useFormik } from 'formik';
+import * as yup from 'yup';
+import { useToastMessage } from '@b2b-tickets/react-hooks';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -65,6 +85,7 @@ export function TicketDetails({
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   const [showRemedyIncDialog, setShowRemedyIncDialog] = useState(false);
   const [showSeverityDialog, setShowSeverityDialog] = useState(false);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
 
   // const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
   const [modalAction, setModalAction] = useState<TicketDetailsModalActions>(
@@ -74,7 +95,13 @@ export function TicketDetails({
   const [nextEscalationLevel, setNextEscalationLevel] = useState<string>('');
 
   // Custom Hook for ESC Key Press
-  useEscKeyListener(() => setShowNewComment(false));
+  useEscKeyListener(() => {
+    setShowNewComment(false);
+    setShowEscalateDialog(false);
+    setShowRemedyIncDialog(false);
+    setShowSeverityDialog(false);
+    setShowCategoryDialog(false);
+  });
 
   const ticketStatus = ticketDetails[0].status_id;
   // const escalatedStatusDate = ticketDetails[0].escalation_date;
@@ -102,9 +129,8 @@ export function TicketDetails({
   const categoryServiceTypeId = ticketDetails[0].category_service_type_id;
   const customerType = ticketDetails[0]['Cust. Type'];
   const customer = ticketDetails[0].Customer;
-
-  const [category, setCategory] = useState('');
-  const [serviceType, setServiceType] = useState('');
+  const category = ticketDetails[0].Category;
+  const serviceType = ticketDetails[0].Service;
 
   useEffect(() => {
     const nextEscLevel = async () => {
@@ -115,20 +141,7 @@ export function TicketDetails({
       setNextEscalationLevel(resp.data);
     };
 
-    const getCategAndServiceType = async () => {
-      console.log(118);
-      const resp = await getCategoryAndServiceTypeById({
-        categoryServiceTypeId,
-      });
-
-      console.log({ resp });
-      setCategory(resp.data?.category_name as string);
-      setServiceType(resp.data?.service_type_name as string);
-    };
-
     nextEscLevel();
-    getCategAndServiceType();
-    console.log(127);
   }, []);
 
   const customButtonBasedOnTicketStatus = () => {
@@ -266,56 +279,24 @@ export function TicketDetails({
       </Button>
     );
   };
+  const statusHTMLColor = getStatusColor(ticketStatus);
 
   const StatusBadge = () => {
     return (
-      <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-        <span
-          className="px-2 text-white border rounded-md p-1"
-          style={{
-            backgroundColor: getStatusColor(ticketStatus),
-            borderColor: getStatusColor(ticketStatus),
-          }}
-        >
-          {ticketDetails[0].Status}
-        </span>
-      </div>
+      // <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+      <span
+        className={`px-2 py-1 text-white`}
+        style={{
+          // border: `1px solid ${statusHTMLColor}30`,
+          // backgroundColor: getStatusColor(ticketStatus),
+          color: statusHTMLColor,
+        }}
+      >
+        {ticketDetails[0].Status}
+      </span>
+      // </div>
     );
   };
-
-  // const EscalationBadge = () => {
-  //   if (escalatedStatusDate == null) return;
-
-  //   const escalationDate = ticketDetails[0].escalation_date || 'Unknown';
-  //   const escalationUserFirstName = ticketDetails[0].first_name || 'Unknown';
-  //   const escalationUserLastName = ticketDetails[0].last_name || 'Unknown';
-
-  //   return (
-  //     <div className="text-black/90 mt-2 mb-2 text-right text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-  //       <div
-  //         className="text-white rounded-md px-1 py-2 shadow-md"
-  //         style={{
-  //           backgroundColor: `${EscalationFillColor}`,
-  //           border: `1px solid ${EscalationBorderColor}`,
-  //           fontSize: '16px',
-  //           lineHeight: '12px',
-  //           fontWeight: 100,
-  //         }}
-  //       >
-  //         <div>
-  //           &nbsp;
-  //           {escalationDate && (
-  //             <span>
-  //               {escalationUserFirstName} {escalationUserLastName}
-  //             </span>
-  //           )}
-  //         </div>
-  //         <br />
-  //         <div>{escalationDate && getGreekDateFormat(escalationDate)}</div>
-  //       </div>
-  //     </div>
-  //   );
-  // };
 
   return (
     <>
@@ -332,13 +313,6 @@ export function TicketDetails({
             </div> */}
           </div>
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
-          {/* <button
-            onClick={async () => {
-              await sendTestEmail();
-            }}
-          >
-            Send E-mail
-          </button> */}
         </div>
         <div
           className={`self-stretch pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex`}
@@ -371,7 +345,13 @@ export function TicketDetails({
                   {title}
                 </div>
               </div>
-              <div className={detailsRowClass}>
+              <div
+                className={`mt-1 mb-1 ${detailsRowClass}`}
+                style={{
+                  borderTop: `1px solid ${statusHTMLColor}40`,
+                  borderBottom: `1px solid ${statusHTMLColor}40`,
+                }}
+              >
                 <div className={detailsRowHeaderClass}>Status</div>
                 <StatusBadge />
               </div>
@@ -381,7 +361,12 @@ export function TicketDetails({
                 ticketDetails={ticketDetails}
                 setShowSeverityDialog={setShowSeverityDialog}
               />
-              <div className={detailsRowClass}>
+              <div
+                onClick={() => {
+                  setShowCategoryDialog(true);
+                }}
+                className={detailsRowClass}
+              >
                 <div className={detailsRowHeaderClass}>Category</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
                   {category}
@@ -393,41 +378,40 @@ export function TicketDetails({
                   {serviceType}
                 </div>
               </div>
-              <div className="w-full h-[0px] border border-black/20"></div>
-              {sid && (
-                <div className={detailsRowClass}>
-                  <div className={detailsRowHeaderClass}>SID</div>
-                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                    {sid}
+              <div className="w-full border-t border-b border-gray-200">
+                {sid && (
+                  <div className={detailsRowClass}>
+                    <div className={detailsRowHeaderClass}>SID</div>
+                    <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                      {sid}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {cid && (
-                <div className={detailsRowClass}>
-                  <div className={detailsRowHeaderClass}>CID</div>
-                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                    {cid}
+                )}
+                {cid && (
+                  <div className={detailsRowClass}>
+                    <div className={detailsRowHeaderClass}>CID</div>
+                    <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                      {cid}
+                    </div>
                   </div>
-                </div>
-              )}
-              {userName && (
-                <div className={detailsRowClass}>
-                  <div className={detailsRowHeaderClass}>User Name</div>
-                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                    {userName}
+                )}
+                {userName && (
+                  <div className={detailsRowClass}>
+                    <div className={detailsRowHeaderClass}>User Name</div>
+                    <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                      {userName}
+                    </div>
                   </div>
-                </div>
-              )}
-              {cliValue && (
-                <div className={detailsRowClass}>
-                  <div className={detailsRowHeaderClass}>CLI Value</div>
-                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                    {cliValue}
+                )}
+                {cliValue && (
+                  <div className={detailsRowClass}>
+                    <div className={detailsRowHeaderClass}>CLI Value</div>
+                    <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                      {cliValue}
+                    </div>
                   </div>
-                </div>
-              )}
-              <div className="w-full h-[0px] border border-black/20"></div>
+                )}
+              </div>
               <div className={detailsRowClass}>
                 <div className={detailsRowHeaderClass}>Contact Person</div>
                 <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
@@ -534,6 +518,13 @@ export function TicketDetails({
           <SeverityPopup
             ticketDetails={ticketDetails}
             setShowSeverityDialog={setShowSeverityDialog}
+          />
+        )}
+
+        {showCategoryDialog && (
+          <ChangeCategoryPopup
+            ticketDetails={ticketDetails}
+            setShowCategoryDialog={setShowCategoryDialog}
           />
         )}
       </>
@@ -918,5 +909,310 @@ const SeverityPopup = ({
         </div>
       </div>
     </>
+  );
+};
+
+const ChangeCategoryPopup = ({
+  ticketDetails,
+  setShowCategoryDialog,
+}: {
+  ticketDetails: TicketDetail[];
+  setShowCategoryDialog: (val: boolean) => void;
+}) => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+
+  const ticketId = ticketDetails[0].ticket_id;
+  const ticketNumber = ticketDetails[0].Ticket;
+
+  const [ticketCategories, setTicketCategories] = useState<TicketCategory[]>(
+    []
+  );
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+
+  const [selectedCategoryServiceTypeId, setSelectedCategoryServiceTypeId] =
+    useState('');
+
+  const [formState, action] = useFormState<any, any>(
+    setNewCategoryServiceTypeForTicket,
+    EMPTY_FORM_STATE
+  );
+  const noScriptFallback = useToastMessage(formState);
+  const ticketSchema = yup.object().shape({
+    category: yup
+      .string()
+      .required('Category is required')
+      .test(
+        'is-valid-number',
+        'Category cannot be empty',
+        (value) => value !== '' && !isNaN(Number(value))
+      ),
+    service: yup
+      .string()
+      .required('Service type is required')
+      .test(
+        'is-valid-number',
+        'Service cannot be empty',
+        (value) => value !== '' && !isNaN(Number(value))
+      ),
+  });
+
+  const formik = useFormik<any>({
+    initialValues: {
+      category: '',
+      service: '',
+    },
+    validateOnMount: true,
+    validationSchema: ticketSchema,
+    onSubmit: async (values, { setSubmitting }) => {},
+  });
+
+  useEffect(() => {
+    if (formState.status === 'SUCCESS') setShowCategoryDialog(false);
+  }, [formState.status, formState.timestamp]);
+
+  // Get Ticket Categories
+  useEffect(() => {
+    const getCategories = async () => {
+      const result = await getTicketCategories();
+
+      if (result.error) return toast.error(result.error);
+
+      // If no error, set the ticket categories with the returned data
+      setTicketCategories(result.data);
+    };
+
+    getCategories();
+  }, []);
+
+  // Set The Ticket's Selected Category
+  useEffect(() => {
+    const initCategoryIdSelected = ticketCategories.filter(
+      (i) => i.Category === ticketDetails[0].Category
+    )[0]?.category_id;
+
+    if (!formik.values.category && ticketCategories.length > 0) {
+      formik.setFieldValue('category', initCategoryIdSelected);
+    }
+  }, [ticketCategories]);
+
+  // Get Available Service Types after category is selected
+  useEffect(() => {
+    const getServices = async () => {
+      const result = await getServicesForCategorySelected({
+        category_id: formik.values['category'],
+      });
+
+      if (result.error) return toast.error(result.error);
+
+      setServiceTypes(result.data);
+    };
+    const categoryIdSelected = formik.values['category'];
+    if (categoryIdSelected) getServices();
+  }, [formik.values['category']]);
+
+  // Set The Ticket's Selected Category
+  useEffect(() => {
+    const serviceIdSelected = serviceTypes.filter(
+      (i) => i.service_type_name === ticketDetails[0].Service
+    )[0]?.service_type_id;
+
+    const categoryServiceTypeId = serviceTypes.filter(
+      (i) => i.service_type_id === formik.values.service
+    )[0]?.category_service_type_id;
+
+    if (!formik.values.service && serviceTypes.length > 0) {
+      formik.setFieldValue('service', serviceIdSelected);
+    }
+
+    setSelectedCategoryServiceTypeId(categoryServiceTypeId);
+  }, [serviceTypes, formik.values.service]);
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 flex items-center justify-center
+       bg-black bg-opacity-50"
+      >
+        <div
+          className={`bg-white rounded-lg justify-start items-center inline-flex min-w-[350px]`}
+        >
+          <div className="w-full flex flex-col items-start gap-2.5 pt-0 pb-[13px] px-0 relative bg-localhostwhite">
+            <div className="flex flex-col items-start gap-[20.8px] relative self-stretch w-full flex-[0_0_auto]">
+              <div className="text-white px-4 py-2 relative self-stretch w-full rounded-t-md [background:linear-gradient(0,rgb(2,0,90)_0%,rgba(55,55,66,0.5)_100%)]">
+                {`Alter Category/Service for ${ticketNumber}`}
+              </div>
+
+              <form action={action}>
+                <div className="w-full px-10 flex flex-col">
+                  <FormControl
+                    sx={{
+                      width: '323px',
+                      marginTop: '16px',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    <InputLabel
+                      id="category"
+                      sx={{
+                        top: '-7px',
+                      }}
+                    >
+                      Category
+                    </InputLabel>
+                    <Select
+                      labelId="category"
+                      id="category"
+                      name="category"
+                      value={formik.values.category}
+                      onChange={(val) => {
+                        formik.handleChange(val);
+                        // formik.setFieldValue('service', '');
+                      }}
+                      onBlur={formik.handleBlur}
+                      autoWidth
+                      label="Categories *"
+                      required
+                      sx={{
+                        '& .MuiSelect-select': {
+                          paddingTop: '8px',
+                          paddingBottom: '8px',
+                        },
+                      }}
+                    >
+                      {ticketCategories.map((item) => {
+                        return (
+                          <MenuItem
+                            key={item.category_id}
+                            value={item.category_id}
+                            sx={{
+                              width: '270px',
+                            }}
+                          >
+                            {item.Category}
+                          </MenuItem>
+                        );
+                      })}
+                    </Select>
+                  </FormControl>
+                  <FieldError formik={formik} name="category" />
+                  <>
+                    <FormControl
+                      sx={{
+                        marginTop: '20px',
+                        marginBottom: '10px',
+                        width: '323px',
+                      }}
+                    >
+                      <InputLabel
+                        id="service"
+                        sx={{
+                          top: '-7px',
+                        }}
+                      >
+                        Service Type
+                      </InputLabel>
+                      <Select
+                        labelId="service"
+                        id="service"
+                        name="service"
+                        value={formik.values.service}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        autoWidth
+                        label="Service Type"
+                        sx={{
+                          '& .MuiSelect-select': {
+                            paddingTop: '8px',
+                            paddingBottom: '8px',
+                          },
+                        }}
+                        // onChangeCapture={(s) => {
+                        //   setSelectedServiceType(formik.values.);
+                        // }}
+                      >
+                        {serviceTypes.map((item: ServiceType) => {
+                          return (
+                            <MenuItem
+                              key={item.service_type_id}
+                              value={item.service_type_id}
+                              sx={{
+                                width: '270px',
+                              }}
+                            >
+                              {item.service_type_name}
+                            </MenuItem>
+                          );
+                        })}
+                      </Select>
+                    </FormControl>
+                    <FieldError formik={formik} name="service" />
+                    <input type="hidden" name="ticketId" value={ticketId} />
+                    <input
+                      type="hidden"
+                      name="categoryServiceTypeId"
+                      value={selectedCategoryServiceTypeId}
+                    />
+                    <input
+                      type="hidden"
+                      name="ticketNumber"
+                      value={ticketNumber}
+                    />
+                  </>
+                </div>
+
+                <div className="flex items-center justify-center gap-20 relative self-stretch w-full flex-[0_0_auto]">
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setShowCategoryDialog(false);
+                    }}
+                  >
+                    CANCEL
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    sx={{
+                      transition: 'transform 0.2s ease-in-out', // Smooth transition
+                      '&:hover': {
+                        transform: 'scale(1.05)', // Scale effect on hover
+                      },
+                    }}
+                    disabled={
+                      !(
+                        formik.touched['category'] || formik.touched['service']
+                      ) ||
+                      !(
+                        formik.dirty &&
+                        (formik.values.category !==
+                          formik.initialValues.category ||
+                          formik.values.service !==
+                            formik.initialValues.service)
+                      )
+                    }
+                  >
+                    SUBMIT
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const FieldError = ({ formik, name, ...rest }: any) => {
+  if (!formik?.touched[name] || !formik?.errors[name]) {
+    return null;
+  }
+
+  return (
+    <p className="text-wrap text-red-500 text-xs -mt-2" {...rest}>
+      {formik?.errors[name]}
+    </p>
   );
 };

@@ -106,7 +106,7 @@ const EscalationComment = ({
   escalationLevel: string;
 }) => {
   return (
-    <div className="self-stretch shadow-sm h-[205px] p-4 bg-white rounded-lg flex-col justify-start items-start gap-2.5 flex">
+    <div className="self-stretch shadow-sm h-[205px] p-4 bg-white rounded-lg flex-col justify-start items-start gap-2.5 flex border border-red-200">
       <div className="self-stretch justify-between items-center gap-2.5 inline-flex">
         <div className="flex justify-center items-center gap-2">
           {getRightAvatar(item['User Customer Name'])}
@@ -115,9 +115,10 @@ const EscalationComment = ({
               {getRightCommentCreatorName(item)}
             </span>
             <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-              &nbsp; escalated this Ticket to <b>Level {escalationLevel}</b>{' '}
-              at&nbsp;
-              {getGreekDateFormat(item['Comment Date'])}
+              &nbsp; <span className="text-red-900">escalated</span> to
+              Level&nbsp;
+              {escalationLevel}&nbsp; at&nbsp;
+              {formatDate(item['Comment Date'])}
             </span>
           </div>
         </div>
@@ -163,7 +164,7 @@ const UserComment = ({
             </span>
             <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
               {' '}
-              added a comment at {getGreekDateFormat(item['Comment Date'])}
+              added a comment at {formatDate(item['Comment Date'])}
             </span>
           </div>
         </div>

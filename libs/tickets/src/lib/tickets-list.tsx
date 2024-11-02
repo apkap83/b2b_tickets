@@ -72,7 +72,7 @@ const generateTableHeadAndColumns = async () => {
   if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
     columnsForTickets.unshift('Cust. Type');
     columnsForTickets.unshift('Customer');
-    columnsForTickets.push('Escalated');
+    columnsForTickets.push('Escalation');
     columnsForTickets.push('Cust. Last Comment');
     columnsForTickets.push('Delayed Resp');
   }
