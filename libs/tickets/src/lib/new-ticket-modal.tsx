@@ -272,7 +272,6 @@ export function NewTicketModal({ closeModal, userId }: any) {
     },
   });
 
-  console.log({ formik });
   return (
     <React.Fragment>
       <div
@@ -283,7 +282,11 @@ export function NewTicketModal({ closeModal, userId }: any) {
           className={`${styles.mainContainer} bg-white pt-[1.3rem] pb-[1.3rem] px-[2rem] 
         rounded-lg max-h-[95vh]  overflow-hidden flow-root bg-gray-50`}
         >
-          <form action={action} className={`${styles.formContainer}`}>
+          <form
+            action={action}
+            autoComplete="off"
+            className={`${styles.formContainer}`}
+          >
             <>
               <Typography
                 variant="h4"
@@ -464,6 +467,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                 >
                   <FormControl
                     sx={{
+                      marginTop: '8px',
                       marginBottom: '8px',
                       minWidth: rightPanelMinWidthPx,
                     }}
@@ -851,7 +855,7 @@ const CcFields = ({
       {showCcFields && (
         <div>
           {/* Cc E-mails Field */}
-          <FormControl sx={{ width: '100%' }}>
+          <FormControl sx={{ width: '100%', mb: '10px' }}>
             <TextField
               margin="dense"
               id="ccEmails"
@@ -869,7 +873,7 @@ const CcFields = ({
           <FieldError formik={formik} name="ccEmails" />
 
           {/* Cc Phones Field */}
-          <FormControl sx={{ width: '100%' }}>
+          <FormControl sx={{ width: '100%', mb: '10px' }}>
             <TextField
               margin="dense"
               id="ccPhones"

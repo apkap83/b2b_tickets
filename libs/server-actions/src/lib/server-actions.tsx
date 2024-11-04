@@ -99,6 +99,53 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
 
 // const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
 
+export const getCcValuesForTicket = async ({
+  ticketId,
+}: {
+  ticketId: string;
+}): Promise<{
+  data?: {
+    ccEmails: string;
+    ccPhones: string;
+  };
+  error?: string;
+}> => {
+  try {
+    const session = await verifySecurityRole([
+      AppRoleTypes.B2B_TicketCreator,
+      AppRoleTypes.B2B_TicketHandler,
+    ]);
+
+    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    //@ts-ignore
+    const customerId = session.user.customer_id;
+
+    //@ts-ignore
+    const customerName = session.user.customer_name;
+
+    // Artificial Delay
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    // Get Cc Emails & Cc Phones
+    const sqlQueryForCcEmails = `SELECT cc_phones FROM ticket_cc_users_v where "ticket_id" = $1`;
+    const res_emails = await pgB2Bpool.query(sqlQueryForCcEmails, [ticketId]);
+
+    const sqlQueryForCcPhones = `SELECT cc_phones FROM ticket_cc_phone_numbers_v where "ticket_id" = $1`;
+    const res_phones = await pgB2Bpool.query(sqlQueryForCcPhones, [ticketId]);
+
+    return {
+      data: {
+        ccEmails: res_emails.rows[0].cc_phones,
+        ccPhones: res_phones.rows[0].cc_phones,
+      },
+    };
+  } catch (error: any) {
+    return {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
 export const getTotalNumOfTicketsForCustomer = async () => {
   try {
     const session = await verifySecurityPermission(
@@ -154,6 +201,8 @@ export const getFilteredTicketsForCustomer = async (
     // Artificial Delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
+    console.log('Customer Id', customerId);
+
     // In case there is no Customer Id then return all
     if (customerId === -1) {
       let sqlExpression = '';
@@ -182,6 +231,7 @@ export const getFilteredTicketsForCustomer = async (
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
+    console.log('sqlQuery', sqlQuery);
     const res = await pgB2Bpool.query(sqlQuery, [customerId]);
 
     return res?.rows as TicketDetail[];
@@ -1073,7 +1123,10 @@ export const getTicketCategories = async (): Promise<{
   error?: string;
 }> => {
   try {
-    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+    const session = await verifySecurityRole([
+      AppRoleTypes.B2B_TicketHandler,
+      AppRoleTypes.B2B_TicketCreator,
+    ]);
 
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
 
@@ -1094,7 +1147,10 @@ export const getServicesForCategorySelected = async ({
   category_id: string;
 }): Promise<{ data: ServiceType[]; error?: string }> => {
   try {
-    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+    const session = await verifySecurityRole([
+      AppRoleTypes.B2B_TicketHandler,
+      AppRoleTypes.B2B_TicketCreator,
+    ]);
 
     if (!category_id) return { data: [], error: 'No category_id was provided' };
     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
@@ -1237,12 +1293,6 @@ export const setNewCategoryServiceTypeForTicket = async (
       message: 'Ticket category/service type was updated!',
     };
   } catch (error: any) {
-    console.error(error);
-    // Optionally revalidate on error as well, if you expect data might change
-    revalidatePath(`/ticket/${formData.get('ticketNumber')}`);
-    return {
-      status: 'ERROR',
-      message: error?.message,
-    };
+    return fromErrorToFormState(error);
   }
 };
