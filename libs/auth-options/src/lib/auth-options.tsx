@@ -22,7 +22,7 @@ import {
   AppRole,
   B2BUser,
   pgB2Bpool,
-  setSchema,
+  setSchemaAndTimezone,
 } from '@b2b-tickets/db-access';
 
 import { NextAuthOptions } from 'next-auth';
@@ -208,7 +208,7 @@ const tryLocalAuthentication = async (
     );
 
     // Find Customer Name from Customer ID
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
     const queryForCustomerName =
       'SELECT customer_name FROM customers WHERE customer_id = $1';
     const customerNameRes = await pgB2Bpool.query(queryForCustomerName, [
@@ -492,7 +492,7 @@ export const options: NextAuthOptions = {
           );
 
           // Find Customer Name from Customer ID
-          await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+          await setSchemaAndTimezone(pgB2Bpool);
           const queryForCustomerName =
             'SELECT customer_name FROM customers WHERE customer_id = $1';
 

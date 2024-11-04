@@ -12,7 +12,7 @@ import {
   AppRole,
   B2BUser,
   pgB2Bpool,
-  setSchema,
+  setSchemaAndTimezone,
 } from '@b2b-tickets/db-access';
 import { revalidatePath } from 'next/cache';
 import {
@@ -94,7 +94,7 @@ export const getCustomersList = async () => {
       AppPermissionTypes.Create_New_App_User,
     ])) as Session;
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const getList = 'SELECT customer_id, customer_name from customers';
     const customersList = await pgB2Bpool.query(getList);
@@ -113,7 +113,7 @@ export const getAdminDashboardData = async () => {
       AppPermissionTypes.Create_New_App_User,
     ])) as Session;
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     // TODO Uncomment
     // await checkAuthenticationAndAdminRole();
@@ -221,7 +221,7 @@ export async function createUser(formState: any, formData: any) {
       throw new Error('User with this mobile phone already exists.');
 
     // Get next user_id from sequence
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
     let user_id = null;
     try {
       const query = "select nextval('users_sq')";

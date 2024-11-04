@@ -5,7 +5,11 @@ import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { pgB2Bpool, setSchema } from '@b2b-tickets/db-access';
+import {
+  pgB2Bpool,
+  setSchema,
+  setSchemaAndTimezone,
+} from '@b2b-tickets/db-access';
 import { config } from '@b2b-tickets/config';
 import {
   toFormState,
@@ -116,7 +120,8 @@ export const getCcValuesForTicket = async ({
       AppRoleTypes.B2B_TicketHandler,
     ]);
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    // await setSchemaAndTimezone(pgB2Bpool);
+    await setSchemaAndTimezone(pgB2Bpool);
     //@ts-ignore
     const customerId = session.user.customer_id;
 
@@ -135,7 +140,7 @@ export const getCcValuesForTicket = async ({
 
     return {
       data: {
-        ccEmails: res_emails.rows[0].cc_phones,
+        ccEmails: res_emails.rows[0].email_address,
         ccPhones: res_phones.rows[0].cc_phones,
       },
     };
@@ -152,7 +157,7 @@ export const getTotalNumOfTicketsForCustomer = async () => {
       AppPermissionTypes.Tickets_Page
     );
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
     //@ts-ignore
     const customerId = session.user.customer_id;
 
@@ -188,7 +193,7 @@ export const getFilteredTicketsForCustomer = async (
     const session = await verifySecurityPermission(
       AppPermissionTypes.Tickets_Page
     );
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
 
@@ -246,7 +251,7 @@ export const getNumOfTickets = async (query: string): Promise<number> => {
       AppPermissionTypes.Tickets_Page
     );
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
     //@ts-ignore
     const customerId = session.user.customer_id;
 
@@ -295,7 +300,7 @@ export const getTicketDetailsForTicketId = async ({
       AppPermissionTypes.Tickets_Page
     );
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const queryForTicketsCategoriesAndTypes = `SELECT * FROM tickets_v WHERE "Ticket" = $1`;
 
@@ -374,7 +379,7 @@ export const getTicketDetailsForTicketId = async ({
 //       AppPermissionTypes.Tickets_Page
 //     );
 
-//     await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+//     await setSchemaAndTimezone(pgB2Bpool);
 
 //     //@ts-ignore
 //     const userId = session.user.user_id;
@@ -394,7 +399,7 @@ export const getServiceTypes = async (): Promise<ServiceType[]> => {
       AppPermissionTypes.Tickets_Page
     );
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const query =
       'SELECT service_id, "Service Name" from service_types_v where start_date < CURRENT_TIMESTAMP and end_date is null';
@@ -466,6 +471,7 @@ export const createNewTicket = async (
     );
 
     // Using entries() to get both key and value
+    //@ts-ignore
     for (const [key, value] of formData.entries()) {
       console.log(`${key}: ${value}`);
     }
@@ -473,9 +479,7 @@ export const createNewTicket = async (
     await client.query(
       `SET search_path TO ${config.postgres_b2b_database.schemaName}`
     );
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
-
-    // await setSchema(client, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     let {
       title,
@@ -640,7 +644,7 @@ export const setRemedyIncidentIDForTicket = async ({
     logRequest.info(
       `Serv.A.F. ${session.user.userName} - Setting Remedy Incident ${remedyIncId} for Ticket Number ${ticketNumber}`
     );
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     if (!userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
       return {
@@ -702,7 +706,7 @@ export const sendTestEmail = async () => {
       redirect(`/api/auth/signin?callbackUrl=/`);
     }
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const mailerSend = new MailerSend({
       apiKey: process.env.MAILERSEND_API_TOKEN as string,
@@ -748,7 +752,7 @@ export const deleteExistingComment = async ({
       AppPermissionTypes.Delete_Comments
     );
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     await pgB2Bpool.query('CALL cmt_delete($1, $2, $3, $4, $5)', [
       commentId,
@@ -780,7 +784,7 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
     );
     const userId = session.user.user_id;
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     let ticketId = formData.get('ticketId') as string;
     const ticketNumber = formData.get('ticketNumber');
@@ -832,7 +836,7 @@ export const alterTicketSeverity = async ({
       AppPermissionTypes.Alter_Ticket_Severity
     );
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -883,7 +887,7 @@ export const createNewComment = async (
 
     //@ts-ignore
     const userId = session.user.user_id;
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const { comment, ticketId, ticketNumber, modalAction } =
       commentSchema_zod.parse({
@@ -993,7 +997,7 @@ export async function setTicketWorking({
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const userId = session.user.user_id;
 
@@ -1105,7 +1109,7 @@ export const getTicketSeverities = async (): Promise<{
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const queryForSeverities = `SELECT severity_id, severity FROM severities`;
     const queryRes = await pgB2Bpool.query(queryForSeverities);
@@ -1128,7 +1132,7 @@ export const getTicketCategories = async (): Promise<{
       AppRoleTypes.B2B_TicketCreator,
     ]);
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const queryForSeverities = `SELECT category_id, "Category" FROM ticket_categories_v`;
     const queryRes = await pgB2Bpool.query(queryForSeverities);
@@ -1153,7 +1157,7 @@ export const getServicesForCategorySelected = async ({
     ]);
 
     if (!category_id) return { data: [], error: 'No category_id was provided' };
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const queryForSeverities = `
     SELECT category_service_type_id, service_type_id, service_type_name 
@@ -1179,7 +1183,7 @@ export async function getNextEscalationLevel({
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const nextEscalationLevel = await pgB2Bpool.query(
       `
@@ -1224,7 +1228,7 @@ export async function getCategoryAndServiceTypeById({
       AppRoleTypes.B2B_TicketCreator,
       AppRoleTypes.B2B_TicketHandler,
     ]);
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     // Filter Tickets View by Customer Name
     const sqlQuery = `SELECT * FROM ticket_category_service_types_v where "category_service_type_id" = $1`;
@@ -1254,7 +1258,7 @@ export const setNewCategoryServiceTypeForTicket = async (
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
 
-    await setSchema(pgB2Bpool, config.postgres_b2b_database.schemaName);
+    await setSchemaAndTimezone(pgB2Bpool);
 
     const ticketId = formData.get('ticketId') as string;
     const categoryServiceTypeId = formData.get('categoryServiceTypeId');
