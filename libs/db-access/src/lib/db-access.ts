@@ -13,33 +13,36 @@ export const pgB2Bpool = new Pool({
 });
 
 // Function to set the search path to the desired schema
-export const setSchema = async (pool: Pool, schema: string) => {
-  try {
-    await pool.query(`SET search_path TO ${schema}`);
-  } catch (error) {
-    console.error(`Error setting schema: ${error}`);
-  }
-};
+// const setSchema = async (pool: Pool, schema: string) => {
+//   try {
+//     await pool.query(`SET search_path TO ${schema}`);
+//   } catch (error) {
+//     console.error(`Error setting schema: ${error}`);
+//   }
+// };
 
 // Function to set the search path to the desired schema and timezone
-export const setSchemaAndTimezone = async (
+const setSchemaAndTimezoneFunction = async (
   pool: Pool,
   schema: string,
   timezone: string
 ) => {
   try {
-    // Set search path
-    await pool.query(`SET search_path TO ${schema}`);
+    console.log('***** 31');
     // Set timezone
     await pool.query(`SET TIME ZONE '${timezone}'`);
+    // Set search path
+    await pool.query(`SET search_path TO ${schema}`);
   } catch (error) {
     console.error(`Error setting schema or timezone: ${error}`);
   }
 };
 
 // Example usage
-setSchemaAndTimezone(
-  pgB2Bpool,
-  config.postgres_b2b_database.schemaName,
-  'Europe/Athens'
-);
+export const setSchemaAndTimezone = async (pool: any) => {
+  await setSchemaAndTimezoneFunction(
+    pool,
+    config.postgres_b2b_database.schemaName,
+    config.TimeZone
+  );
+};
