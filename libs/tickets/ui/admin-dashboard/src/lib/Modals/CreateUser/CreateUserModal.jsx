@@ -27,6 +27,23 @@ function CreateUserModal({ closeModal }) {
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
 
   const noScriptFallback = useToastMessage(formState);
+
+  const validationSchema = Yup.object({
+    company: Yup.string().min(1, '').required('Company is required'),
+    first_name: Yup.string().required('First name is required'),
+    last_name: Yup.string().required('Last name is required'),
+    username: Yup.string().required('User name is required'),
+    password: Yup.string()
+      .min(8, 'Password must be at least 8 characters long')
+      .required('Password is required'),
+    email: Yup.string()
+      .email('Invalid email address')
+      .required('Email is required'),
+    mobile_phone: Yup.string()
+      // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
+      .required('Mobile phone is required'),
+  });
+
   const formik = useFormik({
     initialValues: {
       company: '',
@@ -47,7 +64,7 @@ function CreateUserModal({ closeModal }) {
       email: '',
       mobile_phone: '',
     },
-    validationSchema: validationSchema,
+    // validationSchema: validationSchema,
     // onSubmit: async (values, { setSubmitting }) => {},
   });
 
@@ -72,7 +89,7 @@ function CreateUserModal({ closeModal }) {
 
         <form className="flex flex-col gap-3 pt-3" action={action}>
           <div>
-            <span className={styles.inputDescription}>Company Name</span>
+            <span className={styles.inputDescription}>Customer Name</span>
             <select
               name="company"
               // className="text-left select max-w-xs"
@@ -82,12 +99,13 @@ function CreateUserModal({ closeModal }) {
               className={styles.selectStyle}
             >
               <option value="" hidden>
-                Select Company
+                Select Customer
               </option>
               {customersList.map((item) => {
+                console.log('item', item);
                 return (
                   <option key={item.customer_id} value={item.customer_id}>
-                    {item.customer_name}
+                    {item.customer_display_name}
                   </option>
                 );
               })}
@@ -240,21 +258,5 @@ function CreateUserModal({ closeModal }) {
     </div>
   );
 }
-
-const validationSchema = Yup.object({
-  company: Yup.string().min(1, '').required('Company is required'),
-  first_name: Yup.string().required('First name is required'),
-  last_name: Yup.string().required('Last name is required'),
-  username: Yup.string().required('User name is required'),
-  password: Yup.string()
-    .min(8, 'Password must be at least 8 characters long')
-    .required('Password is required'),
-  email: Yup.string()
-    .email('Invalid email address')
-    .required('Email is required'),
-  mobile_phone: Yup.string()
-    // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
-    .required('Mobile phone is required'),
-});
 
 export default CreateUserModal;
