@@ -234,7 +234,6 @@ export const getFilteredTicketsForCustomer = async (
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
-    console.log('sqlQuery', sqlQuery);
     const res = await pgB2Bpool.query(sqlQuery, [customerId]);
 
     return res?.rows as TicketDetail[];

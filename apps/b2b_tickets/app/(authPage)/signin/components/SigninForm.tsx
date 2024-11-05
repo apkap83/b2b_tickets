@@ -233,6 +233,10 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           setError('Internal Server Error');
           setSubmitting(false);
           break;
+        case ErrorCode.NoRoleAssignedToUser:
+          setError('No Role Assigned');
+          setSubmitting(false);
+          break;
         default:
           setError('Internal Server Error');
           setSubmitting(false);

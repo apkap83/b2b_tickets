@@ -24,6 +24,8 @@ export const SeverityRow = ({
   const statusColor = getSeverityStatusColor(ticketDetails[0].severity_id);
   const isFinalStatus =
     ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
+  const ticketStatus = ticketDetails[0].status_id;
+  const startWorkPressed = ticketStatus !== '1';
   return (
     <>
       {' '}
@@ -32,7 +34,8 @@ export const SeverityRow = ({
         <div
           data-tooltip-id={
             userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
-            !isFinalStatus
+            !isFinalStatus &&
+            startWorkPressed
               ? 'editSeverity'
               : undefined // Only add tooltip ID if the condition is met
           }
