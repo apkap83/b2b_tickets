@@ -240,6 +240,7 @@ const tryLocalAuthentication = async (
 
     logRequest.debug(`Valid User Name/Password was provided`);
 
+    console.log({ userDetails });
     return userDetails;
   } catch (error: unknown) {
     logRequest.error(error);
@@ -284,6 +285,11 @@ export const options: NextAuthOptions = {
               'LocalAuthUserDetails object from Local Authentication is faulty'
             );
             throw new Error(ErrorCode.InternalServerError);
+          }
+
+          // Without Roles Assigned - The user should not login
+          if (localAuthUserDetails?.roles.length === 0) {
+            throw new Error(ErrorCode.NoRoleAssignedToUser);
           }
 
           // Without Two Factor Authentication The User is Now Authenticated
@@ -366,6 +372,7 @@ export const options: NextAuthOptions = {
             ErrorCode.SecondFactorRequired,
             ErrorCode.IncorrectTwoFactorCode,
             ErrorCode.IncorrectUsernameOrPassword,
+            ErrorCode.NoRoleAssignedToUser,
           ].map(String);
 
           if (
@@ -523,6 +530,11 @@ export const options: NextAuthOptions = {
             },
           };
 
+          // Without Roles Assigned - The user should not login
+          if (userDetails?.roles.length === 0) {
+            throw new Error(ErrorCode.NoRoleAssignedToUser);
+          }
+
           return userDetails;
         } catch (error: unknown) {
           const permittedErrorsToFrontEnd: string[] = [
@@ -533,6 +545,7 @@ export const options: NextAuthOptions = {
             ErrorCode.CaptchaJWTTokenRequired,
             ErrorCode.TokenForEmailRequired,
             ErrorCode.NewPasswordRequired,
+            ErrorCode.NoRoleAssignedToUser,
           ].map(String);
 
           if (

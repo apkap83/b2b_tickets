@@ -290,7 +290,7 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
 
       if (response.ok) {
         setError(successMessage);
-        // window.location.href = '/';
+        window.location.href = '/';
       }
 
       let error = response?.error?.replace('Error: ', '');
