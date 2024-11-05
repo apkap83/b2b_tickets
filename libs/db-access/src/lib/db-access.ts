@@ -28,7 +28,6 @@ const setSchemaAndTimezoneFunction = async (
   timezone: string
 ) => {
   try {
-    console.log('***** 31');
     // Set timezone
     await pool.query(`SET TIME ZONE '${timezone}'`);
     // Set search path

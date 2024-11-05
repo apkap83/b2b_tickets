@@ -1,11 +1,14 @@
 'use client';
-import { useRef } from 'react';
 import { TicketDetail } from '@b2b-tickets/shared-models';
 import { alterTicketSeverity } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import InputLabel from '@mui/material/InputLabel';
 import { useTheme } from '@mui/material';
-import { tokens } from '@b2b-tickets/ui-theme';
+import { useFormik } from 'formik';
 
 export const SeverityPopup = ({
   ticketDetails,
@@ -15,11 +18,30 @@ export const SeverityPopup = ({
   setShowSeverityDialog: (val: boolean) => void;
 }) => {
   const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
 
   const ticketNumber = ticketDetails[0].Ticket;
-  const inputSelect = useRef<any>();
-  const severityId = ticketDetails[0].severity_id;
+  const severityId = String(ticketDetails[0].severity_id);
+
+  const formik = useFormik<any>({
+    initialValues: {
+      severity: severityId,
+    },
+    // validateOnMount: true,
+    // validationSchema: ticketSchema,
+    onSubmit: async (values, { setSubmitting }) => {
+      const resp = await alterTicketSeverity({
+        ticketNumber,
+        ticketId: ticketDetails[0].ticket_id,
+        newSeverityId: values.severity,
+      });
+
+      if (resp && resp.status === 'SUCCESS') {
+        toast.success('Severity was altered');
+      }
+
+      setShowSeverityDialog(false);
+    },
+  });
 
   return (
     <>
@@ -36,21 +58,67 @@ export const SeverityPopup = ({
                 {`Alter Severity for ${ticketNumber}`}
               </div>
 
-              <div className="flex max-h-[984.67px] items-center justify-center relative self-stretch w-full">
-                <select
-                  ref={inputSelect}
-                  className="pr-6 border bg-white shadow-md"
-                  name=""
-                  id=""
-                  defaultValue={ticketDetails[0].severity_id}
+              <div className="flex items-center justify-center relative self-stretch w-full">
+                <FormControl
+                  sx={{
+                    marginTop: '10px',
+                    marginBottom: '10px',
+                    width: '150px',
+                  }}
                 >
-                  <option value="1">Low</option>
-                  <option value="2">Medium</option>
-                  <option value="3">High</option>
-                </select>
+                  <InputLabel
+                    id="severity"
+                    sx={{
+                      top: '-7px',
+                    }}
+                  >
+                    Severity
+                  </InputLabel>
+                  <Select
+                    labelId="severity"
+                    id="severity"
+                    name="severity"
+                    value={formik.values.severity}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoWidth
+                    label="Severity"
+                    sx={{
+                      '& .MuiSelect-select': {
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                      },
+                    }}
+                  >
+                    <MenuItem
+                      value="1"
+                      sx={{
+                        width: '270px',
+                      }}
+                    >
+                      Low
+                    </MenuItem>
+                    <MenuItem
+                      value="2"
+                      sx={{
+                        width: '270px',
+                      }}
+                    >
+                      Medium
+                    </MenuItem>
+                    <MenuItem
+                      value="3"
+                      sx={{
+                        width: '270px',
+                      }}
+                    >
+                      High
+                    </MenuItem>
+                  </Select>
+                </FormControl>
               </div>
 
-              <div className="flex items-center justify-center gap-20 relative self-stretch w-full flex-[0_0_auto]">
+              <div className="flex items-center justify-center mb-2 gap-20 relative self-stretch w-full flex-[0_0_auto]">
                 <Button
                   variant="outlined"
                   onClick={() => {
@@ -63,26 +131,12 @@ export const SeverityPopup = ({
                 <Button
                   variant="contained"
                   sx={{
-                    transition: 'transform 0.2s ease-in-out', // Smooth transition
+                    transition: 'transform 0.2s ease-in-out',
                     '&:hover': {
-                      transform: 'scale(1.05)', // Scale effect on hover
+                      transform: 'scale(1.10)', // Scale effect on hover
                     },
                   }}
-                  onClick={async () => {
-                    if (inputSelect && inputSelect.current.value) {
-                      const resp = await alterTicketSeverity({
-                        ticketNumber: ticketDetails[0].Ticket,
-                        ticketId: ticketDetails[0].ticket_id,
-                        newSeverityId: inputSelect.current.value,
-                      });
-
-                      if (resp && resp.status === 'SUCCESS') {
-                        toast.success('Severity was altered');
-                      }
-
-                      setShowSeverityDialog(false);
-                    }
-                  }}
+                  onClick={() => formik.handleSubmit()}
                 >
                   SUBMIT
                 </Button>

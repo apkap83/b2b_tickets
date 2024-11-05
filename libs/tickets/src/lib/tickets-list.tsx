@@ -1,13 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
-import Link from 'next/link';
 
-import {
-  TicketStatusName,
-  AppRoleTypes,
-  TicketStatusColors,
-  TicketDetail,
-} from '@b2b-tickets/shared-models';
+import { AppRoleTypes, TicketDetail } from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 
@@ -16,8 +10,6 @@ import TableBody from '@mui/material/TableBody';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
-import { formatDate } from '@b2b-tickets/utils';
-import clsx from 'clsx';
 import styles from './css/tickets-list.module.scss';
 import { TicketRow } from './ticket-row';
 
