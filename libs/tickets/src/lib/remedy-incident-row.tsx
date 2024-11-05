@@ -2,6 +2,7 @@
 import { TicketDetail } from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 import { AppRoleTypes } from '@b2b-tickets/shared-models';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -19,27 +20,44 @@ export const RemedyIncidentRow = ({
   setShowRemedyIncDialog: (a: boolean) => void;
 }) => {
   if (ticketDetails[0].status_id === '1') return null;
+  const isFinalStatus =
+    ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
 
   if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
     return (
-      <div className={detailsRowClass}>
-        <div className={detailsRowHeaderClass}>Remedy Incident</div>
-        <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-          {!ticketDetails[0]['Remedy Ticket'] ? (
-            <RemedyIncidentButton
-              ticketDetails={ticketDetails}
-              btnLabel="Add Remedy Incident"
-              setShowRemedyIncDialog={setShowRemedyIncDialog}
-            />
-          ) : (
-            <RemedyIncidentButton
-              ticketDetails={ticketDetails}
-              btnLabel=""
-              setShowRemedyIncDialog={setShowRemedyIncDialog}
-            />
-          )}
+      <>
+        <div className={detailsRowClass}>
+          <div className={detailsRowHeaderClass}>Remedy Incident</div>
+          <div
+            data-tooltip-id={
+              userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+              !isFinalStatus
+                ? 'editRemedyInc'
+                : undefined // Only add tooltip ID if the condition is met
+            }
+            className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight"
+          >
+            {!ticketDetails[0]['Remedy Ticket'] ? (
+              <RemedyIncidentButton
+                ticketDetails={ticketDetails}
+                btnLabel="Add Remedy Incident"
+                setShowRemedyIncDialog={setShowRemedyIncDialog}
+              />
+            ) : (
+              <RemedyIncidentButton
+                ticketDetails={ticketDetails}
+                btnLabel=""
+                setShowRemedyIncDialog={setShowRemedyIncDialog}
+              />
+            )}
+          </div>
         </div>
-      </div>
+        <ReactTooltip
+          id="editRemedyInc"
+          place="bottom"
+          content="Edit Remedy INC"
+        />
+      </>
     );
   }
 

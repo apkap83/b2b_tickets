@@ -32,11 +32,10 @@ import { RemedyIncidentRow } from './remedy-incident-row';
 import { RemedyIncPopup } from './remedy-incident-popup';
 import { SeverityPopup } from './severity-popup';
 import { SeverityRow } from './severity-row';
-import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
-import { getCcValuesForTicket } from '@b2b-tickets/server-actions';
-
-import FormControl from '@mui/material/FormControl';
-import TextField from '@mui/material/TextField';
+import { CcFields } from './cc-fields-in-ticket-details';
+import { PiGreaterThanFill } from 'react-icons/pi';
+import clsx from 'clsx';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -105,7 +104,14 @@ export function TicketDetails({
   const customer = ticketDetails[0].Customer;
   const category = ticketDetails[0].Category;
   const serviceType = ticketDetails[0].Service;
+  const statusHTMLColor = getStatusColor(ticketStatus);
+  const currentEscalationLevel = ticketDetails[0]['Curernt Escalation Level'];
+  const isFinalStatus =
+    ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
 
+  const startWorkPressed = ticketStatus !== '1';
+
+  console.log({ ticketDetails });
   useEffect(() => {
     const nextEscLevel = async () => {
       const resp = await getNextEscalationLevel({
@@ -253,7 +259,6 @@ export function TicketDetails({
       </Button>
     );
   };
-  const statusHTMLColor = getStatusColor(ticketStatus);
 
   const StatusBadge = () => {
     return (
@@ -282,9 +287,6 @@ export function TicketDetails({
             <div className="text-black/90 text-5xl font-bold ">
               Ticket Details
             </div>
-            {/* <div className="pt-2 self-stretch h-[17px] text-center text-[#6870fa] text-[15px] font-medium font-['Roboto'] leading-[4px] tracking-widest">
-              {ticketNumber}
-            </div> */}
           </div>
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
         </div>
@@ -295,7 +297,7 @@ export function TicketDetails({
             className={`${styles.statusAndDescriptionDiv} self-stretch justify-start items-center gap-5 inline-flex`}
           >
             <div
-              className={`${styles.statusDiv} min-h-full shadow-lg px-2 py-2 bg-white rounded-lg border border-black/25 flex-col justify-start items-start inline-flex`}
+              className={`${styles.statusDiv} flex flex-col gap-1 min-h-full shadow-lg px-2 py-2 bg-white rounded-lg border border-black/25 justify-start items-start`}
             >
               {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
                 <div className={detailsRowClass}>
@@ -335,24 +337,59 @@ export function TicketDetails({
                 ticketDetails={ticketDetails}
                 setShowSeverityDialog={setShowSeverityDialog}
               />
+              {currentEscalationLevel && (
+                <div className={detailsRowClass}>
+                  <div
+                    className={`${detailsRowHeaderClass} flex gap-1 justify-left items-center`}
+                  >
+                    Escalation Level
+                    {/* {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && ( */}
+                    <div>
+                      <PiGreaterThanFill />
+                    </div>
+                    {/* )} */}
+                  </div>
+                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight text-right">
+                    Level {currentEscalationLevel}
+                  </div>
+                </div>
+              )}
               <div
+                data-tooltip-id={
+                  userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+                  !isFinalStatus &&
+                  startWorkPressed
+                    ? 'editCategoryAndService'
+                    : undefined // Only add tooltip ID if the condition is met
+                }
+                className={clsx({
+                  'w-full hover:scale-[1.01] hover:bg-blue-50 transition-all duration-200 ease-in-out hover:cursor-pointer':
+                    userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+                    !isFinalStatus &&
+                    startWorkPressed,
+                })}
                 onClick={() => {
                   setShowCategoryDialog(true);
                 }}
-                className={detailsRowClass}
               >
-                <div className={detailsRowHeaderClass}>Category</div>
-                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {category}
+                <div className={`${detailsRowClass} mb-1`}>
+                  <div className={detailsRowHeaderClass}>
+                    <div className="flex gap-1 justify-start items-center">
+                      Category
+                    </div>
+                  </div>
+                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                    {category}
+                  </div>
+                </div>
+                <div className={detailsRowClass}>
+                  <div className={detailsRowHeaderClass}>Service Type</div>
+                  <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
+                    {serviceType}
+                  </div>
                 </div>
               </div>
-              <div className={detailsRowClass}>
-                <div className={detailsRowHeaderClass}>Service Type</div>
-                <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-                  {serviceType}
-                </div>
-              </div>
-              <div className="mt-1 mb-1 py-1 w-full border-t border-b border-gray-200">
+              <div className="py-1 w-full border-t border-b border-gray-200">
                 {sid && (
                   <div className={detailsRowClass}>
                     <div className={detailsRowHeaderClass}>SID</div>
@@ -486,75 +523,19 @@ export function TicketDetails({
           />
         )}
 
-        {showCategoryDialog && (
-          <ChangeCategoryPopup
-            ticketDetails={ticketDetails}
-            setShowCategoryDialog={setShowCategoryDialog}
-          />
-        )}
+        {showCategoryDialog &&
+          userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
+            <ChangeCategoryPopup
+              ticketDetails={ticketDetails}
+              setShowCategoryDialog={setShowCategoryDialog}
+            />
+          )}
       </>
+      <ReactTooltip
+        id="editCategoryAndService"
+        place="bottom"
+        content="Edit Category/Service Type"
+      />
     </>
   );
 }
-
-const CcFields = ({ ticketId }: { ticketId: string }) => {
-  const [showCcFields, setShowCcFields] = useState(false);
-
-  const [ccEmails, setCcEmails] = useState('');
-  const [ccPhones, setCcPhones] = useState('');
-
-  useEffect(() => {
-    const getCcValues = async () => {
-      const res = await getCcValuesForTicket({ ticketId });
-      console.log({ res });
-      setCcEmails(res.data?.ccEmails as string);
-      setCcPhones(res.data?.ccPhones as string);
-    };
-
-    getCcValues();
-  }, []);
-
-  // Function to toggle the state
-  const toggleFields = () => {
-    setShowCcFields(!showCcFields);
-  };
-  return (
-    <div className="mt-1 flex-col w-full">
-      <div>
-        <div
-          className="mb-1 text-[12px] border border-gray-200 text-black/50 text-center cursor-pointer"
-          onClick={toggleFields}
-        >
-          {showCcFields ? (
-            <div className="flex justify-center items-center">
-              <span>Hide Cc Fields</span>
-              <RiArrowUpSLine size="20" />
-            </div>
-          ) : (
-            <div className="flex justify-center items-center bg-gray-100">
-              <span>Extra Cc Fields</span>
-              <RiArrowDownSLine size="20" />
-            </div>
-          )}
-        </div>
-      </div>
-      {showCcFields && (
-        <div>
-          <div className={detailsRowClass}>
-            <div className={detailsRowHeaderClass}>CC Users</div>
-            <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-              {ccEmails}
-            </div>
-          </div>
-
-          <div className={detailsRowClass}>
-            <div className={detailsRowHeaderClass}>CC Phones</div>
-            <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
-              {ccPhones}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
