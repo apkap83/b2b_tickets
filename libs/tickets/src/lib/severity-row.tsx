@@ -52,8 +52,8 @@ export const SeverityRow = ({
             setShowSeverityDialog={setShowSeverityDialog}
             //@ts-ignore
             style={{
-              backgroundColor: statusColor,
-              borderColor: statusColor,
+              backgroundColor: isFinalStatus ? 'gray' : statusColor,
+              borderColor: isFinalStatus ? 'gray' : statusColor,
             }}
           />
         </div>
