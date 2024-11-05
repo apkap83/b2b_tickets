@@ -57,6 +57,43 @@ import { TransportName } from '@b2b-tickets/shared-models';
 //   await syncDatabaseAlterTrue();
 // };
 
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import nodemailer, { Transporter } from 'nodemailer';
+
+interface EmailOptions {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}
+
+// Define transporter using SMTPTransport options
+const transporter: Transporter = nodemailer.createTransport({
+  host: '10.0.1.19', // Your relay server IP
+  port: Number(config.EmailRelayServerTCPPort), // Ensure the port is a number
+  secure: false, // Port 25 is typically not secure
+  tls: {
+    rejectUnauthorized: false, // Allow self-signed certificates if used
+  },
+} as SMTPTransport.Options);
+
+export const sendEmail = async (options: EmailOptions): Promise<void> => {
+  try {
+    console.log('Sending Email...');
+
+    await transporter.sendMail({
+      from: '"NOVA B2B Ticketing System" <no-reply@nova.gr>',
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+    console.log('Email sent successfully');
+  } catch (error) {
+    console.error('Error sending email:', error);
+  }
+};
+
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
 ) => {
@@ -973,6 +1010,14 @@ export const createNewComment = async (
     );
 
     await new Promise((resolve) => setTimeout(resolve, 250));
+    // Send email notification
+    await sendEmail({
+      to: 'ap.kapetanios@gmail.com',
+      subject: 'New Comment was created',
+      text: `Hello, New Comment was created!`,
+      html: `<p>Hello,</p><p>New Comment was created!</p>`,
+    });
+
     revalidatePath(`/ticket/${ticketNumber}`);
     return toFormState('SUCCESS', 'Comment Created!');
   } catch (error) {
