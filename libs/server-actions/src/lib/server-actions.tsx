@@ -38,59 +38,96 @@ import {
   CustomLogger,
   getRequestLogger,
 } from '@b2b-tickets/server-actions/server';
-import { TransportName } from '@b2b-tickets/shared-models';
-// export const seedDB = async () => {
-//   // TODO Session & Authorization Enabled Action
-//   await populateDB();
-// };
-// export const syncDBAlterTrueAction = async () => {
-//   // TODO Session & Authorization Enabled Action
-//   // const session = await getServerSession(options);
-//   // if (!session) {
-//   //   throw new Error('Unauthenticated access: User is not authenticated');
-//   // }
-//   // if (!userHasPermission(session, 'Sync DB (Alter True)')) {
-//   //   throw new Error(
-//   //     'Unauthorized access: User is not authorized for this action (Sync DB (Alter True))'
-//   //   );
-//   // }
-//   await syncDatabaseAlterTrue();
-// };
+import {
+  TransportName,
+  EmailTemplate,
+  EmailVariableTypes,
+  EmailOptions,
+} from '@b2b-tickets/shared-models';
 
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import nodemailer, { Transporter } from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
 
-interface EmailOptions {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}
+// Function to replace template variables with actual values
+const populateTemplate = (
+  template: string,
+  variables: Record<string, string>
+): string => {
+  return template.replace(/{{(.*?)}}/g, (_, key) => variables[key] || '');
+};
+
+// Load the HTML template
+const loadTemplate = (templateName: string): string => {
+  const rootPath = path.resolve();
+
+  return fs.readFileSync(
+    path.join(rootPath, 'templates', 'email', templateName),
+    'utf8'
+  );
+};
 
 // Define transporter using SMTPTransport options
 const transporter: Transporter = nodemailer.createTransport({
-  host: '10.0.1.19', // Your relay server IP
-  port: Number(config.EmailRelayServerTCPPort), // Ensure the port is a number
-  secure: false, // Port 25 is typically not secure
+  host: config.EmailRelayServerIP,
+  port: Number(config.EmailRelayServerTCPPort),
+  secure: false,
   tls: {
     rejectUnauthorized: false, // Allow self-signed certificates if used
   },
 } as SMTPTransport.Options);
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
+  const session = await verifySecurityRole([
+    AppRoleTypes.B2B_TicketHandler,
+    AppRoleTypes.B2B_TicketCreator,
+  ]);
+
+  const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
+
   try {
-    console.log('Sending Email...');
+    // Load and populate the template
+    let template = '';
+    let populatedHtml = '';
+
+    if (options.type === EmailTemplate.NEW_TICKET) {
+      template = loadTemplate(`${EmailTemplate.NEW_TICKET}`);
+      populatedHtml = populateTemplate(template, {
+        customerName: options.emailVariables.customerName,
+        ticketNumber: options.emailVariables.ticketNumber,
+      });
+    }
+
+    if (options.type === EmailTemplate.TICKET_ESCALATION) {
+      template = loadTemplate(`${EmailTemplate.TICKET_ESCALATION}`);
+      populatedHtml = populateTemplate(template, {
+        customerName: options.emailVariables.customerName,
+        ticketNumber: options.emailVariables.ticketNumber,
+      });
+    }
+
+    if (options.type === EmailTemplate.TICKET_CLOSURE) {
+      template = loadTemplate(`${EmailTemplate.TICKET_CLOSURE}`);
+      populatedHtml = populateTemplate(template, {
+        customerName: options.emailVariables.customerName,
+        ticketNumber: options.emailVariables.ticketNumber,
+      });
+    }
 
     await transporter.sendMail({
-      from: '"NOVA B2B Ticketing System" <no-reply@nova.gr>',
+      from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
       to: options.to,
       subject: options.subject,
-      text: options.text,
-      html: options.html,
+      text: 'options.text',
+      html: populatedHtml,
     });
-    console.log('Email sent successfully');
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Sent E-mail to ${options.to} with subject ${options.subject}`
+    );
   } catch (error) {
-    console.error('Error sending email:', error);
+    logRequest.error(error);
   }
 };
 
@@ -169,7 +206,7 @@ export const getCcValuesForTicket = async ({
     await new Promise((resolve) => setTimeout(resolve, 250));
 
     // Get Cc Emails & Cc Phones
-    const sqlQueryForCcEmails = `SELECT email_address FROM ticket_cc_users_v where "ticket_id" = $1`;
+    const sqlQueryForCcEmails = `SELECT email_addresses FROM ticket_cc_users_v where "ticket_id" = $1`;
     const res_emails = await pgB2Bpool.query(sqlQueryForCcEmails, [ticketId]);
 
     const sqlQueryForCcPhones = `SELECT cc_phones FROM ticket_cc_phone_numbers_v where "ticket_id" = $1`;
@@ -177,7 +214,7 @@ export const getCcValuesForTicket = async ({
 
     return {
       data: {
-        ccEmails: res_emails.rows[0].email_address,
+        ccEmails: res_emails.rows[0].email_addresses,
         ccPhones: res_phones.rows[0].cc_phones,
       },
     };
@@ -578,7 +615,7 @@ export const createNewTicket = async (
       contactPhoneNum, // pvch_contact_phone_number: string
       standardizedDate, // ptmsp_occurrence_date: timestamp
       session?.user.user_id, // pnum_user_id: number
-      config.api.user, // pvch_api_user: string
+      session.user.userName, // pvch_api_user: string
       config.api.process, // pvch_api_process: string
       config.postgres_b2b_database.debugMode, // pbln_debug_mode: boolean
     ];
@@ -640,11 +677,22 @@ export const createNewTicket = async (
     // Commit the transaction
     await client.query('COMMIT');
 
+    // Send email notification
+    await sendEmail({
+      to: 'apostolos.kapetanios@nova.gr',
+      subject: 'Your Ticket Has Been Created',
+      type: EmailTemplate.NEW_TICKET,
+      emailVariables: {
+        customerName: session.user.customer_name,
+        ticketNumber: newTicketId,
+        escalationLevel: '1',
+      },
+    });
+
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
   } catch (error) {
-    console.log(error);
     // Rollback the transaction in case of an error
     await client.query('ROLLBACK');
     return fromErrorToFormState(error);
@@ -1009,13 +1057,6 @@ export const createNewComment = async (
     );
 
     await new Promise((resolve) => setTimeout(resolve, 250));
-    // Send email notification
-    await sendEmail({
-      to: 'ap.kapetanios@gmail.com',
-      subject: 'New Comment was created',
-      text: `Hello, New Comment was created!`,
-      html: `<p>Hello,</p><p>New Comment was created!</p>`,
-    });
 
     revalidatePath(`/ticket/${ticketNumber}`);
     return toFormState('SUCCESS', 'Comment Created!');

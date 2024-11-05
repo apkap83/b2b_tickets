@@ -256,3 +256,40 @@ export enum EscalationStatus {
 
 export const EscalationFillColor = '#6a2424';
 export const EscalationBorderColor = '#6a2424';
+
+export enum EmailTemplate {
+  NEW_TICKET = 'NewTicket.html',
+  TICKET_ESCALATION = 'Escalate_Ticket.html',
+  TICKET_CLOSURE = 'CloseTicket.html',
+}
+
+export interface EmailVariableTypes {
+  customerName: string;
+  ticketNumber: string;
+}
+
+export interface EmailOptions {
+  to: string;
+  subject: string;
+  type: EmailTemplate;
+  emailVariables:
+    | EmailVariablesForTicketCreation
+    | EmailVariablesForTicketEscalation
+    | EmailVariablesForTicketClosure;
+}
+
+export interface EmailVariablesForTicketCreation {
+  customerName: string;
+  ticketNumber: string;
+}
+
+export interface EmailVariablesForTicketEscalation {
+  customerName: string;
+  ticketNumber: string;
+  escalationLevel: string;
+}
+
+export interface EmailVariablesForTicketClosure {
+  customerName: string;
+  ticketNumber: string;
+}
