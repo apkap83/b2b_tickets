@@ -62,10 +62,6 @@ export const CcFields = ({ ticketId }: { ticketId: string }) => {
             <div className={detailsRowHeaderClass}>CC Users</div>
             <div className="text-black/90 text-right text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
               {ccEmails}
-              Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ad,
-              consectetur adipisci at blanditiis mollitia eveniet exercitationem
-              facere similique facilis enim magni libero expedita quas quasi est
-              esse nihil sed amet.
             </div>
           </div>
 

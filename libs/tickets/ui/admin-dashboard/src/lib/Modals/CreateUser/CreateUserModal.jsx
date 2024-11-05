@@ -102,7 +102,6 @@ function CreateUserModal({ closeModal }) {
                 Select Customer
               </option>
               {customersList.map((item) => {
-                console.log('item', item);
                 return (
                   <option key={item.customer_id} value={item.customer_id}>
                     {item.customer_display_name}

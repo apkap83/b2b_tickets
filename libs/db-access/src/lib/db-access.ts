@@ -10,6 +10,14 @@ export const pgB2Bpool = new Pool({
   host: config.postgres_b2b_database.host,
   port: config.postgres_b2b_database.port,
   database: config.postgres_b2b_database.db,
+  max: 7,
+});
+
+// Set timezone for each connection
+pgB2Bpool.on('connect', (client) => {
+  client.query("SET TIME ZONE 'Europe/Athens';").catch((err) => {
+    console.error('Error setting timezone:', err);
+  });
 });
 
 // Function to set the search path to the desired schema
