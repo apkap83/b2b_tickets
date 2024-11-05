@@ -247,6 +247,7 @@ export enum ErrorCode {
   EmailJWTTokenInvalid = 'email-jwt-token-invalid',
 
   NewPasswordRequired = 'new-password-required',
+  NoRoleAssignedToUser = 'no-role-assigned-to-user',
 }
 
 export enum EscalationStatus {
