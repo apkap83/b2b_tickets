@@ -132,7 +132,7 @@ export const getCcValuesForTicket = async ({
     await new Promise((resolve) => setTimeout(resolve, 250));
 
     // Get Cc Emails & Cc Phones
-    const sqlQueryForCcEmails = `SELECT cc_phones FROM ticket_cc_users_v where "ticket_id" = $1`;
+    const sqlQueryForCcEmails = `SELECT email_address FROM ticket_cc_users_v where "ticket_id" = $1`;
     const res_emails = await pgB2Bpool.query(sqlQueryForCcEmails, [ticketId]);
 
     const sqlQueryForCcPhones = `SELECT cc_phones FROM ticket_cc_phone_numbers_v where "ticket_id" = $1`;
@@ -165,7 +165,7 @@ export const getTotalNumOfTicketsForCustomer = async () => {
     const customerName = session.user.customer_name;
 
     // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
     // In case there is no Customer Id then return all
     if (customerId === -1) {
@@ -204,9 +204,7 @@ export const getFilteredTicketsForCustomer = async (
     const customerName = session.user.customer_name;
 
     // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    console.log('Customer Id', customerId);
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
     // In case there is no Customer Id then return all
     if (customerId === -1) {
@@ -259,7 +257,7 @@ export const getNumOfTickets = async (query: string): Promise<number> => {
     const customerName = session.user.customer_name;
 
     // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
     // In case there is no Customer Id then return all
     if (customerId === -1) {
@@ -838,7 +836,7 @@ export const alterTicketSeverity = async ({
 
     await setSchemaAndTimezone(pgB2Bpool);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 250));
 
     await pgB2Bpool.query(
       `
@@ -929,7 +927,7 @@ export const createNewComment = async (
 
     if (modalAction === TicketDetailsModalActions.CANCEL) {
       await pgB2Bpool.query(
-        `CALL tck_ticket_cancelled
+        `CALL tck_cancel
         (
           pnum_Ticket_ID   => $1,
           pnum_User_ID     => $2,

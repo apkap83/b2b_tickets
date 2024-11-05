@@ -29,7 +29,8 @@
 }
 
 .statusDiv {
-  width: 350px;
+  min-width: 350px;
+  max-width: 350px;
 }
 
 @media only screen and (max-width: 800px) {
@@ -46,5 +47,6 @@
 
   .statusDiv {
     width: 100%;
+    max-width: 100%;
   }
 }

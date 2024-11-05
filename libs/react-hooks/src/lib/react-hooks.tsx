@@ -16,7 +16,7 @@ export const useToastMessage = (formState: FormState) => {
       if (formState.status === 'ERROR') {
         toast.error(formState.message);
       } else {
-        toast.success(formState.message);
+        toast.success(<span className="text-center">{formState.message}</span>);
       }
 
       prevTimestamp.current = formState.timestamp;
