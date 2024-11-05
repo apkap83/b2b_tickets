@@ -96,7 +96,8 @@ export const getCustomersList = async () => {
 
     await setSchemaAndTimezone(pgB2Bpool);
 
-    const getList = 'SELECT customer_id, customer_name from customers';
+    const getList =
+      'SELECT customer_id, customer_display_name from customers_v';
     const customersList = await pgB2Bpool.query(getList);
 
     return customersList.rows;
