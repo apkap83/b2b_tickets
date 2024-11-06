@@ -6,11 +6,11 @@ import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 import { sequelize } from '../../sequelize';
 
 const {
-  models: { AppUser, AppRole, AppPermission },
+  models: { B2BUser, AppRole, AppPermission },
 } = sequelize;
 
 export const populateDB = async () => {
-  await AppUser.findOrCreate({
+  await B2BUser.findOrCreate({
     where: { userName: 'admin' },
     defaults: {
       firstName: 'Administrator',
@@ -24,7 +24,7 @@ export const populateDB = async () => {
     },
   });
 
-  await AppUser.findOrCreate({
+  await B2BUser.findOrCreate({
     where: { userName: 'akapetan' },
     defaults: {
       firstName: 'Apostolos',
@@ -38,7 +38,7 @@ export const populateDB = async () => {
     },
   });
 
-  await AppUser.findOrCreate({
+  await B2BUser.findOrCreate({
     where: { userName: 'ppapadop' },
     defaults: {
       firstName: 'Petros',
@@ -92,7 +92,7 @@ export const populateDB = async () => {
     },
   });
 
-  const adminUser = await AppUser.findOne({
+  const adminUser = await B2BUser.findOne({
     where: {
       userName: 'admin',
     },

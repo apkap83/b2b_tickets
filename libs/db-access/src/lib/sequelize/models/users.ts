@@ -42,7 +42,7 @@ export class B2BUser extends Model<
   declare last_update_process: string;
   declare two_factor_secret?: string;
 
-  // Association methods for AppUser
+  // Association methods for B2BUser
   declare getRoles: BelongsToManyGetAssociationsMixin<AppRole>;
 
   declare addRole: BelongsToManyAddAssociationMixin<AppRole, number>;

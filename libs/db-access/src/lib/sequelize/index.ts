@@ -2,10 +2,9 @@ import { Sequelize } from 'sequelize-typescript';
 
 import { config } from '@b2b-tickets/config';
 
-import { AppUser } from './models/User';
-import { AppRole } from './models/Role';
-import { AppPermission } from './models/Permission';
-import { B2BUser } from './models/users';
+const B2BUser = require('./models/users').B2BUser;
+const AppRole = require('./models/Role').AppRole;
+const AppPermission = require('./models/Permission').AppPermission;
 
 const sequelize = new Sequelize({
   host: config.postgres_b2b_database.host,
@@ -36,41 +35,39 @@ const sequelize = new Sequelize({
   // logging: false,
 });
 
-// initModels(sequelize);
-AppUser.initModel(sequelize);
+B2BUser.initModel(sequelize);
 AppRole.initModel(sequelize);
 AppPermission.initModel(sequelize);
-B2BUser.initModel(sequelize);
 
 const applyAssociations = () => {
   try {
-    const { AppUser, AppRole, AppPermission, Audit, B2BUser } =
-      sequelize.models;
-
-    AppUser.belongsToMany(AppRole, {
-      through: '_userRole',
-      timestamps: false,
-    });
+    // Association between B2BUser and AppRole through _userRoleB2B table
     B2BUser.belongsToMany(AppRole, {
       through: '_userRoleB2B',
+      foreignKey: 'B2BUserUserId', // The column in _userRoleB2B table that references B2BUser
+      otherKey: 'AppRoleId', // The column in _userRoleB2B table that references AppRole
       timestamps: false,
     });
 
-    AppRole.belongsToMany(AppUser, {
-      through: '_userRole',
-      timestamps: false,
-    });
     AppRole.belongsToMany(B2BUser, {
       through: '_userRoleB2B',
+      foreignKey: 'AppRoleId', // The column in _userRoleB2B table that references AppRole
+      otherKey: 'B2BUserUserId', // The column in _userRoleB2B table that references B2BUser
       timestamps: false,
     });
 
+    // Association between AppRole and AppPermission through _rolePermission table
     AppRole.belongsToMany(AppPermission, {
       through: '_rolePermission',
+      foreignKey: 'AppRoleId', // The column in _rolePermission table that references AppRole
+      otherKey: 'AppPermissionId', // The column in _rolePermission table that references AppPermission
       timestamps: false,
     });
+
     AppPermission.belongsToMany(AppRole, {
       through: '_rolePermission',
+      foreignKey: 'AppPermissionId', // The column in _rolePermission table that references AppPermission
+      otherKey: 'AppRoleId', // The column in _rolePermission table that references AppRole
       timestamps: false,
     });
   } catch (error) {
@@ -80,14 +77,27 @@ const applyAssociations = () => {
 
 applyAssociations();
 
-const testConnection = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Connection has been established successfully');
-    sequelize.close();
-  } catch (error) {
-    console.log('Unable to connect to the database', error);
-  }
-};
+// const testAssociations = async () => {
+//   try {
+//     const user = await B2BUser.findOne({
+//       include: [AppRole],
+//     });
+//     console.log(user);
+//   } catch (error) {
+//     console.error('Association test failed:', error);
+//   }
+// };
 
-export { sequelize, AppUser, AppRole, AppPermission, B2BUser };
+// testAssociations();
+
+// const testConnection = async () => {
+//   try {
+//     await sequelize.authenticate();
+//     console.log('Connection has been established successfully');
+//     sequelize.close();
+//   } catch (error) {
+//     console.log('Unable to connect to the database', error);
+//   }
+// };
+
+export { sequelize, AppRole, AppPermission, B2BUser };
