@@ -7,7 +7,6 @@ import { redirect } from 'next/navigation';
 import * as yup from 'yup';
 import {
   sequelize,
-  AppUser,
   AppPermission,
   AppRole,
   B2BUser,
@@ -127,13 +126,13 @@ export const getAdminDashboardData = async () => {
     const permissionsList = await AppPermission.findAll();
 
     // Convert models to plain objects
-    const plainUsersListWithRoles = usersListWithRoles.map((user) =>
+    const plainUsersListWithRoles = usersListWithRoles.map((user: any) =>
       user.toJSON()
     );
-    const plainRolesListWithPermissions = rolesListWithPermissions.map((role) =>
-      role.toJSON()
+    const plainRolesListWithPermissions = rolesListWithPermissions.map(
+      (role: any) => role.toJSON()
     );
-    const plainPermissionsList = permissionsList.map((permission) =>
+    const plainPermissionsList = permissionsList.map((permission: any) =>
       permission.toJSON()
     );
 
@@ -777,38 +776,6 @@ export async function deleteRole({ role }: any) {
 
     return { status: 'SUCCESS', message: 'Role Deleted!' };
   } catch (error: unknown) {
-    logRequest.error(error);
-    return fromErrorToFormState(error);
-  }
-}
-
-export async function updateAuthMethodForUser({ user, authType }: any) {
-  const logRequest: CustomLogger = await getRequestLogger(
-    TransportName.ACTIONS
-  );
-  try {
-    // Verify Security Permission
-    const session = (await verifySecurityPermission(
-      AppPermissionTypes.API_Admin
-    )) as Session;
-
-    //  Find User
-    const foundUser = await AppUser.findOne({
-      where: {
-        userName: user.userName,
-      },
-    });
-
-    //@ts-ignore
-    foundUser.authenticationType = authType;
-    //@ts-ignore
-    await foundUser.save();
-
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    revalidatePath('/admin');
-
-    return { status: 'SUCCESS', message: 'Auth type updated for User' };
-  } catch (error) {
     logRequest.error(error);
     return fromErrorToFormState(error);
   }

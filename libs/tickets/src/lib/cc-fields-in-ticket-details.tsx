@@ -18,7 +18,6 @@ export const CcFields = ({ ticketId }: { ticketId: string }) => {
   useEffect(() => {
     const getCcValues = async () => {
       const res = await getCcValuesForTicket({ ticketId });
-      console.log({ res });
       setCcEmails(res.data?.ccEmails as string);
       setCcPhones(res.data?.ccPhones as string);
     };

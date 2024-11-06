@@ -23,11 +23,11 @@ export async function POST(req: NextRequest) {
     const { emailProvided, totpCode } = body;
 
     // Find User By email address
-    const foundUser = (await B2BUser.findOne({
+    const foundUser = await B2BUser.findOne({
       where: {
         email: emailProvided,
       },
-    })) as B2BUser;
+    });
 
     if (!foundUser) {
       return NextResponse.json(

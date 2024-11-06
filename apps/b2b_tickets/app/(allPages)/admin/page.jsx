@@ -1,3 +1,6 @@
+// Convert the route to be dynamically rendered by opting out of static generation.
+export const dynamic = 'force-dynamic';
+
 import { AdminDashboard } from '@b2b-tickets/tickets/ui';
 import { getAdminDashboardData } from '@b2b-tickets/admin-server-actions';
 
