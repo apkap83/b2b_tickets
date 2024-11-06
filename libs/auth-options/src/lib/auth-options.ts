@@ -118,11 +118,11 @@ export const generateTwoFactorSecretForUserId = async (
     throw new Error(ErrorCode.InternalServerError);
   }
 
-  const foundUser = (await B2BUser.scope('withPassword').findOne({
+  const foundUser = await B2BUser.scope('withPassword').findOne({
     where: {
       user_id: userId,
     },
-  })) as B2BUser;
+  });
 
   logRequest.debug(
     `Generating Random Two Factor Secret for user ${foundUser.username}`
@@ -150,7 +150,7 @@ const tryLocalAuthentication = async (
         credentials ? credentials.userName : 'Not Given'
       }`
     );
-    const foundUser = (await B2BUser.scope('withPassword').findOne({
+    const foundUser = await B2BUser.scope('withPassword').findOne({
       where: {
         username: credentials!.userName,
         authentication_type: AuthenticationTypes.LOCAL,
@@ -159,7 +159,7 @@ const tryLocalAuthentication = async (
         model: AppRole,
         include: [AppPermission],
       },
-    })) as B2BUser & { AppRoles: AppRole[] };
+    });
 
     if (!foundUser) {
       logRequest.error(`Incorrect user name provided`);
@@ -194,11 +194,11 @@ const tryLocalAuthentication = async (
     logRequest.debug(`Given password and DB passwords match`);
 
     const roles = foundUser.AppRoles.map(
-      (role) => role.roleName as AppRoleTypes
+      (role: any) => role.roleName as AppRoleTypes
     );
 
     const permissions: AppPermissionType[] = foundUser.AppRoles.flatMap(
-      (role) =>
+      (role: any) =>
         //@ts-ignore
         role.AppPermissions.map((permission) => ({
           permissionName: permission.permissionName,
@@ -421,7 +421,7 @@ export const options: NextAuthOptions = {
             verifyJWTCaptcha({ req });
           }
 
-          const foundUser = (await B2BUser.findOne({
+          const foundUser = await B2BUser.findOne({
             where: {
               email,
             },
@@ -429,7 +429,7 @@ export const options: NextAuthOptions = {
               model: AppRole,
               include: [AppPermission],
             },
-          })) as B2BUser & { AppRoles: AppRole[] };
+          });
 
           if (!foundUser) {
             logRequest.error(
@@ -488,11 +488,11 @@ export const options: NextAuthOptions = {
           await foundUser.save();
 
           const roles = foundUser.AppRoles.map(
-            (role) => role.roleName as AppRoleTypes
+            (role: any) => role.roleName as AppRoleTypes
           );
 
           const permissions: AppPermissionType[] = foundUser.AppRoles.flatMap(
-            (role) =>
+            (role: any) =>
               //@ts-ignore
               role.AppPermissions.map((permission) => ({
                 permissionName: permission.permissionName,
@@ -573,6 +573,10 @@ export const options: NextAuthOptions = {
     maxAge: config.SessionMaxAge, // Session max age to XX minutes (in seconds)
     updateAge: config.SessionUpdateAge, // Session is refreshed every X minutes (in seconds)
   },
+  jwt: {
+    secret: process.env.NEXTAUTH_SECRET,
+  },
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
