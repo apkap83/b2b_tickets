@@ -5,7 +5,6 @@ import { config } from '@b2b-tickets/config';
 import { AppUser } from './models/User';
 import { AppRole } from './models/Role';
 import { AppPermission } from './models/Permission';
-import { Audit } from './models/Audit';
 import { B2BUser } from './models/users';
 
 const sequelize = new Sequelize({
@@ -42,41 +41,41 @@ AppUser.initModel(sequelize);
 AppRole.initModel(sequelize);
 AppPermission.initModel(sequelize);
 B2BUser.initModel(sequelize);
-Audit(sequelize);
 
-const applyAssociations = async () => {
-  const { AppUser, AppRole, AppPermission, Audit, B2BUser } = sequelize.models;
+const applyAssociations = () => {
+  try {
+    const { AppUser, AppRole, AppPermission, Audit, B2BUser } =
+      sequelize.models;
 
-  AppUser.belongsToMany(AppRole, {
-    through: '_userRole',
-    timestamps: false,
-  });
-  B2BUser.belongsToMany(AppRole, {
-    through: '_userRoleB2B',
-    timestamps: false,
-  });
+    AppUser.belongsToMany(AppRole, {
+      through: '_userRole',
+      timestamps: false,
+    });
+    B2BUser.belongsToMany(AppRole, {
+      through: '_userRoleB2B',
+      timestamps: false,
+    });
 
-  AppRole.belongsToMany(AppUser, {
-    through: '_userRole',
-    timestamps: false,
-  });
-  AppRole.belongsToMany(B2BUser, {
-    through: '_userRoleB2B',
-    timestamps: false,
-  });
+    AppRole.belongsToMany(AppUser, {
+      through: '_userRole',
+      timestamps: false,
+    });
+    AppRole.belongsToMany(B2BUser, {
+      through: '_userRoleB2B',
+      timestamps: false,
+    });
 
-  AppRole.belongsToMany(AppPermission, {
-    through: '_rolePermission',
-    timestamps: false,
-  });
-  AppPermission.belongsToMany(AppRole, {
-    through: '_rolePermission',
-    timestamps: false,
-  });
-
-  Audit.belongsTo(AppUser, { foreignKey: 'userId' });
-  Audit.belongsTo(AppRole, { foreignKey: 'roleId' });
-  Audit.belongsTo(AppPermission, { foreignKey: 'permissionId' });
+    AppRole.belongsToMany(AppPermission, {
+      through: '_rolePermission',
+      timestamps: false,
+    });
+    AppPermission.belongsToMany(AppRole, {
+      through: '_rolePermission',
+      timestamps: false,
+    });
+  } catch (error) {
+    console.error('Error applying associations:', error);
+  }
 };
 
 applyAssociations();

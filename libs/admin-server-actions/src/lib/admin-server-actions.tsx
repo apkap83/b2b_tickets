@@ -32,14 +32,9 @@ import {
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
-
-import {
-  CustomLogger,
-  getRequestLogger,
-} from '@b2b-tickets/server-actions/server';
+import { getRequestLogger } from '@b2b-tickets/server-actions/server';
+import { CustomLogger } from '@b2b-tickets/logging';
 import { TransportName } from '@b2b-tickets/shared-models';
-
-const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -178,6 +173,9 @@ const userSchema = yup.object().shape({
 });
 
 export async function createUser(formState: any, formData: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission([
@@ -280,6 +278,9 @@ export async function createUser(formState: any, formData: any) {
 }
 
 export async function deleteUser({ userName }: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission([
@@ -312,6 +313,9 @@ export async function deleteUser({ userName }: any) {
 }
 
 export async function lockorUnlockUser({ username }: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(
@@ -352,6 +356,9 @@ export async function lockorUnlockUser({ username }: any) {
 }
 
 export async function activeorInactiveUser({ username }: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(
@@ -413,6 +420,9 @@ function getRoleData(formData: any) {
 }
 
 export async function editUser(formState: any, formData: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission([
@@ -508,6 +518,9 @@ function getPermissionData(formData: any) {
 }
 
 export async function editRole(formState: any, formData: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(
@@ -580,6 +593,9 @@ const userSchema_updateUserPassword = yup.object().shape({
 });
 
 export async function updateUserPassword(formState: any, formData: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await getServerSession(options);
 
@@ -643,6 +659,9 @@ export async function updateUserPassword(formState: any, formData: any) {
 }
 
 export async function createPermission(formState: any, formData: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(
@@ -685,6 +704,9 @@ export async function createPermission(formState: any, formData: any) {
 }
 
 export async function createRole(formState: any, formData: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(
@@ -723,6 +745,9 @@ export async function createRole(formState: any, formData: any) {
 }
 
 export async function deleteRole({ role }: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(
@@ -758,6 +783,9 @@ export async function deleteRole({ role }: any) {
 }
 
 export async function updateAuthMethodForUser({ user, authType }: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(
@@ -787,6 +815,9 @@ export async function updateAuthMethodForUser({ user, authType }: any) {
 }
 
 export async function deletePermission({ permission }: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission(

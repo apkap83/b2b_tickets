@@ -8,7 +8,7 @@ import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 import CreateUserModal from '../../Modals/CreateUser/CreateUserModal';
 import DeleteUserModal from '../../Modals/DeleteUser/DeleteUserModal';
 import EditUserModal from '../../Modals/EditUser/EditUserModal';
-import PasswordResetModal from '../../Modals/PasswordReset/PasswordResetModal';
+import { PasswordResetModal } from '../../Modals/PasswordReset/PasswordResetModal';
 
 import { PasswordChangeButton } from './Buttons/PasswordChangeButton';
 import { EditButton } from './Buttons/EditButton';
