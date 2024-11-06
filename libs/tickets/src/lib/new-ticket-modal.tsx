@@ -143,7 +143,9 @@ export function NewTicketModal({ closeModal, userId }: any) {
     sid: yup.string(),
     cid: yup.string(),
     userName: yup.string(),
-    cliValue: yup.string(),
+    cliValue: yup
+      .string()
+      .matches(/^\d{10}$/, 'CLI Value must be a 10-digit number'),
     contactPerson: yup.string().required('Contact Person is required'),
     contactPhoneNum: yup
       .string()
@@ -444,6 +446,11 @@ export function NewTicketModal({ closeModal, userId }: any) {
                             autoComplete={autoComplete}
                           />
                         </FormControl>
+                        <FieldError
+                          formik={formik}
+                          name="cliValue"
+                          style={{ marginTop: '0px' }}
+                        />
                       </Box>
                     </Box>
                     <span className="font-bold">{formState.message}</span>

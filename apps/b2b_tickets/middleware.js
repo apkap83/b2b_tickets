@@ -47,10 +47,10 @@ const authMiddleware = withAuth(
     const roles = req.nextauth?.token?.roles || [];
     const permissions = req.nextauth?.token?.permissions || [];
 
-    console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
-    console.log('*** pathName:', pathName);
-    console.log('*** roles:', roles);
-    console.log('*** permissions:', permissions);
+    // console.log('*** AUTH MIDDLEWARE IS NOW EXECUTED');
+    // console.log('*** pathName:', pathName);
+    // console.log('*** roles:', roles);
+    // console.log('*** permissions:', permissions);
 
     // If no roles are present, redirect to the sign-in page
     if (!roles.length) {
@@ -60,7 +60,7 @@ const authMiddleware = withAuth(
 
     // Allow Admins to proceed directly
     if (roles.includes(AppRoleTypes.Admin)) {
-      console.log('Admin access granted');
+      // console.log('Admin access granted');
       return NextResponse.next();
     }
     // Check if the user has permission to access the requested path
@@ -76,7 +76,7 @@ const authMiddleware = withAuth(
     }
 
     // Proceed to the next middleware or route
-    console.log(`Access granted for path: ${pathName}`);
+    // console.log(`Access granted for path: ${pathName}`);
     return NextResponse.next();
   },
   {

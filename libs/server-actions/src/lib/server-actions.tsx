@@ -120,8 +120,10 @@ export const getCcValuesForTicket = async ({
 
     return {
       data: {
-        ccEmails: res_emails.rows[0].email_addresses,
-        ccPhones: res_phones.rows[0].cc_phones,
+        ccEmails:
+          res_emails.rows?.length > 0 ? res_emails.rows[0].email_addresses : [],
+        ccPhones:
+          res_phones.rows?.length > 0 ? res_phones.rows[0].cc_phones : [],
       },
     };
   } catch (error: any) {
@@ -446,12 +448,6 @@ export const createNewTicket = async (
     const session = await verifySecurityPermission(
       AppPermissionTypes.Create_New_Ticket
     );
-
-    // Using entries() to get both key and value
-    //@ts-ignore
-    for (const [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }
 
     await client.query(
       `SET search_path TO ${config.postgres_b2b_database.schemaName}`
@@ -1202,10 +1198,6 @@ export const setNewCategoryServiceTypeForTicket = async (
     const categoryServiceTypeId = formData.get('categoryServiceTypeId');
     const ticketNumber = formData.get('ticketNumber');
 
-    console.log({
-      ticketId,
-      categoryServiceTypeId,
-    });
     await pgB2Bpool.query(
       `
         CALL tck_change_category_service_type

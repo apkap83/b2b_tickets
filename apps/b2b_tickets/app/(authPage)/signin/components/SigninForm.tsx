@@ -52,7 +52,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
 
   const [callbackUrl, setCallbackUrl] = useState('/');
 
-  const [submitButtonLabel, setSubmitButtonLabel] = useState('Sign in');
+  const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit');
 
   // Create references to User Name & Password fields
   const userNameRef = useRef<HTMLInputElement | null>(null);
@@ -280,7 +280,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           <span>Platinum Support</span>
         </div>
         <div className="text-xl text-left mt-[.75rem] text-[black] font-semibold">
-          Login
+          Sign in
         </div>
       </div>
 
