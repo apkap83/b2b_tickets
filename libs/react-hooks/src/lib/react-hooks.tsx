@@ -81,9 +81,11 @@ export const useSessionTimeLeft = () => {
   };
 
   useEffect(() => {
+    //@ts-ignore
     if (mySession && mySession.expiresAt) {
       const calculateTimeLeft = () => {
         const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+        //@ts-ignore
         const timeLeft = mySession.expiresAt - currentTimeInSeconds;
         setTimeLeftInSeconds(timeLeft > 0 ? timeLeft : 0);
 
