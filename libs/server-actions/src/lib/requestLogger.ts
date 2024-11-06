@@ -1,9 +1,10 @@
+'use server';
 // utils/requestLogger.ts - used for server-side only
 import { headers } from 'next/headers';
 import { createRequestLogger } from '@b2b-tickets/logging';
 import { TransportName } from '@b2b-tickets/shared-models';
 
-export function getRequestLogger(transportName: TransportName) {
+export async function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
   try {
     const headersList = headers(); // Server-side request headers
@@ -29,5 +30,3 @@ export function getRequestLogger(transportName: TransportName) {
     throw new Error('getRequestLogger must be used in a server-side context.');
   }
 }
-
-export { CustomLogger } from '@b2b-tickets/logging';
