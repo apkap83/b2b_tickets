@@ -50,10 +50,11 @@ const authMiddleware = withAuth(
       return NextResponse.next();
     }
 
-    // Check if user has permission to access requested path
-    const authorized = permissions.some((permission) =>
-      pathName.startsWith(permission.permissionEndPoint)
-    );
+    // Check if the user has permission to access the requested path
+    const authorized = permissions.some((permission) => {
+      const permissionEndPoint = permission.permissionEndPoint;
+      return permissionEndPoint && pathName.startsWith(permissionEndPoint);
+    });
 
     if (!authorized) {
       console.warn(`[Auth Middleware] Access denied for path: ${pathName}`);
