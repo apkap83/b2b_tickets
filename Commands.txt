@@ -65,6 +65,15 @@ nx g component Pagination --project ui --export --tags type:ui,scope=b2b_tickets
 # Create Comments Component under tickets/ui library
 nx generate @nx/next:library comments --directory=tickets/ui --component
 
+# Create E-mail service Library
+nx g lib email-service --directory libs --tags type:utils,scope:shared
+
+# Create TOTP service Library
+nx g lib totp-service --directory libs --tags type:utils,scope:shared
+
+
+
+
 # Add Jest to a project
 nx g @nx/jest:configuration --project=tickets
 

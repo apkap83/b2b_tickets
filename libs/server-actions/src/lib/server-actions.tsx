@@ -5,11 +5,7 @@ import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import {
-  pgB2Bpool,
-  setSchema,
-  setSchemaAndTimezone,
-} from '@b2b-tickets/db-access';
+import { pgB2Bpool, setSchemaAndTimezone } from '@b2b-tickets/db-access';
 import { config } from '@b2b-tickets/config';
 import {
   toFormState,
@@ -38,98 +34,8 @@ import {
   CustomLogger,
   getRequestLogger,
 } from '@b2b-tickets/server-actions/server';
-import {
-  TransportName,
-  EmailTemplate,
-  EmailVariableTypes,
-  EmailOptions,
-} from '@b2b-tickets/shared-models';
-
-import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import nodemailer, { Transporter } from 'nodemailer';
-import fs from 'fs';
-import path from 'path';
-
-// Function to replace template variables with actual values
-const populateTemplate = (
-  template: string,
-  variables: Record<string, string>
-): string => {
-  return template.replace(/{{(.*?)}}/g, (_, key) => variables[key] || '');
-};
-
-// Load the HTML template
-const loadTemplate = (templateName: string): string => {
-  const rootPath = path.resolve();
-
-  return fs.readFileSync(
-    path.join(rootPath, 'templates', 'email', templateName),
-    'utf8'
-  );
-};
-
-// Define transporter using SMTPTransport options
-const transporter: Transporter = nodemailer.createTransport({
-  host: config.EmailRelayServerIP,
-  port: Number(config.EmailRelayServerTCPPort),
-  secure: false,
-  tls: {
-    rejectUnauthorized: false, // Allow self-signed certificates if used
-  },
-} as SMTPTransport.Options);
-
-export const sendEmail = async (options: EmailOptions): Promise<void> => {
-  const session = await verifySecurityRole([
-    AppRoleTypes.B2B_TicketHandler,
-    AppRoleTypes.B2B_TicketCreator,
-  ]);
-
-  const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
-
-  try {
-    // Load and populate the template
-    let template = '';
-    let populatedHtml = '';
-
-    if (options.type === EmailTemplate.NEW_TICKET) {
-      template = loadTemplate(`${EmailTemplate.NEW_TICKET}`);
-      populatedHtml = populateTemplate(template, {
-        customerName: options.emailVariables.customerName,
-        ticketNumber: options.emailVariables.ticketNumber,
-      });
-    }
-
-    if (options.type === EmailTemplate.TICKET_ESCALATION) {
-      template = loadTemplate(`${EmailTemplate.TICKET_ESCALATION}`);
-      populatedHtml = populateTemplate(template, {
-        customerName: options.emailVariables.customerName,
-        ticketNumber: options.emailVariables.ticketNumber,
-      });
-    }
-
-    if (options.type === EmailTemplate.TICKET_CLOSURE) {
-      template = loadTemplate(`${EmailTemplate.TICKET_CLOSURE}`);
-      populatedHtml = populateTemplate(template, {
-        customerName: options.emailVariables.customerName,
-        ticketNumber: options.emailVariables.ticketNumber,
-      });
-    }
-
-    await transporter.sendMail({
-      from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
-      to: options.to,
-      subject: options.subject,
-      text: 'options.text',
-      html: populatedHtml,
-    });
-
-    logRequest.info(
-      `Serv.A.F. ${session.user.userName} - Sent E-mail to ${options.to} with subject ${options.subject}`
-    );
-  } catch (error) {
-    logRequest.error(error);
-  }
-};
+import { TransportName, EmailTemplate } from '@b2b-tickets/shared-models';
+import { sendEmail } from '@b2b-tickets/email-service/server';
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -677,17 +583,8 @@ export const createNewTicket = async (
     // Commit the transaction
     await client.query('COMMIT');
 
-    // Send email notification
-    await sendEmail({
-      to: 'apostolos.kapetanios@nova.gr',
-      subject: 'Your Ticket Has Been Created',
-      type: EmailTemplate.NEW_TICKET,
-      emailVariables: {
-        customerName: session.user.customer_name,
-        ticketNumber: newTicketId,
-        escalationLevel: '1',
-      },
-    });
+    // Send E-mail Notifications asynchronously
+    sendEmail(EmailTemplate.NEW_TICKET, newTicketId);
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
@@ -777,48 +674,6 @@ export const setRemedyIncidentIDForTicket = async ({
     };
   } catch (error) {
     return fromErrorToFormState(error);
-  }
-};
-
-import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
-export const sendTestEmail = async () => {
-  try {
-    const session = await getServerSession(options);
-    if (!session) {
-      redirect(`/api/auth/signin?callbackUrl=/`);
-    }
-
-    await setSchemaAndTimezone(pgB2Bpool);
-
-    const mailerSend = new MailerSend({
-      apiKey: process.env.MAILERSEND_API_TOKEN as string,
-    });
-
-    const sentFrom = new Sender('you@mlsender.com', 'Your name');
-
-    const recipients = [
-      new Recipient('apostolos.kapetanios@nova.gr', 'Your Client'),
-    ];
-
-    const emailParams = new EmailParams()
-      .setFrom(sentFrom)
-      .setTo(recipients)
-      .setReplyTo(sentFrom)
-      .setSubject('This is a Subject')
-      .setHtml('<strong>This is the HTML content</strong>')
-      .setText('This is the text content');
-
-    await mailerSend.email.send(emailParams);
-
-    return {
-      status: 'SUCCESS',
-      message: 'Remedy Incident Id was set',
-    };
-  } catch (error: any) {
-    return {
-      status: 'ERROR',
-      message: error?.message,
-    };
   }
 };
 

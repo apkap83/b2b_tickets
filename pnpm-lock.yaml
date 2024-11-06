@@ -149,6 +149,9 @@ importers:
       sharp:
         specifier: 0.33.4
         version: 0.33.4
+      smpp:
+        specifier: 0.6.0-rc.4
+        version: 0.6.0-rc.4
       socket.io:
         specifier: 4.7.5
         version: 4.7.5
@@ -4506,6 +4509,10 @@ packages:
     resolution: {integrity: sha512-+iwzCJ7C5v5KgcBuueqVoNiHVoQpwiUK5XFLjf0affFTep+Wcw93tPvmb8tqujDNmzhBDPddnWV/qgWSXgq+Hg==}
     engines: {node: '>=12'}
 
+  findhit-proxywrap@0.3.13:
+    resolution: {integrity: sha512-gI1KV7yCuMHtveiWbQUJZheNOukScz+15MTtrH/MK5RJ77JjYeJ1DegUfkBnlPvDx5NhZESl48zE/MwpWZ1LXQ==}
+    engines: {node: '>= 0.8'}
+
   flat-cache@3.2.0:
     resolution: {integrity: sha512-CYcENa+FtcUKLmhhqyctpclsq7QF38pKjZHsGNiSQF5r4FtoKDWabFDl3hzaEQMvT1LHEysw5twgLvpYYb4vbw==}
     engines: {node: ^10.12.0 || >=12.0.0}
@@ -7217,6 +7224,10 @@ packages:
   slice-ansi@4.0.0:
     resolution: {integrity: sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ==}
     engines: {node: '>=10'}
+
+  smpp@0.6.0-rc.4:
+    resolution: {integrity: sha512-WDa0XBRQkkJJPcKRtoC9C0cnzhopFIK9/zFcWBOy3sD4xZr3i/Dt3yX+XRparKzpp9QkqRr2/8EYt8JNGxu85w==}
+    engines: {node: '>=4'}
 
   snake-case@3.0.4:
     resolution: {integrity: sha512-LAOh4z89bGQvl9pFfNF8V146i7o7/CqFPbqzYgP+yYzDIDeS9HaNFtXABamRW+AQzEVODcvE79ljJ+8a9YSdMg==}
@@ -13839,6 +13850,10 @@ snapshots:
     dependencies:
       semver-regex: 4.0.5
 
+  findhit-proxywrap@0.3.13:
+    dependencies:
+      lodash: 4.17.21
+
   flat-cache@3.2.0:
     dependencies:
       flatted: 3.3.1
@@ -16880,6 +16895,12 @@ snapshots:
       ansi-styles: 4.3.0
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
+
+  smpp@0.6.0-rc.4:
+    dependencies:
+      findhit-proxywrap: 0.3.13
+      iconv-lite: 0.6.3
+      safer-buffer: 2.1.2
 
   snake-case@3.0.4:
     dependencies:
