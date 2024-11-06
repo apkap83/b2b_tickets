@@ -30,10 +30,10 @@ import {
 import { convertTo24HourFormat } from '@b2b-tickets/utils';
 import { redirect } from 'next/navigation';
 import { execSync } from 'child_process';
-import {
-  CustomLogger,
-  getRequestLogger,
-} from '@b2b-tickets/server-actions/server';
+import { getRequestLogger } from '@b2b-tickets/server-actions/server';
+
+import { CustomLogger } from '@b2b-tickets/logging';
+
 import { TransportName, EmailTemplate } from '@b2b-tickets/shared-models';
 import { sendEmail } from '@b2b-tickets/email-service/server';
 
@@ -80,8 +80,6 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
     throw error;
   }
 };
-
-// const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
 
 export const getCcValuesForTicket = async ({
   ticketId,
@@ -610,12 +608,14 @@ export const setRemedyIncidentIDForTicket = async ({
   remedyIncId: string;
   ticketNumber: string;
 }) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Set_Remedy_INC
     );
 
-    const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
     logRequest.info(
       `Serv.A.F. ${session.user.userName} - Setting Remedy Incident ${remedyIncId} for Ticket Number ${ticketNumber}`
     );

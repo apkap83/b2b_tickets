@@ -34,7 +34,7 @@ import { createRequestLogger } from '@b2b-tickets/logging';
 import { CustomLogger } from '@b2b-tickets/logging';
 import { generateResetToken } from '@b2b-tickets/utils';
 
-export function getRequestLogger(transportName: TransportName) {
+function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
   try {
     const headersList = headers(); // Server-side request headers
@@ -263,7 +263,9 @@ export const options: NextAuthOptions = {
         totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
       },
       async authorize(credentials: any, req: any) {
-        const logRequest: CustomLogger = getRequestLogger(TransportName.AUTH);
+        const logRequest: CustomLogger = await getRequestLogger(
+          TransportName.AUTH
+        );
         try {
           if (!credentials?.userName || !credentials?.password) {
             throw new Error(ErrorCode.NoCredentialsProvided);
@@ -404,7 +406,9 @@ export const options: NextAuthOptions = {
         newPassword: { label: 'newPassword', type: 'text' },
       },
       async authorize(credentials: any, req: any) {
-        const logRequest: CustomLogger = getRequestLogger(TransportName.AUTH);
+        const logRequest: CustomLogger = await getRequestLogger(
+          TransportName.AUTH
+        );
         try {
           const { email, tokenForEmail, newPassword } = credentials;
 

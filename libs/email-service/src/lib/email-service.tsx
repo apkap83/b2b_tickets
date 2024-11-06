@@ -8,10 +8,9 @@ import { options } from '@b2b-tickets/auth-options';
 import { redirect } from 'next/navigation';
 import { userHasRole } from '@b2b-tickets/utils';
 
-import {
-  CustomLogger,
-  getRequestLogger,
-} from '@b2b-tickets/server-actions/server';
+import { getRequestLogger } from '@b2b-tickets/server-actions/server';
+
+import { CustomLogger } from '@b2b-tickets/logging';
 
 import {
   TransportName,
@@ -88,7 +87,9 @@ export const sendEmail = async (
   ticketId: string
 ): Promise<void> => {
   if (!config.SendEmails) return;
-  const logRequest: CustomLogger = getRequestLogger(TransportName.ACTIONS);
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
 
   try {
     const session = await verifySecurityRole([

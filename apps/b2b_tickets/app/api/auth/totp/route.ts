@@ -10,8 +10,8 @@ import { symmetricDecrypt } from '@b2b-tickets/utils';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
 export async function POST(req: NextRequest) {
+  const logRequest = await getRequestLogger(TransportName.AUTH);
   try {
-    const logRequest = getRequestLogger(TransportName.AUTH);
     if (req.method !== 'POST') {
       return NextResponse.json(
         { message: 'Method Not Allowed' },

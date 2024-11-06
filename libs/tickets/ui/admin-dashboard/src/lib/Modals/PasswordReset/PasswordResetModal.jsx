@@ -152,5 +152,3 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
     </div>
   );
 };
-
-export default PasswordResetModal;
