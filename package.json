@@ -52,6 +52,7 @@
     "sequelize": "6.37.3",
     "sequelize-typescript": "2.1.6",
     "sharp": "0.33.4",
+    "smpp": "0.6.0-rc.4",
     "socket.io": "4.7.5",
     "socket.io-client": "4.7.5",
     "styled-components": "5.3.6",
