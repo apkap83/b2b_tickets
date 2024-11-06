@@ -33,7 +33,6 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-import { syncDatabase, syncDatabaseAlterTrue } from '@b2b-tickets/db-access';
 import {
   CustomLogger,
   getRequestLogger,
