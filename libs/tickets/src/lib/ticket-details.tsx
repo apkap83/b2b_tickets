@@ -105,13 +105,12 @@ export function TicketDetails({
   const category = ticketDetails[0].Category;
   const serviceType = ticketDetails[0].Service;
   const statusHTMLColor = getStatusColor(ticketStatus);
-  const currentEscalationLevel = ticketDetails[0]['Curernt Escalation Level'];
+  const currentEscalationLevel = ticketDetails[0]['Current Escalation Level'];
   const isFinalStatus =
     ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
 
   const startWorkPressed = ticketStatus !== '1';
 
-  console.log({ ticketDetails });
   useEffect(() => {
     const nextEscLevel = async () => {
       const resp = await getNextEscalationLevel({
@@ -362,7 +361,7 @@ export function TicketDetails({
                     ? 'editCategoryAndService'
                     : undefined // Only add tooltip ID if the condition is met
                 }
-                className={clsx({
+                className={clsx('w-full', {
                   'w-full hover:scale-[1.01] hover:bg-blue-50 transition-all duration-200 ease-in-out hover:cursor-pointer':
                     userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
                     !isFinalStatus &&

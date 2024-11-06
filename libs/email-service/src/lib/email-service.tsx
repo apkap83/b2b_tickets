@@ -116,7 +116,6 @@ export const sendEmail = async (
       // Find Cc Users
       const res = await getCcValuesForTicket({ ticketId });
       const ticketCreatorEmail = session.user.email as string;
-      console.log(119, ticketCreatorEmail);
       const ccEmails = res.data?.ccEmails as string;
       const ccPhones = res.data?.ccPhones as string;
 

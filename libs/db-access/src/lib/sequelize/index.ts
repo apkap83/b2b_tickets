@@ -81,24 +81,6 @@ const applyAssociations = async () => {
 
 applyAssociations();
 
-const syncDatabase = async () => {
-  try {
-    await sequelize.sync({ force: true });
-    console.log('Database synchronized successfully');
-  } catch (error) {
-    console.error('Error synchronizing the database', error);
-  }
-};
-
-export const syncDatabaseAlterTrue = async () => {
-  try {
-    await sequelize.sync({ alter: true });
-    console.log('Database synchronized successfully');
-  } catch (error) {
-    console.error('Error synchronizing the database', error);
-  }
-};
-
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
@@ -109,4 +91,4 @@ const testConnection = async () => {
   }
 };
 
-export { sequelize, syncDatabase, AppUser, AppRole, AppPermission, B2BUser };
+export { sequelize, AppUser, AppRole, AppPermission, B2BUser };

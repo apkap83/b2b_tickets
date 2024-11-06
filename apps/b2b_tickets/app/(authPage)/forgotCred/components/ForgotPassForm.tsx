@@ -354,14 +354,12 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
           break;
         default:
           setError('Internal Server Error');
-          console.log('357', error);
           setSubmitting(false);
           break;
       }
     },
   });
 
-  console.log(formik);
   return (
     <div
       className={`w-[450px] relative shadow-md rounded-2xl flex flex-col justify-center items-center p-6  backdrop-blur-lg bg-gray-100 border border-[#26295375]`}
@@ -502,7 +500,13 @@ export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
               <FieldError formik={formik} name="tokenForEmail" />
             </div>
           )}
-
+          {/* <div className="mt-5 mb-2 flex justify-around border bg-[#2b2b44] py-1 text-white rounded-md"> */}
+          <div className="my-3 text-right">
+            <Link className="text-xs text-[#6C757D] " href="/signin">
+              Back to <span className="text-blue-500">Login</span> Page
+            </Link>
+          </div>
+          {/* </div> */}
           {error && (
             <p
               className={clsx('mt-3 text-center text-green-500', {

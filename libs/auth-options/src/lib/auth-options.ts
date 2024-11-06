@@ -240,7 +240,6 @@ const tryLocalAuthentication = async (
 
     logRequest.debug(`Valid User Name/Password was provided`);
 
-    console.log({ userDetails });
     return userDetails;
   } catch (error: unknown) {
     logRequest.error(error);

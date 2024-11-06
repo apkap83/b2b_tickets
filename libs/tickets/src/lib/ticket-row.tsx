@@ -23,6 +23,7 @@ export const TicketRow = ({
 
   const lastCustCommentDate = formatDate(item['Last Cust. Comment Date']);
   const delayedResponse = item['Delayed Response'];
+  const finalTicketStatus = item['Is Final Status'] === 'y' ? true : false;
   return (
     <tr
       key={item.ticket_id}
@@ -32,6 +33,7 @@ export const TicketRow = ({
         {
           'bg-red-100':
             userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+            !finalTicketStatus &&
             item['Delayed Response'] === 'Yes',
         }
       )}
@@ -113,16 +115,18 @@ export const TicketRow = ({
       {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
         <>
           <TableCell data-label="Escalated" align="center">
-            {item['Curernt Escalation Level']}
+            <div className="text-center">
+              {!finalTicketStatus && item['Current Escalation Level']}
+            </div>
           </TableCell>
           <TableCell>
             <span>
-              {lastCustCommentDate ? <span>{lastCustCommentDate}</span> : ''}
+              {!finalTicketStatus && <span>{lastCustCommentDate}</span>}
             </span>
           </TableCell>
-          <TableCell>
-            <span>{delayedResponse ? <span>{delayedResponse}</span> : ''}</span>
-          </TableCell>
+          {/* <TableCell>
+            <span>{!finalTicketStatus && <span>{delayedResponse}</span>}</span>
+          </TableCell> */}
         </>
       ) : null}
     </tr>

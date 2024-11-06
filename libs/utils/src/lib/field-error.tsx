@@ -1,5 +1,4 @@
-import React from 'react';
-const FieldError = ({ formik, name }) => {
+const FieldError = ({ formik, name }: any) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
     return null;
   }

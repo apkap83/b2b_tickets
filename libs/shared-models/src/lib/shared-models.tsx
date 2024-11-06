@@ -130,7 +130,7 @@ export interface TicketDetail {
   'First Escalation Date': Date | null; // Changed to Date type
   'Last Escalation User': string | null;
   'Last Escalation Date': Date | null; // Changed to Date type
-  'Curernt Escalation Level': number | null;
+  'Current Escalation Level': number | null;
   last_comment_customer_type_id: number;
   'Last Comment Date': Date; // Changed to Date type
   'Last Cust. Comment Date': Date | null; // Changed to Date type

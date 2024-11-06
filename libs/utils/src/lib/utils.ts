@@ -253,27 +253,6 @@ export const getSeverityStatusColor = (severityId: string) => {
   }
 };
 
-// utils/handleServerAction.ts
-export const handleServerAction = async <T>(
-  action: Promise<{ data: T; error?: string }>
-): Promise<T | undefined> => {
-  const result = await action;
-
-  if (result.error) {
-    // Display the error globally using toast or any other method
-    toast.error(result.error);
-
-    // Optionally log the error or handle it in other ways
-    console.error('Server action error:', result.error);
-
-    // Return `undefined` to signify an error, so we don’t proceed with invalid data
-    return undefined;
-  }
-
-  // Return the data if there’s no error
-  return result.data;
-};
-
 export function generateResetToken() {
   const buffer = crypto.randomBytes(18); // generates 18 random bytes
   return buffer.toString('base64').replace(/[/+=]/g, '').substring(0, 25); // convert to base64, remove non-alphanumeric characters, and trim to 25 chars
