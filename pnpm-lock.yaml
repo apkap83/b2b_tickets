@@ -68,6 +68,9 @@ importers:
       dayjs:
         specifier: 1.11.12
         version: 1.11.12
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
       isomorphic-dompurify:
         specifier: 2.16.0
         version: 2.16.0
@@ -80,9 +83,6 @@ importers:
       ldapts:
         specifier: 7.1.0
         version: 7.1.0
-      lodash:
-        specifier: 4.17.21
-        version: 4.17.21
       mailersend:
         specifier: 2.3.0
         version: 2.3.0

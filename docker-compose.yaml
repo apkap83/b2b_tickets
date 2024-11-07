@@ -1,21 +1,50 @@
-version: "3.8"
-
 services:
-  b2b_ticketing_test:
+  my_monorepo_base:
+    image: my-monorepo-base
+  
+  staging_b2b_tickets:
     build:
       context: .
-      dockerfile: apps/b2b_tickets
-    image: nms_portal_image:${NMS_PORTAL_VERSION:-1.0.1}
+      dockerfile: apps/b2b_tickets/Dockerfile
+    image: b2b_tickets_image:${STAGING_B2B_VERSION:-1.0.1}
     ports:
-      - "7001:7001"
-    container_name: NMS_Portal_Container_1
+      - "5000:3000"
+    container_name: Staging_B2B_Tickets_1
     extra_hosts:
-      - "pirdc01.sys.telestet.gr:10.66.1.11"
+      - "emailrelay:10.0.1.19"
+      - "sms-gw1:10.131.12.77"
+      - "sms-gw2:10.131.20.78"
+      - "test-sms-gw1:10.131.28.73"
+      - "b2b_database:172.27.52.177"
     environment:
       - NODE_ENV=production
-      - PORT=7001
-    command: ["nx", "start", "NMS_Portal"]
+      - APP_ENV=staging
+      - PORT=3000
+    command: ["nx", "start", "b2b_tickets", "--verbose"]
     depends_on:
-      - my_nx_monorepo_base
+      - my_monorepo_base
     volumes:
-      - /var/log/NMS_Portal:/app/apps/NMS_Portal/logs/production
+      - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
+
+  prod_b2b_tickets:
+    build:
+      context: .
+      dockerfile: apps/b2b_tickets/Dockerfile
+    image: b2b_tickets_image:${PROD_B2B_VERSION:-1.0.1}
+    ports:
+      - "8001:3000"
+    container_name: Prod_B2B_Tickets_1
+    extra_hosts:
+      - "emailrelay:10.0.1.19"
+      - "sms-gw1:10.131.12.77"
+      - "sms-gw2:10.131.20.78"
+      - "test-sms-gw1:10.131.28.73"
+      - "b2b_database:172.27.52.177"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    command: ["nx", "start", "b2b_tickets", "--verbose"]
+    depends_on:
+      - my_monorepo_base
+    volumes:
+      - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
