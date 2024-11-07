@@ -1,4 +1,5 @@
 //@ts-check
+const dotenv = require('dotenv');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
@@ -23,5 +24,15 @@ const plugins = [
   // Add more Next.js plugins to this list if needed.
   withNx,
 ];
+
+// Load the appropriate .env file based on APP_ENV or NODE_ENV
+dotenv.config({
+  path:
+    process.env.APP_ENV === 'staging'
+      ? '.env.staging'
+      : process.env.NODE_ENV === 'production'
+      ? '.env.production'
+      : '.env.development',
+});
 
 module.exports = composePlugins(...plugins)(nextConfig);
