@@ -1,0 +1,5 @@
+.nx/
+.git/
+dist/
+.next/
+node_modules/

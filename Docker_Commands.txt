@@ -1,0 +1,62 @@
+pwd
+/home/centos/applications/b2b_tickets
+sudo docker build -t my-monorepo-base -f Dockerfile .
+
+# Start new container from Image
+docker run -d --name nms_portal_backend -p 5001:5001 nms_portal_backend_5001
+
+# Follow up logs
+docker logs -f nms_portal_backend
+
+# Go Inside a running container
+docker exec -it <id> /bin/bash
+
+# Go into an image without a running container
+docker run -it --rm --entrypoint /bin/bash nms_portal_backend_5001
+
+
+# Create Base Image with nx & corporate proxy certificate 
+[root@ipintegrator1 NX_NMS_Portal]# docker build -t my-monorepo-base .
+
+# Create NMS Portal Image
+[root@ipintegrator1 NX_NMS_Portal]# docker build -t b2b_tickets_image:1.0.1 -f apps/b2b_tickets/Dockerfile .
+
+# Start Container
+docker stop NMS_Portal_Container_1   # Stop the container if it's running
+docker rm NMS_Portal_Container_1     # Remove the container
+[root@ipintegrator1 NX_NMS_Portal]# docker run -d -p 7001:7001 --name NMS_Portal_Container_1 nms_portal_image:1.0.1
+[root@ipintegrator1 NX_NMS_Portal]# docker run -d -p 7002:7001 --name NMS_Portal_Container_2 nms_portal_image:1.0.1
+
+
+# Create IP Integrator API Image
+[root@ipintegrator1 NX_NMS_Portal]# docker build -t ip_integrator_api_image:1.0.1 -f apps/API/Dockerfile .
+
+
+[root@ipintegrator1 NX_NMS_Portal]# docker run -d -p 5001:5001 --name IP_Integrator_API_1 --add-host zabbixbe:172.27.52.21 ip_integrator_api_image:1.0.1
+[root@ipintegrator1 NX_NMS_Portal]# docker run -d -p 5002:5001 --name IP_Integrator_API_2 --add-host zabbixbe:172.27.52.21 ip_integrator_api_image:1.0.1
+[root@ipintegrator1 NX_NMS_Portal]# docker run -d -p 5003:5001 --name IP_Integrator_API_3 --add-host zabbixbe:172.27.52.21 ip_integrator_api_image:1.0.1
+
+
+
+
+docker compose up --build # The --build flag ensures that the image is rebuilt every time you run this command.
+docker-compose build
+docker-compose up -d
+docker-compose up -d --remove-orphans
+
+
+# Delete Docker images with <none> name
+docker images | grep '<none>' | awk '{ print $3 }' | xargs docker rmi -f
+docker images|grep none|awk '{print $3}'|xargs docker image rm -f
+
+# Run a docker Image Listening on port 7001
+docker run --rm -p 7001:7001 -it nms_portal_image:1.0.1 bash
+
+
+# Tag current images as stable
+docker tag nms_portal_image:1.0.2 nms_portal_image:stable
+docker tag ip_integrator_api_image:1.0.1 ip_integrator_api_image:stable
+
+# In order to use stable images
+docker-compose down
+docker-compose -f docker-compose-stable.yml up -d --remove-orphans
