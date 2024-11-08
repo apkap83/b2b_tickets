@@ -20,11 +20,14 @@ services:
       - NODE_ENV=production
       - APP_ENV=staging
       - PORT=3000
-    command: ["nx", "start", "b2b_tickets", "--verbose"]
+    command: >
+      sh -c "cp /mnt/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
+             nx start b2b_tickets --verbose"
     depends_on:
       - my_monorepo_base
     volumes:
       - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
+      - /home/centos/Staging_Environment_Variables/.env.staging:/mnt/env-files/.env.staging
 
   prod_b2b_tickets:
     build:

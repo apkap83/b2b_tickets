@@ -279,6 +279,21 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           />
           <span>Platinum Support</span>
         </div>
+        {process.env['NEXT_PUBLIC_APP_ENV'] === 'staging' &&
+          process.env['NODE_ENV'] === 'production' && (
+            <div className="flex items-center justify-center h-12 ">
+              <div className="px-2 opacity-80 text-center text-lg text-pink-900 border border-dashed border-pink-900 mx-auto h-auto shadow-white shadow-sm">
+                Staging Environment
+              </div>
+            </div>
+          )}
+        {process.env['NODE_ENV'] === 'development' && (
+          <div className="flex items-center justify-center h-12">
+            <div className="px-2 opacity-80 text-center text-lg text-pink-900 border border-dashed border-pink-900 mx-auto h-auto shadow-white shadow-sm">
+              Development Environment
+            </div>
+          </div>
+        )}
         <div className="text-xl text-left mt-[.75rem] text-[black] font-semibold">
           Sign in
         </div>
