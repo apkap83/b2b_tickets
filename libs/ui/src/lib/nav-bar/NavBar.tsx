@@ -16,7 +16,7 @@ import { NovaLogo } from '@b2b-tickets/assets';
 import { LoggedInIndication } from '@b2b-tickets/ui';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
-
+import config from '@b2b-tickets/config';
 import styles from './css/NavBar.module.scss';
 import SessionPopup from '../session-popup/SessionPopup';
 
@@ -78,6 +78,21 @@ export const NavBar = () => {
             </Stack>
           </Link>
         </div>
+
+        {process.env['NEXT_PUBLIC_APP_ENV'] === 'staging' && (
+          <div className="flex items-center justify-center h-12 ">
+            <div className="text-center text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-1 shadow-white shadow-sm">
+              Staging Environment
+            </div>
+          </div>
+        )}
+        {process.env['NODE_ENV'] === 'development' && (
+          <div className="rounded-md flex items-center justify-center h-12">
+            <div className="rounded-md text-center text-sm text-pink-100 border border-gray-400 mx-auto h-auto px-2 shadow-white shadow-sm">
+              Development Environment
+            </div>
+          </div>
+        )}
         <Box className={`${styles.menuAndLoggedIndication}`}>
           <Box
             sx={{

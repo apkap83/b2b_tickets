@@ -29,12 +29,14 @@ export const TicketRow = ({
       key={item.ticket_id}
       onClick={handleClick}
       className={clsx(
-        'whitespace-nowrap hover:bg-black/5 hover:cursor-pointer',
+        'hover:bg-black/5',
+        'whitespace-nowrap hover:cursor-pointer',
         {
           'bg-red-100':
             userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
             !finalTicketStatus &&
             item['Delayed Response'] === 'Yes',
+          'hover:bg-red-200': delayedResponse,
         }
       )}
     >

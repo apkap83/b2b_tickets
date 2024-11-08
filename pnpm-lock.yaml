@@ -83,6 +83,9 @@ importers:
       ldapts:
         specifier: 7.1.0
         version: 7.1.0
+      lodash:
+        specifier: 4.17.21
+        version: 4.17.21
       mailersend:
         specifier: 2.3.0
         version: 2.3.0

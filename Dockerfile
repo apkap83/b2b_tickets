@@ -44,5 +44,9 @@ RUN pnpm config set strict-ssl false --global
 RUN pnpm config set proxy http://10.124.49.151:3129
 RUN pnpm config set https-proxy http://10.124.49.151:3129
 
+# Inst env-cmd globally
+RUN pnpm i -g env-cmd
+
 # Install Nx
 RUN pnpm install -g nx@19.2.2
+

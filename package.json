@@ -30,6 +30,7 @@
     "js-cookie": "3.0.5",
     "jsonwebtoken": "9.0.2",
     "ldapts": "7.1.0",
+    "lodash": "4.17.21",
     "mailersend": "2.3.0",
     "mui-one-time-password-input": "2.0.3",
     "next": "14.2.3",
