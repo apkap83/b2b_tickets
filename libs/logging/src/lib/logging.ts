@@ -8,8 +8,16 @@ import { TransportName } from '@b2b-tickets/shared-models';
 const { combine, timestamp, json, printf, colorize, align, errors } =
   winston.format;
 
-const env = process.env['NODE_ENV'] || 'development';
-const logDir = env === 'production' ? 'production' : 'development';
+const env =
+  process.env['NODE_ENV'] === 'production' ? 'production' : 'development';
+
+const logDir =
+  process.env['APP_ENV'] === 'staging'
+    ? 'development'
+    : env === 'production'
+    ? 'production'
+    : 'development';
+
 const logPath = path.join(process.cwd(), 'logs', logDir);
 
 // Ensure log directory exists
