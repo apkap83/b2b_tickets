@@ -25,6 +25,7 @@ import {
   Severity,
   TicketDetail,
   TicketDetailsModalActions,
+  EmailNotificationType,
 } from '@b2b-tickets/shared-models';
 
 import { convertTo24HourFormat } from '@b2b-tickets/utils';
@@ -558,7 +559,7 @@ export const createNewTicket = async (
     await client.query('COMMIT');
 
     // Send E-mail Notifications asynchronously
-    sendEmail(EmailTemplate.NEW_TICKET, newTicketId);
+    sendEmail(EmailNotificationType.TICKET_CREATION, newTicketId);
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
@@ -749,6 +750,9 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
         config.postgres_b2b_database.debugMode,
       ]
     );
+
+    // Send E-mail Notifications asynchronously
+    sendEmail(EmailNotificationType.TICKET_ESCALATION, ticketId);
 
     revalidatePath(`/ticket/${ticketNumber}`);
 
