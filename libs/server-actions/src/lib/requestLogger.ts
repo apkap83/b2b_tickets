@@ -1,9 +1,8 @@
 'use server';
 
 import { headers } from 'next/headers';
-import { createRequestLogger } from '@b2b-tickets/logging';
+import { createRequestLogger, logErr } from '@b2b-tickets/logging';
 import { TransportName } from '@b2b-tickets/shared-models';
-
 export async function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
   try {
@@ -30,3 +29,19 @@ export async function getRequestLogger(transportName: TransportName) {
     throw new Error('getRequestLogger must be used in a server-side context.');
   }
 }
+
+// Setup process event listeners
+process.on('unhandledRejection', async (reason, p) => {
+  logErr.error('Unhandled Rejection at:', { promise: p, reason });
+
+  // Pass the rejection to the uncaughtException handler by throwing it
+  throw reason;
+});
+
+process.on('uncaughtException', async (error) => {
+  logErr.error('Critical untrusted error encountered. Stopping server.', {
+    message: error.message,
+    stack: error.stack,
+  });
+  process.exit(1); // Restart the server for untrusted errors
+});
