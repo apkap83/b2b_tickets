@@ -17,6 +17,10 @@ import {
   EmailTemplate,
   AppRoleTypes,
   TicketDetail,
+  TemplateVariables,
+  EmailTemplateSubject,
+  EmailNotificationType,
+  EmailListOfHandlers,
 } from '@b2b-tickets/shared-models';
 import config from '@b2b-tickets/config';
 import { pgB2Bpool, setSchemaAndTimezone } from '@b2b-tickets/db-access';
@@ -42,16 +46,27 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
   }
 };
 
-// Function to replsace template variables with actual values
-const populateTemplate = (
+const populateTemplate = <T extends keyof TemplateVariables>(
   template: string,
-  variables: Record<string, string>
+  variables: TemplateVariables[T]
 ): string => {
-  return template.replace(/{{(.*?)}}/g, (_, key) => variables[key] || '');
+  return template.replace(/{{(.*?)}}/g, (_, key) => {
+    if (!(key in variables)) {
+      throw new Error(`Missing variable: ${key}`);
+    }
+    return String(variables[key as keyof TemplateVariables[T]]);
+  });
+};
+
+const populateSubject = (
+  subjectTemplate: EmailTemplateSubject,
+  ticketNumber: string
+): string => {
+  return subjectTemplate.replace('{{ticketNumber}}', ticketNumber);
 };
 
 // Load the HTML template
-const loadTemplate = (templateName: string): string => {
+const loadTemplate = (templateName: EmailTemplate): string => {
   const rootPath = path.resolve();
 
   return fs.readFileSync(
@@ -70,20 +85,8 @@ const transporter: Transporter = nodemailer.createTransport({
   },
 } as SMTPTransport.Options);
 
-// Send email notification
-// await sendEmail({
-//   to: 'apostolos.kapetanios@nova.gr',
-//   subject: 'Your Ticket Has Been Created',
-//   type: EmailTemplate.NEW_TICKET,
-//   emailVariables: {
-//     customerName: session.user.customer_name,
-//     ticketNumber: newTicketId,
-//     escalationLevel: '1',
-//   },
-// });
-
 export const sendEmail = async (
-  emailtype: EmailTemplate,
+  emailNotificationType: EmailNotificationType,
   ticketId: string
 ): Promise<void> => {
   if (!config.SendEmails) return;
@@ -101,52 +104,157 @@ export const sendEmail = async (
     let template = '';
     let populatedHtml = '';
 
-    // Ticket Number
+    await setSchemaAndTimezone(pgB2Bpool);
+    // Find Ticket from ticketId
+    const result = await pgB2Bpool.query(
+      'SELECT * from tickets_v where ticket_id = $1',
+      [ticketId]
+    );
 
-    if (emailtype === EmailTemplate.NEW_TICKET) {
-      await setSchemaAndTimezone(pgB2Bpool);
-      // Find Ticket from ticketId
-      const result = await pgB2Bpool.query(
-        'SELECT * from tickets_v where ticket_id = $1',
-        [ticketId]
+    // Type assertion for the rows returned by the query
+    const ticket: TicketDetail = result.rows[0] as TicketDetail;
+
+    // Find Cc Users
+    const res = await getCcValuesForTicket({ ticketId });
+    const ticketCreatorEmail = session.user.email as string;
+    const ticketCreatorUserName = session.user.userName;
+    const ccEmails = res.data?.ccEmails as string;
+    const ccPhones = res.data?.ccPhones as string;
+    const ticketNumber = ticket.Ticket;
+    const customer = ticket.Customer;
+    const ticketSubject = ticket.Title;
+    const currentEscalationLevel = String(ticket['Current Escalation Level']);
+
+    if (emailNotificationType === EmailNotificationType.TICKET_CREATION) {
+      // Load and populate the template
+      const templateForHandlerPopulated = populateTemplate(
+        loadTemplate(EmailTemplate.NEW_TICKET_HANDLER),
+        {
+          webSiteUrl: config.webSiteUrl,
+          ticketNumber: ticketNumber,
+          customerName: customer,
+          ticketSubject: ticketSubject,
+        } as TemplateVariables[EmailTemplate.NEW_TICKET_HANDLER]
       );
 
-      // Type assertion for the rows returned by the query
-      const ticket: TicketDetail = result.rows[0] as TicketDetail;
+      const templateForCustomerPopulated = populateTemplate(
+        loadTemplate(EmailTemplate.NEW_TICKET_CUSTOMER),
+        {
+          webSiteUrl: config.webSiteUrl,
+          userName: ticketCreatorUserName,
+          ticketNumber: ticketNumber,
+          ticketSubject: ticketSubject,
+        } as TemplateVariables[EmailTemplate.NEW_TICKET_CUSTOMER]
+      );
 
-      // Find Cc Users
-      const res = await getCcValuesForTicket({ ticketId });
-      const ticketCreatorEmail = session.user.email as string;
-      const ccEmails = res.data?.ccEmails as string;
-      const ccPhones = res.data?.ccPhones as string;
+      // Send Email for Handler
+      await transporter.sendMail({
+        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        to: EmailListOfHandlers,
+        subject: populateSubject(
+          EmailTemplateSubject.NEW_TICKET_HANDLER,
+          ticketNumber
+        ),
+        text: 'options.text',
+        html: templateForHandlerPopulated,
+      });
+      logRequest.info(
+        `Serv.A.F. ${
+          session.user.userName
+        } - Sent E-mail To Handlers: ${EmailListOfHandlers} with subject ${populateSubject(
+          EmailTemplateSubject.NEW_TICKET_HANDLER,
+          ticketNumber
+        )}`
+      );
 
-      // Load and populate the template
-      template = loadTemplate(EmailTemplate.NEW_TICKET);
-      populatedHtml = populateTemplate(template, {
-        customerName: ticket.Customer,
-        ticketNumber: ticket.Ticket,
+      // Send E-mail for Customer && CC People
+      await transporter.sendMail({
+        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        to: [ticketCreatorEmail, ccEmails],
+        subject: populateSubject(
+          EmailTemplateSubject.NEW_TICKET_CUSTOMER,
+          ticketNumber
+        ),
+        text: 'options.text',
+        html: templateForCustomerPopulated,
       });
 
-      // await transporter.sendMail({
-      //   from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
-      //   to: options.to,
-      //   subject: options.subject,
-      //   text: 'options.text',
-      //   html: populatedHtml,
-      // });
+      logRequest.info(
+        `Serv.A.F. ${session.user.userName} - Sent E-mail To Customer: ${[
+          ticketCreatorEmail,
+          ccEmails,
+        ]} with subject ${populateSubject(
+          EmailTemplateSubject.NEW_TICKET_CUSTOMER,
+          ticketNumber
+        )}`
+      );
     }
 
-    // await transporter.sendMail({
-    //   from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
-    //   to: options.to,
-    //   subject: options.subject,
-    //   text: 'options.text',
-    //   html: populatedHtml,
-    // });
+    if (emailNotificationType === EmailNotificationType.TICKET_ESCALATION) {
+      // Load and populate the template
+      const templateForHandlerPopulated = populateTemplate(
+        loadTemplate(EmailTemplate.TICKET_ESCALATION_HANDLER),
+        {
+          ticketNumber: ticketNumber,
+          customerName: customer,
+          escalationComment: 'Escalation Comment',
+          escalationLevel: currentEscalationLevel,
+          ticketSubject: ticketSubject,
+        } as TemplateVariables[EmailTemplate.TICKET_ESCALATION_HANDLER]
+      );
 
-    // logRequest.info(
-    //   `Serv.A.F. ${session.user.userName} - Sent E-mail to ${options.to} with subject ${options.subject}`
-    // );
+      const templateForCustomerPopulated = populateTemplate(
+        loadTemplate(EmailTemplate.TICKET_ESCALATION_CUSTOMER),
+        {
+          ticketNumber: ticketNumber,
+          escalationLevel: currentEscalationLevel,
+          ticketSubject: ticketSubject,
+          userName: ticketCreatorUserName,
+        } as TemplateVariables[EmailTemplate.TICKET_ESCALATION_CUSTOMER]
+      );
+
+      // Send Email for Handler
+      await transporter.sendMail({
+        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        to: EmailListOfHandlers,
+        subject: populateSubject(
+          EmailTemplateSubject.TICKET_ESCALATION_HANDLER,
+          ticketNumber
+        ),
+        text: 'options.text',
+        html: templateForHandlerPopulated,
+      });
+      logRequest.info(
+        `Serv.A.F. ${
+          session.user.userName
+        } - Sent E-mail To Handlers: ${EmailListOfHandlers} with subject ${populateSubject(
+          EmailTemplateSubject.TICKET_ESCALATION_HANDLER,
+          ticketNumber
+        )}`
+      );
+
+      // Send E-mail for Customer && CC People
+      await transporter.sendMail({
+        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        to: [ticketCreatorEmail, ccEmails],
+        subject: populateSubject(
+          EmailTemplateSubject.TICKET_ESCALATION_CUSTOMER,
+          ticketNumber
+        ),
+        text: 'options.text',
+        html: templateForCustomerPopulated,
+      });
+
+      logRequest.info(
+        `Serv.A.F. ${session.user.userName} - Sent E-mail To Customer: ${[
+          ticketCreatorEmail,
+          ccEmails,
+        ]} with subject ${populateSubject(
+          EmailTemplateSubject.TICKET_ESCALATION_CUSTOMER,
+          ticketNumber
+        )}`
+      );
+    }
   } catch (error) {
     logRequest.error(error);
   }
@@ -198,8 +306,10 @@ export const getCcValuesForTicket = async ({
 
     return {
       data: {
-        ccEmails: res_emails.rows[0].email_addresses,
-        ccPhones: res_phones.rows[0].cc_phones,
+        ccEmails:
+          res_emails.rows?.length > 0 ? res_emails.rows[0].email_addresses : [],
+        ccPhones:
+          res_phones.rows?.length > 0 ? res_phones.rows[0].cc_phones : [],
       },
     };
   } catch (error: any) {
