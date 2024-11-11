@@ -1,10 +1,16 @@
 import { Sequelize } from 'sequelize-typescript';
 
 import { config } from '@b2b-tickets/config';
+import { sequelizeDBActionsLogger } from '@b2b-tickets/logging';
 
 const B2BUser = require('./models/users').B2BUser;
 const AppRole = require('./models/Role').AppRole;
 const AppPermission = require('./models/Permission').AppPermission;
+
+// Define a custom logging function for Sequelize
+const sequelizeLogger = (msg: string) => {
+  sequelizeDBActionsLogger.info(msg);
+};
 
 const sequelize = new Sequelize({
   host: config.postgres_b2b_database.host,
@@ -31,8 +37,7 @@ const sequelize = new Sequelize({
     acquire: 30000,
     idle: 10000,
   },
-  // disable logging; default: console log
-  // logging: false,
+  logging: sequelizeLogger,
 });
 
 B2BUser.initModel(sequelize);
