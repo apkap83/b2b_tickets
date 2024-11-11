@@ -350,26 +350,6 @@ export const getTicketDetailsForTicketId = async ({
   }
 };
 
-// export const getTicketCategories = async (): Promise<TicketCategory[]> => {
-//   try {
-//     const session = await verifySecurityPermission(
-//       AppPermissionTypes.Tickets_Page
-//     );
-
-//     await setSchemaAndTimezone(pgB2Bpool);
-
-//     //@ts-ignore
-//     const userId = session.user.user_id;
-
-//     const query =
-//       'SELECT category_id, "Category" FROM ticket_categories_v WHERE user_id = $1';
-//     const res = await pgB2Bpool.query(query, [userId]);
-//     return res.rows;
-//   } catch (error) {
-//     throw error;
-//   }
-// };
-
 export const getServiceTypes = async (): Promise<ServiceType[]> => {
   try {
     const session = await verifySecurityPermission(
@@ -661,7 +641,6 @@ export const setRemedyIncidentIDForTicket = async ({
         config.postgres_b2b_database.debugMode,
       ]
     );
-
     revalidatePath(`/ticket/${ticketNumber}`);
 
     return {
@@ -669,6 +648,12 @@ export const setRemedyIncidentIDForTicket = async ({
       message: 'Remedy Incident Id was set',
     };
   } catch (error) {
+    logRequest.error(
+      `Failed to set Remedy Incident ID for ticket: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
     return fromErrorToFormState(error);
   }
 };
@@ -680,9 +665,16 @@ export const deleteExistingComment = async ({
   commentId: string;
   ticketNumber: string;
 }) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Delete_Comments
+    );
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Deleting Existing comment with id ${commentId} for Ticket Number ${ticketNumber}`
     );
 
     await setSchemaAndTimezone(pgB2Bpool);
@@ -703,6 +695,12 @@ export const deleteExistingComment = async ({
       message: 'Comment was deleted successfully',
     };
   } catch (error: any) {
+    logRequest.error(
+      `Failed to delete existing Comment: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
     return {
       status: 'ERROR',
       message: error?.message,
@@ -711,6 +709,9 @@ export const deleteExistingComment = async ({
 };
 
 export const escalateTicket = async (formState: any, formData: FormData) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Escalate_Ticket
@@ -722,6 +723,10 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
     let ticketId = formData.get('ticketId') as string;
     const ticketNumber = formData.get('ticketNumber');
     const comment = formData.get('comment');
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Escalating Ticket with id ${ticketId}`
+    );
 
     const escalation_id = await pgB2Bpool.query(
       `
@@ -752,6 +757,12 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
       message: 'Ticket was escalated!',
     };
   } catch (error: any) {
+    logRequest.error(
+      `Failed to Escalate ticket: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
     return {
       status: 'ERROR',
       message: error?.message,
@@ -764,12 +775,19 @@ export const alterTicketSeverity = async ({
   ticketId,
   newSeverityId,
 }: any) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Alter_Ticket_Severity
     );
 
     await setSchemaAndTimezone(pgB2Bpool);
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Altering Ticket Serverity for ticket with id ${ticketId} to ${newSeverityId}`
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 250));
 
@@ -802,6 +820,12 @@ export const alterTicketSeverity = async ({
       message: 'Ticket was escalated!',
     };
   } catch (error: any) {
+    logRequest.error(
+      `Failed to Alter Ticket Severity: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
     return {
       status: 'ERROR',
       message: error?.message,
@@ -813,6 +837,10 @@ export const createNewComment = async (
   formState: TicketFormState,
   formData: FormData
 ): Promise<any> => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Ticket_Details_Page
@@ -831,6 +859,9 @@ export const createNewComment = async (
       });
 
     if (modalAction === TicketDetailsModalActions.CLOSE) {
+      logRequest.info(
+        `Serv.A.F. ${session.user.userName} - Creating new closing comment for ticket with id ${ticketId}`
+      );
       await pgB2Bpool.query(
         `
           CALL tck_close
@@ -861,6 +892,9 @@ export const createNewComment = async (
     }
 
     if (modalAction === TicketDetailsModalActions.CANCEL) {
+      logRequest.info(
+        `Serv.A.F. ${session.user.userName} - Creating new cancelling comment for ticket with id ${ticketId}`
+      );
       await pgB2Bpool.query(
         `CALL tck_cancel
         (
@@ -885,6 +919,10 @@ export const createNewComment = async (
       revalidatePath(`/ticket/${ticketNumber}`);
       return toFormState('SUCCESS', 'Ticket was Cancelled');
     }
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Creating new comment for ticket with id ${ticketId}`
+    );
 
     await pgB2Bpool.query(
       `CALL cmt_add_simple
@@ -912,7 +950,12 @@ export const createNewComment = async (
     revalidatePath(`/ticket/${ticketNumber}`);
     return toFormState('SUCCESS', 'Comment Created!');
   } catch (error) {
-    console.log('ERROR', error);
+    logRequest.error(
+      `Failed to Create new Comment: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
     return fromErrorToFormState(error);
   }
 };
@@ -928,12 +971,19 @@ export async function setTicketWorking({
   statusId: string;
   comment: string;
 }) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
 
     await setSchemaAndTimezone(pgB2Bpool);
 
     const userId = session.user.user_id;
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Altering Ticket To Working state ticket with id ${ticketId}`
+    );
 
     await pgB2Bpool.query(
       `
@@ -962,6 +1012,12 @@ export async function setTicketWorking({
       message: `Ticket was updated successfuly`,
     };
   } catch (error: any) {
+    logRequest.error(
+      `Failed to set Ticket to Working status: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
     return fromErrorToFormState(error);
   }
 }
@@ -1189,6 +1245,9 @@ export const setNewCategoryServiceTypeForTicket = async (
   formState: any,
   formData: FormData
 ) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
 
@@ -1197,6 +1256,10 @@ export const setNewCategoryServiceTypeForTicket = async (
     const ticketId = formData.get('ticketId') as string;
     const categoryServiceTypeId = formData.get('categoryServiceTypeId');
     const ticketNumber = formData.get('ticketNumber');
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Setting new Category and Service for ticket with id ${ticketId}`
+    );
 
     await pgB2Bpool.query(
       `
@@ -1227,6 +1290,12 @@ export const setNewCategoryServiceTypeForTicket = async (
       message: 'Ticket category/service type was updated!',
     };
   } catch (error: any) {
+    logRequest.error(
+      `Failed to Set New Category and Service: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
     return fromErrorToFormState(error);
   }
 };
