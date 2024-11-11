@@ -257,10 +257,67 @@ export enum EscalationStatus {
 export const EscalationFillColor = '#6a2424';
 export const EscalationBorderColor = '#6a2424';
 
+export enum EmailNotificationType {
+  TICKET_CREATION = 'ticket-creation',
+  TICKET_ESCALATION = 'ticket-escalation',
+  TICKET_CLOSURE = 'ticket-closure',
+}
+
+export const EmailListOfHandlers = ['apostolos.kapetanios@nova.gr'];
+
 export enum EmailTemplate {
-  NEW_TICKET = 'NewTicket.html',
-  TICKET_ESCALATION = 'Escalate_Ticket.html',
-  TICKET_CLOSURE = 'CloseTicket.html',
+  NEW_TICKET_HANDLER = 'NewTicketHandler.html',
+  TICKET_ESCALATION_HANDLER = 'TicketEscalationHandler.html',
+  TICKET_CLOSURE_HANDLER = 'TicketClosureHandler.html',
+
+  NEW_TICKET_CUSTOMER = 'NewTicketCustomer.html',
+  TICKET_ESCALATION_CUSTOMER = 'TicketEscalationCustomer.html',
+  TICKET_CLOSURE_CUSTOMER = 'TicketClosureCustomer.html',
+}
+
+export interface TemplateVariables {
+  [EmailTemplate.NEW_TICKET_HANDLER]: {
+    webSiteUrl: string;
+    ticketNumber: string;
+    customerName: string;
+    ticketSubject: string;
+  };
+  [EmailTemplate.TICKET_ESCALATION_HANDLER]: {
+    ticketNumber: string;
+    escalationLevel: string;
+    customerName: string;
+    ticketSubject: string;
+    escalationComment: string;
+  };
+  [EmailTemplate.TICKET_CLOSURE_HANDLER]: {
+    ticketNumber: string;
+    customerName: string;
+    ticketSubject: string;
+  };
+  [EmailTemplate.NEW_TICKET_CUSTOMER]: {
+    userName: string;
+    ticketNumber: string;
+    ticketSubject: EmailTemplateSubject;
+  };
+  [EmailTemplate.TICKET_ESCALATION_CUSTOMER]: {
+    ticketNumber: string;
+    userName: string;
+    escalationLevel: string;
+    ticketSubject: string;
+  };
+  [EmailTemplate.TICKET_CLOSURE_CUSTOMER]: {
+    userName: string;
+    ticketSubject: string;
+  };
+}
+
+export enum EmailTemplateSubject {
+  NEW_TICKET_HANDLER = 'Nova Platinum Ticketing - New Issue {{ticketNumber}}',
+  NEW_TICKET_CUSTOMER = 'Nova Platinum Ticketing - New Issue: {{ticketNumber}}',
+  TICKET_ESCALATION_HANDLER = 'Nova Platinum Ticketing- Escalated Issue: {{ticketNumber}}',
+  TICKET_ESCALATION_CUSTOMER = 'Nova Platinum Ticketing- Escalated Issue: {{ticketNumber}}',
+  TICKET_CLOSURE_HANDLER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
+  TICKET_CLOSURE_CUSTOMER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
 }
 
 export interface EmailVariableTypes {

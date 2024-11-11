@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      /* Add styles if needed */
+    </style>
+  </head>
+  <body>
+    <p>Dear {{userName}},</p>
+    <p>Thank you for contacting Nova Platinum Support.</p>
+    <p>
+      We appreciate your continued business and the opportunity to assist you
+      with your inquiry.
+    </p>
+    <p>
+      Your Case
+      <a
+        href="{{webSiteUrl}}/ticket/{{ticketNumber}}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ticketNumber}}
+      </a>
+      has been created and is currently being directed to the appropriate
+      Support Engineer, who will be reaching out to you shortly regarding this
+      matter.
+    </p>
+    <p>Issue: {{ticketSubject}}</p>
+    <p>
+      For your convenience, you may view or update your case at any time via the
+      Nova Platinum Ticketing portal.
+    </p>
+    <p>Thank you for your patience as we work to address your issue.</p>
+
+    <p>Kind Regards</p>
+    <p>Nova Platinum Support</p>
+  </body>
+</html>
