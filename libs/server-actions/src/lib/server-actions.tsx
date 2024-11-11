@@ -782,7 +782,6 @@ export const alterTicketSeverity = async ({
     const session = await verifySecurityPermission(
       AppPermissionTypes.Alter_Ticket_Severity
     );
-
     await setSchemaAndTimezone(pgB2Bpool);
 
     logRequest.info(

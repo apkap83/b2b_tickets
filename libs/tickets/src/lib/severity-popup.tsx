@@ -35,9 +35,11 @@ export const SeverityPopup = ({
         newSeverityId: values.severity,
       });
 
-      if (resp && resp.status === 'SUCCESS') {
-        toast.success('Severity was altered');
+      if (resp?.status === 'ERROR') {
+        toast.error(resp.message);
+        return;
       }
+      toast.success('Severity was altered');
 
       setShowSeverityDialog(false);
     },
