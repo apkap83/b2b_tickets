@@ -4,6 +4,33 @@ export interface AppPermissionType {
   permissionDescription: string;
 }
 
+export interface B2BUserType {
+  user_id: number;
+  customer_id: number;
+  username: string;
+  password: string;
+  password_change_date: Date;
+  first_name: string;
+  last_name: string;
+  mobile_phone?: string | null;
+  email?: string | null;
+  authentication_type: 'LOCAL' | 'LDAP';
+  change_password: 'y' | 'n';
+  is_active: 'y' | 'n';
+  is_locked: 'y' | 'n';
+  locked_reason?: string | null;
+  last_login_attempt: Date;
+  last_login_status: 's' | 'f' | 'i';
+  last_login_failed_attempts?: number | null;
+  record_version: number;
+  creation_date: Date;
+  creation_user: string;
+  last_update_date?: Date | null;
+  last_update_user?: string | null;
+  last_update_process: string;
+  two_factor_secret?: string | null;
+}
+
 export type FormState = {
   status: 'UNSET' | 'SUCCESS' | 'ERROR';
   message: string;
@@ -261,9 +288,11 @@ export enum EmailNotificationType {
   TICKET_CREATION = 'ticket-creation',
   TICKET_ESCALATION = 'ticket-escalation',
   TICKET_CLOSURE = 'ticket-closure',
+  USER_CREATION = 'user-creation',
 }
 
 export const EmailListOfHandlers = ['apostolos.kapetanios@nova.gr'];
+export const NMS_Team_Email_Address = ['nms_system_support@nova.gr'];
 
 export enum EmailTemplate {
   NEW_TICKET_HANDLER = 'NewTicketHandler.html',
@@ -273,6 +302,8 @@ export enum EmailTemplate {
   NEW_TICKET_CUSTOMER = 'NewTicketCustomer.html',
   TICKET_ESCALATION_CUSTOMER = 'TicketEscalationCustomer.html',
   TICKET_CLOSURE_CUSTOMER = 'TicketClosureCustomer.html',
+
+  NEW_USER_CREATION_NOTIFICATION = 'NewUserNotification.html',
 }
 
 export interface TemplateVariables {
@@ -282,42 +313,97 @@ export interface TemplateVariables {
     customerName: string;
     ticketSubject: string;
   };
+  [EmailTemplate.NEW_TICKET_CUSTOMER]: {
+    webSiteUrl: string;
+    userName: string;
+    ticketNumber: string;
+    ticketSubject: EmailTemplateSubject;
+  };
   [EmailTemplate.TICKET_ESCALATION_HANDLER]: {
+    webSiteUrl: string;
     ticketNumber: string;
     escalationLevel: string;
     customerName: string;
     ticketSubject: string;
     escalationComment: string;
   };
-  [EmailTemplate.TICKET_CLOSURE_HANDLER]: {
-    ticketNumber: string;
-    customerName: string;
-    ticketSubject: string;
-  };
-  [EmailTemplate.NEW_TICKET_CUSTOMER]: {
-    userName: string;
-    ticketNumber: string;
-    ticketSubject: EmailTemplateSubject;
-  };
   [EmailTemplate.TICKET_ESCALATION_CUSTOMER]: {
+    webSiteUrl: string;
     ticketNumber: string;
     userName: string;
     escalationLevel: string;
     ticketSubject: string;
   };
-  [EmailTemplate.TICKET_CLOSURE_CUSTOMER]: {
-    userName: string;
+  [EmailTemplate.TICKET_CLOSURE_HANDLER]: {
+    webSiteUrl: string;
+    ticketNumber: string;
+    customerName: string;
     ticketSubject: string;
   };
+  [EmailTemplate.TICKET_CLOSURE_CUSTOMER]: {
+    webSiteUrl: string;
+    userName: string;
+    ticketNumber: string;
+    ticketSubject: string;
+  };
+  [EmailTemplate.NEW_USER_CREATION_NOTIFICATION]: {
+    secureLink: string;
+    userName: string;
+    appEnvironment: string;
+    appURL: string;
+  };
+}
+
+export interface TicketEscalation {
+  escalation_id: number; // Primary key, numeric type
+  ticket_id: number; // Foreign key to tickets, numeric type
+  ticket_creation_date: Date; // Timestamp, non-nullable
+  escalation_date: Date; // Timestamp, non-nullable
+  escalation_user_id: number; // Foreign key to users, numeric type
+  escalation_comment_id: number; // Foreign key to ticket_comments, numeric type
+  hours_passed: number; // Numeric type, non-nullable
+  escalation_scheme_level_id: number; // Foreign key to escalation_scheme_levels, numeric type
+  escalation_scheme_id: number; // Foreign key to escalation_schemes, numeric type
+  escalation_level_title: string; // VarChar(100), non-nullable
+  escalation_level: number; // Numeric type, non-nullable
+  escalation_hours: number; // Numeric type, non-nullable
+  escalation_email_recipients?: string | null; // Text, nullable
+  record_version: number; // Numeric type, non-nullable
+  creation_date: Date; // Timestamp, non-nullable
+  creation_user: string; // VarChar(150), non-nullable
+  last_update_date?: Date | null; // Timestamp, nullable
+  last_update_user?: string | null; // VarChar(150), nullable
+  last_update_process: string; // VarChar(250), non-nullable
+}
+
+export interface TicketCommentDB {
+  comment_id: number; // Primary key, numeric type
+  ticket_id: number; // Foreign key to tickets, numeric type
+  comment_date: Date; // Timestamp, non-nullable
+  comment_user_id: number; // Foreign key to users, numeric type
+  comment: string; // VarChar(4000), non-nullable
+  escalation_level?: number | null; // Numeric, nullable
+  is_closure?: 'y' | 'n' | null; // VarChar(1), nullable, constrained to 'y' or 'n'
+  by_system?: 'y' | 'n' | null; // VarChar(1), nullable, constrained to 'y' or 'n'
+  deletion_date?: Date | null; // Timestamp, nullable
+  deletion_user_id?: number | null; // Foreign key to users, numeric type, nullable
+  record_version: number; // Numeric, non-nullable
+  creation_date: Date; // Timestamp, non-nullable
+  creation_user: string; // VarChar(150), non-nullable
+  last_update_date?: Date | null; // Timestamp, nullable
+  last_update_user?: string | null; // VarChar(150), nullable
+  last_update_process: string; // VarChar(250), non-nullable
 }
 
 export enum EmailTemplateSubject {
   NEW_TICKET_HANDLER = 'Nova Platinum Ticketing - New Issue {{ticketNumber}}',
   NEW_TICKET_CUSTOMER = 'Nova Platinum Ticketing - New Issue: {{ticketNumber}}',
-  TICKET_ESCALATION_HANDLER = 'Nova Platinum Ticketing- Escalated Issue: {{ticketNumber}}',
-  TICKET_ESCALATION_CUSTOMER = 'Nova Platinum Ticketing- Escalated Issue: {{ticketNumber}}',
+  TICKET_ESCALATION_HANDLER = 'Nova Platinum Ticketing - Escalated Issue: {{ticketNumber}} - Level {{escalationLevel}}',
+  TICKET_ESCALATION_CUSTOMER = 'Nova Platinum Ticketing - Escalated Issue: {{ticketNumber}} - Level {{escalationLevel}}',
   TICKET_CLOSURE_HANDLER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
   TICKET_CLOSURE_CUSTOMER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
+
+  NEW_USER_CREATION = 'Activate Your Nova Platinum Ticketing System Account',
 }
 
 export interface EmailVariableTypes {

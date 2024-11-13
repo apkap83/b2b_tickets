@@ -44,6 +44,7 @@ export const Footer: React.FC = () => {
           src={united_group_member}
           alt={'United Group Logo'}
           height={24}
+          width={129}
         />
       </div>
     </footer>

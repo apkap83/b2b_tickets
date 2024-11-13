@@ -20,7 +20,7 @@ import CookieConsentBanner from './CookieConsentBanner';
 // import StyledComponentsRegistry from './lib/registry';
 
 export const metadata = {
-  title: 'Nova - B2B Tickets',
+  title: 'Nova Platinum Ticketing',
   description: 'Nova Business To Business Ticketing System',
 };
 
@@ -49,9 +49,9 @@ export default async function RootLayout({
             <AppThemeProvider>
               <ToastProvider>
                 <main>
-                  {session ? <NavBar /> : null}
+                  {/* {session ? <NavBar /> : null} */}
                   {children}
-                  {session ? <Footer /> : null}
+                  {/* {session ? <Footer /> : null} */}
                 </main>
                 <CookieConsentBanner />
               </ToastProvider>

@@ -19,6 +19,7 @@ import {
   getCustomersList,
 } from '@b2b-tickets/admin-server-actions';
 import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { passwordComplexitySchema } from '@b2b-tickets/utils';
 
 import styles from './CreateUserModal.module.scss';
 
@@ -33,9 +34,7 @@ function CreateUserModal({ closeModal }) {
     first_name: Yup.string().required('First name is required'),
     last_name: Yup.string().required('Last name is required'),
     username: Yup.string().required('User name is required'),
-    password: Yup.string()
-      .min(8, 'Password must be at least 8 characters long')
-      .required('Password is required'),
+    password: passwordComplexitySchema,
     email: Yup.string()
       .email('Invalid email address')
       .required('Email is required'),
@@ -64,7 +63,7 @@ function CreateUserModal({ closeModal }) {
       email: '',
       mobile_phone: '',
     },
-    // validationSchema: validationSchema,
+    validationSchema: validationSchema,
     // onSubmit: async (values, { setSubmitting }) => {},
   });
 
@@ -84,7 +83,7 @@ function CreateUserModal({ closeModal }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white px-10 py-3 rounded-lg max-h-[600px] overflow-y-auto">
+      <div className="bg-white px-10 py-5 rounded-lg max-h-[800px] overflow-y-auto">
         <h3 className="font-bold text-lg text-center">Create User Form</h3>
 
         <form className="flex flex-col gap-3 pt-3" action={action}>
@@ -232,13 +231,13 @@ function CreateUserModal({ closeModal }) {
           <FieldError formik={formik} name="mobile_phone" />
 
           <div
-            className="flex h-8 items-end space-x-1"
+            className="flex h-2 items-end space-x-1"
             aria-live="polite"
             aria-atomic="true"
           >
             <FormStateError formState={formState} />
           </div>
-          <div className="mt-5 flex justify-around">
+          <div className="mt-1 mb-2 flex justify-around">
             <SubmitButton
               label="Create"
               loading="Creating ..."
@@ -246,7 +245,7 @@ function CreateUserModal({ closeModal }) {
               isDirty={formik.dirty}
             />
 
-            <button className="btn btn-" onClick={closeModal}>
+            <button className="btn btn- px-4" onClick={closeModal}>
               Close
             </button>
 

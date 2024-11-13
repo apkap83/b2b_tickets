@@ -7,10 +7,17 @@ import {
   AppPermissionTypes,
   AppRoleTypes,
   AppPermissionType,
+  B2BUserType,
 } from '@b2b-tickets/shared-models';
 import { Session } from 'next-auth';
 import * as crypto from 'crypto';
 import * as Yup from 'yup';
+
+import { B2BUser } from '@b2b-tickets/db-access';
+
+import * as jwt from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
+
 const ALGORITHM = 'aes256';
 const INPUT_ENCODING = 'utf8';
 const OUTPUT_ENCODING = 'hex';

@@ -23,7 +23,7 @@ import toast from 'react-hot-toast';
 
 const getRightAvatar = (company: string) => {
   return company === 'Nova' ? (
-    <Image src={imagePath} alt="Nova Avatar" width={49} />
+    <Image src={imagePath} alt="Nova Avatar" width={49} height={48} />
   ) : (
     <FcVoicePresentation size={49} />
   );
