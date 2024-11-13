@@ -1,88 +1,50 @@
+'use server';
 //@ts-ignore
 import smpp, { Session, PDU } from 'smpp';
+import { config } from '@b2b-tickets/config';
 
-interface SMPPConfig {
-  url: string;
-  auto_enquire_link_period: number;
-  debug: boolean;
-}
+export async function sendSms(destinationAddr: string, shortMessage: string) {
+  const session = smpp.connect(
+    {
+      url: config.SMSGateway,
+      auto_enquire_link_period: 10000,
+      debug: true,
+    },
+    () => {
+      session.bind_transceiver(
+        {
+          system_id: config.SMS_SystemId,
+          password: config.SMS_Password,
+        },
+        (pdu: any) => {
+          if (pdu.command_status === 0) {
+            // Successfully bound
+            session.submit_sm(
+              {
+                destination_addr: destinationAddr,
+                short_message: shortMessage,
+              },
+              (pdu: any) => {
+                if (pdu.command_status === 0) {
+                  // Message successfully sent
+                  console.log('Message ID:', pdu.message_id);
+                } else {
+                  console.error('Failed to send message:', pdu.command_status);
+                }
+                // Unbind and close session after sending
+                session.unbind();
+              }
+            );
+          } else {
+            console.error('Failed to bind transceiver:', pdu.command_status);
+            session.close();
+          }
+        }
+      );
+    }
+  );
 
-interface BindOptions {
-  system_id: string;
-  password: string;
-}
-
-interface MessageOptions {
-  destination_addr: string;
-  short_message: string;
-}
-
-const SMPP_SERVER_CONFIG: SMPPConfig = {
-  url: 'smpp://example.com:2775',
-  auto_enquire_link_period: 10000,
-  debug: true,
-};
-
-const BIND_OPTIONS: BindOptions = {
-  system_id: 'YOUR_SYSTEM_ID',
-  password: 'YOUR_PASSWORD',
-};
-
-const MESSAGE_OPTIONS: MessageOptions = {
-  destination_addr: 'DESTINATION NUMBER',
-  short_message: 'Hello!',
-};
-
-async function connectToSMPP(config: SMPPConfig): Promise<Session> {
-  const session = smpp.connect(config);
-
-  return new Promise<Session>((resolve, reject) => {
-    session.once('connect', () => resolve(session));
-    session.once('error', (err: Error) => reject(err));
+  session.on('error', (error: unknown) => {
+    console.error('SMPP Session Error:', error);
   });
 }
-
-async function bindTransceiver(
-  session: Session,
-  options: BindOptions
-): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    session.bind_transceiver(options, (pdu: PDU) => {
-      if (pdu.command_status === 0) {
-        // Successfully bound
-        resolve();
-      } else {
-        reject(new Error('Failed to bind transceiver'));
-      }
-    });
-  });
-}
-
-async function submitSM(
-  session: Session,
-  options: MessageOptions
-): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    session.submit_sm(options, (pdu: PDU) => {
-      if (pdu.command_status === 0) {
-        // Message successfully sent
-        console.log(pdu.message_id);
-        resolve();
-      } else {
-        reject(new Error('Failed to send message'));
-      }
-    });
-  });
-}
-
-async function sendSMPPMessage() {
-  try {
-    const session = await connectToSMPP(SMPP_SERVER_CONFIG);
-    await bindTransceiver(session, BIND_OPTIONS);
-    await submitSM(session, MESSAGE_OPTIONS);
-  } catch (error) {
-    console.error('Error:', error);
-  }
-}
-
-sendSMPPMessage();

@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_image:${STAGING_B2B_VERSION:-1.0.1}
+    image: b2b_tickets_image_staging:${STAGING_B2B_VERSION:-1.0.2}
     ports:
       - "5000:3000"
     container_name: Staging_B2B_Tickets_1
@@ -21,19 +21,21 @@ services:
       - APP_ENV=staging
       - PORT=3000
     command: >
-      sh -c "cp /mnt/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
+      sh -c "cp /app/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
+             cp /app/env-files/staging.ts /app/libs/config/src/lib/production.ts &&
              nx start b2b_tickets --verbose"
     depends_on:
       - my_monorepo_base
     volumes:
       - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
-      - /home/centos/Staging_Environment_Variables/.env.staging:/mnt/env-files/.env.staging
+      - /home/centos/Staging_Environment_Variables/.env.staging:/app/env-files/.env.staging
+      - /home/centos/Staging_Configuration/staging.ts:/app/env-files/staging.ts
 
   prod_b2b_tickets:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_image:${PROD_B2B_VERSION:-1.0.1}
+    image: b2b_tickets_image_production:${PROD_B2B_VERSION:-1.0.2}
     ports:
       - "8001:3000"
     container_name: Prod_B2B_Tickets_1

@@ -34,6 +34,8 @@ dayjs.extend(customParseFormat);
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 import { CustomLogger } from '@b2b-tickets/logging';
 import { TransportName } from '@b2b-tickets/shared-models';
+import { sendEmailsForUserCreation } from '@b2b-tickets/email-service/server';
+import { EmailNotificationType } from '@b2b-tickets/shared-models';
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -265,6 +267,12 @@ export async function createUser(formState: any, formData: any) {
         mobilePhone,
       })}`
     );
+
+    sendEmailsForUserCreation({
+      emailNotificationType: EmailNotificationType.USER_CREATION,
+      email,
+      userName,
+    });
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');

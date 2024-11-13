@@ -36,7 +36,9 @@ export const TicketRow = ({
             userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
             !finalTicketStatus &&
             item['Delayed Response'] === 'Yes',
-          'hover:bg-red-200': delayedResponse,
+          'hover:bg-red-200':
+            userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+            delayedResponse,
         }
       )}
     >

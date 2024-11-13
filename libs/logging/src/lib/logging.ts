@@ -11,12 +11,7 @@ const { combine, timestamp, json, printf, colorize, align, errors } =
 const env =
   process.env['NODE_ENV'] === 'production' ? 'production' : 'development';
 
-const logDir =
-  process.env['APP_ENV'] === 'staging'
-    ? 'development'
-    : env === 'production'
-    ? 'production'
-    : 'development';
+const logDir = config.logDirPerEnvironment;
 
 const logPath = path.join(process.cwd(), 'logs', logDir);
 
