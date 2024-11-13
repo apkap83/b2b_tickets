@@ -41,7 +41,7 @@ const authMiddleware = withAuth(
 
     // If no roles, redirect to sign-in
     if (!roles.length) {
-      console.warn('[Auth Middleware] No roles found, redirecting to sign-in');
+      // console.warn('[Auth Middleware] No roles found, redirecting to sign-in');
       return NextResponse.rewrite(new URL('/signin', req.url));
     }
 
@@ -67,7 +67,7 @@ const authMiddleware = withAuth(
     callbacks: {
       authorized: ({ token }) => {
         if (!token) {
-          console.warn('[Auth Middleware] Unauthorized: No valid token');
+          // console.warn('[Auth Middleware] Unauthorized: No valid token');
           return false;
         }
 

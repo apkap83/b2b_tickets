@@ -6,7 +6,7 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
 import { redirect } from 'next/navigation';
-import { userHasRole } from '@b2b-tickets/utils';
+import { userHasRole, symmetricEncrypt } from '@b2b-tickets/utils';
 
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 
@@ -21,9 +21,19 @@ import {
   EmailTemplateSubject,
   EmailNotificationType,
   EmailListOfHandlers,
+  TicketEscalation,
+  TicketCommentDB,
+  B2BUserType,
+  NMS_Team_Email_Address,
 } from '@b2b-tickets/shared-models';
 import config from '@b2b-tickets/config';
 import { pgB2Bpool, setSchemaAndTimezone } from '@b2b-tickets/db-access';
+
+import { B2BUser } from '@b2b-tickets/db-access';
+
+import * as jwt from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
+import { sendSms } from '@b2b-tickets/totp-service/server';
 
 const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
   try {
@@ -60,8 +70,17 @@ const populateTemplate = <T extends keyof TemplateVariables>(
 
 const populateSubject = (
   subjectTemplate: EmailTemplateSubject,
-  ticketNumber: string
+  ticketNumber: string,
+  escalationLevel?: string
 ): string => {
+  if (escalationLevel) {
+    const subject = subjectTemplate.replace(
+      '{{escalationLevel}}',
+      escalationLevel
+    );
+    return subject.replace('{{ticketNumber}}', ticketNumber);
+  }
+
   return subjectTemplate.replace('{{ticketNumber}}', ticketNumber);
 };
 
@@ -85,11 +104,12 @@ const transporter: Transporter = nodemailer.createTransport({
   },
 } as SMTPTransport.Options);
 
-export const sendEmail = async (
+export const sendEmailOnTicketUpdate = async (
   emailNotificationType: EmailNotificationType,
-  ticketId: string
+  ticketId?: string,
+  escalationId?: string
 ): Promise<void> => {
-  if (!config.SendEmails) return;
+  if (!config.SendEmails || !ticketId) return;
   const logRequest: CustomLogger = await getRequestLogger(
     TransportName.ACTIONS
   );
@@ -106,18 +126,20 @@ export const sendEmail = async (
 
     await setSchemaAndTimezone(pgB2Bpool);
     // Find Ticket from ticketId
-    const result = await pgB2Bpool.query(
+    const ticketResp = await pgB2Bpool.query(
       'SELECT * from tickets_v where ticket_id = $1',
       [ticketId]
     );
 
     // Type assertion for the rows returned by the query
-    const ticket: TicketDetail = result.rows[0] as TicketDetail;
+    const ticket: TicketDetail = ticketResp.rows[0] as TicketDetail;
 
     // Find Cc Users
     const res = await getCcValuesForTicket({ ticketId });
+
+    // TODO - Get Ticket Creator Email from DB View
     const ticketCreatorEmail = session.user.email as string;
-    const ticketCreatorUserName = session.user.userName;
+    const ticketCreatorUserName = ticket['Opened By'];
     const ccEmails = res.data?.ccEmails as string;
     const ccPhones = res.data?.ccPhones as string;
     const ticketNumber = ticket.Ticket;
@@ -170,7 +192,8 @@ export const sendEmail = async (
       // Send E-mail for Customer && CC People
       await transporter.sendMail({
         from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
-        to: [ticketCreatorEmail, ccEmails],
+        to: [ticketCreatorEmail],
+        cc: ccEmails ? [ccEmails] : [],
         subject: populateSubject(
           EmailTemplateSubject.NEW_TICKET_CUSTOMER,
           ticketNumber
@@ -191,21 +214,39 @@ export const sendEmail = async (
     }
 
     if (emailNotificationType === EmailNotificationType.TICKET_ESCALATION) {
+      // Get Escalation Comment Id
+      const escalationResult = await pgB2Bpool.query(
+        'SELECT * from ticket_escalations where escalation_id = $1',
+        [escalationId]
+      );
+
+      const escalation: TicketEscalation = escalationResult.rows[0];
+      const escalationCommentId = escalation.escalation_comment_id;
+      // Get Escalation Comment
+      const commentResult = await pgB2Bpool.query(
+        'SELECT * from ticket_comments where comment_id = $1',
+        [escalationCommentId]
+      );
+
+      const commentLine: TicketCommentDB = commentResult.rows[0];
+      const escalationComment = commentLine.comment;
       // Load and populate the template
       const templateForHandlerPopulated = populateTemplate(
         loadTemplate(EmailTemplate.TICKET_ESCALATION_HANDLER),
         {
+          webSiteUrl: config.webSiteUrl,
           ticketNumber: ticketNumber,
-          customerName: customer,
-          escalationComment: 'Escalation Comment',
           escalationLevel: currentEscalationLevel,
+          customerName: customer,
           ticketSubject: ticketSubject,
+          escalationComment: escalationComment,
         } as TemplateVariables[EmailTemplate.TICKET_ESCALATION_HANDLER]
       );
 
       const templateForCustomerPopulated = populateTemplate(
         loadTemplate(EmailTemplate.TICKET_ESCALATION_CUSTOMER),
         {
+          webSiteUrl: config.webSiteUrl,
           ticketNumber: ticketNumber,
           escalationLevel: currentEscalationLevel,
           ticketSubject: ticketSubject,
@@ -219,9 +260,10 @@ export const sendEmail = async (
         to: EmailListOfHandlers,
         subject: populateSubject(
           EmailTemplateSubject.TICKET_ESCALATION_HANDLER,
-          ticketNumber
+          ticketNumber,
+          currentEscalationLevel
         ),
-        text: 'options.text',
+        text: stripHtmlTags(templateForHandlerPopulated),
         html: templateForHandlerPopulated,
       });
       logRequest.info(
@@ -236,12 +278,14 @@ export const sendEmail = async (
       // Send E-mail for Customer && CC People
       await transporter.sendMail({
         from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
-        to: [ticketCreatorEmail, ccEmails],
+        to: [ticketCreatorEmail],
+        cc: ccEmails ? [ccEmails] : [],
         subject: populateSubject(
           EmailTemplateSubject.TICKET_ESCALATION_CUSTOMER,
-          ticketNumber
+          ticketNumber,
+          currentEscalationLevel
         ),
-        text: 'options.text',
+        text: stripHtmlTags(templateForCustomerPopulated),
         html: templateForCustomerPopulated,
       });
 
@@ -255,21 +299,132 @@ export const sendEmail = async (
         )}`
       );
     }
+
+    if (emailNotificationType === EmailNotificationType.TICKET_CLOSURE) {
+      // Load and populate the template
+      const templateForHandlerPopulated = populateTemplate(
+        loadTemplate(EmailTemplate.TICKET_CLOSURE_HANDLER),
+        {
+          webSiteUrl: config.webSiteUrl,
+          ticketNumber: ticketNumber,
+          customerName: customer,
+          ticketSubject: ticketSubject,
+        } as TemplateVariables[EmailTemplate.TICKET_CLOSURE_HANDLER]
+      );
+
+      const templateForCustomerPopulated = populateTemplate(
+        loadTemplate(EmailTemplate.TICKET_CLOSURE_CUSTOMER),
+        {
+          webSiteUrl: config.webSiteUrl,
+          userName: ticketCreatorUserName,
+          ticketNumber: ticketNumber,
+          ticketSubject: ticketSubject,
+        } as TemplateVariables[EmailTemplate.TICKET_CLOSURE_CUSTOMER]
+      );
+
+      // Send Email for Handler
+      await transporter.sendMail({
+        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        to: EmailListOfHandlers,
+        subject: populateSubject(
+          EmailTemplateSubject.TICKET_CLOSURE_HANDLER,
+          ticketNumber
+        ),
+        text: 'options.text',
+        html: templateForHandlerPopulated,
+      });
+      logRequest.info(
+        `Serv.A.F. ${
+          session.user.userName
+        } - Sent E-mail for Ticket Closure To Handlers: ${EmailListOfHandlers} with subject ${populateSubject(
+          EmailTemplateSubject.TICKET_CLOSURE_HANDLER,
+          ticketNumber
+        )}`
+      );
+
+      // Send E-mail for Customer && CC People
+      await transporter.sendMail({
+        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        to: [ticketCreatorEmail],
+        cc: ccEmails ? [ccEmails] : [],
+        subject: populateSubject(
+          EmailTemplateSubject.TICKET_CLOSURE_CUSTOMER,
+          ticketNumber
+        ),
+        text: 'options.text',
+        html: templateForCustomerPopulated,
+      });
+
+      logRequest.info(
+        `Serv.A.F. ${
+          session.user.userName
+        } - Sent E-mail for Ticket Closure To Customer: ${[
+          ticketCreatorEmail,
+          ccEmails,
+        ]} with subject ${populateSubject(
+          EmailTemplateSubject.TICKET_CLOSURE_CUSTOMER,
+          ticketNumber
+        )}`
+      );
+    }
   } catch (error) {
     logRequest.error(error);
   }
 };
 
-// React server components are async so you make database or API calls.
-export async function sendEmailsForTicketCreation({
-  ticketId,
+export async function sendEmailsForUserCreation({
+  emailNotificationType,
+  email,
+  userName,
 }: {
-  ticketId: string;
+  emailNotificationType: EmailNotificationType;
+  email: string;
+  userName: string;
 }) {
-  return <h1>Hello Server</h1>;
+  if (!config.SendEmails) return;
+
+  const logRequest = await getRequestLogger(TransportName.AUTH);
+  try {
+    if (emailNotificationType === EmailNotificationType.USER_CREATION) {
+      const secureLink = await generateSecureLinkForPasswordCreation(email);
+      // Load and populate the template
+      const templateForUserCreation = populateTemplate(
+        loadTemplate(EmailTemplate.NEW_USER_CREATION_NOTIFICATION),
+        {
+          secureLink,
+          userName,
+          appEnvironment:
+            process.env['APP_ENV'] === 'staging'
+              ? 'Staging'
+              : process.env['NODE_ENV'] === 'production'
+              ? 'Production'
+              : 'Development',
+          appURL: config.webSiteUrl,
+        } as TemplateVariables[EmailTemplate.NEW_USER_CREATION_NOTIFICATION]
+      );
+
+      // Send Email for Handler
+      await transporter.sendMail({
+        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        to: [email],
+        // cc: NMS_Team_Email_Address,
+        subject: EmailTemplateSubject.NEW_USER_CREATION,
+        text: 'options.text',
+        html: templateForUserCreation,
+      });
+
+      logRequest.info(
+        `Serv.A.F. - Sent E-mail for User creation Notification to ${email}`
+      );
+
+      sendSms('6936092138', 'Καλησπέρα');
+    }
+  } catch (error) {
+    logRequest.error(error);
+  }
 }
 
-export const getCcValuesForTicket = async ({
+const getCcValuesForTicket = async ({
   ticketId,
 }: {
   ticketId: string;
@@ -317,4 +472,50 @@ export const getCcValuesForTicket = async ({
       error: error instanceof Error ? error.message : String(error),
     };
   }
+};
+
+function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, '');
+}
+
+export const generateSecureLinkForPasswordCreation = async (
+  email: string
+): Promise<string | undefined> => {
+  if (!email) {
+    return;
+  }
+
+  interface MyJwtPayload extends JwtPayload {
+    userName: string;
+    email: string;
+    is_active: string;
+    is_locked: string;
+  }
+
+  // Find User By email address
+  const foundUser: B2BUserType = await B2BUser.findOne({
+    where: {
+      email: email,
+    },
+  });
+
+  const payload: MyJwtPayload = {
+    userName: foundUser.username,
+    email: foundUser.email as string,
+    is_active: foundUser.is_active,
+    is_locked: foundUser.is_locked,
+  };
+
+  // Generate a JWT token
+  const token = jwt.sign(
+    payload, // Payload
+    process.env['JWT_SECRET']!, // Secret key
+    { expiresIn: config.userCreationSecureLinkValidity } // Token is valid for X days
+  );
+
+  const encryptedSecret = symmetricEncrypt(
+    token,
+    process.env['ENCRYPTION_KEY']!
+  );
+  return `${config.webSiteUrl}/reset-pass/${encryptedSecret}`;
 };

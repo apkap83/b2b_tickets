@@ -8,10 +8,18 @@
   <body>
     <p>Dear Team,</p>
     <p>
-      Please be advised that Case {{ticketNumber}} has been escalated to level
-      {{escalationLevel}}, due to the critical nature of the customer’s issue.
-      This case now requires your immediate attention and should be prioritized
-      accordingly.
+      Please be advised that Case
+      <a
+        href="{{webSiteUrl}}/ticket/{{ticketNumber}}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ticketNumber}}
+      </a>
+      has been escalated to
+      <b>Level {{escalationLevel}}</b>, due to the critical nature of the
+      customer’s issue. This case now requires your immediate attention and
+      should be prioritized accordingly.
     </p>
     <p>
       Please review the details and contact the customer promptly to begin the
@@ -19,7 +27,7 @@
     </p>
     <p>Customer Name: {{customerName}}</p>
     <p>Issue: {{ticketSubject}}</p>
-    <p>Escalation Reason: {{escalationComment}}</p>
+    <p>Escalation Reason: <i>{{escalationComment}}</i></p>
     <p>
       The customer has been informed of the escalation and is awaiting prompt
       follow-up.

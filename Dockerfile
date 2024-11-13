@@ -23,6 +23,7 @@ WORKDIR /app
 COPY Nova_Root_Certificate.crt  /usr/local/share/ca-certificates/Nova_Root_Certificate.crt
 RUN chmod 644 /usr/local/share/ca-certificates/Nova_Root_Certificate.crt
 RUN update-ca-certificates
+RUN mkdir /app/env-files
 
 # Update CA certificates
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/Nova_Root_Certificate.crt

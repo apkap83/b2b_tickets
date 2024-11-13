@@ -8,8 +8,16 @@
   <body>
     <p>Dear Team,</p>
     <p>
-      This is to confirm that Case {{ticketNumber}} has been successfully closed
-      following resolution and customer confirmation.
+      This is to confirm that Case
+      <a
+        href="{{webSiteUrl}}/ticket/{{ticketNumber}}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ticketNumber}}
+      </a>
+      has been successfully closed following resolution and customer
+      confirmation.
     </p>
     <p>Customer Name: {{customerName}}</p>
     <p>Issue: {{ticketSubject}}</p>

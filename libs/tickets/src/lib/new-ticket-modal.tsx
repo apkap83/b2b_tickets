@@ -300,7 +300,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                 text-gray-300 pl-3
                 `}
               >
-                B2B - New Ticket Form
+                Create New Ticket
               </Typography>
 
               <div className={`${styles.fieldsMainContainer}`}>

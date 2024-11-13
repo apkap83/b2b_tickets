@@ -8,10 +8,18 @@
   <body>
     <p>Dear {{userName}},</p>
     <p>
-      We are reaching out to inform you that Case {{ticketNumber}} has been
-      successfully resolved and is now closed. We appreciate the opportunity to
-      assist you and trust that the solution provided has addressed your
-      concerns.
+      We are reaching out to inform you that Case
+      <a
+        href="{{webSiteUrl}}/ticket/{{ticketNumber}}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {{ticketNumber}}
+      </a>
+
+      has been successfully resolved and is now closed. We appreciate the
+      opportunity to assist you and trust that the solution provided has
+      addressed your concerns.
     </p>
     <p>Issue: {{ticketSubject}}</p>
     <p>

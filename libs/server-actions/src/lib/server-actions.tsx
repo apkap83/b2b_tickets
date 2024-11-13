@@ -36,7 +36,7 @@ import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 import { CustomLogger } from '@b2b-tickets/logging';
 
 import { TransportName, EmailTemplate } from '@b2b-tickets/shared-models';
-import { sendEmail } from '@b2b-tickets/email-service/server';
+import { sendEmailOnTicketUpdate } from '@b2b-tickets/email-service/server';
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -559,7 +559,7 @@ export const createNewTicket = async (
     await client.query('COMMIT');
 
     // Send E-mail Notifications asynchronously
-    sendEmail(EmailNotificationType.TICKET_CREATION, newTicketId);
+    sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CREATION, newTicketId);
 
     await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
@@ -729,7 +729,7 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
       `Serv.A.F. ${session.user.userName} - Escalating Ticket with id ${ticketId}`
     );
 
-    const escalation_id = await pgB2Bpool.query(
+    const resp = await pgB2Bpool.query(
       `
         SELECT tck_escalate
         (
@@ -751,8 +751,14 @@ export const escalateTicket = async (formState: any, formData: FormData) => {
       ]
     );
 
+    const escalationId = resp.rows[0].tck_escalate;
+
     // Send E-mail Notifications asynchronously
-    sendEmail(EmailNotificationType.TICKET_ESCALATION, ticketId);
+    sendEmailOnTicketUpdate(
+      EmailNotificationType.TICKET_ESCALATION,
+      ticketId,
+      escalationId
+    );
 
     revalidatePath(`/ticket/${ticketNumber}`);
 
@@ -888,6 +894,9 @@ export const createNewComment = async (
           config.postgres_b2b_database.debugMode,
         ]
       );
+
+      // Send E-mail Notifications asynchronously
+      sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CLOSURE, ticketId);
 
       await new Promise((resolve) => setTimeout(resolve, 250));
       revalidatePath(`/ticket/${ticketNumber}`);

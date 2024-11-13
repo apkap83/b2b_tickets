@@ -39,7 +39,18 @@ const FieldError: React.FC<FieldErrorProps> = ({ formik, name }) => {
   return <p className="text-red-500 text-sm">{error}</p>;
 };
 
-export default function ForgotPassForm({ csrfToken }: { csrfToken: string }) {
+interface ForgotPassFormProps {
+  // providers: Record<
+  //   LiteralUnion<BuiltInProviderType, string>,
+  //   ClientSafeProvider
+  // > | null;
+  csrfToken?: string;
+}
+
+export default function ForgotPassForm({
+  // providers,
+  csrfToken,
+}: ForgotPassFormProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
