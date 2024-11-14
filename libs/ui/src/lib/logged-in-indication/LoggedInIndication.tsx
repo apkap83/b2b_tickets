@@ -6,10 +6,16 @@ import { FaCircleUser } from 'react-icons/fa6';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import { userHasRole } from '@b2b-tickets/utils';
+import { AppRoleTypes } from '@/libs/shared-models/src';
 
 export const LoggedInIndication = ({ session, customerName }: any) => {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const menuRef = useRef();
+
+  const userIsHandler = userHasRole(session, AppRoleTypes.B2B_TicketHandler);
+  const userIsCreator = userHasRole(session, AppRoleTypes.B2B_TicketCreator);
+  const bothRoles = userIsHandler && userIsCreator;
 
   useEffect(() => {
     const handleClickOutside = (event: any) => {
@@ -90,9 +96,25 @@ export const LoggedInIndication = ({ session, customerName }: any) => {
               {customerName}
             </div>
           ) : (
-            <div className="border-t border-dotted border-black">
-              Nova Ticket Handler
-            </div>
+            <>
+              {bothRoles ? (
+                <div className="border-t border-dotted border-black">
+                  Nova Ticket Handler & Ticket Creator
+                </div>
+              ) : userIsHandler ? (
+                <div className="border-t border-dotted border-black">
+                  Nova Ticket Handler
+                </div>
+              ) : userIsCreator ? (
+                <div className="border-t border-dotted border-black">
+                  Ticket Creator
+                </div>
+              ) : (
+                <div className="border-t border-dotted border-black">
+                  No Role Assigned
+                </div>
+              )}
+            </>
           )}
         </div>
         {profileMenuOpen ? <ProfileMenuContents /> : null}
