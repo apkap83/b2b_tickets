@@ -13,8 +13,18 @@ ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 # Set the SHELL environment variable to bash or sh
 ENV SHELL=/bin/sh
 
-# Install ca-certificates package
-# RUN apk add --no-cache --allow-untrusted --no-check-certificate ca-certificates
+# Add centos user with the same UID and GID as the host's centos user
+RUN addgroup --gid 1001 centos && \
+    adduser --uid 1001 --gid 1001 --home /home/centos --shell /bin/sh --disabled-password centos
+
+# Set the home directory for centos
+ENV HOME=/home/centos
+
+# Create necessary directories with correct permissions for centos
+RUN mkdir -p /app/env-files && \
+    mkdir -p /home/centos/.pnpm-global && \
+    chown -R centos:centos /app /home/centos/.pnpm-global && \
+    chmod g+s /home/centos # Use a Sticky Group Permission: To automatically enforce ownership for new files and directories created under /home/centos, you can use a sticky group permission
 
 # Set the working directory
 WORKDIR /app
@@ -23,7 +33,6 @@ WORKDIR /app
 COPY Nova_Root_Certificate.crt  /usr/local/share/ca-certificates/Nova_Root_Certificate.crt
 RUN chmod 644 /usr/local/share/ca-certificates/Nova_Root_Certificate.crt
 RUN update-ca-certificates
-RUN mkdir /app/env-files
 
 # Update CA certificates
 ENV NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/Nova_Root_Certificate.crt
@@ -50,4 +59,5 @@ RUN pnpm i -g env-cmd
 
 # Install Nx
 RUN pnpm install -g nx@19.2.2
+
 
