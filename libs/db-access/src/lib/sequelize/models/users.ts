@@ -41,6 +41,7 @@ export class B2BUser extends Model<
   declare last_update_user?: string;
   declare last_update_process: string;
   declare two_factor_secret?: string;
+  declare lastotpsent?: string;
 
   // Association methods for B2BUser
   declare getRoles: BelongsToManyGetAssociationsMixin<AppRole>;
@@ -157,6 +158,10 @@ export class B2BUser extends Model<
           type: DataTypes.STRING(250),
           allowNull: true,
         },
+        lastotpsent: {
+          type: DataTypes.STRING(10),
+          allowNull: true,
+        },
       },
       {
         sequelize,
@@ -196,6 +201,7 @@ export class B2BUser extends Model<
               'is_locked',
               'authentication_type',
               'two_factor_secret',
+              'lastotpsent',
             ],
           },
         },

@@ -278,3 +278,7 @@ export const passwordComplexitySchema = Yup.string()
     'Password must contain at least one special character'
   )
   .required('Password is required');
+
+export function stripHtmlTags(html: string): string {
+  return html.replace(/<[^>]*>/g, '');
+}
