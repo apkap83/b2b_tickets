@@ -289,6 +289,7 @@ export enum EmailNotificationType {
   TICKET_ESCALATION = 'ticket-escalation',
   TICKET_CLOSURE = 'ticket-closure',
   USER_CREATION = 'user-creation',
+  RESET_TOKEN = 'reset-token',
 }
 
 export const EmailListOfHandlers = ['apostolos.kapetanios@nova.gr'];
@@ -303,7 +304,11 @@ export enum EmailTemplate {
   TICKET_ESCALATION_CUSTOMER = 'TicketEscalationCustomer.html',
   TICKET_CLOSURE_CUSTOMER = 'TicketClosureCustomer.html',
 
-  NEW_USER_CREATION_NOTIFICATION = 'NewUserNotification.html',
+  NEW_USER_CREATION_NOTIFICATION_DEVELOPMENT = 'NewUserNotification_Staging.html',
+  NEW_USER_CREATION_NOTIFICATION_STAGING = 'NewUserNotification_Staging.html',
+  NEW_USER_CREATION_NOTIFICATION_PRODUCTION = 'NewUserNotification.html',
+
+  EMAIL_TOKEN_NOTIFICATION = 'EmailToken.html',
 }
 
 export interface TemplateVariables {
@@ -346,11 +351,28 @@ export interface TemplateVariables {
     ticketNumber: string;
     ticketSubject: string;
   };
-  [EmailTemplate.NEW_USER_CREATION_NOTIFICATION]: {
+  [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_STAGING]: {
     secureLink: string;
     userName: string;
     appEnvironment: string;
     appURL: string;
+  };
+
+  [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_DEVELOPMENT]: {
+    secureLink: string;
+    userName: string;
+    appEnvironment: string;
+    appURL: string;
+  };
+
+  [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_PRODUCTION]: {
+    secureLink: string;
+    userName: string;
+    appURL: string;
+  };
+
+  [EmailTemplate.EMAIL_TOKEN_NOTIFICATION]: {
+    verificationCode: string;
   };
 }
 
@@ -403,7 +425,11 @@ export enum EmailTemplateSubject {
   TICKET_CLOSURE_HANDLER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
   TICKET_CLOSURE_CUSTOMER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
 
-  NEW_USER_CREATION = 'Activate Your Nova Platinum Ticketing System Account',
+  NEW_USER_CREATION_DEVELOPMENT = 'Activate Your Nova Platinum Ticketing System Account - ({{appEnvironment}} Environment)',
+  NEW_USER_CREATION_STAGING = 'Activate Your Nova Platinum Ticketing System Account - ({{appEnvironment}} Environment)',
+  NEW_USER_CREATION_PRODUCTION = 'Activate Your Nova Platinum Ticketing System Account',
+
+  EMAIL_TOKEN_NOTIFICATION = 'Nova Platinum Ticketing - Reset Token',
 }
 
 export interface EmailVariableTypes {
@@ -418,7 +444,8 @@ export interface EmailOptions {
   emailVariables:
     | EmailVariablesForTicketCreation
     | EmailVariablesForTicketEscalation
-    | EmailVariablesForTicketClosure;
+    | EmailVariablesForTicketClosure
+    | EmailVariablesForEmailToken;
 }
 
 export interface EmailVariablesForTicketCreation {
@@ -435,4 +462,21 @@ export interface EmailVariablesForTicketEscalation {
 export interface EmailVariablesForTicketClosure {
   customerName: string;
   ticketNumber: string;
+}
+
+export interface EmailVariablesForUserCreation {
+  secureLink?: string;
+  userName?: string;
+  appEnvironment?: string;
+  appURL?: string;
+}
+
+export interface EmailVariablesForEmailToken {
+  verificationCode: string;
+}
+
+export enum ApplicationEnvironment {
+  Production = 'Production',
+  Staging = 'Staging',
+  Development = 'Development',
 }

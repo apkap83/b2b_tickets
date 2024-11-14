@@ -7,6 +7,8 @@ import { authenticator } from 'otplib';
 import { B2BUser } from '@b2b-tickets/db-access';
 import { symmetricDecrypt } from '@b2b-tickets/utils';
 import { generateResetToken, symmetricEncrypt } from '@b2b-tickets/utils';
+import { sendEmailForPasswordReset } from '@/libs/email-service/src/server';
+import { EmailNotificationType } from '@b2b-tickets/shared-models';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
@@ -42,7 +44,11 @@ export async function POST(req: NextRequest) {
     logRequest.info(
       `'*** Emai: ${emailProvided} - Token Code for Pass Reset: ${emailToken}`
     );
-
+    sendEmailForPasswordReset(
+      EmailNotificationType.RESET_TOKEN,
+      foundUser.email,
+      emailToken
+    );
     const encryptedSecret = symmetricEncrypt(
       emailToken,
       process.env['ENCRYPTION_KEY']!
