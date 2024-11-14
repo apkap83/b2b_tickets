@@ -1,7 +1,4 @@
 services:
-  my_monorepo_base:
-    image: my-monorepo-base
-  
   staging_b2b_tickets:
     build:
       context: .
@@ -24,8 +21,6 @@ services:
       sh -c "cp /app/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
              cp /app/env-files/staging.ts /app/libs/config/src/lib/production.ts &&
              nx start b2b_tickets --verbose"
-    depends_on:
-      - my_monorepo_base
     volumes:
       - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
       - /home/centos/Staging_Environment_Variables/.env.staging:/app/env-files/.env.staging
@@ -49,7 +44,5 @@ services:
       - NODE_ENV=production
       - PORT=3000
     command: ["nx", "start", "b2b_tickets", "--verbose"]
-    depends_on:
-      - my_monorepo_base
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production

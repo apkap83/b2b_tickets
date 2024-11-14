@@ -301,7 +301,7 @@ export default function ForgotPassForm({
 
       if (response.ok) {
         setError(successMessage);
-        window.location.href = '/';
+        // window.location.href = '/';
       }
 
       let error = response?.error?.replace('Error: ', '');
