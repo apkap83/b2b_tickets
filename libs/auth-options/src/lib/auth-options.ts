@@ -33,6 +33,7 @@ import { headers } from 'next/headers';
 import { createRequestLogger } from '@b2b-tickets/logging';
 import { CustomLogger } from '@b2b-tickets/logging';
 import { generateResetToken } from '@b2b-tickets/utils';
+import { sendOTP } from '@b2b-tickets/totp-service/server';
 
 function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
@@ -330,7 +331,8 @@ export const options: NextAuthOptions = {
 
           // SEND SMS HERE
           logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
-
+          if (localAuthUserDetails.mobilePhone)
+            await sendOTP(localAuthUserDetails.mobilePhone, correctOTPCode!);
           if (!credentials.totpCode) {
             throw new Error(ErrorCode.SecondFactorRequired);
           }
@@ -374,6 +376,9 @@ export const options: NextAuthOptions = {
             ErrorCode.IncorrectTwoFactorCode,
             ErrorCode.IncorrectUsernameOrPassword,
             ErrorCode.NoRoleAssignedToUser,
+            ErrorCode.CaptchaJWTTokenRequired,
+            ErrorCode.EmailIsRequired,
+            ErrorCode.TotpJWTTokenRequired,
           ].map(String);
 
           if (
@@ -462,7 +467,8 @@ export const options: NextAuthOptions = {
 
             // SEND SMS HERE
             logRequest.info(`'*** OTP Code for Pass Reset: ${correctOTPCode}`);
-
+            if (foundUser.mobile_phone)
+              await sendOTP(foundUser.mobile_phone, correctOTPCode!);
             verifyJWTTotp({ req });
           }
 
@@ -623,12 +629,11 @@ function verifyJWTCaptcha({ req }: { req: any }) {
   const cookies = req.headers?.cookie || '';
   const captchaJWTToken = cookies.match(/captchaJWTToken=([^;]+)/)?.[1];
 
-  if (!captchaJWTToken) {
-    throw new Error(ErrorCode.CaptchaJWTTokenRequired);
-  }
-
   // Verify the JWT token
   try {
+    if (!captchaJWTToken) {
+      throw new Error(ErrorCode.CaptchaJWTTokenRequired);
+    }
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
     const decoded = jwt.verify(captchaJWTToken, JWT_SECRET) as {
       captchaValidated: boolean;
@@ -646,12 +651,11 @@ function verifyJWTTotp({ req }: { req: any }) {
   const cookies = req.headers?.cookie || '';
   const totpJWTToken = cookies.match(/totpJWTToken=([^;]+)/)?.[1];
 
-  if (!totpJWTToken) {
-    throw new Error(ErrorCode.TotpJWTTokenRequired);
-  }
-
   // Verify the JWT token
   try {
+    if (!totpJWTToken) {
+      throw new Error(ErrorCode.TotpJWTTokenRequired);
+    }
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
     const decoded = jwt.verify(totpJWTToken, JWT_SECRET);
     //@ts-ignore
@@ -674,13 +678,12 @@ function verifyJWTTokenForEmail({
 }) {
   const cookies = req.headers?.cookie || '';
   const emailJWTToken = cookies.match(/emailJWTToken=([^;]+)/)?.[1];
-
-  if (!emailJWTToken) {
-    throw new Error(ErrorCode.EmailJWTTokenRequired);
-  }
-
   // Verify the JWT token
   try {
+    if (!emailJWTToken) {
+      throw new Error(ErrorCode.EmailJWTTokenRequired);
+    }
+
     const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
     const decoded = jwt.verify(emailJWTToken, JWT_SECRET) as {
       emailProvided: string;

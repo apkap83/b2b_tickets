@@ -52,5 +52,5 @@ out
 # Audit Files
 *-audit.json
 
-# Ignore Production Env
-.env.production
+# Ignore Env files
+.env

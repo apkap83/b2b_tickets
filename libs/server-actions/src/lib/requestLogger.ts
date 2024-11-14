@@ -30,18 +30,18 @@ export async function getRequestLogger(transportName: TransportName) {
   }
 }
 
-// Setup process event listeners
-process.on('unhandledRejection', async (reason, p) => {
-  logErr.error('Unhandled Rejection at:', { promise: p, reason });
+// // Setup process event listeners
+// process.on('unhandledRejection', async (reason, p) => {
+//   logErr.error('Unhandled Rejection at:', { promise: p, reason });
 
-  // Pass the rejection to the uncaughtException handler by throwing it
-  throw reason;
-});
+//   // Pass the rejection to the uncaughtException handler by throwing it
+//   throw reason;
+// });
 
-process.on('uncaughtException', async (error) => {
-  logErr.error('Critical untrusted error encountered. Stopping server.', {
-    message: error.message,
-    stack: error.stack,
-  });
-  process.exit(1); // Restart the server for untrusted errors
-});
+// process.on('uncaughtException', async (error) => {
+//   logErr.error('Critical untrusted error encountered. Stopping server.', {
+//     message: error.message,
+//     stack: error.stack,
+//   });
+//   process.exit(1); // Restart the server for untrusted errors
+// });
