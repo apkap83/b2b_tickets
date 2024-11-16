@@ -522,7 +522,6 @@ const getCcValuesForTicket = async ({
     const customerName = session.user.customer_name;
 
     // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 250));
 
     // Get Cc Emails & Cc Phones
     const sqlQueryForCcEmails = `SELECT email_addresses FROM ticket_cc_users_v where "ticket_id" = $1`;
@@ -581,9 +580,6 @@ export const generateSecureLinkForPasswordCreation = async (
     { expiresIn: config.userCreationSecureLinkValidity } // Token is valid for X days
   );
 
-  const encryptedSecret = symmetricEncrypt(
-    token,
-    process.env['ENCRYPTION_KEY']!
-  );
+  const encryptedSecret = symmetricEncrypt(token);
   return `${config.webSiteUrl}/reset-pass/${encryptedSecret}`;
 };

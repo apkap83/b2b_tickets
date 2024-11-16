@@ -36,7 +36,7 @@ export const ExportToExcelButton = ({
       // Generate an Excel file
       XLSX.writeFile(workbook, 'exported_data.xlsx');
       setProducingExcelFile(false);
-    }, 1000);
+    }, 500);
   };
 
   if (totalTickets === 0) {

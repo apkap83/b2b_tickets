@@ -107,9 +107,6 @@ export const getCcValuesForTicket = async ({
     //@ts-ignore
     const customerName = session.user.customer_name;
 
-    // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 250));
-
     // Get Cc Emails & Cc Phones
     const sqlQueryForCcEmails = `SELECT email_addresses FROM ticket_cc_users_v where "ticket_id" = $1`;
     const res_emails = await pgB2Bpool.query(sqlQueryForCcEmails, [ticketId]);
@@ -144,9 +141,6 @@ export const getTotalNumOfTicketsForCustomer = async () => {
 
     //@ts-ignore
     const customerName = session.user.customer_name;
-
-    // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 250));
 
     // In case there is no Customer Id then return all
     if (customerId === -1) {
@@ -183,9 +177,6 @@ export const getFilteredTicketsForCustomer = async (
 
     //@ts-ignore
     const customerName = session.user.customer_name;
-
-    // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 250));
 
     // In case there is no Customer Id then return all
     if (customerId === -1) {
@@ -235,9 +226,6 @@ export const getNumOfTickets = async (query: string): Promise<number> => {
 
     //@ts-ignore
     const customerName = session.user.customer_name;
-
-    // Artificial Delay
-    await new Promise((resolve) => setTimeout(resolve, 250));
 
     // In case there is no Customer Id then return all
     if (customerId === -1) {
@@ -325,7 +313,6 @@ export const getTicketDetailsForTicketId = async ({
       const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
       queryRes1.rows[0]['comments'] = queryRes2.rows;
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
       return queryRes1.rows;
     }
 
@@ -344,7 +331,6 @@ export const getTicketDetailsForTicketId = async ({
     const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
     queryRes1.rows[0]['comments'] = queryRes2.rows;
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     return queryRes1.rows;
   } catch (error) {
     throw error;
@@ -561,7 +547,6 @@ export const createNewTicket = async (
     // Send E-mail Notifications asynchronously
     sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CREATION, newTicketId);
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');
   } catch (error) {
@@ -798,8 +783,6 @@ export const alterTicketSeverity = async ({
       `Serv.A.F. ${session.user.userName} - Altering Ticket Serverity for ticket with id ${ticketId} to ${newSeverityId}`
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
-
     await pgB2Bpool.query(
       `
         CALL tck_change_severity
@@ -898,7 +881,6 @@ export const createNewComment = async (
       // Send E-mail Notifications asynchronously
       sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CLOSURE, ticketId);
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
       revalidatePath(`/ticket/${ticketNumber}`);
       return toFormState('SUCCESS', 'Ticket was closed');
     }
@@ -927,7 +909,6 @@ export const createNewComment = async (
         ]
       );
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
       revalidatePath(`/ticket/${ticketNumber}`);
       return toFormState('SUCCESS', 'Ticket was Cancelled');
     }
@@ -956,8 +937,6 @@ export const createNewComment = async (
         config.postgres_b2b_database.debugMode,
       ]
     );
-
-    await new Promise((resolve) => setTimeout(resolve, 250));
 
     revalidatePath(`/ticket/${ticketNumber}`);
     return toFormState('SUCCESS', 'Comment Created!');

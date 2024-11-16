@@ -148,7 +148,6 @@ export const getAdminDashboardData = async () => {
       }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     return {
       usersList: plainUsersListWithRoles,
       fullUsersListWithCustomers: usersWithCustomers.rows,
@@ -274,7 +273,6 @@ export async function createUser(formState: any, formData: any) {
       userName,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'User Created!');
@@ -301,7 +299,6 @@ export async function deleteUser({ userName }: any) {
       },
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     if (deletedCount === 0) {
@@ -343,7 +340,6 @@ export async function lockorUnlockUser({ username }: any) {
       `A.F.: ${session?.user.userName} - Locking user with username: ${username}`
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return {
@@ -387,7 +383,7 @@ export async function activeorInactiveUser({ username }: any) {
         user.is_active === 'y' ? 'SUCCESS_UNLOCKED' : 'SUCCESS_LOCKED'
       } for user: ${username}`
     );
-    await new Promise((resolve) => setTimeout(resolve, 250));
+
     revalidatePath('/admin');
 
     return {
@@ -496,7 +492,6 @@ export async function editUser(formState: any, formData: any) {
       )}`
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'User Updated!');
@@ -578,7 +573,6 @@ export async function editRole(formState: any, formData: any) {
     }
     //
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'Role Updated!');
@@ -655,7 +649,7 @@ export async function updateUserPassword(formState: any, formData: any) {
       //@ts-ignore
       `A.F.: ${session?.user.userName} - Performing Password change for user: ${userName}`
     );
-    await new Promise((resolve) => setTimeout(resolve, 250));
+
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'Password Updated!');
@@ -700,7 +694,6 @@ export async function createPermission(formState: any, formData: any) {
       description: permissionDescription,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'Permission Created!');
@@ -741,7 +734,6 @@ export async function createRole(formState: any, formData: any) {
       description: roleDescription,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     return toFormState('SUCCESS', 'Role Created!');
@@ -769,7 +761,6 @@ export async function deleteRole({ role }: any) {
       },
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     if (deletedCount === 0) {
@@ -807,7 +798,6 @@ export async function deletePermission({ permission }: any) {
       },
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 250));
     revalidatePath('/admin');
 
     if (deletedCount === 0) {

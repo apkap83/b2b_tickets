@@ -26,7 +26,8 @@ export const RolesTab = ({ rolesList, permissionsList }) => {
   });
 
   return (
-    <div>
+    // <div>
+    <>
       {/* Render roles content */}
       <table className="table table-s">
         <thead>
@@ -122,6 +123,7 @@ export const RolesTab = ({ rolesList, permissionsList }) => {
           closeModal={() => setShowEditRoleModal({ visible: false })}
         />
       )}
-    </div>
+    </>
+    // </div>
   );
 };

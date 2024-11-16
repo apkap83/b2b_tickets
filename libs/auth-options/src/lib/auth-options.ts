@@ -69,43 +69,6 @@ authenticator.options = {
   step: config.TwoFactorValiditySeconds,
 };
 
-// // Extend User and JWT interfaces
-// declare module 'next-auth' {
-//   interface User {
-//     user_id: number;
-//     customer_id: number;
-//     customer_name: string;
-//     userName: string;
-//     firstName: string;
-//     lastName: string;
-//     mobilePhone: string;
-//     roles: AppRoleTypes[];
-//     permissions: AppPermissionType[];
-//     authenticationType: string;
-//   }
-
-//   interface Session {
-//     user: User;
-//     expiresAt: number;
-//   }
-// }
-
-// declare module 'next-auth/jwt' {
-//   interface JWT {
-//     user_id: number;
-//     customer_id: number;
-//     customer_name: string;
-//     userName: string;
-//     firstName: string;
-//     lastName: string;
-//     mobilePhone: string;
-//     roles: string[];
-//     permissions: any[];
-//     authenticationType: string;
-//     exp: number;
-//   }
-// }
-
 type CredentialsType = Record<'userName' | 'password', string> | undefined;
 
 export const generateTwoFactorSecretForUserId = async (
@@ -119,7 +82,7 @@ export const generateTwoFactorSecretForUserId = async (
     throw new Error(ErrorCode.InternalServerError);
   }
 
-  const foundUser = await B2BUser.scope('withPassword').findOne({
+  const foundUser = await B2BUser.findOne({
     where: {
       user_id: userId,
     },
@@ -130,10 +93,7 @@ export const generateTwoFactorSecretForUserId = async (
   );
 
   const newSecret = authenticator.generateSecret();
-  const encryptedSecret = symmetricEncrypt(
-    newSecret,
-    process.env['ENCRYPTION_KEY']!
-  );
+  const encryptedSecret = symmetricEncrypt(newSecret);
 
   foundUser.two_factor_secret = encryptedSecret;
   await foundUser.save();
@@ -351,8 +311,7 @@ export const options: NextAuthOptions = {
 
           // Validate OTP
           const secret = symmetricDecrypt(
-            localAuthUserDetails.two_factor_secret!,
-            process.env.ENCRYPTION_KEY!
+            localAuthUserDetails.two_factor_secret!
           );
 
           const isValidToken = authenticator.check(
@@ -699,12 +658,7 @@ function verifyJWTTokenForEmail({
     }
 
     // Decrypt token in JWT
-    const decryptedToken = symmetricDecrypt(
-      //@ts-ignore
-      decoded.token,
-      //@ts-ignore
-      process.env['ENCRYPTION_KEY']
-    );
+    const decryptedToken = symmetricDecrypt(decoded.token);
 
     if (decryptedToken !== tokenProvidedFromUser) {
       throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
