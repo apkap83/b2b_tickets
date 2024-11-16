@@ -37,10 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate OTP
-    const secret = symmetricDecrypt(
-      foundUser.two_factor_secret!,
-      process.env.ENCRYPTION_KEY!
-    );
+    const secret = symmetricDecrypt(foundUser.two_factor_secret!);
 
     const isValidToken = authenticator.check(totpCode, secret);
     if (!isValidToken) {

@@ -60,3 +60,11 @@ docker tag ip_integrator_api_image:1.0.1 ip_integrator_api_image:stable
 # In order to use stable images
 docker-compose down
 docker-compose -f docker-compose-stable.yml up -d --remove-orphans
+
+# Prune Unused Containers, Images, and Networks
+sudo docker system prune -a -f --volumes
+
+
+
+
+

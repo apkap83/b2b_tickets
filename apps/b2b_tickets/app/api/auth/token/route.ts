@@ -3,9 +3,7 @@ import { serialize } from 'cookie';
 import jwt from 'jsonwebtoken';
 import { TransportName } from '@b2b-tickets/shared-models';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
-import { authenticator } from 'otplib';
 import { B2BUser } from '@b2b-tickets/db-access';
-import { symmetricDecrypt } from '@b2b-tickets/utils';
 import { generateResetToken, symmetricEncrypt } from '@b2b-tickets/utils';
 import { sendEmailForPasswordReset } from '@/libs/email-service/src/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
@@ -49,10 +47,7 @@ export async function POST(req: NextRequest) {
       foundUser.email,
       emailToken
     );
-    const encryptedSecret = symmetricEncrypt(
-      emailToken,
-      process.env['ENCRYPTION_KEY']!
-    );
+    const encryptedSecret = symmetricEncrypt(emailToken);
 
     // Generate a JWT token
     const token = jwt.sign(

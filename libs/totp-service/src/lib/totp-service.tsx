@@ -5,8 +5,10 @@ import { config } from '@b2b-tickets/config';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 
 import { CustomLogger } from '@b2b-tickets/logging';
-import { TransportName, EmailTemplate } from '@b2b-tickets/shared-models';
+import { TransportName, B2BUserType } from '@b2b-tickets/shared-models';
 import { B2BUser } from '@b2b-tickets/db-access';
+import { symmetricDecrypt, symmetricEncrypt } from '@b2b-tickets/utils';
+
 export async function sendOTP(destinationAddr: string, OTPCode: string) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   try {
@@ -15,7 +17,8 @@ export async function sendOTP(destinationAddr: string, OTPCode: string) {
     );
 
     // Step 1: Check if user exists
-    const user = await B2BUser.findOne({
+    // TODO Add Index There
+    const user: B2BUserType = await B2BUser.findOne({
       where: { mobile_phone: destinationAddr },
     });
 
@@ -27,9 +30,10 @@ export async function sendOTP(destinationAddr: string, OTPCode: string) {
     }
 
     // Step 2: Check if the new OTP is the same as the last one sent
-    if (user.lastotpsent === OTPCode) {
-      // logRequest.info(`The OTP code is the same as the last OTP sent. SMS will not be sent to ${destinationAddr}.`);
-      return; // Exit if the OTP code is the same as the previous one
+    if (user.lastotpsent) {
+      // Decrypt the saved OTP
+      const lastOtpSentDecrypted = symmetricDecrypt(user.lastotpsent);
+      if (lastOtpSentDecrypted === OTPCode) return;
     }
 
     logRequest.info(
@@ -65,7 +69,13 @@ export async function sendOTP(destinationAddr: string, OTPCode: string) {
                     );
 
                     // Step 4: Update the lastOTPSent field after successful SMS send
-                    user.lastotpsent = OTPCode; // Save the new OTP code
+                    const encryptedOTP = symmetricEncrypt(OTPCode);
+                    await B2BUser.update(
+                      { lastotpsent: encryptedOTP }, // The field to update
+                      { where: { user_id: user.user_id } } // The condition to identify the correct user
+                    );
+
+                    //@ts-ignore
                     await user.save();
                     logRequest.info(
                       `User with mobile ${destinationAddr} updated with new lastOTPSent: ${user.lastotpsent}`

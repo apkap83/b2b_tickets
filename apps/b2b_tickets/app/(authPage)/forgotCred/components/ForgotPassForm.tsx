@@ -235,6 +235,11 @@ export default function ForgotPassForm({
       : config.PasswordComplexityActive
       ? passwordComplexitySchema
       : Yup.string().required('Password is required'),
+    repeatNewPassword: !showNewPasswordField
+      ? Yup.string()
+      : Yup.string()
+          .oneOf([Yup.ref('newPassword')], 'Passwords must match')
+          .required('Please confirm your password'),
   });
 
   const formik = useFormik({
@@ -242,6 +247,7 @@ export default function ForgotPassForm({
       email: '',
       tokenForEmail: '',
       newPassword: '',
+      repeatNewPassword: '',
     },
     validationSchema: validationSchema,
     validate: async (values) => {
@@ -452,8 +458,22 @@ export default function ForgotPassForm({
                       readOnly={error === successMessage}
                     />
                   </label>
+                  <label className="mt-3 input input-bordered flex items-center gap-2 dark:bg-white  ">
+                    <FaKey />
+                    <input
+                      type="password"
+                      name="repeatNewPassword"
+                      value={formik.values.repeatNewPassword}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={clsx('grow text-black', {})}
+                      placeholder="Repeat Password"
+                      readOnly={error === successMessage}
+                    />
+                  </label>
                   <div className="text-xs text-red-900 mt-1">
-                    {formik.errors['newPassword']}
+                    {formik.errors['newPassword'] ||
+                      formik.errors['repeatNewPassword']}
                   </div>
                 </div>
               </>

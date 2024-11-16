@@ -56,7 +56,7 @@ export function UsersTab({ usersList, rolesList }) {
 
   return (
     <>
-      <div className="border-b overflow-y-auto">
+      <div className="mb-[2rem] border-b">
         <table className={`${styles.myTable} table border-b`}>
           <thead>
             <tr>
