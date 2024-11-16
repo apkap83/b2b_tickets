@@ -1,4 +1,31 @@
 services:
+  staging_b2b_tickets_pre_entry:
+    build:
+      context: .
+      dockerfile: apps/b2b_tickets/Dockerfile
+    image: b2b_tickets_image_staging_preentry:${STAGING_B2B_VERSION_TEST:-1.0.2}
+    ports:
+      - "5001:3000"
+    container_name: Staging_B2B_Tickets_PreEntry
+    extra_hosts:
+      - "emailrelay:10.0.1.19"
+      - "sms-gw1:10.131.12.77"
+      - "sms-gw2:10.131.20.78"
+      - "test-sms-gw1:10.131.28.73"
+      - "b2b_database:172.27.52.177"
+    environment:
+      - NODE_ENV=production
+      - APP_ENV=staging
+      - PORT=3000
+    command: >
+      sh -c "cp /app/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
+             cp /app/env-files/staging.ts /app/libs/config/src/lib/production.ts &&
+             nx start b2b_tickets --verbose"
+    volumes:
+      - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
+      - /home/centos/Staging_Environment_Variables/.env.staging:/app/env-files/.env.staging
+      - /home/centos/Staging_Configuration/staging.ts:/app/env-files/staging.ts
+
   staging_b2b_tickets:
     build:
       context: .

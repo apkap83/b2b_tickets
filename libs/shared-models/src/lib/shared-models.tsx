@@ -29,6 +29,7 @@ export interface B2BUserType {
   last_update_user?: string | null;
   last_update_process: string;
   two_factor_secret?: string | null;
+  lastotpsent?: string | null;
 }
 
 export type FormState = {
@@ -275,6 +276,7 @@ export enum ErrorCode {
 
   NewPasswordRequired = 'new-password-required',
   NoRoleAssignedToUser = 'no-role-assigned-to-user',
+  DecryptionFailed = 'decryption-failed',
 }
 
 export enum EscalationStatus {
@@ -420,8 +422,10 @@ export interface TicketCommentDB {
 export enum EmailTemplateSubject {
   NEW_TICKET_HANDLER = 'Nova Platinum Ticketing - New Issue {{ticketNumber}}',
   NEW_TICKET_CUSTOMER = 'Nova Platinum Ticketing - New Issue: {{ticketNumber}}',
-  TICKET_ESCALATION_HANDLER = 'Nova Platinum Ticketing - Escalated Issue: {{ticketNumber}} - Level {{escalationLevel}}',
-  TICKET_ESCALATION_CUSTOMER = 'Nova Platinum Ticketing - Escalated Issue: {{ticketNumber}} - Level {{escalationLevel}}',
+
+  TICKET_ESCALATION_HANDLER = 'Nova Platinum Ticketing - Escalated Issue: {{ticketNumber}} - Level {{currentEscalationLevel}}',
+  TICKET_ESCALATION_CUSTOMER = 'Nova Platinum Ticketing - Escalated Issue: {{ticketNumber}} - Level {{currentEscalationLevel}}',
+
   TICKET_CLOSURE_HANDLER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
   TICKET_CLOSURE_CUSTOMER = 'Nova Platinum Ticketing -  Close Issue: {{ticketNumber}}',
 

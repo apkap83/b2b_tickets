@@ -1,0 +1,16 @@
+@keyframes opacityChange {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+.loginRectangle {
+  opacity: 0.9;
+  animation: opacityChange 0.5s backwards ease-in-out;
+}

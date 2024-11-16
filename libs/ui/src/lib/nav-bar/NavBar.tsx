@@ -43,7 +43,7 @@ export const NavBar = () => {
         display="flex"
         justifyContent="space-between"
         p={1.3}
-        className={`${styles.navBar}`}
+        className={`${styles.navBar} z-10`}
       >
         <div>
           <Link
@@ -157,6 +157,8 @@ export const NavBar = () => {
           </Box>
         </Box>
       </Box>
+
+      <div className="h-[75px]"></div>
     </>
   );
 };

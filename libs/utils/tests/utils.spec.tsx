@@ -14,8 +14,8 @@ describe('Encryption and OTP Generation', () => {
   });
 
   test('symmetricDecrypt should return the original text', () => {
-    const encryptedText = symmetricEncrypt(text, key.toString('hex'));
-    const decryptedText = symmetricDecrypt(encryptedText, key.toString('hex'));
+    const encryptedText = symmetricEncrypt(text);
+    const decryptedText = symmetricDecrypt(encryptedText);
     expect(decryptedText).toEqual(text);
   });
 

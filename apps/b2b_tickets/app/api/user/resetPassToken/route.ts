@@ -29,11 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Decrypt JSON Web Token
-    const decryptedJWT = symmetricDecrypt(
-      decodeURIComponent(jwtTokenEnc),
-      //@ts-ignore
-      process.env['ENCRYPTION_KEY']
-    );
+    const decryptedJWT = symmetricDecrypt(decodeURIComponent(jwtTokenEnc));
 
     interface MyJwtPayload extends JwtPayload {
       userName: string;

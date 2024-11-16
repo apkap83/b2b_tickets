@@ -18,6 +18,7 @@ import { useCountdown } from '@b2b-tickets/react-hooks';
 import { formatTimeMMSS } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
 import Link from 'next/link';
+import styles from './css/signin.module.scss';
 
 interface FieldErrorProps {
   formik: {
@@ -247,7 +248,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
 
   return (
     <div
-      className={`w-[500px] relative shadow-md rounded-2xl flex flex-col justify-center 
+      className={`${styles.loginRectangle} w-[500px] relative shadow-md rounded-2xl flex flex-col justify-center 
       items-center p-7  backdrop-blur-lg bg-gray-100 border border-[#26295375]
 
       `}
