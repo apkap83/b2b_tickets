@@ -6,11 +6,11 @@
     opacity: 0.5;
   }
   100% {
-    opacity: 0.9;
+    opacity: 1;
   }
 }
 
 .loginRectangle {
-  opacity: 0.9;
-  animation: opacityChange 0.5s backwards ease-in-out;
+  opacity: 1;
+  animation: opacityChange 0.75s backwards ease-in-out;
 }
