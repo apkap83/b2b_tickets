@@ -48,33 +48,6 @@ export enum TransportName {
   COMBINED = 'combined',
 }
 
-// export interface Ticket {
-//   ticket_id: string;
-//   Customer: string;
-//   Ticket: string;
-//   Title: string;
-//   Description: string;
-//   Severity: string;
-//   Category: string;
-//   Service: string;
-//   Equipment: string;
-//   Sid: string;
-//   Cid: string;
-//   Username: string;
-//   Cli: string;
-//   'Contact person': string;
-//   'Contact phone number': string;
-//   'Occurence date': Date;
-//   Opened: Date;
-//   'Opened By': string;
-//   status_id: string;
-//   Status: string;
-//   'Status Date': Date;
-//   'Status User': string;
-//   Closed: Date | null;
-//   'Closed By': string | null;
-// }
-
 export interface TicketCategory {
   category_id: string;
   Category: string;
@@ -123,6 +96,7 @@ export interface TicketComment {
 
 export interface TicketDetail {
   ticket_id: string;
+  customer_id: string;
   severity_id: string;
   Customer: string;
   'Cust. Type': string;
@@ -143,8 +117,9 @@ export interface TicketDetail {
   'Occurence date': Date; // Changed to Date type
   Opened: Date; // Changed to Date type
   'Opened By': string;
-  Status: string;
+  ticket_creator_email: string;
   status_id: string;
+  Status: string;
   'Status Date': Date; // Changed to Date type
   'Status User': string;
   Closed: Date | null; // Changed to Date type
@@ -166,6 +141,39 @@ export interface TicketDetail {
   'Delayed Response': string | null;
   comments: TicketComment[];
   'Is Final Status': string;
+}
+
+export interface TicketDetailForTicketCreator {
+  ticket_id: string;
+  customer_id: string;
+  severity_id: string;
+  Ticket: string;
+  Title: string;
+  Description: string;
+  Severity: string;
+  category_service_type_id: string;
+  Category: string;
+  Service: string;
+  Equipment: string;
+  Sid: string;
+  Cid: string | null;
+  Username: string | null;
+  Cli: string | null;
+  'Contact person': string;
+  'Contact phone number': string;
+  'Occurence date': Date; // Changed to Date type
+  Opened: Date; // Changed to Date type
+  'Opened By': string;
+  ticket_creator_email: string;
+  status_id: string;
+  Status: string;
+  'Status Date': Date; // Changed to Date type
+  'Status User': string;
+  Closed: Date | null; // Changed to Date type
+  'Closed By': string | null;
+  'Remedy Ticket': string | null;
+  Escalated: string;
+  comments: TicketComment[];
 }
 
 export enum AppRoleTypes {
@@ -215,6 +223,11 @@ export enum TicketStatusName {
   WORKING = 'Working',
   CANCELLED = 'Cancelled',
   CLOSED = 'Closed',
+}
+
+export enum TicketStatusIsFinal {
+  YES = 'y',
+  NO = 'n',
 }
 
 export enum TicketStatusColors {
@@ -379,25 +392,30 @@ export interface TemplateVariables {
 }
 
 export interface TicketEscalation {
-  escalation_id: number; // Primary key, numeric type
-  ticket_id: number; // Foreign key to tickets, numeric type
-  ticket_creation_date: Date; // Timestamp, non-nullable
-  escalation_date: Date; // Timestamp, non-nullable
-  escalation_user_id: number; // Foreign key to users, numeric type
-  escalation_comment_id: number; // Foreign key to ticket_comments, numeric type
-  hours_passed: number; // Numeric type, non-nullable
-  escalation_scheme_level_id: number; // Foreign key to escalation_scheme_levels, numeric type
-  escalation_scheme_id: number; // Foreign key to escalation_schemes, numeric type
-  escalation_level_title: string; // VarChar(100), non-nullable
-  escalation_level: number; // Numeric type, non-nullable
-  escalation_hours: number; // Numeric type, non-nullable
-  escalation_email_recipients?: string | null; // Text, nullable
-  record_version: number; // Numeric type, non-nullable
-  creation_date: Date; // Timestamp, non-nullable
-  creation_user: string; // VarChar(150), non-nullable
-  last_update_date?: Date | null; // Timestamp, nullable
-  last_update_user?: string | null; // VarChar(150), nullable
-  last_update_process: string; // VarChar(250), non-nullable
+  escalation_id: number; // ID of the escalation
+  ticket_id: number; // ID of the associated ticket
+  ticket_creation_date: string; // Date when the ticket was created
+  category_service_type_id: number; // ID linking category and service type
+  category_id: number; // ID of the ticket's category
+  category_name: string; // Name of the category
+  service_type_id: number; // ID of the service type
+  service_type_name: string; // Name of the service type
+  severity_id: number; // ID of the severity
+  severity: string; // Description of the severity
+  escalation_date: string; // Date when the escalation occurred
+  escalation_user_id: number; // ID of the user who escalated
+  escalation_user_username: string; // Username of the escalation user
+  escalation_user_first_name: string; // First name of the escalation user
+  escalation_user_last_name: string; // Last name of the escalation user
+  escalation_comment_id: number; // ID of the associated comment
+  escalation_comment: string; // Comment content related to the escalation
+  hours_passed: number; // Hours passed since escalation, rounded to 1 decimal
+  escalation_scheme_level_id: number; // ID of the escalation scheme level
+  escalation_scheme_id: number; // ID of the escalation scheme
+  escalation_level_title: string; // Title of the escalation level
+  escalation_level: number; // Escalation level number
+  escalation_hours: number; // Escalation hours defined in the scheme
+  escalation_email_recipients: string; // Email recipients for the escalation
 }
 
 export interface TicketCommentDB {
