@@ -26,9 +26,11 @@ import {
   TicketDetail,
   TicketDetailsModalActions,
   EmailNotificationType,
+  TicketStatusIsFinal,
+  TicketDetailForTicketCreator,
 } from '@b2b-tickets/shared-models';
 
-import { convertTo24HourFormat } from '@b2b-tickets/utils';
+import { convertTo24HourFormat, mapToTicketCreator } from '@b2b-tickets/utils';
 import { redirect } from 'next/navigation';
 import { execSync } from 'child_process';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
@@ -171,22 +173,32 @@ export const getFilteredTicketsForCustomer = async (
     await setSchemaAndTimezone(pgB2Bpool);
 
     const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
-
-    //@ts-ignore
     const customerId = session.user.customer_id;
 
-    //@ts-ignore
-    const customerName = session.user.customer_name;
+    // Check if the user belongs to the Ticket Handler role
+    const isTicketHandler = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketHandler
+    );
 
-    // In case there is no Customer Id then return all
-    if (customerId === -1) {
-      let sqlExpression = '';
-      if (query === FilterTicketsStatus.Open)
-        sqlExpression = `WHERE "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
-      if (query === FilterTicketsStatus.Closed)
-        sqlExpression = `WHERE "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
+    // Check if the user belongs to the Ticket Creator role
+    const isTicketCreator = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketCreator
+    );
 
-      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression}
+    let sqlExpression = '';
+    if (query === FilterTicketsStatus.Open)
+      sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+    if (query === FilterTicketsStatus.Closed)
+      sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.YES}' `;
+
+    // If The role is Ticket Handler Return all Tickets
+    if (isTicketHandler) {
+      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression.replace(
+        'AND',
+        'WHERE'
+      )}
       ${
         allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
       }
@@ -195,20 +207,20 @@ export const getFilteredTicketsForCustomer = async (
       return res?.rows as TicketDetail[];
     }
 
-    let sqlExpression = '';
-    if (query === FilterTicketsStatus.Open)
-      sqlExpression = `AND "Status" IN ('${TicketStatusName.NEW}','${TicketStatusName.WORKING}')`;
-    if (query === FilterTicketsStatus.Closed)
-      sqlExpression = `AND "Status" IN ('${TicketStatusName.CLOSED}','${TicketStatusName.CANCELLED}')`;
-
     // Filter Tickets View by Customer Name
     const sqlQuery = `SELECT * FROM tickets_v where "customer_id" = $1 ${sqlExpression}
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
     const res = await pgB2Bpool.query(sqlQuery, [customerId]);
+    const tickets = res?.rows as TicketDetail[];
 
-    return res?.rows as TicketDetail[];
+    // If Ticket Creator, filter and map the result to TicketDetailForTicketCreator
+    if (isTicketCreator) {
+      return tickets.map((ticket) => mapToTicketCreator(ticket));
+    }
+
+    return tickets;
   } catch (error) {
     throw error;
   }
@@ -260,7 +272,7 @@ export const getTicketDetailsForTicketId = async ({
   ticketNumber,
 }: {
   ticketNumber: string;
-}): Promise<TicketDetail[]> => {
+}) => {
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Tickets_Page
@@ -268,68 +280,57 @@ export const getTicketDetailsForTicketId = async ({
 
     await setSchemaAndTimezone(pgB2Bpool);
 
-    const queryForTicketsCategoriesAndTypes = `SELECT * FROM tickets_v WHERE "Ticket" = $1`;
+    // Check if the user belongs to the Ticket Handler role
+    const isTicketHandler = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketHandler
+    );
 
-    // const queryForComments = `
-    //   SELECT tc.comment_id,
-    //   tc.ticket_id,
-    //   tc.comment_date,
-    //   tc.comment_user_id,
-    //   tc.comment,
-    //   tc.is_closure,
-    //   tc.creation_date,
-    //   tc.creation_user,
-    //   u.username,
-    //   u.first_name,
-    //   u.last_name,
-    //   c.customer_name
-    //   FROM tickets as t
-    //   INNER JOIN ticket_comments as tc
-    //   ON t.ticket_id = tc.ticket_id
-    //   INNER JOIN users as u
-    //   ON u.user_id = tc.comment_user_id
-    //   INNER JOIN customers as c
-    //   ON u.customer_id = c.customer_id
-    //   WHERE t.ticket_number = $1 and tc.deletion_date is null
-    //   ORDER BY tc.comment_date DESC
-    // `;
+    // Check if the user belongs to the Ticket Creator role
+    const isTicketCreator = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketCreator
+    );
+
+    // Define queries
+    const queryForTicketsCategoriesAndTypes = isTicketHandler
+      ? `SELECT * FROM tickets_v WHERE "Ticket" = $1`
+      : `SELECT * FROM tickets_v WHERE customer_id = $1 AND "Ticket" = $2`;
 
     const queryForComments =
       'SELECT * FROM ticket_comments_v WHERE "Ticket Number" = $1 order by "Comment Date" DESC';
 
-    const queryRes1 = await pgB2Bpool.query(queryForTicketsCategoriesAndTypes, [
-      ticketNumber,
-    ]);
+    // Execute ticket query
+    const ticketQueryParams = isTicketHandler
+      ? [ticketNumber]
+      : [session.user.customer_id, ticketNumber];
+
+    const queryRes1 = await pgB2Bpool.query(
+      queryForTicketsCategoriesAndTypes,
+      ticketQueryParams
+    );
 
     if (queryRes1.rows.length === 0) {
       notFound();
     }
 
-    // If Role is Admin or Ticket Handler you can see the details for every ticket
+    // Additional validation for Ticket Creator - Avoid Ticket Handlers from Openning Other customer tickets (!)
     if (
-      userHasRole(session, AppRoleTypes.Admin) ||
-      userHasRole(session, AppRoleTypes.B2B_TicketHandler)
+      isTicketCreator &&
+      session?.user.customer_id !== Number(queryRes1.rows[0].customer_id)
     ) {
-      const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
-      queryRes1.rows[0]['comments'] = queryRes2.rows;
-
-      return queryRes1.rows;
+      // Only Nova Customer Can See Ticket Details for All Tickets
+      if (session?.user.customer_id !== -1) notFound();
     }
 
-    // If Roles is not Ticket Creator Ticket Details cannot be seen
-    if (!userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
-      notFound();
-    }
-
-    // This check ensures that a customer cannot see other customers tickets
-    // Check if the specific ticket belongs to the customer ID that was requested it
-    // Compare session.user.customer_id with ticketDetails[0].customer_id
-    if (session?.user.customer_id !== Number(queryRes1.rows[0].customer_id)) {
-      notFound();
-    }
-
+    // Execute comments query
     const queryRes2 = await pgB2Bpool.query(queryForComments, [ticketNumber]);
     queryRes1.rows[0]['comments'] = queryRes2.rows;
+
+    // Filter results for Ticket Creator role
+    if (isTicketCreator) {
+      return queryRes1.rows.map((ticket) => mapToTicketCreator(ticket));
+    }
 
     return queryRes1.rows;
   } catch (error) {

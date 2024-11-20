@@ -8,6 +8,8 @@ import {
   AppRoleTypes,
   AppPermissionType,
   B2BUserType,
+  TicketDetail,
+  TicketDetailForTicketCreator,
 } from '@b2b-tickets/shared-models';
 import { Session } from 'next-auth';
 import * as crypto from 'crypto';
@@ -315,3 +317,41 @@ export const passwordComplexitySchema = Yup.string()
 export function stripHtmlTags(html: string): string {
   return html.replace(/<[^>]*>/g, '');
 }
+
+// Utility function to map TicketDetail to TicketDetailForTicketCreator
+export const mapToTicketCreator = (
+  ticket: TicketDetail
+): TicketDetailForTicketCreator => {
+  return {
+    ticket_id: ticket.ticket_id,
+    customer_id: ticket.customer_id,
+    severity_id: ticket.severity_id,
+    Ticket: ticket.Ticket,
+    Title: ticket.Title,
+    Description: ticket.Description,
+    Severity: ticket.Severity,
+    category_service_type_id: ticket.category_service_type_id,
+    Category: ticket.Category,
+    Service: ticket.Service,
+    Equipment: ticket.Equipment,
+    Sid: ticket.Sid,
+    Cid: ticket.Cid,
+    Username: ticket.Username,
+    Cli: ticket.Cli,
+    'Contact person': ticket['Contact person'],
+    'Contact phone number': ticket['Contact phone number'],
+    'Occurence date': ticket['Occurence date'],
+    Opened: ticket.Opened,
+    'Opened By': ticket['Opened By'],
+    ticket_creator_email: ticket.ticket_creator_email,
+    status_id: ticket.status_id,
+    Status: ticket.Status,
+    'Status Date': ticket['Status Date'],
+    'Status User': ticket['Status User'],
+    Closed: ticket.Closed,
+    'Closed By': ticket['Closed By'],
+    'Remedy Ticket': ticket['Remedy Ticket'],
+    Escalated: ticket.Escalated,
+    comments: ticket.comments,
+  };
+};
