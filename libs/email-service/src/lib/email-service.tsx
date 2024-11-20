@@ -24,7 +24,7 @@ import {
   TemplateVariables,
   EmailTemplateSubject,
   EmailNotificationType,
-  EmailListOfHandlers,
+  // EmailListOfHandlers,
   TicketEscalation,
   TicketCommentDB,
   B2BUserType,
@@ -139,8 +139,9 @@ export const sendEmailOnTicketUpdate = async (
     // Find Cc Users
     const res = await getCcValuesForTicket({ ticketId });
 
-    // TODO - Get Ticket Creator Email from DB View
-    const ticketCreatorEmail = session.user.email as string;
+    const EmailListOfHandlers = config.emailListOfHandlers;
+
+    const ticketCreatorEmail = ticket.ticket_creator_email;
     const ticketCreatorUserName = ticket['Opened By'];
     const ccEmails = res.data?.ccEmails as string;
     const ccPhones = res.data?.ccPhones as string;
@@ -216,20 +217,15 @@ export const sendEmailOnTicketUpdate = async (
     if (emailNotificationType === EmailNotificationType.TICKET_ESCALATION) {
       // Get Escalation Comment Id
       const escalationResult = await pgB2Bpool.query(
-        'SELECT * from ticket_escalations where escalation_id = $1',
+        'SELECT * FROM TICKET_ESCALATIONS_V WHERE ESCALATION_ID = $1',
         [escalationId]
       );
 
       const escalation: TicketEscalation = escalationResult.rows[0];
-      const escalationCommentId = escalation.escalation_comment_id;
-      // Get Escalation Comment
-      const commentResult = await pgB2Bpool.query(
-        'SELECT * from ticket_comments where comment_id = $1',
-        [escalationCommentId]
-      );
+      const escalationMailHandlerRecipients =
+        escalation.escalation_email_recipients;
+      const escalationComment = escalation.escalation_comment;
 
-      const commentLine: TicketCommentDB = commentResult.rows[0];
-      const escalationComment = commentLine.comment;
       // Load and populate the template
       const templateForHandlerPopulated = populateTemplate(
         loadTemplate(EmailTemplate.TICKET_ESCALATION_HANDLER),
@@ -257,7 +253,7 @@ export const sendEmailOnTicketUpdate = async (
       // Send Email for Handler
       await transporter.sendMail({
         from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
-        to: EmailListOfHandlers,
+        to: escalationMailHandlerRecipients.split(/[,;]/),
         subject: populateSubject(
           EmailTemplateSubject.TICKET_ESCALATION_HANDLER,
           { ticketNumber, currentEscalationLevel }
@@ -265,6 +261,7 @@ export const sendEmailOnTicketUpdate = async (
         text: stripHtmlTags(templateForHandlerPopulated),
         html: templateForHandlerPopulated,
       });
+
       logRequest.info(
         `Serv.A.F. ${
           session.user.userName
@@ -545,7 +542,7 @@ const getCcValuesForTicket = async ({
   }
 };
 
-export const generateSecureLinkForPasswordCreation = async (
+const generateSecureLinkForPasswordCreation = async (
   email: string
 ): Promise<string | undefined> => {
   if (!email) {
