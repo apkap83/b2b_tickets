@@ -23,7 +23,7 @@ ENV HOME=/home/centos
 # Create necessary directories with correct permissions for centos
 RUN mkdir -p /app/env-files && \
     mkdir -p /home/centos/.pnpm-global && \
-    chown -R centos:centos /app /home/centos/.pnpm-global /home/centos/.npmrc && \
+    chown -R centos:centos /app /home/centos/.pnpm-global && \
     chmod g+s /home/centos # Use a Sticky Group Permission: To automatically enforce ownership for new files and directories created under /home/centos, you can use a sticky group permission
 
 # Set the working directory
