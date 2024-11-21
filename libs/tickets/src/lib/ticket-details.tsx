@@ -34,8 +34,10 @@ import { SeverityPopup } from './severity-popup';
 import { SeverityRow } from './severity-row';
 import { CcFields } from './cc-fields-in-ticket-details';
 import { PiGreaterThanFill } from 'react-icons/pi';
+import { PiLessThanFill } from 'react-icons/pi';
 import clsx from 'clsx';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
+import { EscalationBars } from '@b2b-tickets/ui';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -261,18 +263,14 @@ export function TicketDetails({
 
   const StatusBadge = () => {
     return (
-      // <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight">
       <span
         className={`px-2 py-1 text-white`}
         style={{
-          // border: `1px solid ${statusHTMLColor}30`,
-          // backgroundColor: getStatusColor(ticketStatus),
           color: statusHTMLColor,
         }}
       >
         {ticketDetails[0].Status}
       </span>
-      // </div>
     );
   };
 
@@ -342,14 +340,14 @@ export function TicketDetails({
                     className={`${detailsRowHeaderClass} flex gap-1 justify-left items-center`}
                   >
                     Escalation Level
-                    {/* {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && ( */}
-                    <div>
-                      <PiGreaterThanFill />
-                    </div>
-                    {/* )} */}
                   </div>
                   <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight text-right">
-                    Level {currentEscalationLevel}
+                    <div className="flex justify-center items-center gap-1">
+                      <EscalationBars
+                        level={currentEscalationLevel}
+                        showNumbers={true}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
