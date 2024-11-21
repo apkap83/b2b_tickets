@@ -2,7 +2,10 @@
 import { useState } from 'react';
 import Button from '@mui/material/Button';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
-import { TicketDetail } from '@b2b-tickets/shared-models';
+import {
+  TicketDetail,
+  TicketDetailForTicketCreator,
+} from '@b2b-tickets/shared-models';
 import * as XLSX from 'xlsx';
 import { SiMicrosoftexcel } from 'react-icons/si';
 import Tooltip from '@mui/material/Tooltip';
@@ -20,7 +23,7 @@ export const ExportToExcelButton = ({
 
   const getDataAndConvertToExcel = async () => {
     setProducingExcelFile(true);
-    const ticketsList: TicketDetail[] = await getFilteredTicketsForCustomer(
+    const ticketsList = await getFilteredTicketsForCustomer(
       query,
       currentPage,
       true

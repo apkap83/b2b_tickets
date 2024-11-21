@@ -1,7 +1,11 @@
 import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
 
-import { AppRoleTypes, TicketDetail } from '@b2b-tickets/shared-models';
+import {
+  AppRoleTypes,
+  TicketDetail,
+  TicketDetailForTicketCreator,
+} from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 
@@ -20,10 +24,7 @@ export const TicketsList = async ({
   query: string;
   currentPage: number;
 }) => {
-  const ticketsList: TicketDetail[] = await getFilteredTicketsForCustomer(
-    query,
-    currentPage
-  );
+  const ticketsList = await getFilteredTicketsForCustomer(query, currentPage);
 
   if (ticketsList.length === 0) {
     return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
@@ -84,7 +85,9 @@ const generateTableHeadAndColumns = async () => {
   );
 };
 
-const generateTableBody = async (items: TicketDetail[]) => {
+const generateTableBody = async (
+  items: TicketDetail[] | TicketDetailForTicketCreator[]
+) => {
   const session = await getServerSession(options);
 
   return (
