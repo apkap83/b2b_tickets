@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import { formatDate, userHasRole, getStatusColor } from '@b2b-tickets/utils';
 // import styles from './css/ticker-row.module.scss';
 import { useRouter } from 'next/navigation';
+import { EscalationBars } from '@b2b-tickets/ui';
 
 export const TicketRow = ({
   session,
@@ -30,16 +31,7 @@ export const TicketRow = ({
       onClick={handleClick}
       className={clsx(
         'hover:bg-black/5',
-        'whitespace-nowrap hover:cursor-pointer',
-        {
-          'bg-red-100':
-            userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
-            !finalTicketStatus &&
-            item['Delayed Response'] === 'Yes',
-          'hover:bg-red-200':
-            userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
-            delayedResponse,
-        }
+        'whitespace-nowrap hover:cursor-pointer'
       )}
     >
       {/* One More Column for Ticket Handlers */}
@@ -120,10 +112,22 @@ export const TicketRow = ({
         <>
           <TableCell data-label="Escalated" align="center">
             <div className="text-center">
-              {!finalTicketStatus && item['Current Escalation Level']}
+              {!finalTicketStatus && (
+                <EscalationBars level={item['Current Escalation Level']!} />
+              )}
             </div>
           </TableCell>
-          <TableCell>
+          <TableCell
+            className={clsx({
+              'bg-red-100':
+                userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+                !finalTicketStatus &&
+                item['Delayed Response'] === 'Yes',
+              'hover:bg-red-200':
+                userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+                delayedResponse,
+            })}
+          >
             <span>
               {!finalTicketStatus && <span>{lastCustCommentDate}</span>}
             </span>

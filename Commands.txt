@@ -71,6 +71,9 @@ nx g lib email-service --directory libs --tags type:utils,scope:shared
 # Create TOTP service Library
 nx g lib totp-service --directory libs --tags type:utils,scope:shared
 
+# Create NavBar component
+nx g component EscalationBars --project ui --export --tags type:ui,scope=b2b_tickets
+
 
 
 
