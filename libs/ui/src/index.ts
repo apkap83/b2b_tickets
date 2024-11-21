@@ -1,3 +1,4 @@
+export * from './lib/escalation-bars/EscalationBars';
 export * from './lib/session-popup/SessionPopup';
 export * from './lib/footer/Footer';
 export * from './lib/logged-in-indication/LoggedInIndication';

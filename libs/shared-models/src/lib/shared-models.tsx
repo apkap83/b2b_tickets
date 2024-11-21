@@ -173,6 +173,7 @@ export interface TicketDetailForTicketCreator {
   'Closed By': string | null;
   'Remedy Ticket': string | null;
   Escalated: string;
+  'Current Escalation Level': number | null;
   comments: TicketComment[];
 }
 

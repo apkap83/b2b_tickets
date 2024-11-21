@@ -351,6 +351,7 @@ export const mapToTicketCreator = (
     Closed: ticket.Closed,
     'Closed By': ticket['Closed By'],
     'Remedy Ticket': ticket['Remedy Ticket'],
+    'Current Escalation Level': ticket['Current Escalation Level'],
     Escalated: ticket.Escalated,
     comments: ticket.comments,
   };
