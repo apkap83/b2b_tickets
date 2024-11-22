@@ -16,6 +16,9 @@ RUN nx reset
 # Set Permisssions to Centos for /app dir
 RUN chown -R centos:centos /app /home/centos/.npmrc
 
+# Unset Proxy Settings
+RUN unset HTTP_PROXY && unset HTTPS_PROXY
+
 # Switch to centos user
 USER centos
 

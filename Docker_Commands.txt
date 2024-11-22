@@ -1,6 +1,10 @@
 pwd
 /home/centos/applications/b2b_tickets
-sudo docker build -t my-monorepo-base -f Dockerfile .
+# For MAC
+sudo docker build --build-arg USE_PROXY=false -t my-monorepo-base -f Dockerfile .
+
+# For Server
+sudo docker build --build-arg USE_PROXY=true --build-arg HTTP_PROXY=http://10.124.49.151:3129 --build-arg HTTPS_PROXY=http://10.124.49.151:3129 -t my-monorepo-base -f Dockerfile .
 
 # Start new container from Image
 docker run -d --name nms_portal_backend -p 5001:5001 nms_portal_backend_5001
