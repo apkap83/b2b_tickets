@@ -14,7 +14,7 @@ RUN pnpm install --frozen-lockfile || cat /app/.npm/_logs/*
 RUN nx reset
 
 # Set Permisssions to Centos for /app dir
-RUN chown -R centos:centos /app /home/centos/.npmrc
+RUN chown -R centos:centos /app /home/centos/
 
 # Unset Proxy Settings
 RUN unset HTTP_PROXY && unset HTTPS_PROXY
