@@ -53,4 +53,4 @@ out
 *-audit.json
 
 # Ignore Env files
-.env
+.env*
