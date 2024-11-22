@@ -5,14 +5,16 @@ ARG USE_PROXY=true
 ARG HTTP_PROXY=http://10.124.49.151:3129
 ARG HTTPS_PROXY=http://10.124.49.151:3129
 
-# Set environment variables
 ENV SHELL=/bin/sh \
-HOME=/home/centos \
-PNPM_HOME=/home/centos/.pnpm-global \
-PATH=$PNPM_HOME:$PATH \
-NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/Nova_Root_Certificate.crt
+    HOME=/home/centos \
+    PNPM_HOME=/home/centos/.pnpm-global \
+    NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/Nova_Root_Certificate.crt
 
-RUN if [ "$USE_PROXY" = "false" ]; then unset HTTP_PROXY HTTPS_PROXY; fi
+ENV PATH=$PNPM_HOME:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Ensure PATH includes PNPM_HOME during build and runtime
+RUN export PATH=$PNPM_HOME:$PATH && \
+    echo "export PATH=$PNPM_HOME:$PATH" >> /etc/profile
 
 # Add centos user with the same UID and GID as the host's centos user
 RUN addgroup --gid 1001 centos && \
