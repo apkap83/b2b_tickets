@@ -46,7 +46,7 @@ docker rm NMS_Portal_Container_1     # Remove the container
 docker compose up --build # The --build flag ensures that the image is rebuilt every time you run this command.
 docker-compose build
 docker-compose up -d
-docker-compose up -d --remove-orphans
+docker-compose up -d --build --remove-orphans
 
 
 # Delete Docker images with <none> name
