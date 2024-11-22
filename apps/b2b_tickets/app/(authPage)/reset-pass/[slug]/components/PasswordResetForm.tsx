@@ -232,7 +232,6 @@ export function PasswordResetForm({
   const handleCaptchaChange = (value: string | null) => {
     setCaptcha(value);
   };
-  console.log('formik', formik);
   const { timeLeft, isRunning, start, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
     window.location.reload();
