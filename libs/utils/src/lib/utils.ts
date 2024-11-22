@@ -204,7 +204,6 @@ export const symmetricDecrypt = function (text: string): string {
   if (_key.length !== 32) {
     throw new Error('Invalid encryption key length. Must be 32 bytes.');
   }
-  console.log('text', text);
   if (!text.includes(':')) {
     throw new Error(
       'Invalid ciphertext format. Must contain IV and ciphertext.'
