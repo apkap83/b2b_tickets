@@ -2,7 +2,7 @@
 
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
-import { options } from '@b2b-tickets/auth-options';
+import { options, Session } from '@b2b-tickets/auth-options';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { pgB2Bpool, setSchemaAndTimezone } from '@b2b-tickets/db-access';
@@ -1063,7 +1063,7 @@ export const getAppVersion = async (): Promise<{
 };
 
 export const extendSessionAction = async (): Promise<{
-  data: string;
+  data: Session | null;
   error?: string;
 }> => {
   try {
@@ -1074,11 +1074,11 @@ export const extendSessionAction = async (): Promise<{
     }
 
     return {
-      data: 'Session Extended',
+      data: session,
     };
   } catch (error: unknown) {
     return {
-      data: '',
+      data: null,
       error: error instanceof Error ? error.message : String(error),
     };
   }
