@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useContext } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -18,7 +18,7 @@ import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 import config from '@b2b-tickets/config';
 import styles from './css/NavBar.module.scss';
-import SessionPopup from '../session-popup/SessionPopup';
+import { SessionIndicationAndPopup } from '../session-popup/SessionIndicationAndPopup';
 
 export const NavBar = () => {
   const theme = useTheme();
@@ -27,19 +27,37 @@ export const NavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [navbarHeight, setNavbarHeight] = useState(75);
+  const navbarRef = useRef<HTMLDivElement | null>(null);
+
   const { data: session, status } = useSession();
+
+  useEffect(() => {
+    const calculateHeight = () => {
+      if (navbarRef.current) {
+        setNavbarHeight(navbarRef.current.offsetHeight);
+      }
+    };
+
+    // Calculate height on load
+    calculateHeight();
+
+    // Recalculate height on window resize
+    window.addEventListener('resize', calculateHeight);
+    return () => {
+      window.removeEventListener('resize', calculateHeight);
+    };
+  }, []);
 
   //@ts-ignore
   const customerName = session?.user?.customer_name;
 
   const isAdminPath = pathname === '/admin';
   const isTicketsPath = pathname === '/tickets';
-
   return (
     <>
-      <SessionPopup />
-
       <Box
+        ref={navbarRef}
         display="flex"
         justifyContent="space-between"
         p={1.3}
@@ -94,6 +112,15 @@ export const NavBar = () => {
           </div>
         )}
         <Box className={`${styles.menuAndLoggedIndication}`}>
+          <Box
+            sx={{
+              display: 'flex',
+              height: '50px',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginRight: '8px',
+            }}
+          ></Box>
           <Box
             sx={{
               borderTop: '1px solid #5b5ea090',
@@ -153,12 +180,18 @@ export const NavBar = () => {
                 <span className="text-xs">Tickets List</span>
               </IconButton>
             </div>
-            <LoggedInIndication session={session} customerName={customerName} />
+            <div className="flex justify-center items-center gap-2">
+              <LoggedInIndication
+                session={session}
+                customerName={customerName}
+              />
+              <SessionIndicationAndPopup />
+            </div>
           </Box>
         </Box>
       </Box>
 
-      <div className="h-[75px]"></div>
+      <div style={{ height: `${navbarHeight}px` }}></div>
     </>
   );
 };

@@ -1,5 +1,5 @@
 export * from './lib/escalation-bars/EscalationBars';
-export * from './lib/session-popup/SessionPopup';
+export * from './lib/session-popup/SessionIndicationAndPopup';
 export * from './lib/footer/Footer';
 export * from './lib/logged-in-indication/LoggedInIndication';
 export * from './lib/activeness/Activeness';
