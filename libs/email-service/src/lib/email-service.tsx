@@ -174,7 +174,7 @@ export const sendEmailOnTicketUpdate = async (
 
       // Send Email for Handler
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: EmailListOfHandlers,
         subject: populateSubject(EmailTemplateSubject.NEW_TICKET_HANDLER, {
           ticketNumber,
@@ -193,7 +193,7 @@ export const sendEmailOnTicketUpdate = async (
 
       // Send E-mail for Customer && CC People
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: [ticketCreatorEmail],
         cc: ccEmails ? [ccEmails] : [],
         subject: populateSubject(EmailTemplateSubject.NEW_TICKET_CUSTOMER, {
@@ -252,7 +252,7 @@ export const sendEmailOnTicketUpdate = async (
 
       // Send Email for Handler
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: escalationMailHandlerRecipients.split(/[,;]/),
         subject: populateSubject(
           EmailTemplateSubject.TICKET_ESCALATION_HANDLER,
@@ -273,7 +273,7 @@ export const sendEmailOnTicketUpdate = async (
 
       // Send E-mail for Customer && CC People
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: [ticketCreatorEmail],
         cc: ccEmails ? [ccEmails] : [],
         subject: populateSubject(
@@ -319,7 +319,7 @@ export const sendEmailOnTicketUpdate = async (
 
       // Send Email for Handler
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: EmailListOfHandlers,
         subject: populateSubject(EmailTemplateSubject.TICKET_CLOSURE_HANDLER, {
           ticketNumber,
@@ -338,7 +338,7 @@ export const sendEmailOnTicketUpdate = async (
 
       // Send E-mail for Customer && CC People
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: [ticketCreatorEmail],
         cc: ccEmails ? [ccEmails] : [],
         subject: populateSubject(EmailTemplateSubject.TICKET_CLOSURE_CUSTOMER, {
@@ -429,7 +429,7 @@ export async function sendEmailsForUserCreation({
 
       // Send Email for Handler
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: [email],
         // cc: NMS_Team_Email_Address,
         subject: subject as string,
@@ -476,7 +476,7 @@ export async function sendEmailForPasswordReset(
 
       // Send Email for Handler
       await transporter.sendMail({
-        from: '"Nova Platinum Ticketing" <no-reply@nova.gr>',
+        from: config.EmailFromAddress,
         to: [email],
         // cc: NMS_Team_Email_Address,
         subject: subject as string,
@@ -485,7 +485,7 @@ export async function sendEmailForPasswordReset(
       });
 
       logRequest.info(
-        `Serv.A.F. - Sent E-mail for User creation Notification to ${email}`
+        `Serv.A.F. - Sent E-mail Notification for Password Reset to ${email}`
       );
     }
   } catch (error) {
