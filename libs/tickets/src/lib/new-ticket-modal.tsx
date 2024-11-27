@@ -782,7 +782,6 @@ export const SubmitButton = ({
 
   let letterColor = '#ddd7d7';
   let backgroundColor = '#1e197b';
-  let borderColor = '#1e197b';
 
   if (!isValid || pending) {
     backgroundColor = '#5b5b5d';
@@ -799,7 +798,6 @@ export const SubmitButton = ({
       style={{
         color: `${letterColor}`,
         backgroundColor: `${backgroundColor}`,
-        border: `1px solid ${borderColor}`,
       }}
     >
       {pending ? loadingText : label}

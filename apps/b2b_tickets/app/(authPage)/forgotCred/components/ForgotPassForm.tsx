@@ -58,7 +58,10 @@ export default function ForgotPassForm({
   const [captchaVerified, setCaptchaVerified] = useState(false);
 
   const [totpVerified, setTotpVerified] = useState(false);
-  const [totpCode, setTotpCode] = useState('');
+  // const [totpCode, setTotpCode] = useState('');
+
+  const [buttonIsDisabled, setButtonIsDisabled] = useState(false);
+
   const [showOTP, setShowOTP] = useState(false);
 
   const [showEmailTokenField, setShowEmailTokenField] = useState(false);
@@ -149,40 +152,6 @@ export default function ForgotPassForm({
     }
   };
 
-  const getTotpJWTToken = async ({ emailProvided, setSubmitting }: any) => {
-    if (!totpCode) {
-      setError('Verify TOTP Code!');
-      setSubmitting(false);
-      return;
-    }
-    try {
-      // Call your custom captcha validation API route
-      const totpResponse = await fetch('/api/auth/totp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ emailProvided, totpCode }),
-      });
-
-      const totpResult = await totpResponse.json();
-
-      if (!totpResponse.ok) {
-        setError(totpResult.message || 'Invalid TOTP Code');
-        setSubmitting(false);
-        return;
-      }
-
-      // Server Verified Totp at this point
-      resetTimer(300);
-      setTotpVerified(true);
-    } catch (error) {
-      setError('An error occurred while validating TOTP. Please try again.');
-      setSubmitting(false);
-      return;
-    }
-  };
-
   const getEmailJWTToken = async ({ emailProvided, setSubmitting }: any) => {
     try {
       // Call your custom token validation API route
@@ -229,7 +198,14 @@ export default function ForgotPassForm({
 
   const validationSchema = Yup.object({
     email: Yup.string().required('Email is required'),
-    emailToken: Yup.string(),
+    totpCode: !showOTP
+      ? Yup.string()
+      : Yup.string()
+          .matches(/^\d{5}$/, ' ')
+          .required('OTP Code is required'),
+    tokenForEmail: !showEmailTokenField
+      ? Yup.string()
+      : Yup.string().required('Email Token is required'),
     newPassword: !showNewPasswordField
       ? Yup.string()
       : config.PasswordComplexityActive
@@ -245,15 +221,18 @@ export default function ForgotPassForm({
   const formik = useFormik({
     initialValues: {
       email: '',
+      totpCode: '',
       tokenForEmail: '',
       newPassword: '',
       repeatNewPassword: '',
     },
+    validateOnMount: true,
     validationSchema: validationSchema,
     validate: async (values) => {
       try {
         // Validate with abortEarly: false to gather all errors
         await validationSchema.validate(values, { abortEarly: false });
+        setButtonIsDisabled(false);
       } catch (err) {
         // Explicitly define err as Yup.ValidationError
         if (err instanceof Yup.ValidationError) {
@@ -288,7 +267,7 @@ export default function ForgotPassForm({
       if (
         config.TwoFactorEnabledForPasswordReset &&
         !totpVerified &&
-        totpCode
+        formik.values.totpCode
       ) {
         await getTotpJWTToken({
           emailProvided: formik.values.email,
@@ -340,6 +319,7 @@ export default function ForgotPassForm({
           setShowOTP(true);
           setSubmitting(false);
           setEmailFieldIsReadOnly(true);
+          setButtonIsDisabled(true);
           break;
         case ErrorCode.TotpJWTTokenInvalid:
           setShowOTP(true);
@@ -358,6 +338,7 @@ export default function ForgotPassForm({
             emailProvided: formik.values.email,
             setSubmitting,
           });
+          setButtonIsDisabled(true);
           break;
         case ErrorCode.IncorrectPassResetTokenProvided:
           setSubmitting(false);
@@ -368,6 +349,7 @@ export default function ForgotPassForm({
           setShowEmailTokenField(false);
           setShowNewPasswordField(true);
           setError('');
+          setButtonIsDisabled(true);
           break;
         default:
           setError('Internal Server Error');
@@ -376,6 +358,43 @@ export default function ForgotPassForm({
       }
     },
   });
+
+  const getTotpJWTToken = async ({ emailProvided, setSubmitting }: any) => {
+    if (!formik.values.totpCode) {
+      setError('Verify TOTP Code!');
+      setSubmitting(false);
+      return;
+    }
+    try {
+      // Call your custom captcha validation API route
+      const totpResponse = await fetch('/api/auth/totp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emailProvided,
+          totpCode: formik.values.totpCode,
+        }),
+      });
+
+      const totpResult = await totpResponse.json();
+
+      if (!totpResponse.ok) {
+        setError(totpResult.message || 'Invalid TOTP Code');
+        setSubmitting(false);
+        return;
+      }
+
+      // Server Verified Totp at this point
+      resetTimer(300);
+      setTotpVerified(true);
+    } catch (error) {
+      setError('An error occurred while validating TOTP. Please try again.');
+      setSubmitting(false);
+      return;
+    }
+  };
 
   return (
     <div
@@ -439,7 +458,9 @@ export default function ForgotPassForm({
                   readOnly={emailFieldIsReadOnly}
                 />
               </label>
-              <FieldError formik={formik} name="email" />
+              <div className="text-center mt-3">
+                <FieldError formik={formik} name="email" />
+              </div>
             </div>
             {showNewPasswordField && (
               <>
@@ -505,9 +526,12 @@ export default function ForgotPassForm({
                 Remaining time {formatTimeMMSS(timeLeft)}
               </p>
               <TwoFactAuth
-                value={totpCode}
-                onChange={(val) => setTotpCode(val)}
+                value={formik.values.totpCode}
+                onChange={(val) => formik.setFieldValue('totpCode', val)}
               />
+              <div className="text-center mt-3">
+                <FieldError formik={formik} name="totpCode" />
+              </div>
             </div>
           )}
           {showEmailTokenField && (
@@ -528,7 +552,9 @@ export default function ForgotPassForm({
                   placeholder="Your Token"
                 />
               </label>
-              <FieldError formik={formik} name="tokenForEmail" />
+              <div className="text-center mt-3">
+                <FieldError formik={formik} name="tokenForEmail" />
+              </div>
             </div>
           )}
           {/* <div className="mt-5 mb-2 flex justify-around border bg-[#2b2b44] py-1 text-white rounded-md"> */}
@@ -554,7 +580,7 @@ export default function ForgotPassForm({
                 pending={formik.isSubmitting}
                 label={submitButtonLabel}
                 loadingText="Loading ..."
-                isValid={formik.isValid}
+                isValid={formik.isValid && !buttonIsDisabled}
                 // className="btn btn-primary py-4 px-5 font-semibold text-white "
               />
             </div>
@@ -586,7 +612,7 @@ const SignInButton = ({
         `btn transition-all duration-300 ease-in-out bg-gradient-to-r from-gray-800 via-black to-gray-900
          text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:from-gray-700 hover:via-gray-800 hover:to-gray-700 
          hover:scale-105 transform border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 
-         focus:ring-gray-600 focus:ring-offset-gray-100
+         focus:ring-gray-600 focus:ring-offset-gray-100 disabled:bg-gray-500 disabled:text-gray-300
         `,
         {
           'cursor-not-allowed opacity-70': pending,
@@ -595,9 +621,9 @@ const SignInButton = ({
       style={{
         width: '105px',
       }}
-      disabled={pending}
+      disabled={pending || !isValid}
       type="submit"
-      aria-disabled={pending}
+      aria-disabled={pending || !isValid}
     >
       {pending ? (
         <span className="text-white-500">{loadingText}</span>
