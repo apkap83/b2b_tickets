@@ -55,10 +55,10 @@ const MyProfile = () => {
           <label className="inline">
             Account Type: &nbsp;<span>{session?.user.authenticationType}</span>
           </label>
-          <label className="inline">
+          {/* <label className="inline">
             Git Commit: &nbsp;
             <span>{gitVersion}</span>
-          </label>
+          </label> */}
 
           <ProfilePageButtons
             setShowPasswordResetModal={setShowPasswordResetModal}

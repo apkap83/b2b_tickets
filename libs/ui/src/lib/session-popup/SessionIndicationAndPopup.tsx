@@ -1,13 +1,14 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useSessionTimeLeft } from '@b2b-tickets/react-hooks'; // Assuming this is your hook
-import { formatTimeMMSS } from '@b2b-tickets/utils'; // Assuming this is your time formatting function
+import { formatTimeMMSS, userHasRole } from '@b2b-tickets/utils'; // Assuming this is your time formatting function
 import { Button } from '@mui/material';
 import config from '@b2b-tickets/config';
 import { signOut } from 'next-auth/react';
 import { extendSessionAction } from '@b2b-tickets/server-actions';
 import { getSession } from 'next-auth/react';
 import { Session } from 'next-auth';
+import { AppRoleTypes } from '@/libs/shared-models/src';
 import toast from 'react-hot-toast';
 import './SessionTimer.css';
 
@@ -73,8 +74,10 @@ export const SessionIndicationAndPopup = () => {
   const extendSession = async () => {
     const result = await extendSessionAction();
 
+    console.log({ result });
     if (result.error) {
       setIsExtending(false);
+
       return toast.error(result.error);
     }
 
@@ -93,27 +96,34 @@ export const SessionIndicationAndPopup = () => {
 
   return (
     <>
-      <div className="semi-circle-timer pointer-events-none">
-        <svg width="50" height="25" viewBox="0 0 200 100">
-          <path
-            d="M10,100 A90,90 0 0,1 190,100"
-            fill="none"
-            stroke="#777"
-            strokeWidth="20"
-          />
-          <path
-            d="M10,100 A90,90 0 0,1 190,100"
-            fill="none"
-            stroke="#007700"
-            strokeWidth="20"
-            strokeDasharray="282"
-            strokeDashoffset={`${282 - (282 * (percentage || 1)) / 100}`}
-          />
-        </svg>
-        <div className="remaining-time">
-          {formatTimeMMSS(timeLeftInSeconds!)}
+      {userHasRole(mySession, AppRoleTypes.B2B_TicketHandler) && (
+        <div
+          className="semi-circle-timer cursor-pointer"
+          onClick={() => {
+            extendSession();
+          }}
+        >
+          <svg width="50" height="25" viewBox="0 0 200 100">
+            <path
+              d="M10,100 A90,90 0 0,1 190,100"
+              fill="none"
+              stroke="#777"
+              strokeWidth="20"
+            />
+            <path
+              d="M10,100 A90,90 0 0,1 190,100"
+              fill="none"
+              stroke="#007700"
+              strokeWidth="20"
+              strokeDasharray="282"
+              strokeDashoffset={`${282 - (282 * (percentage || 1)) / 100}`}
+            />
+          </svg>
+          <div className="remaining-time">
+            {formatTimeMMSS(timeLeftInSeconds!)}
+          </div>
         </div>
-      </div>
+      )}
       {/* Show popup if time left is less than 5 minutes */}
       {showPopup && (
         <div className="fixed z-10 inset-0 flex items-center justify-center bg-black bg-opacity-50">
