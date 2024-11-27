@@ -60,9 +60,18 @@ export const TicketListHeader = ({
             variant="contained"
             onClick={() => setShowCreateTicketModal(true)}
             sx={{
-              ':hover': {
+              boxShadow: '0 10px 20px rgba(0,0,0,.2)',
+              transition: 'all .2s',
+
+              '&:hover': {
+                boxShadow: '0 10px 20px rgba(0,0,0,.2)',
                 backgroundColor: 'black',
                 color: 'white',
+              },
+
+              '&:active': {
+                transform: 'translateY(2px)',
+                boxShadow: '0 5px 10px rgba(0,0,0,.2)',
               },
             }}
           >

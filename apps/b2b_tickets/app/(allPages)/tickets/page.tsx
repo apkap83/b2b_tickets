@@ -51,7 +51,12 @@ const App: React.FC = async ({
       )}
 
       {totalTickets === 0 && (
-        <p className="pt-5 text-center">No Tickets Currently Exist</p>
+        <>
+          <p className="pt-5 text-center">No Tickets Currently Exist</p>
+          <p className="pt-5 text-center">
+            To Create a new ticket press <b>Create New Ticket</b> Button
+          </p>
+        </>
       )}
 
       {totalTickets > 0 && (
