@@ -64,12 +64,13 @@
   background: #000;
 }
 
+/*
 @media (prefers-color-scheme: dark) {
   input {
     color: white;
-    /* background-color: #222; */
   }
 }
+*/
 
 /* html,
 body,

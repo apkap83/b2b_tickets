@@ -74,7 +74,6 @@ export const SessionIndicationAndPopup = () => {
   const extendSession = async () => {
     const result = await extendSessionAction();
 
-    console.log({ result });
     if (result.error) {
       setIsExtending(false);
 

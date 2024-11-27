@@ -425,7 +425,7 @@ const SignInButton = ({
         `btn transition-all duration-300 ease-in-out bg-gradient-to-r from-gray-800 via-black to-gray-900
          text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:from-gray-700 hover:via-gray-800 hover:to-gray-700 
          hover:scale-105 transform border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 
-         focus:ring-gray-600 focus:ring-offset-gray-100
+         focus:ring-gray-600 focus:ring-offset-gray-100 disabled:bg-gray-500 disabled:text-gray-300 
         `,
         {
           'cursor-not-allowed opacity-70': pending,
@@ -434,9 +434,9 @@ const SignInButton = ({
       style={{
         width: '105px',
       }}
-      disabled={pending}
+      disabled={pending || !isValid}
       type="submit"
-      aria-disabled={pending}
+      aria-disabled={pending || !isValid}
     >
       {pending ? (
         <span className="text-white-500">{loadingText}</span>
