@@ -1,0 +1,19 @@
+{
+  "name": "socket-server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/socket-server/src",
+  "projectType": "library",
+  "tags": ["type:server", "scope:b2b_tickets"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/socket-server",
+        "main": "libs/socket-server/src/index.ts",
+        "tsConfig": "libs/socket-server/tsconfig.lib.json",
+        "assets": ["libs/socket-server/*.md"]
+      }
+    }
+  }
+}
