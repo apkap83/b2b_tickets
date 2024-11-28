@@ -281,7 +281,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
        bg-black bg-opacity-65 z-10`}
       >
         <div
-          className={`${styles.mainContainer} bg-white pt-[1.3rem] pb-[1.3rem] px-[2rem] 
+          className={`${styles.mainContainer} pt-[1.3rem] pb-[1.3rem] px-[2rem] 
         rounded-lg max-h-[95vh]  overflow-hidden flow-root bg-gray-50`}
         >
           <form

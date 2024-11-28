@@ -38,6 +38,7 @@ import { PiLessThanFill } from 'react-icons/pi';
 import clsx from 'clsx';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { EscalationBars } from '@b2b-tickets/ui';
+import { io } from 'socket.io-client';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -112,6 +113,47 @@ export function TicketDetails({
     ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
 
   const startWorkPressed = ticketStatus !== '1';
+
+  useEffect(() => {
+    // Create a connection to the Socket.IO server
+    const socket = io('http://127.0.0.1:3456', {
+      transports: ['websocket'], // Use WebSocket for persistent connection
+    });
+
+    // Log when the socket is connected
+    socket.on('connect', () => {
+      console.log('Socket connected to server:', socket.id);
+    });
+
+    // Handle socket disconnection
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected due to:', reason);
+    });
+
+    // Listen for the 'MyBigEvent' from the server
+    socket.on('MyBigEvent', (data) => {
+      console.log('Received MyBigEvent:', data);
+      // Handle the event data (e.g., update the UI, etc.)
+    });
+
+    // Emit an event to the Socket.IO server
+    const emitEvent = () => {
+      const eventData = { message: 'This is a test message' };
+      socket.emit('MyBigEvent', eventData);
+      console.log('Event MyBigEvent emitted with data:', eventData);
+    };
+
+    // Example: Emitting the event after a certain time
+    setTimeout(() => {
+      emitEvent(); // Emit event after 2 seconds
+    }, 2000);
+
+    // Clean up the socket when the component is unmounted
+    return () => {
+      socket.disconnect();
+      console.log('Socket disconnected!');
+    };
+  }, []); // Empty dependency array ensures this effect runs only once
 
   useEffect(() => {
     const nextEscLevel = async () => {
