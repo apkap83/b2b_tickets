@@ -1,5 +1,9 @@
 'use client';
-import { TicketDetail } from '@b2b-tickets/shared-models';
+import {
+  TicketDetail,
+  WebSocketMessage,
+  WebSocketData,
+} from '@b2b-tickets/shared-models';
 import { alterTicketSeverity } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import Button from '@mui/material/Button';
@@ -9,6 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import { useTheme } from '@mui/material';
 import { useFormik } from 'formik';
+import { useWebSocket } from '@b2b-tickets/react-hooks';
 
 export const SeverityPopup = ({
   ticketDetails,
@@ -19,8 +24,12 @@ export const SeverityPopup = ({
 }) => {
   const theme = useTheme();
 
+  const ticketId = ticketDetails[0].ticket_id;
   const ticketNumber = ticketDetails[0].Ticket;
   const severityId = String(ticketDetails[0].severity_id);
+
+  // Web Socket Connection
+  const { emitEvent } = useWebSocket();
 
   const formik = useFormik<any>({
     initialValues: {
@@ -39,6 +48,11 @@ export const SeverityPopup = ({
         toast.error(resp.message);
         return;
       }
+
+      emitEvent(WebSocketMessage.TICKET_ALTERED_SEVERITY, {
+        ticket_id: ticketId,
+      });
+
       toast.success('Severity was altered');
 
       setShowSeverityDialog(false);

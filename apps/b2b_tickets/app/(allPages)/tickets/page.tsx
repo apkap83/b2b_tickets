@@ -45,9 +45,9 @@ const App: React.FC = async ({
       />
 
       {totalTickets > 0 && (
-        <Suspense key={query + currentPage} fallback={<MyFallBack />}>
-          <TicketsList query={query} currentPage={currentPage} />
-        </Suspense>
+        // <Suspense key={query + currentPage} fallback={<MyFallBack />}>
+        <TicketsList query={query} currentPage={currentPage} />
+        // </Suspense>
       )}
 
       {totalTickets === 0 && (

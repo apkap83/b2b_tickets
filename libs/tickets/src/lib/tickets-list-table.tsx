@@ -1,7 +1,7 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { userHasRole } from '@b2b-tickets/utils';
+import { userHasRole, formatDate } from '@b2b-tickets/utils';
 import {
   AppRoleTypes,
   TicketDetail,
@@ -13,39 +13,66 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { TicketRow } from './ticket-row';
+import { useWebSocket } from '@b2b-tickets/react-hooks';
 import styles from './css/tickets-list.module.scss';
-import { io } from 'socket.io-client';
+import { WebSocketMessage } from '@b2b-tickets/shared-models';
+import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 
-export const TicketsListTable = ({ ticketsList }: { ticketsList: any }) => {
+export const TicketsListTable = ({
+  ticketsList,
+  query,
+  currentPage,
+}: {
+  ticketsList: TicketDetail[] | TicketDetailForTicketCreator[];
+  query: any;
+  currentPage: any;
+}) => {
   const { data: session, status } = useSession();
+  // Web Socket Connection
+  // State to manage the updated ticket list
+  const [updatedTickets, setUpdatedTickets] = useState<
+    TicketDetail[] | TicketDetailForTicketCreator[]
+  >(ticketsList);
+
+  const { emitEvent, latestEventEmitted } = useWebSocket(); // Access WebSocket instance
 
   useEffect(() => {
-    // Create the socket connection once
-    const socket = io('http://127.0.0.1:3456', {
-      transports: ['websocket'], // Use WebSocket for persistent connection
-    });
+    const fetchData = async () => {
+      if (!latestEventEmitted) return;
 
-    // Log when the socket is connected
-    socket.on('connect', () => {
-      console.log('Socket connected:', socket.id);
-    });
+      if (latestEventEmitted.event === WebSocketMessage.NEW_COMMENT_ADDED) {
+        console.log('latestEventEmitted', latestEventEmitted);
 
-    // Handle socket disconnection
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected due to:', reason);
-    });
+        console.log('Setting Comment Last Date...');
+        // const newTicketsList = await getFilteredTicketsForCustomer(
+        //   query,
+        //   currentPage
+        // );
+        const emittedTicketId = latestEventEmitted.data.ticket_id;
+        const commentDate = formatDate(new Date(latestEventEmitted.data.date));
 
-    // Listen for the 'alter-ticket-severity' event
-    socket.on('MyBigEvent', (data) => {
-      console.log('Received MyBigEvent:', data);
-    });
-
-    // Clean up the socket when the component is unmounted
-    return () => {
-      socket.disconnect();
-      console.log('Socket disconnected!');
+        setUpdatedTickets((prevTickets) =>
+          prevTickets.map((ticket) =>
+            ticket.ticket_id === emittedTicketId
+              ? {
+                  ...ticket,
+                  'Last Cust. Comment Date': commentDate,
+                }
+              : ticket
+          )
+        );
+      }
     };
-  }, []); // Empty dependency array ensures this effect runs only once
+
+    fetchData();
+  }, [latestEventEmitted]);
+
+  // Function to emit a socket event
+  const handleEmitEvent = () => {
+    const eventData = { ticketId: '12456' };
+    //@ts-ignore
+    emitEvent(WebSocketMessage.NEW_TICKET_CREATED, eventData); // Emit event using the function from the hook
+  };
 
   const generateTableHeadAndColumns = async () => {
     let columnsForTickets = [
@@ -97,6 +124,8 @@ export const TicketsListTable = ({ ticketsList }: { ticketsList: any }) => {
 
   return (
     <>
+      <h1>Socket.IO Example</h1>
+      <button onClick={handleEmitEvent}>Emit Event</button>
       <Table
         sx={{
           width: '100%',
@@ -107,7 +136,7 @@ export const TicketsListTable = ({ ticketsList }: { ticketsList: any }) => {
         className={`${styles.ticketsList}`}
       >
         {generateTableHeadAndColumns()}
-        {generateTableBody(ticketsList)}
+        {generateTableBody(updatedTickets)}
       </Table>
     </>
   );
