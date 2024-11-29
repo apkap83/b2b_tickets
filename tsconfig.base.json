@@ -38,7 +38,6 @@
         "libs/server-actions/src/server.ts"
       ],
       "@b2b-tickets/shared-models": ["libs/shared-models/src/index.ts"],
-      "@b2b-tickets/socket-server": ["libs/socket-server/src/index.ts"],
       "@b2b-tickets/tickets": ["libs/tickets/src/index.ts"],
       "@b2b-tickets/tickets/server": ["libs/tickets/src/server.ts"],
       "@b2b-tickets/tickets/ui": ["libs/tickets/ui/src/index.ts"],

@@ -1,19 +1,23 @@
 'use client';
 
 import * as React from 'react';
+import { useSession } from 'next-auth/react';
 import { useFormState } from 'react-dom';
 import { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
 import { Typography, useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
 import { createNewComment } from '@b2b-tickets/server-actions';
-import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
+import { EMPTY_FORM_STATE, userHasRole } from '@b2b-tickets/utils';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { SubmitButton } from '@b2b-tickets/ui';
+import { useWebSocket } from '@b2b-tickets/react-hooks';
 
 import {
   TicketDetail,
   TicketDetailsModalActions,
+  WebSocketMessage,
+  AppRoleTypes,
 } from '@b2b-tickets/shared-models';
 
 import styles from './css/new-comment-modal.module.scss';
@@ -29,6 +33,7 @@ export function NewCommentModal({
   ticketDetail: TicketDetail[];
   closeModal: any;
 }) {
+  const { data: session, status } = useSession();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -41,10 +46,26 @@ export function NewCommentModal({
     EMPTY_FORM_STATE
   );
 
+  // Web Socket Connection
+  const { emitEvent } = useWebSocket();
+
   const noScriptFallback = useToastMessage(formState);
 
   useEffect(() => {
-    if (formState.status === 'SUCCESS') closeModal();
+    if (formState.status === 'SUCCESS') {
+      const isTicketCreator = userHasRole(
+        session,
+        AppRoleTypes.B2B_TicketCreator
+      );
+
+      emitEvent(WebSocketMessage.NEW_COMMENT_ADDED, {
+        ticket_id,
+        isTicketCreator,
+        date: new Date(),
+      });
+
+      closeModal();
+    }
   }, [formState.status, formState.timestamp]);
 
   useEffect(() => {

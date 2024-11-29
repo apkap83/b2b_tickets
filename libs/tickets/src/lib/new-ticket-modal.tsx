@@ -47,12 +47,10 @@ import {
   TicketCategory,
   ServiceType,
   Severity,
-  TicketSeverityLevels,
-  TicketSeverityColors,
+  WebSocketMessage,
 } from '@b2b-tickets/shared-models';
 import toast from 'react-hot-toast';
-
-import ReactQuill from 'react-quill';
+import { useWebSocket } from '@b2b-tickets/react-hooks';
 import 'react-quill/dist/quill.snow.css';
 
 const FieldError = ({ formik, name, ...rest }: any) => {
@@ -95,6 +93,8 @@ export function NewTicketModal({ closeModal, userId }: any) {
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
 
   const [severities, setSeverities] = useState<Severity[]>([]);
+
+  const { emitEvent } = useWebSocket();
 
   // Get Severities
   useEffect(() => {
@@ -253,7 +253,12 @@ export function NewTicketModal({ closeModal, userId }: any) {
   }, [formik.values['category']]);
 
   useEffect(() => {
-    if (formState.status === 'SUCCESS') closeModal();
+    if (formState.status === 'SUCCESS') {
+      const eventData = { ticketId: '12456' };
+      //@ts-ignore
+      emitEvent(WebSocketMessage.NEW_TICKET_CREATED, eventData);
+      closeModal();
+    }
   }, [formState.status, formState.timestamp]);
 
   dayjs.extend(customParseFormat);

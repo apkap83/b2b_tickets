@@ -15,10 +15,8 @@ import { Session } from 'next-auth';
 import * as crypto from 'crypto';
 import * as Yup from 'yup';
 
-import { B2BUser } from '@b2b-tickets/db-access';
-
-import * as jwt from 'jsonwebtoken';
-import { JwtPayload } from 'jsonwebtoken';
+import { Socket } from 'socket.io-client';
+import { WebSocketMessage, WebSocketData } from '@b2b-tickets/shared-models'; // Import WebSocketMessage and WebSocketData types
 
 const ALGORITHM = 'aes-256-cbc';
 const INPUT_ENCODING = 'utf8';
@@ -354,4 +352,18 @@ export const mapToTicketCreator = (
     Escalated: ticket.Escalated,
     comments: ticket.comments,
   };
+};
+
+// Utility function to emit socket events
+export const emitSocketEvent = <T extends WebSocketMessage>(
+  socket: Socket | null,
+  event: T,
+  data: WebSocketData[T]
+) => {
+  if (socket && socket.connected) {
+    socket.emit(event, data);
+    console.log(`Event ${event} emitted with data:`, data);
+  } else {
+    console.log('Socket is not connected');
+  }
 };

@@ -128,9 +128,9 @@ export const TicketRow = ({
                 delayedResponse,
             })}
           >
-            <span>
+            <div className="text-center">
               {!finalTicketStatus && <span>{lastCustCommentDate}</span>}
-            </span>
+            </div>
           </TableCell>
           {/* <TableCell>
             <span>{!finalTicketStatus && <span>{delayedResponse}</span>}</span>
