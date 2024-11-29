@@ -6,6 +6,7 @@ import {
   TicketDetail,
   TicketCategory,
   ServiceType,
+  WebSocketMessage,
 } from '@b2b-tickets/shared-models';
 import {
   getTicketCategories,
@@ -23,6 +24,7 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { FieldError } from '@b2b-tickets/utils';
+import { useWebSocket } from '@b2b-tickets/react-hooks';
 
 export const ChangeCategoryPopup = ({
   ticketDetails,
@@ -46,6 +48,10 @@ export const ChangeCategoryPopup = ({
     setNewCategoryServiceTypeForTicket,
     EMPTY_FORM_STATE
   );
+
+  // Web Socket Connection
+  const { emitEvent } = useWebSocket();
+
   const noScriptFallback = useToastMessage(formState);
   const ticketSchema = yup.object().shape({
     category: yup
@@ -77,7 +83,12 @@ export const ChangeCategoryPopup = ({
   });
 
   useEffect(() => {
-    if (formState.status === 'SUCCESS') setShowCategoryDialog(false);
+    if (formState.status === 'SUCCESS') {
+      setShowCategoryDialog(false);
+      emitEvent(WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE, {
+        ticket_id: ticketDetails[0].ticket_id,
+      });
+    }
   }, [formState.status, formState.timestamp]);
 
   // Get Ticket Categories

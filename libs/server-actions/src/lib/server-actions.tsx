@@ -226,6 +226,52 @@ export const getFilteredTicketsForCustomer = async (
   }
 };
 
+export const getLatestTicketCreated = async () => {
+  try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    // Check if the user belongs to the Ticket Handler role
+    const isTicketHandler = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketHandler
+    );
+
+    // Check if the user belongs to the Ticket Creator role
+    const isTicketCreator = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketCreator
+    );
+
+    // If The role is Ticket Handler Return all Tickets
+    if (isTicketHandler) {
+      const sqlQuery = `select * from b2btickets_dev.tickets_v order by ticket_id desc limit 1;`;
+      const res = await pgB2Bpool.query(sqlQuery);
+      const ticket = res?.rows as TicketDetail[];
+      return ticket;
+    }
+
+    // // Filter Tickets View by Customer Name
+    // const sqlQuery = `SELECT * FROM tickets_v where "customer_id" = $1 ${sqlExpression}
+    // ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
+    //   `;
+
+    // const res = await pgB2Bpool.query(sqlQuery, [customerId]);
+    // const tickets = res?.rows as TicketDetail[];
+
+    // // If Ticket Creator, filter and map the result to TicketDetailForTicketCreator
+    // if (isTicketCreator) {
+    //   return tickets.map((ticket) => mapToTicketCreator(ticket));
+    // }
+
+    // return tickets;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getNumOfTickets = async (query: string): Promise<number> => {
   try {
     const session = await verifySecurityPermission(
@@ -546,7 +592,7 @@ export const createNewTicket = async (
     await client.query('COMMIT');
 
     // Send E-mail Notifications asynchronously
-    sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CREATION, newTicketId);
+    //sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CREATION, newTicketId);
 
     revalidatePath('/tickets');
     return toFormState('SUCCESS', 'Ticket Created!');

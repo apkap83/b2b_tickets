@@ -8,7 +8,12 @@ const App = async ({ params }: { params: any }) => {
     ticketNumber: params.slug,
   });
 
-  return <TicketDetails ticketDetails={ticketDetails} />;
+  return (
+    <TicketDetails
+      theTicketDetails={ticketDetails}
+      theTicketNumber={params.slug}
+    />
+  );
 };
 
 export default App;

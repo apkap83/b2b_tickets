@@ -1,11 +1,12 @@
 'use client';
 import React, { useRef } from 'react';
-import { TicketDetail } from '@b2b-tickets/shared-models';
+import { TicketDetail, WebSocketMessage } from '@b2b-tickets/shared-models';
 import { setRemedyIncidentIDForTicket } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import Button from '@mui/material/Button';
 import { useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
+import { useWebSocket } from '@b2b-tickets/react-hooks';
 
 export const RemedyIncPopup = ({
   ticketDetails,
@@ -20,6 +21,9 @@ export const RemedyIncPopup = ({
   const ticketNumber = ticketDetails[0].Ticket;
   const remedyInc = ticketDetails[0]['Remedy Ticket'];
   const inputBox = useRef<any>();
+
+  // Web Socket Connection
+  const { emitEvent } = useWebSocket();
 
   const handleSubmit = async () => {
     if (inputBox && inputBox.current.value) {
@@ -39,6 +43,10 @@ export const RemedyIncPopup = ({
         toast.error(resp.message);
         return;
       }
+
+      emitEvent(WebSocketMessage.TICKET_ALTERED_REMEDY_INC, {
+        ticket_id: ticketDetails[0].ticket_id,
+      });
 
       toast.success(resp.message);
       setShowRemedyIncDialog(false);
