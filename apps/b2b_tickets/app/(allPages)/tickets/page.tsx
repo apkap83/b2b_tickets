@@ -17,16 +17,16 @@ const App: React.FC = async ({
     page?: string;
   };
 }) => {
-  const query = searchParams?.query || '';
-  const currentPage = Number(searchParams?.page) || 1;
+  // const query = searchParams?.query || '';
+  // const currentPage = Number(searchParams?.page) || 1;
 
-  const totalTicketsForCustomer = Number(
-    await getTotalNumOfTicketsForCustomer()
-  );
-  const totalTickets = Number(await getNumOfTickets(query));
-  const totalPages = Math.ceil(
-    Number(totalTickets) / config.TICKET_ITEMS_PER_PAGE
-  );
+  // const totalTicketsForCustomer = Number(
+  //   await getTotalNumOfTicketsForCustomer()
+  // );
+  // const totalTickets = Number(await getNumOfTickets(query));
+  // const totalPages = Math.ceil(
+  //   Number(totalTickets) / config.TICKET_ITEMS_PER_PAGE
+  // );
 
   return (
     <Container
@@ -37,34 +37,35 @@ const App: React.FC = async ({
       }}
       className="relative"
     >
-      <TicketListHeader
+      {/* <TicketListHeader
         totalTicketsForCustomer={totalTicketsForCustomer}
         totalTickets={totalTickets}
         query={query}
         currentPage={currentPage}
-      />
+      /> */}
 
-      {totalTickets > 0 && (
+      {/* {totalTickets > 0 && (
         // <Suspense key={query + currentPage} fallback={<MyFallBack />}>
-        <TicketsList query={query} currentPage={currentPage} />
         // </Suspense>
-      )}
+      )} */}
 
-      {totalTickets === 0 && (
+      <TicketsList searchParams={searchParams} />
+
+      {/* {totalTickets === 0 && (
         <>
           <p className="pt-5 text-center">No Tickets Currently Exist</p>
           <p className="pt-5 text-center">
             To Create a new ticket press <b>Create New Ticket</b> Button
           </p>
         </>
-      )}
+      )} */}
 
-      {totalTickets > 0 && (
+      {/* {totalTickets > 0 && (
         <div className="pt-5 flex justify-between items-center">
           <div>Total Items: {totalTickets}</div>
           {totalPages > 1 && <Pagination totalPages={totalPages} />}
         </div>
-      )}
+      )} */}
     </Container>
   );
 };

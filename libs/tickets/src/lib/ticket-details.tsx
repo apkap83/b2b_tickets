@@ -42,6 +42,7 @@ import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { EscalationBars } from '@b2b-tickets/ui';
 import { useWebSocket } from '@b2b-tickets/react-hooks';
 import { getTicketDetailsForTicketId } from '@b2b-tickets/server-actions';
+import { emit } from 'process';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -93,7 +94,9 @@ export function TicketDetails({
           WebSocketMessage.TICKET_ALTERED_REMEDY_INC ||
         latestEventEmitted.event ===
           WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE ||
-        latestEventEmitted.event === WebSocketMessage.NEW_COMMENT_ADDED
+        latestEventEmitted.event === WebSocketMessage.NEW_COMMENT_ADDED ||
+        latestEventEmitted.event === WebSocketMessage.TICKET_STARTED_WORK ||
+        latestEventEmitted.event === WebSocketMessage.TICKET_ESCALATED
       ) {
         console.log(
           'latestEventEmitted.data.ticket_id',
@@ -191,6 +194,9 @@ export function TicketDetails({
               if (response.status === 'ERROR')
                 return toast.error(response.message);
 
+              emitEvent(WebSocketMessage.TICKET_STARTED_WORK, {
+                ticket_id: ticketId,
+              });
               toast.success(response.message);
             }}
             sx={{
@@ -292,6 +298,9 @@ export function TicketDetails({
         onClick={() => {
           setModalAction(TicketDetailsModalActions.ESCALATE);
           setShowEscalateDialog(true);
+          emitEvent(WebSocketMessage.TICKET_ESCALATED, {
+            ticket_id: ticketId,
+          });
         }}
         variant="outlined"
         sx={{

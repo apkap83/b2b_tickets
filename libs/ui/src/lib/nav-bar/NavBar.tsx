@@ -185,7 +185,7 @@ export const NavBar = () => {
                 session={session}
                 customerName={customerName}
               />
-              <SessionIndicationAndPopup />
+              {/* <SessionIndicationAndPopup /> */}
             </div>
           </Box>
         </Box>

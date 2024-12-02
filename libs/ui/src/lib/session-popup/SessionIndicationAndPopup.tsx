@@ -125,7 +125,7 @@ export const SessionIndicationAndPopup = () => {
       )}
       {/* Show popup if time left is less than 5 minutes */}
       {showPopup && (
-        <div className="fixed z-10 inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed z-10 inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none">
           <div className="bg-white px-8 py-3 rounded-lg">
             <h2 className="text-center mb-3">Session Expiring Soon</h2>
             <p>

@@ -129,9 +129,17 @@ export const useWebSocket = (): UseSocketReturn => {
   const [connected, setConnected] = useState(false);
   const [latestEventEmitted, setLatestEventEmitted] = useState<any>(); // State to store the updated ticket list
 
+  const socketURL =
+    process.env.NODE_ENV === 'production'
+      ? config.webSiteUrl
+      : 'http://127.0.0.1:3455';
+
   useEffect(() => {
-    const socketInstance = io(config.webSocketURL, {
+    console.log('socketURL', socketURL);
+    const socketInstance = io(socketURL, {
+      path: '/socket.io',
       transports: ['websocket'], // Use WebSocket for persistent connection
+      withCredentials: true, // Allow cookies to be sent with the request
     });
 
     setSocket(socketInstance);
@@ -208,6 +216,28 @@ export const useWebSocket = (): UseSocketReturn => {
         console.log(`Received ${WebSocketMessage.NEW_COMMENT_ADDED}:`, data);
         setLatestEventEmitted({
           event: WebSocketMessage.NEW_COMMENT_ADDED,
+          data,
+        });
+      }
+    );
+
+    socketInstance.on(
+      WebSocketMessage.TICKET_STARTED_WORK,
+      (data: WebSocketData[WebSocketMessage.TICKET_STARTED_WORK]) => {
+        console.log(`Received ${WebSocketMessage.TICKET_STARTED_WORK}:`, data);
+        setLatestEventEmitted({
+          event: WebSocketMessage.TICKET_STARTED_WORK,
+          data,
+        });
+      }
+    );
+
+    socketInstance.on(
+      WebSocketMessage.TICKET_ESCALATED,
+      (data: WebSocketData[WebSocketMessage.TICKET_ESCALATED]) => {
+        console.log(`Received ${WebSocketMessage.TICKET_ESCALATED}:`, data);
+        setLatestEventEmitted({
+          event: WebSocketMessage.TICKET_ESCALATED,
           data,
         });
       }
