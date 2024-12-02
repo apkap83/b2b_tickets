@@ -507,6 +507,7 @@ export enum ApplicationEnvironment {
 export enum WebSocketMessage {
   NEW_TICKET_CREATED = 'NewTicketCreated',
   NEW_COMMENT_ADDED = 'NewCommentAdded',
+  TICKET_STARTED_WORK = 'TicketStartedWorking',
   TICKET_ESCALATED = 'TicketEscalated',
   TICKET_ALTERED_SEVERITY = 'TicketAlteredSeverity',
   TICKET_ALTERED_REMEDY_INC = 'TicketAlteredRemedyInc',
@@ -524,9 +525,13 @@ export interface WebSocketData {
     isTicketCreator: boolean;
     date: Date;
   };
+
+  [WebSocketMessage.TICKET_STARTED_WORK]: {
+    ticket_id: string;
+  };
+
   [WebSocketMessage.TICKET_ESCALATED]: {
     ticket_id: string;
-    escalationId: string;
   };
 
   [WebSocketMessage.TICKET_ALTERED_SEVERITY]: {

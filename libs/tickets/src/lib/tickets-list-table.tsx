@@ -20,39 +20,35 @@ import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 
 export const TicketsListTable = ({
   ticketsList,
-  query,
-  currentPage,
+  setTicketsList,
 }: {
   ticketsList: TicketDetail[] | TicketDetailForTicketCreator[];
-  query: any;
-  currentPage: any;
+  setTicketsList: (a: TicketDetail[] | TicketDetailForTicketCreator[]) => void;
 }) => {
   const { data: session, status } = useSession();
   // Web Socket Connection
   // State to manage the updated ticket list
   const [updatedTickets, setUpdatedTickets] = useState<
     TicketDetail[] | TicketDetailForTicketCreator[]
-  >(ticketsList);
+  >([]);
 
-  const { emitEvent, latestEventEmitted } = useWebSocket(); // Access WebSocket instance
+  const { latestEventEmitted } = useWebSocket(); // Access WebSocket instance
+
+  // Update Ticket List Based on Received Events
 
   useEffect(() => {
     const fetchData = async () => {
       if (!latestEventEmitted) return;
 
       if (latestEventEmitted.event === WebSocketMessage.NEW_COMMENT_ADDED) {
-        console.log('latestEventEmitted', latestEventEmitted);
+        // console.log('latestEventEmitted', latestEventEmitted);
 
-        console.log('Setting Comment Last Date...');
-        // const newTicketsList = await getFilteredTicketsForCustomer(
-        //   query,
-        //   currentPage
-        // );
+        // console.log('Setting Comment Last Date...');
         const emittedTicketId = latestEventEmitted.data.ticket_id;
         const commentDate = formatDate(new Date(latestEventEmitted.data.date));
 
-        setUpdatedTickets((prevTickets) =>
-          prevTickets.map((ticket) =>
+        setTicketsList((prevTickets: any) =>
+          prevTickets.map((ticket: any) =>
             ticket.ticket_id === emittedTicketId
               ? {
                   ...ticket,
@@ -62,19 +58,23 @@ export const TicketsListTable = ({
           )
         );
       }
+
+      if (latestEventEmitted.event === WebSocketMessage.NEW_TICKET_CREATED) {
+        // console.log('latestEventEmitted', latestEventEmitted);
+
+        // console.log('Retrieving list of tickets again');
+        const ticketsList = await getFilteredTicketsForCustomer(
+          query,
+          currentPage
+        );
+        setUpdatedTickets(ticketsList);
+      }
     };
 
     fetchData();
   }, [latestEventEmitted]);
 
-  // Function to emit a socket event
-  const handleEmitEvent = () => {
-    const eventData = { ticketId: '12456' };
-    //@ts-ignore
-    emitEvent(WebSocketMessage.NEW_TICKET_CREATED, eventData); // Emit event using the function from the hook
-  };
-
-  const generateTableHeadAndColumns = async () => {
+  const generateTableHeadAndColumns = () => {
     let columnsForTickets = [
       'Ticket Number',
       'Opened',
@@ -110,7 +110,7 @@ export const TicketsListTable = ({
     );
   };
 
-  const generateTableBody = async (
+  const generateTableBody = (
     items: TicketDetail[] | TicketDetailForTicketCreator[]
   ) => {
     return (
@@ -122,10 +122,10 @@ export const TicketsListTable = ({
     );
   };
 
+  if (!ticketsList || ticketsList.length === 0) return null;
+
   return (
     <>
-      <h1>Socket.IO Example</h1>
-      <button onClick={handleEmitEvent}>Emit Event</button>
       <Table
         sx={{
           width: '100%',
@@ -136,7 +136,7 @@ export const TicketsListTable = ({
         className={`${styles.ticketsList}`}
       >
         {generateTableHeadAndColumns()}
-        {generateTableBody(updatedTickets)}
+        {generateTableBody(ticketsList)}
       </Table>
     </>
   );
