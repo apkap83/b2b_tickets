@@ -31,41 +31,31 @@ export const NavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [navbarHeight, setNavbarHeight] = useState(75);
+  // const [navbarHeight, setNavbarHeight] = useState(75);
   const navbarRef = useRef<HTMLDivElement | null>(null);
 
   const { data: session, status } = useSession();
 
-  useEffect(() => {
-    const calculateHeight = () => {
-      if (navbarRef.current) {
-        setNavbarHeight(navbarRef.current.offsetHeight);
-      }
-    };
+  // useEffect(() => {
+  //   const calculateHeight = () => {
+  //     if (navbarRef.current) {
+  //       setNavbarHeight(navbarRef.current.offsetHeight);
+  //     }
+  //   };
 
-    // Calculate height on load
-    calculateHeight();
+  //   // Calculate height on load
+  //   calculateHeight();
 
-    // Recalculate height on window resize
-    window.addEventListener('resize', calculateHeight);
-    return () => {
-      window.removeEventListener('resize', calculateHeight);
-    };
-  }, []);
+  //   // Recalculate height on window resize
+  //   window.addEventListener('resize', calculateHeight);
+  //   return () => {
+  //     window.removeEventListener('resize', calculateHeight);
+  //   };
+  // }, []);
 
-  //@ts-ignore
   const customerName = session?.user?.customer_name;
-
   const isAdminPath = pathname === '/admin';
   const isTicketsPath = pathname === '/tickets';
-
-  let savedFilter: string | null = '';
-  let params: any = '';
-
-  if (sessionStorage) {
-    savedFilter = sessionStorage.getItem('ticketFilter');
-    params = new URLSearchParams(`query=${savedFilter}&page=1`);
-  }
 
   return (
     <>
@@ -77,37 +67,37 @@ export const NavBar = () => {
         className={`${styles.navBar} z-10`}
       >
         <div>
-          <Link
+          {/* <Link
             href={savedFilter ? `/tickets?${params}` : '/tickets'}
             style={{
               display: 'inline-block',
               height: '100%',
             }}
-          >
-            <Stack>
-              <Stack
-                sx={{
-                  bgcolor: 'white',
-                  paddingY: '5px',
-                  paddingX: '10px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  borderTopLeftRadius: '5px',
-                  borderTopRightRadius: '5px',
-                }}
-              >
-                <Image
-                  priority
-                  src={NovaLogo}
-                  alt={'Nova Logo'}
-                  height={18}
-                  width={110}
-                />
-              </Stack>
-              <div className={`${styles.b2b_logo_text}`}>Platinum Support</div>
+          > */}
+          <Stack>
+            <Stack
+              sx={{
+                bgcolor: 'white',
+                paddingY: '5px',
+                paddingX: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                borderTopLeftRadius: '5px',
+                borderTopRightRadius: '5px',
+              }}
+            >
+              <Image
+                priority
+                src={NovaLogo}
+                alt={'Nova Logo'}
+                height={18}
+                width={110}
+              />
             </Stack>
-          </Link>
+            <div className={`${styles.b2b_logo_text}`}>Platinum Support</div>
+          </Stack>
+          {/* </Link> */}
         </div>
 
         {process.env['NEXT_PUBLIC_APP_ENV'] === 'staging' && (
@@ -177,10 +167,15 @@ export const NavBar = () => {
               <IconButton
                 className="flex flex-col justify-center items-center"
                 onClick={() => {
-                  if (savedFilter) router.replace(`/tickets?${params}`);
-                  else {
-                    router.replace(`/tickets`);
+                  if (window) {
+                    const savedFilter = sessionStorage.getItem('ticketFilter');
+                    if (!savedFilter) return router.replace(`/tickets`);
+
+                    router.replace(`/tickets?query=${savedFilter}&page=1`);
+                    return;
                   }
+
+                  router.replace(`/tickets`);
                 }}
                 sx={{
                   color: isTicketsPath
@@ -207,7 +202,7 @@ export const NavBar = () => {
         </Box>
       </Box>
 
-      <div style={{ height: `${navbarHeight}px` }}></div>
+      {/* <div style={{ height: `${navbarHeight}px` }}></div> */}
     </>
   );
 };
