@@ -33,7 +33,6 @@ export const TicketListHeader = ({
   useEscKeyListener(() => {
     setShowCreateTicketModal(false);
   });
-
   return (
     <Box
       className={clsx(styles.ticketDetailsContainer)}
@@ -53,6 +52,7 @@ export const TicketListHeader = ({
           totalTickets={totalTickets}
           query={query}
           currentPage={currentPage}
+          disabled={Number(totalTickets) === 0 ? true : false}
         />
         <TicketFilter totalTicketsForCustomer={totalTicketsForCustomer} />
         {userHasPermission(session, AppPermissionTypes.Create_New_Ticket) && (

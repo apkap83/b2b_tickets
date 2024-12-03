@@ -41,7 +41,7 @@ import clsx from 'clsx';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { EscalationBars } from '@b2b-tickets/ui';
 import { useWebSocket } from '@b2b-tickets/react-hooks';
-import { getTicketDetailsForTicketId } from '@b2b-tickets/server-actions';
+import { getTicketDetailsForTicketNumber } from '@b2b-tickets/server-actions';
 import { emit } from 'process';
 
 const detailsRowClass =
@@ -51,10 +51,8 @@ const detailsRowHeaderClass =
   "grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] ";
 
 export function TicketDetails({
-  theTicketDetails,
   theTicketNumber,
 }: {
-  theTicketDetails: TicketDetail[];
   theTicketNumber: string;
 }) {
   // const theme = useTheme();
@@ -76,19 +74,39 @@ export function TicketDetails({
 
   const [nextEscalationLevel, setNextEscalationLevel] = useState<string>('');
 
-  const [ticketDetails, setTicketDetails] =
-    useState<TicketDetail[]>(theTicketDetails);
+  const [ticketDetails, setTicketDetails] = useState<TicketDetail[]>([]);
+
+  // Get Ticket Details and Next Escalation Level
+  useEffect(() => {
+    const getTicketDetails = async () => {
+      const ticketDetails: TicketDetail[] =
+        await getTicketDetailsForTicketNumber({
+          ticketNumber: theTicketNumber,
+        });
+      if (ticketDetails) {
+        const resp = await getNextEscalationLevel({
+          ticketId: ticketDetails[0].ticket_id,
+          ticketNumber: theTicketNumber,
+        });
+        setNextEscalationLevel(resp.data);
+      }
+      setTicketDetails(ticketDetails);
+    };
+
+    getTicketDetails();
+  }, []);
 
   // Web Socket Connection
-  const { emitEvent, latestEventEmitted } = useWebSocket();
+  const { emitEvent, latestEventEmitted, resetLatestEventEmitted } =
+    useWebSocket();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFreshData = async () => {
       if (!latestEventEmitted) return;
-      console.log('latestEventEmitted', latestEventEmitted);
+      const { event, data: ticket_id } = latestEventEmitted;
+      const { ticket_id: eventTicketid } = ticket_id;
 
       if (
-        latestEventEmitted.event === WebSocketMessage.TICKET_ALTERED_SEVERITY ||
         latestEventEmitted.event === WebSocketMessage.TICKET_ALTERED_SEVERITY ||
         latestEventEmitted.event ===
           WebSocketMessage.TICKET_ALTERED_REMEDY_INC ||
@@ -96,29 +114,34 @@ export function TicketDetails({
           WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE ||
         latestEventEmitted.event === WebSocketMessage.NEW_COMMENT_ADDED ||
         latestEventEmitted.event === WebSocketMessage.TICKET_STARTED_WORK ||
-        latestEventEmitted.event === WebSocketMessage.TICKET_ESCALATED
+        latestEventEmitted.event === WebSocketMessage.TICKET_ESCALATED ||
+        latestEventEmitted.event === WebSocketMessage.TICKET_CANCELED ||
+        latestEventEmitted.event === WebSocketMessage.TICKET_CLOSED
       ) {
-        console.log(
-          'latestEventEmitted.data.ticket_id',
-          latestEventEmitted.data.ticket_id
-        );
-        console.log('ticketDetails[0].ticket_id', ticketDetails[0].ticket_id);
-        if (latestEventEmitted.data.ticket_id === ticketDetails[0].ticket_id) {
-          console.log(
-            `Fetching again for ${latestEventEmitted.event} Ticket Id: ${latestEventEmitted.data.ticket_id}...`
-          );
+        const currentTicketId = ticketDetails[0].ticket_id;
+        const currentTicketNumber = ticketDetails[0].Ticket;
 
+        // If user is in the correct ticket details page then force reload
+        if (eventTicketid === currentTicketId) {
+          // Get Ticket Details - Except Next Escalation Level
           const ticketDetails: TicketDetail[] =
-            await getTicketDetailsForTicketId({
-              ticketNumber: theTicketNumber,
+            await getTicketDetailsForTicketNumber({
+              ticketNumber: currentTicketNumber,
             });
-
           setTicketDetails(ticketDetails); // Update the tickets state
+
+          // Get Next Escalation Level too
+          const resp = await getNextEscalationLevel({
+            ticketId: currentTicketId,
+            ticketNumber: currentTicketNumber,
+          });
+          setNextEscalationLevel(resp.data);
+          resetLatestEventEmitted();
         }
       }
     };
 
-    fetchData();
+    fetchFreshData();
   }, [latestEventEmitted]);
 
   // Custom Hook for ESC Key Press
@@ -129,6 +152,8 @@ export function TicketDetails({
     setShowSeverityDialog(false);
     setShowCategoryDialog(false);
   });
+
+  if (!ticketDetails || ticketDetails.length === 0) return null;
 
   const ticketStatus = ticketDetails[0].status_id;
   // const escalatedStatusDate = ticketDetails[0].escalation_date;
@@ -164,18 +189,6 @@ export function TicketDetails({
     ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
 
   const startWorkPressed = ticketStatus !== '1';
-
-  useEffect(() => {
-    const nextEscLevel = async () => {
-      const resp = await getNextEscalationLevel({
-        ticketId,
-        ticketNumber,
-      });
-      setNextEscalationLevel(resp.data);
-    };
-
-    nextEscLevel();
-  }, []);
 
   const customButtonBasedOnTicketStatus = () => {
     if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
@@ -298,9 +311,6 @@ export function TicketDetails({
         onClick={() => {
           setModalAction(TicketDetailsModalActions.ESCALATE);
           setShowEscalateDialog(true);
-          emitEvent(WebSocketMessage.TICKET_ESCALATED, {
-            ticket_id: ticketId,
-          });
         }}
         variant="outlined"
         sx={{

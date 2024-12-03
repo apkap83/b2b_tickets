@@ -362,8 +362,7 @@ export const emitSocketEvent = <T extends WebSocketMessage>(
 ) => {
   if (socket && socket.connected) {
     socket.emit(event, data);
-    console.log(`Event ${event} emitted with data:`, data);
   } else {
-    console.log('Socket is not connected');
+    console.error('Socket is not connected');
   }
 };

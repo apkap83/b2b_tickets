@@ -58,12 +58,27 @@ export function NewCommentModal({
         AppRoleTypes.B2B_TicketCreator
       );
 
-      emitEvent(WebSocketMessage.NEW_COMMENT_ADDED, {
-        ticket_id,
-        isTicketCreator,
-        date: new Date(),
-      });
+      if (modalAction === TicketDetailsModalActions.NO_ACTION)
+        emitEvent(WebSocketMessage.NEW_COMMENT_ADDED, {
+          ticket_id,
+          isTicketCreator,
+          date: new Date(),
+        });
 
+      if (modalAction === TicketDetailsModalActions.CLOSE)
+        emitEvent(WebSocketMessage.TICKET_CLOSED, {
+          ticket_id,
+        });
+
+      if (modalAction === TicketDetailsModalActions.CANCEL)
+        emitEvent(WebSocketMessage.TICKET_CANCELED, {
+          ticket_id,
+        });
+
+      if (modalAction === TicketDetailsModalActions.ESCALATE)
+        emitEvent(WebSocketMessage.TICKET_ESCALATED, {
+          ticket_id,
+        });
       closeModal();
     }
   }, [formState.status, formState.timestamp]);

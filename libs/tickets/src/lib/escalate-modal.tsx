@@ -56,8 +56,9 @@ import {
   EscalationBorderColor,
   TicketDetail,
   TicketDetailsModalActions,
+  WebSocketMessage,
 } from '@b2b-tickets/shared-models';
-
+import { useWebSocket } from '@b2b-tickets/react-hooks';
 import styles from './css/new-comment-modal.module.scss';
 
 export function EscalateModal({
@@ -88,6 +89,9 @@ export function EscalateModal({
 
   const noScriptFallback = useToastMessage(formState);
 
+  // Web Socket Connection
+  const { emitEvent } = useWebSocket();
+
   useEffect(() => {
     const nextEscLevel = async () => {
       const resp = await getNextEscalationLevel({
@@ -99,7 +103,12 @@ export function EscalateModal({
 
     nextEscLevel();
 
-    if (formState.status === 'SUCCESS') closeModal();
+    if (formState.status === 'SUCCESS') {
+      emitEvent(WebSocketMessage.TICKET_ESCALATED, {
+        ticket_id: ticketId,
+      });
+      closeModal();
+    }
   }, [formState.status, formState.timestamp]);
 
   useEffect(() => {
