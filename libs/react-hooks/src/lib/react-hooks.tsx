@@ -7,7 +7,6 @@ import { FormState } from '@b2b-tickets/shared-models';
 import { io, Socket } from 'socket.io-client';
 import { config } from '@b2b-tickets/config';
 import { WebSocketMessage, WebSocketData } from '@b2b-tickets/shared-models';
-import { getLatestTicketCreated } from '@b2b-tickets/server-actions';
 
 export const useToastMessage = (formState: FormState) => {
   const prevTimestamp = useRef(formState.timestamp);
@@ -77,7 +76,7 @@ export const useSessionTimeLeft = () => {
 
   // Function to refresh the session
   const refreshSession = async () => {
-    console.log('Refreshing session...');
+    console.info('Refreshing session...');
     const updatedSession = await getSession(); // Fetch the updated session
     if (updatedSession) {
       setMySession(updatedSession); // Update mySession manually
@@ -121,6 +120,7 @@ interface UseSocketReturn {
     data: WebSocketData[T]
   ) => void; // Make it generic
   latestEventEmitted: any;
+  resetLatestEventEmitted: () => void;
 }
 
 // Custom Hook to handle Socket.IO connection
@@ -135,7 +135,6 @@ export const useWebSocket = (): UseSocketReturn => {
       : 'http://127.0.0.1:3455';
 
   useEffect(() => {
-    console.log('socketURL', socketURL);
     const socketInstance = io(socketURL, {
       path: '/socket.io',
       transports: ['websocket'], // Use WebSocket for persistent connection
@@ -145,12 +144,10 @@ export const useWebSocket = (): UseSocketReturn => {
     setSocket(socketInstance);
 
     socketInstance.on('connect', () => {
-      console.log('Socket connected:', socketInstance.id);
       setConnected(true);
     });
 
     socketInstance.on('disconnect', (reason) => {
-      console.log('Socket disconnected due to:', reason);
       setConnected(false);
     });
 
@@ -158,7 +155,6 @@ export const useWebSocket = (): UseSocketReturn => {
     socketInstance.on(
       WebSocketMessage.NEW_TICKET_CREATED,
       (data: WebSocketData[WebSocketMessage.NEW_TICKET_CREATED]) => {
-        console.log('Received NEW_TICKET_CREATED:', data);
         setLatestEventEmitted({
           event: WebSocketMessage.NEW_TICKET_CREATED,
           data,
@@ -167,12 +163,38 @@ export const useWebSocket = (): UseSocketReturn => {
     );
 
     socketInstance.on(
+      WebSocketMessage.TICKET_CLOSED,
+      (data: WebSocketData[WebSocketMessage.TICKET_CLOSED]) => {
+        setLatestEventEmitted({
+          event: WebSocketMessage.TICKET_CLOSED,
+          data,
+        });
+      }
+    );
+
+    socketInstance.on(
+      WebSocketMessage.TICKET_CANCELED,
+      (data: WebSocketData[WebSocketMessage.TICKET_CANCELED]) => {
+        setLatestEventEmitted({
+          event: WebSocketMessage.TICKET_CANCELED,
+          data,
+        });
+      }
+    );
+
+    socketInstance.on(
+      WebSocketMessage.TICKET_ESCALATED,
+      (data: WebSocketData[WebSocketMessage.TICKET_ESCALATED]) => {
+        setLatestEventEmitted({
+          event: WebSocketMessage.TICKET_ESCALATED,
+          data,
+        });
+      }
+    );
+
+    socketInstance.on(
       WebSocketMessage.TICKET_ALTERED_SEVERITY,
       (data: WebSocketData[WebSocketMessage.TICKET_ALTERED_SEVERITY]) => {
-        console.log(
-          `Received ${WebSocketMessage.TICKET_ALTERED_SEVERITY}:`,
-          data
-        );
         setLatestEventEmitted({
           event: WebSocketMessage.TICKET_ALTERED_SEVERITY,
           data,
@@ -183,10 +205,6 @@ export const useWebSocket = (): UseSocketReturn => {
     socketInstance.on(
       WebSocketMessage.TICKET_ALTERED_REMEDY_INC,
       (data: WebSocketData[WebSocketMessage.TICKET_ALTERED_REMEDY_INC]) => {
-        console.log(
-          `Received ${WebSocketMessage.TICKET_ALTERED_REMEDY_INC}:`,
-          data
-        );
         setLatestEventEmitted({
           event: WebSocketMessage.TICKET_ALTERED_REMEDY_INC,
           data,
@@ -199,10 +217,6 @@ export const useWebSocket = (): UseSocketReturn => {
       (
         data: WebSocketData[WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE]
       ) => {
-        console.log(
-          `Received ${WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE}:`,
-          data
-        );
         setLatestEventEmitted({
           event: WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE,
           data,
@@ -213,7 +227,6 @@ export const useWebSocket = (): UseSocketReturn => {
     socketInstance.on(
       WebSocketMessage.NEW_COMMENT_ADDED,
       (data: WebSocketData[WebSocketMessage.NEW_COMMENT_ADDED]) => {
-        console.log(`Received ${WebSocketMessage.NEW_COMMENT_ADDED}:`, data);
         setLatestEventEmitted({
           event: WebSocketMessage.NEW_COMMENT_ADDED,
           data,
@@ -224,20 +237,8 @@ export const useWebSocket = (): UseSocketReturn => {
     socketInstance.on(
       WebSocketMessage.TICKET_STARTED_WORK,
       (data: WebSocketData[WebSocketMessage.TICKET_STARTED_WORK]) => {
-        console.log(`Received ${WebSocketMessage.TICKET_STARTED_WORK}:`, data);
         setLatestEventEmitted({
           event: WebSocketMessage.TICKET_STARTED_WORK,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.TICKET_ESCALATED,
-      (data: WebSocketData[WebSocketMessage.TICKET_ESCALATED]) => {
-        console.log(`Received ${WebSocketMessage.TICKET_ESCALATED}:`, data);
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_ESCALATED,
           data,
         });
       }
@@ -246,7 +247,6 @@ export const useWebSocket = (): UseSocketReturn => {
     // Clean up the socket when the component is unmounted
     return () => {
       socketInstance.disconnect();
-      console.log('Socket disconnected!');
     };
   }, []); // Run the effect only once on mount
 
@@ -257,30 +257,20 @@ export const useWebSocket = (): UseSocketReturn => {
   ) => {
     if (socket && connected) {
       socket.emit(event, data);
-      console.log(`Event ${event} emitted with data:`, data);
     } else {
-      console.log('Socket is not connected');
+      console.error('Socket is not connected');
     }
   };
 
-  return { socket, connected, emitEvent, latestEventEmitted };
-};
+  const resetLatestEventEmitted = () => {
+    setLatestEventEmitted(null);
+  };
 
-const triggerRevalidation = async (path: string) => {
-  const response = await fetch('/api/revalidate', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      path, // Path you want to revalidate
-    }),
-  });
-
-  const data = await response.json();
-  if (response.ok) {
-    console.log(`Revalidated: ${data.message}`);
-  } else {
-    console.log(`Error: ${data.error}`);
-  }
+  return {
+    socket,
+    connected,
+    emitEvent,
+    latestEventEmitted,
+    resetLatestEventEmitted,
+  };
 };

@@ -17,62 +17,108 @@ import { useWebSocket } from '@b2b-tickets/react-hooks';
 import styles from './css/tickets-list.module.scss';
 import { WebSocketMessage } from '@b2b-tickets/shared-models';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
+import { AppRole } from '@/libs/db-access/src';
+import { late } from 'zod';
 
 export const TicketsListTable = ({
   ticketsList,
   setTicketsList,
+  query,
+  currentPage,
 }: {
   ticketsList: TicketDetail[] | TicketDetailForTicketCreator[];
   setTicketsList: (a: TicketDetail[] | TicketDetailForTicketCreator[]) => void;
+  query: string;
+  currentPage: number;
 }) => {
   const { data: session, status } = useSession();
-  // Web Socket Connection
-  // State to manage the updated ticket list
-  const [updatedTickets, setUpdatedTickets] = useState<
-    TicketDetail[] | TicketDetailForTicketCreator[]
-  >([]);
-
   const { latestEventEmitted } = useWebSocket(); // Access WebSocket instance
-
-  // Update Ticket List Based on Received Events
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!latestEventEmitted) return;
+    const refreshTicketsList = async () => {
+      setIsLoading(true);
+      try {
+        const { event, data: ticket_id } = latestEventEmitted;
+        const { ticket_id: eventTicketid } = ticket_id;
 
-      if (latestEventEmitted.event === WebSocketMessage.NEW_COMMENT_ADDED) {
-        // console.log('latestEventEmitted', latestEventEmitted);
+        // Only for New Ticket
+        if (event === WebSocketMessage.NEW_TICKET_CREATED) {
+          const newTicketsList = await getFilteredTicketsForCustomer(
+            query,
+            currentPage
+          );
 
-        // console.log('Setting Comment Last Date...');
-        const emittedTicketId = latestEventEmitted.data.ticket_id;
-        const commentDate = formatDate(new Date(latestEventEmitted.data.date));
+          const newTicketShouldBeIncludedInCurrentView =
+            newTicketsList.pageData.some(
+              (item: any) => item.ticket_id === eventTicketid
+            );
 
-        setTicketsList((prevTickets: any) =>
-          prevTickets.map((ticket: any) =>
-            ticket.ticket_id === emittedTicketId
-              ? {
-                  ...ticket,
-                  'Last Cust. Comment Date': commentDate,
-                }
-              : ticket
-          )
+          if (newTicketShouldBeIncludedInCurrentView)
+            setTicketsList(newTicketsList.pageData);
+          return;
+        }
+
+        // For Every Other Kind of Event Message
+        const currentUserViewShowsThisTicket = ticketsList.some(
+          (item) => item.ticket_id === eventTicketid
         );
-      }
 
-      if (latestEventEmitted.event === WebSocketMessage.NEW_TICKET_CREATED) {
-        // console.log('latestEventEmitted', latestEventEmitted);
-
-        // console.log('Retrieving list of tickets again');
-        const ticketsList = await getFilteredTicketsForCustomer(
-          query,
-          currentPage
-        );
-        setUpdatedTickets(ticketsList);
+        // Get Tickets List only if altered ticket exists in current user's view
+        if (currentUserViewShowsThisTicket) {
+          const newTicketsList = await getFilteredTicketsForCustomer(
+            query,
+            currentPage
+          );
+          setTicketsList(newTicketsList.pageData);
+        }
+      } catch (error) {
+        console.error('Error refreshing tickets:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
+    if (!latestEventEmitted) return;
 
-    fetchData();
+    const { event, data } = latestEventEmitted;
+
+    switch (event) {
+      case WebSocketMessage.NEW_COMMENT_ADDED:
+        if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
+          //@ts-ignore
+          setTicketsList((prevTickets) =>
+            //@ts-ignore
+            prevTickets.map((ticket) =>
+              ticket.ticket_id === data.ticket_id
+                ? {
+                    ...ticket,
+                    'Last Cust. Comment Date': formatDate(new Date(data.date)),
+                  }
+                : ticket
+            )
+          );
+        }
+        break;
+
+      case WebSocketMessage.TICKET_ALTERED_REMEDY_INC: // No Action
+        break;
+      case WebSocketMessage.NEW_TICKET_CREATED:
+      case WebSocketMessage.TICKET_CLOSED:
+      case WebSocketMessage.TICKET_CANCELED:
+      case WebSocketMessage.TICKET_ESCALATED:
+      case WebSocketMessage.TICKET_ALTERED_SEVERITY:
+      case WebSocketMessage.TICKET_STARTED_WORK:
+      case WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE:
+        refreshTicketsList();
+        break;
+
+      default:
+        console.warn(`Unhandled WebSocket event: ${event}`);
+    }
   }, [latestEventEmitted]);
+
+  if (!ticketsList || ticketsList.length === 0)
+    return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
 
   const generateTableHeadAndColumns = () => {
     let columnsForTickets = [

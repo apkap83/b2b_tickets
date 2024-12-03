@@ -254,9 +254,8 @@ export function NewTicketModal({ closeModal, userId }: any) {
 
   useEffect(() => {
     if (formState.status === 'SUCCESS') {
-      const eventData = { ticketId: '12456' };
-      //@ts-ignore
-      emitEvent(WebSocketMessage.NEW_TICKET_CREATED, eventData);
+      const ticket_id = formState.extraData;
+      emitEvent(WebSocketMessage.NEW_TICKET_CREATED, { ticket_id });
       closeModal();
     }
   }, [formState.status, formState.timestamp]);

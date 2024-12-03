@@ -14,7 +14,11 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { ColorModeContext, tokens } from '@b2b-tickets/ui-theme';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { LoggedInIndication } from '@b2b-tickets/ui';
-import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
+import {
+  AppPermissionTypes,
+  AppRoleTypes,
+  FilterTicketsStatus,
+} from '@b2b-tickets/shared-models';
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 import config from '@b2b-tickets/config';
 import styles from './css/NavBar.module.scss';
@@ -54,6 +58,15 @@ export const NavBar = () => {
 
   const isAdminPath = pathname === '/admin';
   const isTicketsPath = pathname === '/tickets';
+
+  let savedFilter: string | null = '';
+  let params: any = '';
+
+  if (sessionStorage) {
+    savedFilter = sessionStorage.getItem('ticketFilter');
+    params = new URLSearchParams(`query=${savedFilter}&page=1`);
+  }
+
   return (
     <>
       <Box
@@ -65,7 +78,7 @@ export const NavBar = () => {
       >
         <div>
           <Link
-            href="/"
+            href={savedFilter ? `/tickets?${params}` : '/tickets'}
             style={{
               display: 'inline-block',
               height: '100%',
@@ -164,7 +177,10 @@ export const NavBar = () => {
               <IconButton
                 className="flex flex-col justify-center items-center"
                 onClick={() => {
-                  router.replace('/tickets');
+                  if (savedFilter) router.replace(`/tickets?${params}`);
+                  else {
+                    router.replace(`/tickets`);
+                  }
                 }}
                 sx={{
                   color: isTicketsPath
@@ -185,7 +201,7 @@ export const NavBar = () => {
                 session={session}
                 customerName={customerName}
               />
-              {/* <SessionIndicationAndPopup /> */}
+              <SessionIndicationAndPopup />
             </div>
           </Box>
         </Box>

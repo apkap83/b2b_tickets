@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function Index() {
+export default async function Index() {
   redirect('/tickets');
 }

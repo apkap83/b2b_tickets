@@ -1,15 +1,18 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
-import { FilterTicketsStatus } from '@b2b-tickets/shared-models';
+import { AppRoleTypes, FilterTicketsStatus } from '@b2b-tickets/shared-models';
 import { VscFilterFilled } from 'react-icons/vsc';
 import Button from '@mui/material/Button';
+import { userHasRole } from '@/libs/utils/src';
 
 export const TicketFilter = ({
   totalTicketsForCustomer,
 }: {
   totalTicketsForCustomer: number;
 }) => {
+  const { data: session, status } = useSession();
   const [isTicketFilterDropdownOpen, setTicketFilterDropdownOpen] =
     useState(false);
 
@@ -90,7 +93,7 @@ export const TicketFilter = ({
         }}
         onClick={toggleDropDown}
       >
-        <div className="text-xs flex flex-col justify-center items-center">
+        <div className="text-xs flex flex-col justify-center items-center gap-0">
           {searchParams.get('query')?.toString() === FilterTicketsStatus.All ||
           searchParams.get('query')?.toString() == undefined ? (
             <VscFilterFilled color="#514f4f" />
@@ -101,6 +104,7 @@ export const TicketFilter = ({
                 style={{
                   fontSize: '8px',
                   fontWeight: 800,
+                  letterSpacing: '.5px',
                 }}
               >
                 {searchParams.get('query')?.toString()}
@@ -111,7 +115,7 @@ export const TicketFilter = ({
         {isTicketFilterDropdownOpen ? (
           <div
             // ref={dropdownRef}
-            className="absolute top-[34px] left-[-70px] w-[160px] bg-white z-[15] text-[12px] border border-[#88888845] rounded-bl-[16px] rounded-br-[16px]"
+            className="absolute top-[34px] left-[-70px] w-[160px] bg-white z-[5] text-[12px] border border-[#88888845] rounded-bl-[16px] rounded-br-[16px]"
           >
             <ul
               tabIndex={0}
@@ -127,6 +131,7 @@ export const TicketFilter = ({
               >
                 <a>{FilterTicketsStatus.All}</a>
               </li>
+
               <li
                 onClick={() => {
                   handleFilter(FilterTicketsStatus.Open);
@@ -143,6 +148,50 @@ export const TicketFilter = ({
               >
                 <a>{FilterTicketsStatus.Closed}</a>
               </li>
+              {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
+                <>
+                  <li
+                    onClick={() => {
+                      handleFilter(FilterTicketsStatus.SeverityHigh);
+                      toggleDropDown();
+                    }}
+                  >
+                    <a>{FilterTicketsStatus.SeverityHigh}</a>
+                  </li>
+                  <li
+                    onClick={() => {
+                      handleFilter(FilterTicketsStatus.SeverityMedium);
+                      toggleDropDown();
+                    }}
+                  >
+                    <a>{FilterTicketsStatus.SeverityMedium}</a>
+                  </li>
+                  <li
+                    onClick={() => {
+                      handleFilter(FilterTicketsStatus.SeverityLow);
+                      toggleDropDown();
+                    }}
+                  >
+                    <a>{FilterTicketsStatus.SeverityLow}</a>
+                  </li>
+                  <li
+                    onClick={() => {
+                      handleFilter(FilterTicketsStatus.Escalated);
+                      toggleDropDown();
+                    }}
+                  >
+                    <a>Escalated Only</a>
+                  </li>
+                  <li
+                    onClick={() => {
+                      handleFilter(FilterTicketsStatus.StatusNew);
+                      toggleDropDown();
+                    }}
+                  >
+                    <a>{FilterTicketsStatus.StatusNew}</a>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
         ) : null}
