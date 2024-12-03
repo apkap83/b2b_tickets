@@ -254,6 +254,11 @@ export enum FilterTicketsStatus {
   All = 'All Tickets',
   Open = 'Open Tickets',
   Closed = 'Resolved Tickets',
+  StatusNew = 'Status New',
+  SeverityHigh = 'Severity High',
+  SeverityMedium = 'Severity Medium',
+  SeverityLow = 'Severity Low',
+  Escalated = 'Escalated',
 }
 
 export enum ErrorCode {
@@ -536,7 +541,6 @@ export interface WebSocketData {
 
   [WebSocketMessage.TICKET_ALTERED_SEVERITY]: {
     ticket_id: string;
-    // severityId: string;
   };
 
   [WebSocketMessage.TICKET_ALTERED_REMEDY_INC]: {

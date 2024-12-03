@@ -14,10 +14,12 @@ export const ExportToExcelButton = ({
   totalTickets,
   query,
   currentPage,
+  disabled,
 }: {
   totalTickets: number;
   query: string;
   currentPage: number;
+  disabled: boolean;
 }) => {
   const [producingExcelFile, setProducingExcelFile] = useState(false);
 
@@ -33,7 +35,7 @@ export const ExportToExcelButton = ({
       // Create a new workbook
       const workbook = XLSX.utils.book_new();
       // Convert the data to a worksheet
-      const worksheet = XLSX.utils.json_to_sheet(ticketsList);
+      const worksheet = XLSX.utils.json_to_sheet(ticketsList.pageData);
       // Add the worksheet to the workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
       // Generate an Excel file
@@ -45,34 +47,36 @@ export const ExportToExcelButton = ({
   if (totalTickets === 0) {
     return null;
   }
-
   return (
     <Tooltip title="Export list to Excel">
-      <Button
-        variant="outlined"
-        sx={{
-          border: '1px solid #45464a50',
-          height: '33px',
-          paddingTop: '16px',
-          paddingBottom: '16px',
-        }}
-        onClick={() => {
-          getDataAndConvertToExcel();
-        }}
-      >
-        <div className="flex flex-col justify-center items-center">
-          <SiMicrosoftexcel size={16} />
-          {producingExcelFile ? (
-            <div
-              style={{
-                fontSize: '7px',
-              }}
-            >
-              Exporting...
-            </div>
-          ) : null}
-        </div>
-      </Button>
+      <span>
+        <Button
+          variant="outlined"
+          sx={{
+            border: '1px solid #45464a50',
+            height: '33px',
+            paddingTop: '16px',
+            paddingBottom: '16px',
+          }}
+          onClick={() => {
+            getDataAndConvertToExcel();
+          }}
+          disabled={disabled}
+        >
+          <div className="flex flex-col justify-center items-center">
+            <SiMicrosoftexcel size={16} />
+            {producingExcelFile ? (
+              <div
+                style={{
+                  fontSize: '7px',
+                }}
+              >
+                Exporting...
+              </div>
+            ) : null}
+          </div>
+        </Button>
+      </span>
     </Tooltip>
   );
 };

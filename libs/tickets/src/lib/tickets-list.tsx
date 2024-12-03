@@ -1,15 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import {
-  getFilteredTicketsForCustomer,
-  getTotalNumOfTicketsForCustomer,
-} from '@b2b-tickets/server-actions';
+import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 import { TicketsListTable } from './tickets-list-table';
 import {
-  AppRoleTypes,
   TicketDetail,
   TicketDetailForTicketCreator,
+  FilterTicketsStatus,
 } from '@b2b-tickets/shared-models';
 import { TicketListHeader } from '@b2b-tickets/tickets';
 import { Pagination } from '@b2b-tickets/ui';
@@ -23,8 +19,6 @@ export const TicketsList = ({
     page?: string;
   };
 }) => {
-  const { data: session, status } = useSession();
-
   // State to manage the updated ticket list
   const [ticketsList, setTicketsList] = useState<
     TicketDetail[] | TicketDetailForTicketCreator[]
@@ -32,11 +26,7 @@ export const TicketsList = ({
 
   const [numOfTickets, setNumOfTickets] = useState(0);
 
-  const [query, setQuery] = useState('');
-
-  const [currentPage, setCurrentPage] = useState(
-    Number(searchParams?.page) || 1
-  );
+  const currentPage = Number(searchParams?.page) || 1;
 
   const [ticketListRetrieved, setTicketListRetrieved] = useState(false);
 
@@ -45,20 +35,14 @@ export const TicketsList = ({
     const getTicketList = async () => {
       const query = searchParams?.query || '';
       const currentPage = Number(searchParams?.page) || 1;
-      const ticketsList = await getFilteredTicketsForCustomer(
+      const { pageData, totalRows } = await getFilteredTicketsForCustomer(
         query,
         currentPage
       );
 
-      console.log('ticketsList', ticketsList);
-      setTicketsList(ticketsList);
+      setTicketsList(pageData);
 
-      const totalTicketsForCustomer = Number(
-        await getTotalNumOfTicketsForCustomer()
-      );
-
-      setNumOfTickets(totalTicketsForCustomer);
-
+      setNumOfTickets(totalRows);
       setTicketListRetrieved(true);
     };
 
@@ -66,10 +50,6 @@ export const TicketsList = ({
   }, [searchParams]);
 
   if (!ticketListRetrieved) return null;
-
-  if (ticketListRetrieved && ticketsList.length === 0) {
-    return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
-  }
 
   const totalPages = Math.ceil(
     Number(numOfTickets) / config.TICKET_ITEMS_PER_PAGE
@@ -80,12 +60,14 @@ export const TicketsList = ({
       <TicketListHeader
         totalTicketsForCustomer={numOfTickets}
         totalTickets={numOfTickets}
-        query={''}
-        currentPage={1}
+        query={searchParams?.query!}
+        currentPage={Number(currentPage)}
       />
       <TicketsListTable
         ticketsList={ticketsList}
         setTicketsList={setTicketsList}
+        query={searchParams?.query!}
+        currentPage={Number(currentPage)}
       />
 
       {numOfTickets > 0 && (

@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 export type FormState = {
   status: 'UNSET' | 'SUCCESS' | 'ERROR';
   message: string;
+  extraData?: string;
   fieldErrors: Record<string, string[] | undefined>;
   timestamp: number;
 };
@@ -48,11 +49,13 @@ export const fromErrorToFormState = (error: unknown) => {
 
 export const toFormState = (
   status: FormState['status'],
-  message: string
+  message: string,
+  extraData?: string
 ): FormState => {
   return {
     status,
     message,
+    extraData: extraData,
     fieldErrors: {},
     timestamp: Date.now(),
   };

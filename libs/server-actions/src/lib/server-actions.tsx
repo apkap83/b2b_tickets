@@ -131,36 +131,6 @@ export const getCcValuesForTicket = async ({
   }
 };
 
-export const getTotalNumOfTicketsForCustomer = async () => {
-  try {
-    const session = await verifySecurityPermission(
-      AppPermissionTypes.Tickets_Page
-    );
-
-    await setSchemaAndTimezone(pgB2Bpool);
-    //@ts-ignore
-    const customerId = session.user.customer_id;
-
-    //@ts-ignore
-    const customerName = session.user.customer_name;
-
-    // In case there is no Customer Id then return all
-    if (customerId === -1) {
-      const sqlQuery = `SELECT count(*) FROM tickets_v`;
-      const res = await pgB2Bpool.query(sqlQuery);
-      return res?.rows[0].count as number;
-    }
-    // Filter Tickets View by Customer Name
-    const sqlQuery = `SELECT count(*) FROM tickets_v where "Customer" = $1`;
-    const res = await pgB2Bpool.query(sqlQuery, [customerName]);
-
-    return res?.rows[0].count as number;
-  } catch (error) {
-    // logRequest.error(error);
-    return fromErrorToFormState(error);
-  }
-};
-
 export const getFilteredTicketsForCustomer = async (
   query: string,
   currentPage: number,
@@ -192,9 +162,37 @@ export const getFilteredTicketsForCustomer = async (
       sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
     if (query === FilterTicketsStatus.Closed)
       sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.YES}' `;
+    if (query === FilterTicketsStatus.SeverityHigh)
+      sqlExpression = `AND "Severity" = '${FilterTicketsStatus.SeverityHigh.replace(
+        'Severity ',
+        ''
+      )}' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+    if (query === FilterTicketsStatus.SeverityMedium)
+      sqlExpression = `AND "Severity" = '${FilterTicketsStatus.SeverityMedium.replace(
+        'Severity ',
+        ''
+      )}' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
+    if (query === FilterTicketsStatus.SeverityLow)
+      sqlExpression = `AND "Severity" = '${FilterTicketsStatus.SeverityLow.replace(
+        'Severity ',
+        ''
+      )}' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
+
+    if (query === FilterTicketsStatus.StatusNew)
+      sqlExpression = `AND "Status" = '${FilterTicketsStatus.StatusNew.replace(
+        'Status ',
+        ''
+      )}'`;
+
+    if (query === FilterTicketsStatus.Escalated)
+      sqlExpression = `AND "Escalated" = 'Yes' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
 
     // If The role is Ticket Handler Return all Tickets
     if (isTicketHandler) {
+      const sqlQueryCount = `SELECT COUNT(*) FROM tickets_v ${sqlExpression.replace(
+        'AND',
+        'WHERE'
+      )}`;
       const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression.replace(
         'AND',
         'WHERE'
@@ -203,70 +201,34 @@ export const getFilteredTicketsForCustomer = async (
         allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
       }
       `;
+
+      const count = await pgB2Bpool.query(sqlQueryCount);
+      const numOfTotalRows = count.rows[0].count;
       const res = await pgB2Bpool.query(sqlQuery);
-      return res?.rows as TicketDetail[];
+      return { pageData: res?.rows, totalRows: numOfTotalRows };
     }
 
     // Filter Tickets View by Customer Name
+    const sqlQueryCount = `SELECT COUNT(*) FROM tickets_v where "customer_id" = $1 ${sqlExpression}`;
     const sqlQuery = `SELECT * FROM tickets_v where "customer_id" = $1 ${sqlExpression}
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
+    const count = await pgB2Bpool.query(sqlQueryCount, [customerId]);
+    const numOfTotalRows = count.rows[0].count;
+
     const res = await pgB2Bpool.query(sqlQuery, [customerId]);
-    const tickets = res?.rows as TicketDetail[];
+    const tickets = res?.rows;
 
     // If Ticket Creator, filter and map the result to TicketDetailForTicketCreator
     if (isTicketCreator) {
-      return tickets.map((ticket) => mapToTicketCreator(ticket));
+      return {
+        pageData: tickets.map((ticket) => mapToTicketCreator(ticket)),
+        totalRows: numOfTotalRows,
+      };
     }
 
-    return tickets;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getLatestTicketCreated = async () => {
-  try {
-    const session = await verifySecurityPermission(
-      AppPermissionTypes.Tickets_Page
-    );
-    await setSchemaAndTimezone(pgB2Bpool);
-
-    // Check if the user belongs to the Ticket Handler role
-    const isTicketHandler = userHasRole(
-      session,
-      AppRoleTypes.B2B_TicketHandler
-    );
-
-    // Check if the user belongs to the Ticket Creator role
-    const isTicketCreator = userHasRole(
-      session,
-      AppRoleTypes.B2B_TicketCreator
-    );
-
-    // If The role is Ticket Handler Return all Tickets
-    if (isTicketHandler) {
-      const sqlQuery = `select * from b2btickets_dev.tickets_v order by ticket_id desc limit 1;`;
-      const res = await pgB2Bpool.query(sqlQuery);
-      const ticket = res?.rows as TicketDetail[];
-      return ticket;
-    }
-
-    // // Filter Tickets View by Customer Name
-    // const sqlQuery = `SELECT * FROM tickets_v where "customer_id" = $1 ${sqlExpression}
-    // ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
-    //   `;
-
-    // const res = await pgB2Bpool.query(sqlQuery, [customerId]);
-    // const tickets = res?.rows as TicketDetail[];
-
-    // // If Ticket Creator, filter and map the result to TicketDetailForTicketCreator
-    // if (isTicketCreator) {
-    //   return tickets.map((ticket) => mapToTicketCreator(ticket));
-    // }
-
-    // return tickets;
+    return { pageData: tickets, totalRows: numOfTotalRows };
   } catch (error) {
     throw error;
   }
@@ -314,7 +276,7 @@ export const getNumOfTickets = async (query: string): Promise<number> => {
   }
 };
 
-export const getTicketDetailsForTicketId = async ({
+export const getTicketDetailsForTicketNumber = async ({
   ticketNumber,
 }: {
   ticketNumber: string;
@@ -592,10 +554,10 @@ export const createNewTicket = async (
     await client.query('COMMIT');
 
     // Send E-mail Notifications asynchronously
-    //sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CREATION, newTicketId);
+    sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CREATION, newTicketId);
 
     revalidatePath('/tickets');
-    return toFormState('SUCCESS', 'Ticket Created!');
+    return toFormState('SUCCESS', 'Ticket Created!', newTicketId);
   } catch (error) {
     // Rollback the transaction in case of an error
     await client.query('ROLLBACK');
