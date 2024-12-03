@@ -102,7 +102,7 @@ export const TicketFilter = ({
               <VscFilterFilled />
               <span
                 style={{
-                  fontSize: '8px',
+                  fontSize: '10px',
                   fontWeight: 800,
                   letterSpacing: '.5px',
                 }}
