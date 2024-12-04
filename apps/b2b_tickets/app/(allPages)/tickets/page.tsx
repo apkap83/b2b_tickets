@@ -1,8 +1,9 @@
 import React from 'react';
 import { TicketsList } from '@b2b-tickets/tickets';
 import Container from '@mui/material/Container';
+import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 
-const App: React.FC = ({
+const App: React.FC = async ({
   searchParams,
 }: {
   searchParams?: {
@@ -10,6 +11,14 @@ const App: React.FC = ({
     page?: string;
   };
 }) => {
+  const defeaultQuery = searchParams?.query || '';
+  const defaultPage = Number(searchParams?.page) || 1;
+
+  const { pageData, totalRows } = await getFilteredTicketsForCustomer(
+    defeaultQuery,
+    defaultPage
+  );
+
   return (
     <Container
       maxWidth="xl"
@@ -19,7 +28,7 @@ const App: React.FC = ({
       }}
       className="relative"
     >
-      <TicketsList searchParams={searchParams} />
+      <TicketsList searchParams={searchParams} theTicketsList={pageData} />
     </Container>
   );
 };

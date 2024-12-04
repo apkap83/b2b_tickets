@@ -93,6 +93,10 @@ export const NavBar = () => {
                 alt={'Nova Logo'}
                 height={18}
                 width={110}
+                style={{
+                  width: '110px',
+                  height: '18.2px',
+                }}
               />
             </Stack>
             <div className={`${styles.b2b_logo_text}`}>Platinum Support</div>
