@@ -5,11 +5,17 @@ import {
   TicketDetail,
   TicketDetailForTicketCreator,
 } from '@/libs/shared-models/src';
+import { notFound } from 'next/navigation';
 
 const App = async ({ params }: { params: any }) => {
   const ticketDetails = (await getTicketDetailsForTicketNumber({
     ticketNumber: params.slug,
   })) as TicketDetail[] | TicketDetailForTicketCreator[];
+
+  if (!ticketDetails) {
+    notFound(); // Automatically renders `not-found.tsx`
+  }
+
   return (
     <TicketDetails
       theTicketDetails={ticketDetails}
