@@ -2,6 +2,7 @@ import React from 'react';
 import { TicketsList } from '@b2b-tickets/tickets';
 import Container from '@mui/material/Container';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
+import { notFound } from 'next/navigation';
 
 const App: React.FC = async ({
   searchParams,
@@ -18,6 +19,10 @@ const App: React.FC = async ({
     defeaultQuery,
     defaultPage
   );
+
+  if (!pageData) {
+    notFound(); // Automatically renders `not-found.tsx`
+  }
 
   return (
     <Container
