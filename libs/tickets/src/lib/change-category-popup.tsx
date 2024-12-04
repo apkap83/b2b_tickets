@@ -150,173 +150,173 @@ export const ChangeCategoryPopup = ({
 
   return (
     <>
-      <div
-        className="fixed inset-0 flex items-center justify-center
-         bg-black bg-opacity-50"
-      >
-        <div
-          className={`bg-white rounded-lg justify-start items-center inline-flex min-w-[350px]`}
-        >
-          <div className="w-full flex flex-col items-start gap-2.5 pt-0 pb-[13px] px-0 relative bg-localhostwhite">
-            <div className="flex flex-col items-start gap-[20.8px] relative self-stretch w-full flex-[0_0_auto]">
-              <div className="text-white px-4 py-2 relative self-stretch w-full rounded-t-md [background:linear-gradient(0,rgb(2,0,90)_0%,rgba(55,55,66,0.5)_100%)]">
-                {`Alter Category/Service for ${ticketNumber}`}
-              </div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 pointer-events-none z-10">
+        <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-auto">
+          <div
+            className={`bg-white rounded-lg justify-start items-center inline-flex min-w-[350px]`}
+          >
+            <div className="w-full flex flex-col items-start gap-2.5 pt-0 pb-[13px] px-0 relative bg-localhostwhite">
+              <div className="flex flex-col items-start gap-[20.8px] relative self-stretch w-full flex-[0_0_auto]">
+                <div className="text-white px-4 py-2 relative self-stretch w-full rounded-t-md [background:linear-gradient(0,rgb(2,0,90)_0%,rgba(55,55,66,0.5)_100%)]">
+                  {`Alter Category/Service for ${ticketNumber}`}
+                </div>
 
-              <form action={action}>
-                <div className="w-full px-10 flex flex-col">
-                  <FormControl
-                    sx={{
-                      width: '323px',
-                      marginTop: '16px',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    <InputLabel
-                      id="category"
-                      sx={{
-                        top: '-7px',
-                      }}
-                    >
-                      Category
-                    </InputLabel>
-                    <Select
-                      labelId="category"
-                      id="category"
-                      name="category"
-                      value={formik.values.category}
-                      onChange={(val) => {
-                        formik.handleChange(val);
-                        // formik.setFieldValue('service', '');
-                      }}
-                      onBlur={formik.handleBlur}
-                      autoWidth
-                      label="Categories *"
-                      required
-                      sx={{
-                        '& .MuiSelect-select': {
-                          paddingTop: '8px',
-                          paddingBottom: '8px',
-                        },
-                      }}
-                    >
-                      {ticketCategories.map((item) => {
-                        return (
-                          <MenuItem
-                            key={item.category_id}
-                            value={item.category_id}
-                            sx={{
-                              width: '270px',
-                            }}
-                          >
-                            {item.Category}
-                          </MenuItem>
-                        );
-                      })}
-                    </Select>
-                  </FormControl>
-                  <FieldError formik={formik} name="category" />
-                  <>
+                <form action={action}>
+                  <div className="w-full px-10 flex flex-col">
                     <FormControl
                       sx={{
-                        marginTop: '20px',
-                        marginBottom: '10px',
                         width: '323px',
+                        marginTop: '16px',
+                        marginBottom: '10px',
                       }}
                     >
                       <InputLabel
-                        id="service"
+                        id="category"
                         sx={{
                           top: '-7px',
                         }}
                       >
-                        Service Type
+                        Category
                       </InputLabel>
                       <Select
-                        labelId="service"
-                        id="service"
-                        name="service"
-                        value={formik.values.service}
-                        onChange={formik.handleChange}
+                        labelId="category"
+                        id="category"
+                        name="category"
+                        value={formik.values.category}
+                        onChange={(val) => {
+                          formik.handleChange(val);
+                          // formik.setFieldValue('service', '');
+                        }}
                         onBlur={formik.handleBlur}
                         autoWidth
-                        label="Service Type"
+                        label="Categories *"
+                        required
                         sx={{
                           '& .MuiSelect-select': {
                             paddingTop: '8px',
                             paddingBottom: '8px',
                           },
                         }}
-                        // onChangeCapture={(s) => {
-                        //   setSelectedServiceType(formik.values.);
-                        // }}
                       >
-                        {serviceTypes.map((item: ServiceType) => {
+                        {ticketCategories.map((item) => {
                           return (
                             <MenuItem
-                              key={item.service_type_id}
-                              value={item.service_type_id}
+                              key={item.category_id}
+                              value={item.category_id}
                               sx={{
                                 width: '270px',
                               }}
                             >
-                              {item.service_type_name}
+                              {item.Category}
                             </MenuItem>
                           );
                         })}
                       </Select>
                     </FormControl>
-                    <FieldError formik={formik} name="service" />
-                    <input type="hidden" name="ticketId" value={ticketId} />
-                    <input
-                      type="hidden"
-                      name="categoryServiceTypeId"
-                      value={selectedCategoryServiceTypeId}
-                    />
-                    <input
-                      type="hidden"
-                      name="ticketNumber"
-                      value={ticketNumber}
-                    />
-                  </>
-                </div>
+                    <FieldError formik={formik} name="category" />
+                    <>
+                      <FormControl
+                        sx={{
+                          marginTop: '20px',
+                          marginBottom: '10px',
+                          width: '323px',
+                        }}
+                      >
+                        <InputLabel
+                          id="service"
+                          sx={{
+                            top: '-7px',
+                          }}
+                        >
+                          Service Type
+                        </InputLabel>
+                        <Select
+                          labelId="service"
+                          id="service"
+                          name="service"
+                          value={formik.values.service}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          autoWidth
+                          label="Service Type"
+                          sx={{
+                            '& .MuiSelect-select': {
+                              paddingTop: '8px',
+                              paddingBottom: '8px',
+                            },
+                          }}
+                          // onChangeCapture={(s) => {
+                          //   setSelectedServiceType(formik.values.);
+                          // }}
+                        >
+                          {serviceTypes.map((item: ServiceType) => {
+                            return (
+                              <MenuItem
+                                key={item.service_type_id}
+                                value={item.service_type_id}
+                                sx={{
+                                  width: '270px',
+                                }}
+                              >
+                                {item.service_type_name}
+                              </MenuItem>
+                            );
+                          })}
+                        </Select>
+                      </FormControl>
+                      <FieldError formik={formik} name="service" />
+                      <input type="hidden" name="ticketId" value={ticketId} />
+                      <input
+                        type="hidden"
+                        name="categoryServiceTypeId"
+                        value={selectedCategoryServiceTypeId}
+                      />
+                      <input
+                        type="hidden"
+                        name="ticketNumber"
+                        value={ticketNumber}
+                      />
+                    </>
+                  </div>
 
-                <div className="flex items-center justify-center py-4 gap-20 relative self-stretch w-full flex-[0_0_auto]">
-                  <Button
-                    variant="outlined"
-                    onClick={() => {
-                      setShowCategoryDialog(false);
-                    }}
-                  >
-                    CANCEL
-                  </Button>
+                  <div className="flex items-center justify-center py-4 gap-20 relative self-stretch w-full flex-[0_0_auto]">
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        setShowCategoryDialog(false);
+                      }}
+                    >
+                      CANCEL
+                    </Button>
 
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    sx={{
-                      transition: 'transform 0.2s ease-in-out', // Smooth transition
-                      '&:hover': {
-                        transform: 'scale(1.05)', // Scale effect on hover
-                      },
-                    }}
-                    disabled={
-                      !(
-                        formik.touched['category'] || formik.touched['service']
-                      ) ||
-                      !(
-                        formik.dirty &&
-                        (formik.values.category !==
-                          formik.initialValues.category ||
-                          formik.values.service !==
-                            formik.initialValues.service)
-                      )
-                    }
-                  >
-                    SUBMIT
-                  </Button>
-                </div>
-              </form>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      sx={{
+                        transition: 'transform 0.2s ease-in-out', // Smooth transition
+                        '&:hover': {
+                          transform: 'scale(1.05)', // Scale effect on hover
+                        },
+                      }}
+                      disabled={
+                        !(
+                          formik.touched['category'] ||
+                          formik.touched['service']
+                        ) ||
+                        !(
+                          formik.dirty &&
+                          (formik.values.category !==
+                            formik.initialValues.category ||
+                            formik.values.service !==
+                              formik.initialValues.service)
+                        )
+                      }
+                    >
+                      SUBMIT
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>

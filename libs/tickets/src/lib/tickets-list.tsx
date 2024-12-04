@@ -13,24 +13,22 @@ import { config } from '@b2b-tickets/config';
 
 export const TicketsList = ({
   searchParams,
+  theTicketsList,
 }: {
   searchParams?: {
     query?: string;
     page?: string;
   };
+  theTicketsList: TicketDetail[] | TicketDetailForTicketCreator[];
 }) => {
   // State to manage the updated ticket list
   const [ticketsList, setTicketsList] = useState<
     TicketDetail[] | TicketDetailForTicketCreator[]
-  >([]);
-
-  const [numOfTickets, setNumOfTickets] = useState(0);
+  >(theTicketsList);
 
   const currentPage = Number(searchParams?.page) || 1;
 
-  const [ticketListRetrieved, setTicketListRetrieved] = useState(false);
-
-  // Get Tickets List for the first time
+  // Get Tickets List on Search Param Change
   useEffect(() => {
     const getTicketList = async () => {
       const query = searchParams?.query || '';
@@ -39,18 +37,12 @@ export const TicketsList = ({
         query,
         currentPage
       );
-
       setTicketsList(pageData);
-
-      setNumOfTickets(totalRows);
-      setTicketListRetrieved(true);
     };
-
     getTicketList();
   }, [searchParams]);
 
-  if (!ticketListRetrieved) return null;
-
+  const numOfTickets = ticketsList?.length;
   const totalPages = Math.ceil(
     Number(numOfTickets) / config.TICKET_ITEMS_PER_PAGE
   );

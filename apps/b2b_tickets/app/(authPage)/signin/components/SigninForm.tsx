@@ -275,8 +275,12 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
             priority
             src={NovaLogo}
             alt={'Nova Logo'}
-            height={40}
             width={245}
+            height={40}
+            style={{
+              width: 'auto', // Adjust width to auto if the height is set
+              height: 'auto', // Adjust height to auto if the width is set
+            }}
           />
           <span>Platinum Support</span>
         </div>
@@ -329,6 +333,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                   onBlur={formik.handleBlur}
                   className="grow text-black"
                   placeholder="User Name"
+                  autoComplete="false"
                 />
               </label>
               <FieldError formik={formik} name="userName" />
@@ -349,6 +354,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                   onBlur={formik.handleBlur}
                   className="grow text-black"
                   placeholder="Password"
+                  autoComplete="false"
                 />
               </label>
               <FieldError formik={formik} name="password" />
