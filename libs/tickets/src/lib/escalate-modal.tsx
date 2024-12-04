@@ -130,80 +130,79 @@ export function EscalateModal({
 
   return (
     <React.Fragment>
-      <div
-        className="fixed inset-0 flex items-center justify-center
-       bg-black bg-opacity-50"
-      >
-        <div
-          className={`${styles.mainDiv} max-w-[700px] px-8 pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex`}
-        >
-          <div className="w-full self-stretch flex-col justify-start items-start gap-[20.80px] inline-flex">
-            <div className="self-stretch pl-3 py-2 bg-gradient-to-r from-[#020024] to-[#373742] rounded-md flex-col justify-start items-start flex">
-              {getCorrectTitle()}
-            </div>
-            <form
-              action={action}
-              className="grow shrink basis-0 self-stretch pl-[8.56px] pr-[16.56px] py-[0.56px] bg-white rounded-md shadow border border-[#c3c6fd] flex-col justify-start items-start inline-flex"
-            >
-              {/* <div className="grow shrink basis-0 self-stretch pl-[8.56px] pr-[16.56px] py-[0.56px] bg-white rounded-md shadow border border-[#c3c6fd] flex-col justify-start items-start inline-flex"> */}
-              <div className="w-full px-1 pt-3 pb-4 flex-col justify-start items-start gap-3 flex">
-                <div className="w-full pt-2 flex-col justify-center items-center flex">
-                  <span>Are you sure you want to Escalate this ticket ?</span>
-
-                  <textarea
-                    id="comment"
-                    name="comment"
-                    placeholder="Add your comment here..."
-                    required
-                    // value={formik.values.description}
-                    // onChange={formik.handleChange}
-                    // onBlur={formik.handleBlur}
-                    className="border mt-4 mb-2 p-2 max-w-[600px] min-h-[200px]"
-                    style={{
-                      backgroundColor: `${colors.grey[900]}`,
-                      color: `${colors.grey[100]}`,
-                      width: '100%',
-                      height: '100%',
-                      resize: 'none',
-                      boxSizing: 'border-box',
-                      padding: '10px',
-                      outline: 'none',
-                    }}
-                  ></textarea>
-                  <input
-                    type="hidden"
-                    name="ticketNumber"
-                    value={ticketNumber}
-                  />
-                  <input type="hidden" name="ticketId" value={ticketId} />
-                </div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 pointer-events-none z-10">
+        <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-auto">
+          <div
+            className={`${styles.mainDiv} max-w-[700px] px-8 pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex`}
+          >
+            <div className="w-full self-stretch flex-col justify-start items-start gap-[20.80px] inline-flex">
+              <div className="self-stretch pl-3 py-2 bg-gradient-to-r from-[#020024] to-[#373742] rounded-md flex-col justify-start items-start flex">
+                {getCorrectTitle()}
               </div>
-              {/* </div> */}
-              <div
-                className={`${styles.buttonDiv} self-stretch justify-center items-center inline-flex`}
+              <form
+                action={action}
+                className="grow shrink basis-0 self-stretch pl-[8.56px] pr-[16.56px] py-[0.56px] bg-white rounded-md shadow border border-[#c3c6fd] flex-col justify-start items-start inline-flex"
               >
-                <Button
-                  onClick={() => {
-                    closeModal();
-                  }}
-                  variant="outlined"
-                  size="large"
-                  style={{
-                    color: `${colors.grey[500]}`,
-                    border: `1px solid ${colors.grey[500]}`,
-                  }}
+                {/* <div className="grow shrink basis-0 self-stretch pl-[8.56px] pr-[16.56px] py-[0.56px] bg-white rounded-md shadow border border-[#c3c6fd] flex-col justify-start items-start inline-flex"> */}
+                <div className="w-full px-1 pt-3 pb-4 flex-col justify-start items-start gap-3 flex">
+                  <div className="w-full pt-2 flex-col justify-center items-center flex">
+                    <span>Are you sure you want to Escalate this ticket ?</span>
+
+                    <textarea
+                      id="comment"
+                      name="comment"
+                      placeholder="Add your comment here..."
+                      required
+                      // value={formik.values.description}
+                      // onChange={formik.handleChange}
+                      // onBlur={formik.handleBlur}
+                      className="border mt-4 mb-2 p-2 max-w-[600px] min-h-[200px]"
+                      style={{
+                        backgroundColor: `${colors.grey[900]}`,
+                        color: `${colors.grey[100]}`,
+                        width: '100%',
+                        height: '100%',
+                        resize: 'none',
+                        boxSizing: 'border-box',
+                        padding: '10px',
+                        outline: 'none',
+                      }}
+                    ></textarea>
+                    <input
+                      type="hidden"
+                      name="ticketNumber"
+                      value={ticketNumber}
+                    />
+                    <input type="hidden" name="ticketId" value={ticketId} />
+                  </div>
+                </div>
+                {/* </div> */}
+                <div
+                  className={`${styles.buttonDiv} self-stretch justify-center items-center inline-flex`}
                 >
-                  Cancel
-                </Button>
-                <SubmitButton
-                  label={submitButtonLabel}
-                  loadingText="Escalating..."
-                  // isValid={formik.isValid}
-                  isValid={true}
-                  action={modalAction}
-                />
-              </div>
-            </form>
+                  <Button
+                    onClick={() => {
+                      closeModal();
+                    }}
+                    variant="outlined"
+                    size="large"
+                    style={{
+                      color: `${colors.grey[500]}`,
+                      border: `1px solid ${colors.grey[500]}`,
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <SubmitButton
+                    label={submitButtonLabel}
+                    loadingText="Escalating..."
+                    // isValid={formik.isValid}
+                    isValid={true}
+                    action={modalAction}
+                  />
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>

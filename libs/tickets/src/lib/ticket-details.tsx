@@ -4,12 +4,14 @@ import { getGreekDateFormat, getStatusColor } from '@b2b-tickets/utils';
 import {
   TicketComment,
   TicketDetail,
+  TicketDetailForTicketCreator,
   WebSocketMessage,
 } from '@b2b-tickets/shared-models';
 import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
 import { NewCommentModal } from './new-comment-modal';
 import { EscalateModal } from './escalate-modal';
 
+import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEscKeyListener } from '@b2b-tickets/react-hooks';
 
@@ -42,7 +44,6 @@ import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { EscalationBars } from '@b2b-tickets/ui';
 import { useWebSocket } from '@b2b-tickets/react-hooks';
 import { getTicketDetailsForTicketNumber } from '@b2b-tickets/server-actions';
-import { emit } from 'process';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -51,12 +52,13 @@ const detailsRowHeaderClass =
   "grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] ";
 
 export function TicketDetails({
+  theTicketDetails,
   theTicketNumber,
 }: {
+  theTicketDetails: TicketDetail[] | TicketDetailForTicketCreator[];
   theTicketNumber: string;
 }) {
-  // const theme = useTheme();
-  // const colors = tokens(theme.palette.mode);
+  const router = useRouter();
   const { data: session, status } = useSession();
   //@ts-ignore
   const userId = session?.user.user_id;
@@ -74,28 +76,28 @@ export function TicketDetails({
 
   const [nextEscalationLevel, setNextEscalationLevel] = useState<string>('');
 
-  const [ticketDetails, setTicketDetails] = useState<TicketDetail[]>([]);
+  const [ticketDetails, setTicketDetails] = useState<
+    TicketDetail[] | TicketDetailForTicketCreator[]
+  >(theTicketDetails);
 
   // Get Ticket Details and Next Escalation Level
   useEffect(() => {
-    const getTicketDetails = async () => {
-      const ticketDetails: TicketDetail[] =
-        await getTicketDetailsForTicketNumber({
-          ticketNumber: theTicketNumber,
-        });
-      if (ticketDetails) {
+    const getMyNextEscalationLevel = async () => {
+      try {
         const resp = await getNextEscalationLevel({
           ticketId: ticketDetails[0].ticket_id,
           ticketNumber: theTicketNumber,
         });
+
         setNextEscalationLevel(resp.data);
+      } catch (error) {
+        console.error('Error fetching next escalation level:', error);
       }
-      setTicketDetails(ticketDetails);
     };
 
-    getTicketDetails();
-  }, []);
-
+    // getTicketDetails();
+    getMyNextEscalationLevel();
+  }, [theTicketNumber]);
   // Web Socket Connection
   const { emitEvent, latestEventEmitted, resetLatestEventEmitted } =
     useWebSocket();
