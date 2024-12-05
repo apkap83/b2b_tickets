@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReCAPTCHA from 'react-google-recaptcha';
 
@@ -28,8 +27,6 @@ export function PasswordResetForm({
   csrfToken: string;
   jwtToken: string;
 }) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const [loadingState, setLoadingState] = useState(true);
   const [linkIsValid, setLinkIsValid] = useState(true);
 
@@ -45,11 +42,10 @@ export function PasswordResetForm({
   const [showEmailTokenField, setShowEmailTokenField] = useState(false);
   const [showNewPasswordField, setShowNewPasswordField] = useState(false);
 
-  const [emailFieldIsReadOnly, setEmailFieldIsReadOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit');
-  const successMessage = 'Password Successfully updated!';
 
+  const submitButtonLabel = 'Submit';
+  const successMessage = 'Password Successfully updated!';
   const recaptchaRef = useRef<any>(); // New useRef for reCAPTCHA
 
   const validationSchema = Yup.object({
@@ -173,7 +169,6 @@ export function PasswordResetForm({
 
           setShowOTP(true);
           setSubmitting(false);
-          setEmailFieldIsReadOnly(true);
           setButtonIsDisabled(true);
           break;
         case ErrorCode.TotpJWTTokenInvalid:
@@ -187,7 +182,6 @@ export function PasswordResetForm({
         case ErrorCode.TokenForEmailRequired:
           setSubmitting(false);
           setCaptchaVerified(true);
-          setEmailFieldIsReadOnly(true);
           setShowEmailTokenField(true);
           getEmailJWTToken({
             emailProvided: formik.values.email,
@@ -197,7 +191,6 @@ export function PasswordResetForm({
           break;
         case ErrorCode.IncorrectPassResetTokenProvided:
           setSubmitting(false);
-          setEmailFieldIsReadOnly(true);
           setError('Incorrect Token provided');
           break;
         case ErrorCode.NewPasswordRequired:
@@ -246,7 +239,7 @@ export function PasswordResetForm({
   const handleCaptchaChange = (value: string | null) => {
     setCaptcha(value);
   };
-  const { timeLeft, isRunning, start, resetTimer } = useCountdown(0, () => {
+  const { timeLeft, start, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
     window.location.reload();
   });

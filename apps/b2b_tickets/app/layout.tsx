@@ -9,8 +9,6 @@ import '@fontsource/roboto/700.css';
 
 import './global.css';
 import './sass/main.scss';
-import { NavBar } from '@b2b-tickets/ui';
-import { Footer } from '@b2b-tickets/ui';
 
 import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
 import { AppThemeProvider } from '@b2b-tickets/ui-theme';
@@ -24,15 +22,11 @@ export const metadata = {
   description: 'Nova Business To Business Ticketing System',
 };
 
-import { getServerSession } from 'next-auth';
-import { options } from '@b2b-tickets/auth-options';
-
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(options);
   return (
     <html lang="en">
       <head>

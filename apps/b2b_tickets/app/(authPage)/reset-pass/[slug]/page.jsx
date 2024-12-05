@@ -1,11 +1,10 @@
-import { getProviders, getCsrfToken } from 'next-auth/react';
+import { getCsrfToken } from 'next-auth/react';
 import Image from 'next/image';
 import { background_nms_portal as imagePath } from '@b2b-tickets/assets';
 import { PasswordResetForm } from './components/PasswordResetForm';
 
 export default async function ResetPass({ params }) {
   const { slug } = params;
-  const providers = await getProviders();
   const csrfToken = await getCsrfToken();
 
   return (
