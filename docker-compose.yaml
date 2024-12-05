@@ -129,7 +129,7 @@ services:
     build:
       context: .
       dockerfile: apps/socket-server/Dockerfile
-    image: production_socket_server_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.5}
+    image: production_socket_server_img:${STAGING_B2B_VERSION_TEST:-1.0.5}
     ports:
       - '3457:3457'
     container_name: Production_Socket_Server_1

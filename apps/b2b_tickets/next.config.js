@@ -17,6 +17,7 @@ const nextConfig = {
   compiler: {
     styledComponents: true,
   },
+  poweredByHeader: false,
 };
 
 const plugins = [

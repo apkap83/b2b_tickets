@@ -52,4 +52,4 @@ RUN set -x && \
     else \
       echo "Not using proxy settings for pnpm" ;\
     fi && \
-    pnpm install -g env-cmd nx@19.2.2
+    pnpm install -g env-cmd nx@19.4.2
