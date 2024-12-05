@@ -98,3 +98,55 @@ services:
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
     restart: unless-stopped
+
+  staging_socket_server_pre_entry_1:
+    build:
+      context: .
+      dockerfile: apps/socket-server/Dockerfile
+    image: staging_socket_server_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.5}
+    ports:
+      - '3456:3456'
+    container_name: Staging_Socket_Server_PreEntry_1
+    extra_hosts:
+      - 'emailrelay:10.0.1.19'
+      - 'sms-gw1:10.131.12.77'
+      - 'sms-gw2:10.131.20.78'
+      - 'test-sms-gw1:10.131.28.73'
+      - 'b2b_database:172.27.52.177'
+    environment:
+      - NODE_ENV=staging
+      - DEBUG=1
+      - PORT=3456
+      - SOCKET_CORS_ORIGIN=https://10.124.49.151:8444
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - NEXT_AUTH_SESSION_URL=https://10.124.49.151:8444/api/auth/session
+    command: >
+      sh -c "nx build socket-server --configuration=staging --verbose &&
+             node dist/apps/socket-server/main.js"
+    restart: unless-stopped
+
+  production_socket_server_1:
+    build:
+      context: .
+      dockerfile: apps/socket-server/Dockerfile
+    image: production_socket_server_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.5}
+    ports:
+      - '3457:3457'
+    container_name: Production_Socket_Server_1
+    extra_hosts:
+      - 'emailrelay:10.0.1.19'
+      - 'sms-gw1:10.131.12.77'
+      - 'sms-gw2:10.131.20.78'
+      - 'test-sms-gw1:10.131.28.73'
+      - 'b2b_database:172.27.52.177'
+    environment:
+      - NODE_ENV=staging
+      - DEBUG=1
+      - PORT=3457
+      - SOCKET_CORS_ORIGIN=https://10.124.49.151
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - NEXT_AUTH_SESSION_URL=https://10.124.49.151/api/auth/session
+    command: >
+      sh -c "nx build socket-server --configuration=staging --verbose &&
+             node dist/apps/socket-server/main.js"
+    restart: unless-stopped

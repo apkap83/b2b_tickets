@@ -126,30 +126,32 @@ export const SessionIndicationAndPopup = () => {
       {/* Show popup if time left is less than 5 minutes */}
       {showPopup && (
         <div className="fixed z-10 inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none">
-          <div className="bg-white px-8 py-3 rounded-lg">
-            <h2 className="text-center mb-3">Session Expiring Soon</h2>
-            <p>
-              Your session will expire in{' '}
-              {formatTimeMMSS(timeLeftInSeconds ?? 0)}. Do you want to extend
-              your session?
-            </p>
-            <div className="mt-5 flex justify-center items-center gap-6">
-              <Button variant="outlined" onClick={performLogOut}>
-                Log Out
-              </Button>
-              <Button
-                disabled={isExtending}
-                variant="contained"
-                onClick={async () => {
-                  setIsExtending(true);
-                  await extendSession();
-                  setTimeout(() => {
-                    setIsExtending(false);
-                  }, 5000);
-                }}
-              >
-                {isExtending ? 'Extending...' : 'Extend Session'}
-              </Button>
+          <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-auto">
+            <div className="bg-white px-8 py-3 rounded-lg">
+              <h2 className="text-center mb-3">Session Expiring Soon</h2>
+              <p>
+                Your session will expire in{' '}
+                {formatTimeMMSS(timeLeftInSeconds ?? 0)}. Do you want to extend
+                your session?
+              </p>
+              <div className="mt-5 flex justify-center items-center gap-6">
+                <Button variant="outlined" onClick={performLogOut}>
+                  Log Out
+                </Button>
+                <Button
+                  disabled={isExtending}
+                  variant="contained"
+                  onClick={async () => {
+                    setIsExtending(true);
+                    await extendSession();
+                    setTimeout(() => {
+                      setIsExtending(false);
+                    }, 5000);
+                  }}
+                >
+                  {isExtending ? 'Extending...' : 'Extend Session'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

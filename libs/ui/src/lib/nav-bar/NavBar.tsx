@@ -74,7 +74,20 @@ export const NavBar = () => {
               height: '100%',
             }}
           > */}
-          <Stack>
+          <Stack
+            className="hover:cursor-pointer"
+            onClick={() => {
+              if (window) {
+                const savedFilter = sessionStorage.getItem('ticketFilter');
+                if (!savedFilter) return router.replace(`/tickets`);
+
+                router.replace(`/tickets?query=${savedFilter}&page=1`);
+                return;
+              }
+
+              router.replace(`/tickets`);
+            }}
+          >
             <Stack
               sx={{
                 bgcolor: 'white',

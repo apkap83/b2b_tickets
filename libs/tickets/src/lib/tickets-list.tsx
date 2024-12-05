@@ -14,12 +14,14 @@ import { config } from '@b2b-tickets/config';
 export const TicketsList = ({
   searchParams,
   theTicketsList,
+  totalRows,
 }: {
   searchParams?: {
     query?: string;
     page?: string;
   };
   theTicketsList: TicketDetail[] | TicketDetailForTicketCreator[];
+  totalRows: number;
 }) => {
   // State to manage the updated ticket list
   const [ticketsList, setTicketsList] = useState<
@@ -42,32 +44,21 @@ export const TicketsList = ({
     getTicketList();
   }, [searchParams]);
 
-  const numOfTickets = ticketsList?.length;
-  const totalPages = Math.ceil(
-    Number(numOfTickets) / config.TICKET_ITEMS_PER_PAGE
-  );
-
   return (
     <>
       <TicketListHeader
-        totalTicketsForCustomer={numOfTickets}
-        totalTickets={numOfTickets}
+        totalRows={totalRows}
+        ticketsList={ticketsList}
         query={searchParams?.query!}
         currentPage={Number(currentPage)}
       />
       <TicketsListTable
+        totalRows={totalRows}
         ticketsList={ticketsList}
         setTicketsList={setTicketsList}
         query={searchParams?.query!}
         currentPage={Number(currentPage)}
       />
-
-      {numOfTickets > 0 && (
-        <div className="pt-5 flex justify-between items-center">
-          <div>Total Items: {numOfTickets}</div>
-          {totalPages > 1 && <Pagination totalPages={totalPages} />}
-        </div>
-      )}
     </>
   );
 };

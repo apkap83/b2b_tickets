@@ -316,9 +316,7 @@ export function stripHtmlTags(html: string): string {
 }
 
 // Utility function to map TicketDetail to TicketDetailForTicketCreator
-export const mapToTicketCreator = (
-  ticket: TicketDetail
-): TicketDetailForTicketCreator => {
+export const mapToTicketCreator = (ticket: TicketDetail) => {
   return {
     ticket_id: ticket.ticket_id,
     customer_id: ticket.customer_id,
