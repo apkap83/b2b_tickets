@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { MuiOtpInput } from 'mui-one-time-password-input';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { config } from '@b2b-tickets/config';
 
 export function TwoFactAuth({

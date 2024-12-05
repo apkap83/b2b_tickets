@@ -1,19 +1,17 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
-import { getAppVersion } from '@b2b-tickets/server-actions';
-import toast from 'react-hot-toast';
 
 const MyProfile = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState({
     visible: false,
   });
-  const [gitVersion, setGitVersion] = useState('');
+  // const [gitVersion, setGitVersion] = useState('');
 
   const { data: session } = useSession({
     required: true,
@@ -29,14 +27,14 @@ const MyProfile = () => {
     authenticationType: session?.user.authenticationType,
   };
 
-  useEffect(() => {
-    const getMyAppVersion = async () => {
-      const resp = await getAppVersion();
-      if (resp.error) toast.error(error.message);
-      setGitVersion(resp.data);
-    };
-    getMyAppVersion();
-  }, []);
+  // useEffect(() => {
+  //   const getMyAppVersion = async () => {
+  //     const resp = await getAppVersion();
+  //     if (resp.error) toast.error(error.message);
+  //     setGitVersion(resp.data);
+  //   };
+  //   getMyAppVersion();
+  // }, []);
 
   return (
     <div className="absolute inset-0 flex justify-center items-center -translate-y-5 bg-black bg-opacity-50">

@@ -40,7 +40,7 @@ const FieldError: React.FC<FieldErrorProps> = ({ formik, name }) => {
 };
 
 export default function SignInForm({ csrfToken }: { csrfToken: string }) {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   const [captcha, setCaptcha] = useState<string | null>(null);
@@ -62,11 +62,6 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const passwordLabelRef = useRef(null);
   const userNamePasswordGroupRef = useRef<HTMLDivElement | null>(null);
 
-  // Assuming the type of the reCAPTCHA component has a 'reset' method.
-  type RecaptchaRefType = {
-    reset: () => void;
-  };
-
   // Create a reference for reCAPTCHA
   const recaptchaRef = useRef<any>(null); // New useRef for reCAPTCHA
   // Handle the onChange event of the ReCAPTCHA
@@ -75,7 +70,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
     // Set as verified when captcha value is present
   };
 
-  const { timeLeft, isRunning, start, resetTimer } = useCountdown(0, () => {
+  const { timeLeft, start, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
     window.location.reload();
     // router.reload();

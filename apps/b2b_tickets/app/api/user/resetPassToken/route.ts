@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serialize } from 'cookie';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { TransportName, B2BUserType } from '@b2b-tickets/shared-models';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
-import { authenticator } from 'otplib';
 import { symmetricDecrypt } from '@b2b-tickets/utils';
 import { B2BUser } from '@b2b-tickets/db-access';
 
