@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ReCAPTCHA from 'react-google-recaptcha';
 
@@ -51,9 +50,6 @@ export default function ForgotPassForm({
   // providers,
   csrfToken,
 }: ForgotPassFormProps) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
 
@@ -69,9 +65,9 @@ export default function ForgotPassForm({
 
   const [emailFieldIsReadOnly, setEmailFieldIsReadOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit');
-  const successMessage = 'Password Successfully updated!';
 
+  const submitButtonLabel = 'Submit';
+  const successMessage = 'Password Successfully updated!';
   const recaptchaRef = useRef<any>(); // New useRef for reCAPTCHA
 
   // Handle the onChange event of the ReCAPTCHA
@@ -79,7 +75,7 @@ export default function ForgotPassForm({
     setCaptcha(value);
   };
 
-  const { timeLeft, isRunning, start, resetTimer } = useCountdown(0, () => {
+  const { timeLeft, start, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
     window.location.reload();
   });
@@ -289,7 +285,7 @@ export default function ForgotPassForm({
         // window.location.href = '/';
       }
 
-      let error = response?.error?.replace('Error: ', '');
+      const error = response?.error?.replace('Error: ', '');
 
       // If no error field exists or it's empty, return early
       if (!error) return;

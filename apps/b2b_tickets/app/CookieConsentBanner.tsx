@@ -7,7 +7,7 @@ import { signOut } from 'next-auth/react';
 import config from '@b2b-tickets/config';
 
 const CookieConsentBanner = () => {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   const [showBanner, setShowBanner] = useState(false);
   useEffect(() => {
