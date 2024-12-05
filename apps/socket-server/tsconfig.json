@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "files": [],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "skipLibCheck": true, // Optional but useful for resolving third-party library issues
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true
+  }
+}

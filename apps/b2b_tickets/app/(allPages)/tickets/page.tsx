@@ -33,7 +33,11 @@ const App: React.FC = async ({
       }}
       className="relative"
     >
-      <TicketsList searchParams={searchParams} theTicketsList={pageData} />
+      <TicketsList
+        searchParams={searchParams}
+        theTicketsList={pageData}
+        totalRows={totalRows}
+      />
     </Container>
   );
 };

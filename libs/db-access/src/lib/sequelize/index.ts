@@ -32,8 +32,8 @@ const sequelize = new Sequelize({
   },
   // logging: sequelizeLogging,
   pool: {
-    max: 5,
-    min: 0,
+    max: 14,
+    min: 10,
     acquire: 30000,
     idle: 10000,
   },

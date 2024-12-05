@@ -1,6 +1,9 @@
 'use client';
 import { getSeverityStatusColor } from '@b2b-tickets/utils';
-import { TicketDetail } from '@b2b-tickets/shared-models';
+import {
+  TicketDetail,
+  TicketDetailForTicketCreator,
+} from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 import { AppRoleTypes } from '@b2b-tickets/shared-models';
 import { SeverityButton } from './severity-button';
@@ -18,7 +21,7 @@ export const SeverityRow = ({
   setShowSeverityDialog,
 }: {
   session: any;
-  ticketDetails: TicketDetail[];
+  ticketDetails: TicketDetail[] | TicketDetailForTicketCreator[];
   setShowSeverityDialog: (a: boolean) => void;
 }) => {
   const statusColor = getSeverityStatusColor(ticketDetails[0].severity_id);

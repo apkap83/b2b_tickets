@@ -10,7 +10,8 @@ export const pgB2Bpool = new Pool({
   host: config.postgres_b2b_database.host,
   port: config.postgres_b2b_database.port,
   database: config.postgres_b2b_database.db,
-  max: 7,
+  min: config.postgres_b2b_database.minConnections,
+  max: config.postgres_b2b_database.maxConnections,
 });
 
 // Set timezone for each connection
