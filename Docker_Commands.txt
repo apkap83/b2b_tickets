@@ -44,9 +44,21 @@ docker rm NMS_Portal_Container_1     # Remove the container
 
 
 docker compose up --build # The --build flag ensures that the image is rebuilt every time you run this command.
-docker-compose build
-docker-compose up -d
-docker-compose up -d --build --remove-orphans
+
+sudo docker compose build staging_b2b_tickets_pre_entry_1
+
+sudo docker compose up -d --build --no-cache --remove-orphans staging_b2b_tickets_pre_entry_1
+
+# how to make container Staging_B2B_Tickets_PreEntry_2 to start with the same image as Staging_B2B_Tickets_PreEntry_1 ?
+
+[centos@solarwinds-ip-sla-or-ticketing b2b_tickets]$ sudo docker stop Staging_B2B_Tickets_PreEntry_2
+Staging_B2B_Tickets_PreEntry_2
+[centos@solarwinds-ip-sla-or-ticketing b2b_tickets]$ sudo docker rm Staging_B2B_Tickets_PreEntry_2
+Staging_B2B_Tickets_PreEntry_2
+[centos@solarwinds-ip-sla-or-ticketing b2b_tickets]$ sudo docker compose up -d staging_b2b_tickets_pre_entry_2
+[+] Running 1/1
+ ✔ Container Staging_B2B_Tickets_PreEntry_2  Started                                                                                                                                                                                                                                      0.3s 
+[centos@solarwinds-ip-sla-or-ticketing b2b_tickets]$ 
 
 
 # Delete Docker images with <none> name
