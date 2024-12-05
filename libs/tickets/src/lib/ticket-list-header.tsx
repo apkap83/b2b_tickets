@@ -12,17 +12,22 @@ import { useSession } from 'next-auth/react';
 import styles from './css/tickets-list.module.scss';
 import clsx from 'clsx';
 import { TicketFilter } from './ticket-filter-btn';
+import {
+  TicketDetail,
+  TicketDetailForTicketCreator,
+  FilterTicketsStatus,
+} from '@b2b-tickets/shared-models';
 import { ExportToExcelButton } from './export-excel-btn';
 import { useEscKeyListener } from '@/libs/react-hooks/src';
 
 export const TicketListHeader = ({
-  totalTicketsForCustomer,
-  totalTickets,
+  totalRows,
+  ticketsList,
   query,
   currentPage,
 }: {
-  totalTicketsForCustomer: number;
-  totalTickets: number;
+  totalRows: number;
+  ticketsList: TicketDetail[] | TicketDetailForTicketCreator[];
   query: string;
   currentPage: number;
 }) => {
@@ -49,12 +54,11 @@ export const TicketListHeader = ({
 
       <div className="flex gap-2">
         <ExportToExcelButton
-          totalTickets={totalTickets}
           query={query}
           currentPage={currentPage}
-          disabled={Number(totalTickets) === 0 ? true : false}
+          disabled={totalRows === 0 ? true : false}
         />
-        <TicketFilter totalTicketsForCustomer={totalTicketsForCustomer} />
+        <TicketFilter />
         {userHasPermission(session, AppPermissionTypes.Create_New_Ticket) && (
           <Button
             variant="contained"

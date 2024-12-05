@@ -143,7 +143,7 @@ export interface TicketDetail {
   'Is Final Status': string;
 }
 
-export interface TicketDetailForTicketCreator {
+export interface TicketDetailForTicketCreator extends TicketDetail {
   ticket_id: string;
   customer_id: string;
   severity_id: string;

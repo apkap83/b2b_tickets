@@ -19,13 +19,17 @@ import { WebSocketMessage } from '@b2b-tickets/shared-models';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 import { AppRole } from '@/libs/db-access/src';
 import { late } from 'zod';
+import { Pagination } from '@b2b-tickets/ui';
+import { config } from '@b2b-tickets/config';
 
 export const TicketsListTable = ({
+  totalRows,
   ticketsList,
   setTicketsList,
   query,
   currentPage,
 }: {
+  totalRows: number;
   ticketsList: TicketDetail[] | TicketDetailForTicketCreator[];
   setTicketsList: (a: TicketDetail[] | TicketDetailForTicketCreator[]) => void;
   query: string;
@@ -117,7 +121,7 @@ export const TicketsListTable = ({
     }
   }, [latestEventEmitted]);
 
-  if (!ticketsList || ticketsList.length === 0)
+  if (totalRows === 0)
     return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
 
   const generateTableHeadAndColumns = () => {
@@ -168,7 +172,9 @@ export const TicketsListTable = ({
     );
   };
 
-  if (!ticketsList || ticketsList.length === 0) return null;
+  const totalPages = Math.ceil(
+    Number(totalRows) / config.TICKET_ITEMS_PER_PAGE
+  );
 
   return (
     <>
@@ -184,6 +190,12 @@ export const TicketsListTable = ({
         {generateTableHeadAndColumns()}
         {generateTableBody(ticketsList)}
       </Table>
+      {totalRows > 0 && (
+        <div className="pt-5 flex justify-between items-center">
+          <div>Total Items: {totalRows}</div>
+          {totalPages > 1 && <Pagination totalPages={totalPages} />}
+        </div>
+      )}
     </>
   );
 };

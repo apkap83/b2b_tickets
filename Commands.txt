@@ -74,8 +74,41 @@ nx g lib totp-service --directory libs --tags type:utils,scope:shared
 # Create NavBar component
 nx g component EscalationBars --project ui --export --tags type:ui,scope=b2b_tickets
 
-# Create Socket Server Library
-nx g @nrwl/js:library socket-server --directory libs --tags type:server,scope:b2b_tickets
+# Create Socket Server Application
+nx generate @nx/node:application Socket_Server --verbose
+
+nx report
+nx show project socket-server
+
+# Run in Development Mode
+export DEBUG=1
+export NODE_ENV=staging
+export PORT=3455
+export SOCKET_CORS_ORIGIN=http://127.0.0.1:3000
+export NEXT_AUTH_SESSION_URL=http://127.0.0.1:3000/api/auth/session
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+nx serve socket-server 
+
+# Run in Staging Mode
+export DEBUG=1
+export NODE_ENV=staging
+export PORT=3456
+export SOCKET_CORS_ORIGIN=https://10.124.49.151:8444
+export NEXT_AUTH_SESSION_URL=https://10.124.49.151:8444/api/auth/session
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+nx build socket-server --configuration=staging --verbose
+node dist/apps/socket-server/main.js
+
+# Run in Production Mode
+export DEBUG=1
+export NODE_ENV=staging
+export PORT=3457
+export SOCKET_CORS_ORIGIN=https://10.124.49.151
+export NEXT_AUTH_SESSION_URL=https://10.124.49.151/api/auth/session
+export NODE_TLS_REJECT_UNAUTHORIZED=0
+nx build socket-server --configuration=production --verbose
+node dist/apps/socket-server/main.js
+
 
 
 # Add Jest to a project

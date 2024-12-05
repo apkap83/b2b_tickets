@@ -1,5 +1,8 @@
 'use client';
-import { TicketDetail } from '@b2b-tickets/shared-models';
+import {
+  TicketDetail,
+  TicketDetailForTicketCreator,
+} from '@b2b-tickets/shared-models';
 import { userHasRole } from '@b2b-tickets/utils';
 import { AppRoleTypes } from '@b2b-tickets/shared-models';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
@@ -16,7 +19,7 @@ export const RemedyIncidentRow = ({
   setShowRemedyIncDialog,
 }: {
   session: any;
-  ticketDetails: TicketDetail[];
+  ticketDetails: TicketDetail[] | TicketDetailForTicketCreator[];
   setShowRemedyIncDialog: (a: boolean) => void;
 }) => {
   if (ticketDetails[0].status_id === '1') return null;
@@ -85,7 +88,7 @@ const RemedyIncidentButton = ({
   setShowRemedyIncDialog,
 }: {
   btnLabel: string;
-  ticketDetails: TicketDetail[];
+  ticketDetails: TicketDetail[] | TicketDetailForTicketCreator[];
   setShowRemedyIncDialog: (a: boolean) => void;
 }) => {
   const remedyInc = ticketDetails[0]['Remedy Ticket'] || '';

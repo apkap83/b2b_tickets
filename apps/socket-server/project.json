@@ -1,0 +1,67 @@
+{
+  "name": "socket-server",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/socket-server/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/socket-server",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "apps/socket-server/src/main.ts",
+        "tsConfig": "apps/socket-server/tsconfig.app.json",
+        "assets": ["apps/socket-server/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "staging": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        },
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "socket-server:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "socket-server:build:development"
+        },
+        "staging": {
+          "buildTarget": "socket-server:build:staging"
+        },
+        "production": {
+          "buildTarget": "socket-server:build:production"
+        }
+      }
+    }
+  }
+}

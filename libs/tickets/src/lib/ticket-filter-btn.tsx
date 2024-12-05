@@ -7,11 +7,7 @@ import { VscFilterFilled } from 'react-icons/vsc';
 import Button from '@mui/material/Button';
 import { userHasRole } from '@/libs/utils/src';
 
-export const TicketFilter = ({
-  totalTicketsForCustomer,
-}: {
-  totalTicketsForCustomer: number;
-}) => {
+export const TicketFilter = () => {
   const { data: session, status } = useSession();
   const [isTicketFilterDropdownOpen, setTicketFilterDropdownOpen] =
     useState(false);
@@ -50,33 +46,6 @@ export const TicketFilter = ({
     }
     replace(`${pathname}?${params.toString()}`);
   };
-
-  // const buttonRef = useRef<HTMLDivElement>(null);
-  // const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // // Close dropdown when clicking outside of it and the button
-  // useEffect(() => {
-  //   const handleClickOutside = (event: MouseEvent) => {
-  //     if (
-  //       dropdownRef.current &&
-  //       !dropdownRef.current.contains(event.target as Node) &&
-  //       buttonRef.current &&
-  //       !buttonRef.current.contains(event.target as Node)
-  //     ) {
-  //       setTicketFilterDropdownOpen(false);
-  //     }
-  //   };
-
-  //   document.addEventListener('mousedown', handleClickOutside);
-
-  //   return () => {
-  //     document.removeEventListener('mousedown', handleClickOutside);
-  //   };
-  // }, []);
-
-  if (totalTicketsForCustomer === 0) {
-    return null;
-  }
 
   return (
     <div /*ref={buttonRef}*/>
