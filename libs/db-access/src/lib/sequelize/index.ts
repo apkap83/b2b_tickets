@@ -24,18 +24,22 @@ const sequelize = new Sequelize({
   dialectModule: require('pg'),
   dialectOptions: {
     charset: 'utf8',
+    application_name: config.postgres_b2b_database.applicationNameSequelize,
+    keepAlive: true,
   },
+
   define: {
     freezeTableName: true,
     timestamps: true,
     schema: config.postgres_b2b_database.schemaName,
   },
+
   // logging: sequelizeLogging,
   pool: {
-    max: 14,
-    min: 10,
-    acquire: 30000,
-    idle: 10000,
+    max: config.postgres_b2b_database.sequelizeMaxConnections,
+    min: config.postgres_b2b_database.sequelizeMinConnections,
+    acquire: config.postgres_b2b_database.connectionTimeout,
+    idle: config.postgres_b2b_database.idleTimeout,
   },
   logging: sequelizeLogger,
 });
