@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.6}
+    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.7}
     ports:
       - '5001:3000'
     container_name: Staging_B2B_Tickets_PreEntry_1
@@ -31,7 +31,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.6}
+    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.7}
     ports:
       - '5002:3000'
     container_name: Staging_B2B_Tickets_PreEntry_2
