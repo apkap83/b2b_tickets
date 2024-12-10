@@ -26,6 +26,7 @@ const sequelize = new Sequelize({
     charset: 'utf8',
     application_name: config.postgres_b2b_database.applicationNameSequelize,
     keepAlive: true,
+    idleTimeoutMillis: config.postgres_b2b_database.idleTimeout,
   },
 
   define: {
