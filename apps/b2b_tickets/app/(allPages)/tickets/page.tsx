@@ -24,7 +24,6 @@ const App: React.FC = async ({
       .split('\x1F') // Use the delimiter to split values
       .filter(Boolean); // Remove empty values
   });
-  console.log('filters page', filters);
   const { pageData, totalRows } = await getFilteredTicketsForCustomer(
     page,
     query,

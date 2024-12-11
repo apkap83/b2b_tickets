@@ -66,7 +66,6 @@ export const TicketsList = ({
     getTicketList();
   }, [searchParams]);
 
-  console.log('******* filters', filters);
   return (
     <>
       <TicketListHeader
