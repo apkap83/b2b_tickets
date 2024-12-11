@@ -24,8 +24,8 @@ export const ExportToExcelButton = ({
   const getDataAndConvertToExcel = async () => {
     setProducingExcelFile(true);
     const ticketsList = await getFilteredTicketsForCustomer(
-      query,
       currentPage,
+      query,
       true
     );
 

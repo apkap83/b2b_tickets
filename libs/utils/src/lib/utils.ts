@@ -10,6 +10,7 @@ import {
   B2BUserType,
   TicketDetail,
   TicketDetailForTicketCreator,
+  AllowedColumnsForFilteringType,
 } from '@b2b-tickets/shared-models';
 import { Session } from 'next-auth';
 import * as crypto from 'crypto';
@@ -348,6 +349,7 @@ export const mapToTicketCreator = (ticket: TicketDetail) => {
     'Remedy Ticket': ticket['Remedy Ticket'],
     'Current Escalation Level': ticket['Current Escalation Level'],
     Escalated: ticket.Escalated,
+    escalation_levels: ticket.escalation_levels,
     comments: ticket.comments,
   };
 };
@@ -364,3 +366,15 @@ export const emitSocketEvent = <T extends WebSocketMessage>(
     console.error('Socket is not connected');
   }
 };
+
+export const allowedColumnsForFiltering = [
+  AllowedColumnsForFilteringType.CUSTOMER,
+  AllowedColumnsForFilteringType.CUST_TYPE,
+  AllowedColumnsForFilteringType.TICKET_NUMBER,
+  AllowedColumnsForFilteringType.TITLE,
+  AllowedColumnsForFilteringType.OPENED_BY,
+];
+
+export const columnAllowedForFilter = (
+  column: AllowedColumnsForFilteringType
+) => allowedColumnsForFiltering.includes(column);

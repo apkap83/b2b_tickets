@@ -128,6 +128,7 @@ export interface TicketDetail {
   last_comment_info: string;
   'Hours Passed': number | null;
   'Remedy Ticket': string | null;
+  escalation_levels: string | null;
   Escalated: string;
   'First Escalation User': string | null;
   'First Escalation Date': Date | null; // Changed to Date type
@@ -558,4 +559,12 @@ export interface WebSocketData {
   [WebSocketMessage.TICKET_CANCELED]: {
     ticket_id: string;
   };
+}
+
+export enum AllowedColumnsForFilteringType {
+  CUSTOMER = 'Customer',
+  CUST_TYPE = 'Cust. Type',
+  TICKET_NUMBER = 'Ticket Number',
+  TITLE = 'Title',
+  OPENED_BY = 'Opened By',
 }

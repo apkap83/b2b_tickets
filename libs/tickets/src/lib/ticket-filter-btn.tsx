@@ -6,11 +6,17 @@ import { AppRoleTypes, FilterTicketsStatus } from '@b2b-tickets/shared-models';
 import { VscFilterFilled } from 'react-icons/vsc';
 import Button from '@mui/material/Button';
 import { userHasRole } from '@/libs/utils/src';
+import { useEscKeyListener } from '@/libs/react-hooks/src';
 
 export const TicketFilter = () => {
   const { data: session, status } = useSession();
   const [isTicketFilterDropdownOpen, setTicketFilterDropdownOpen] =
     useState(false);
+
+  // ESC Key Listener
+  useEscKeyListener(() => {
+    setTicketFilterDropdownOpen(false);
+  });
 
   const toggleDropDown = () => {
     setTicketFilterDropdownOpen(!isTicketFilterDropdownOpen);
@@ -48,7 +54,11 @@ export const TicketFilter = () => {
   };
 
   return (
-    <div /*ref={buttonRef}*/>
+    <div
+      style={{
+        position: 'relative',
+      }}
+    >
       <Button
         variant="outlined"
         // ref={dropdownRef}
@@ -57,7 +67,6 @@ export const TicketFilter = () => {
           height: '33px',
           paddingTop: '16px',
           paddingBottom: '16px',
-          position: 'relative',
           flex: 1,
         }}
         onClick={toggleDropDown}
@@ -81,90 +90,90 @@ export const TicketFilter = () => {
             </>
           )}
         </div>
-        {isTicketFilterDropdownOpen ? (
-          <div
-            // ref={dropdownRef}
-            className="absolute top-[34px] left-[-70px] w-[160px] bg-white z-[5] text-[12px] border border-[#88888845] rounded-bl-[16px] rounded-br-[16px]"
-          >
-            <ul
-              tabIndex={0}
-              className={`text-xs dropdown-content 
+      </Button>
+      {isTicketFilterDropdownOpen ? (
+        <div
+          // ref={dropdownRef}
+          className="absolute top-[34px] right-[0px] w-[145px] bg-white z-[5] text-[12px] border border-[#88888845] rounded-tl-[16px] rounded-bl-[16px] rounded-br-[16px]"
+        >
+          <ul
+            tabIndex={0}
+            className={`text-xs dropdown-content 
               menu bg-base-100 rounded-box 
                p-2 shadow-lg dark:bg-white`}
+          >
+            <li
+              onClick={() => {
+                handleFilter(FilterTicketsStatus.All);
+                toggleDropDown();
+              }}
             >
-              <li
-                onClick={() => {
-                  handleFilter(FilterTicketsStatus.All);
-                  toggleDropDown();
-                }}
-              >
-                <a>{FilterTicketsStatus.All}</a>
-              </li>
+              <a>{FilterTicketsStatus.All}</a>
+            </li>
 
-              <li
-                onClick={() => {
-                  handleFilter(FilterTicketsStatus.Open);
-                  toggleDropDown();
-                }}
-              >
-                <a>{FilterTicketsStatus.Open}</a>
-              </li>
-              <li
-                onClick={() => {
-                  handleFilter(FilterTicketsStatus.Closed);
-                  toggleDropDown();
-                }}
-              >
-                <a>{FilterTicketsStatus.Closed}</a>
-              </li>
-              {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
-                <>
-                  <li
-                    onClick={() => {
-                      handleFilter(FilterTicketsStatus.SeverityHigh);
-                      toggleDropDown();
-                    }}
-                  >
-                    <a>{FilterTicketsStatus.SeverityHigh}</a>
-                  </li>
-                  <li
-                    onClick={() => {
-                      handleFilter(FilterTicketsStatus.SeverityMedium);
-                      toggleDropDown();
-                    }}
-                  >
-                    <a>{FilterTicketsStatus.SeverityMedium}</a>
-                  </li>
-                  <li
-                    onClick={() => {
-                      handleFilter(FilterTicketsStatus.SeverityLow);
-                      toggleDropDown();
-                    }}
-                  >
-                    <a>{FilterTicketsStatus.SeverityLow}</a>
-                  </li>
-                  <li
-                    onClick={() => {
-                      handleFilter(FilterTicketsStatus.Escalated);
-                      toggleDropDown();
-                    }}
-                  >
-                    <a>Escalated Only</a>
-                  </li>
-                  <li
-                    onClick={() => {
-                      handleFilter(FilterTicketsStatus.StatusNew);
-                      toggleDropDown();
-                    }}
-                  >
-                    <a>{FilterTicketsStatus.StatusNew}</a>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-        ) : null}
-      </Button>
+            <li
+              onClick={() => {
+                handleFilter(FilterTicketsStatus.Open);
+                toggleDropDown();
+              }}
+            >
+              <a>{FilterTicketsStatus.Open}</a>
+            </li>
+            <li
+              onClick={() => {
+                handleFilter(FilterTicketsStatus.Closed);
+                toggleDropDown();
+              }}
+            >
+              <a>{FilterTicketsStatus.Closed}</a>
+            </li>
+            {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
+              <>
+                <li
+                  onClick={() => {
+                    handleFilter(FilterTicketsStatus.SeverityHigh);
+                    toggleDropDown();
+                  }}
+                >
+                  <a>{FilterTicketsStatus.SeverityHigh}</a>
+                </li>
+                <li
+                  onClick={() => {
+                    handleFilter(FilterTicketsStatus.SeverityMedium);
+                    toggleDropDown();
+                  }}
+                >
+                  <a>{FilterTicketsStatus.SeverityMedium}</a>
+                </li>
+                <li
+                  onClick={() => {
+                    handleFilter(FilterTicketsStatus.SeverityLow);
+                    toggleDropDown();
+                  }}
+                >
+                  <a>{FilterTicketsStatus.SeverityLow}</a>
+                </li>
+                <li
+                  onClick={() => {
+                    handleFilter(FilterTicketsStatus.Escalated);
+                    toggleDropDown();
+                  }}
+                >
+                  <a>Escalated Only</a>
+                </li>
+                <li
+                  onClick={() => {
+                    handleFilter(FilterTicketsStatus.StatusNew);
+                    toggleDropDown();
+                  }}
+                >
+                  <a>{FilterTicketsStatus.StatusNew}</a>
+                </li>
+              </>
+            )}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 };

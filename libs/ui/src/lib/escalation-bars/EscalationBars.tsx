@@ -31,13 +31,15 @@ export const EscalationBars_old = ({ level }: { level: number }) => {
 
 // Component to render the escalation level
 export const EscalationBars = ({
+  escalation_levels,
   level,
   showNumbers,
 }: {
+  escalation_levels: number;
   level: number;
   showNumbers?: boolean;
 }) => {
-  const totalLevels = 4; // Maximum number of levels
+  const totalLevels = escalation_levels || 4; // Maximum number of levels
   const colors = [
     '#4CAF50', // Level 1: Green (Safe)
     '#FFC107', // Level 2: Yellow (Caution)
@@ -56,7 +58,14 @@ export const EscalationBars = ({
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: '10px',
+      }}
+    >
       {/* Render the circles */}
       <div style={{ display: 'flex', gap: '5px' }}>
         {Array.from({ length: totalLevels }, (_, index) => (
@@ -74,9 +83,20 @@ export const EscalationBars = ({
               fontWeight: 'bold',
               fontSize: '8px', // Smaller font size
               border: '1px solid #ccc',
+              position: 'relative',
             }}
           >
-            {showNumbers && level && index + 1} {/* Display the number */}
+            <span
+              style={{
+                position: 'absolute',
+                left: '4.5px',
+                top: '-1.75px',
+                // transform: 'translate(-50%, -50%)',
+              }}
+            >
+              {showNumbers && level && index + 1}
+            </span>
+            {/* Display the number */}
           </div>
         ))}
       </div>
