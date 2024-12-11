@@ -223,30 +223,31 @@ export const getFilteredTicketsForCustomer = async (
     );
 
     // Create SQL expressions based on the query
-    let sqlExpression = '';
+    let sqlExpression: string | null = null;
     switch (query) {
       case FilterTicketsStatus.Open:
-        sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        sqlExpression = `"Is Final Status" = '${TicketStatusIsFinal.NO}'`;
         break;
       case FilterTicketsStatus.Closed:
-        sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.YES}' `;
+        sqlExpression = `"Is Final Status" = '${TicketStatusIsFinal.YES}'`;
         break;
       case FilterTicketsStatus.SeverityHigh:
-        sqlExpression = `AND "Severity" = 'High' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        sqlExpression = `"Severity" = 'High' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
         break;
       case FilterTicketsStatus.SeverityMedium:
-        sqlExpression = `AND "Severity" = 'Medium' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        sqlExpression = `"Severity" = 'Medium' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
         break;
       case FilterTicketsStatus.SeverityLow:
-        sqlExpression = `AND "Severity" = 'Low' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        sqlExpression = `"Severity" = 'Low' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
         break;
       case FilterTicketsStatus.StatusNew:
-        sqlExpression = `AND "Status" = 'New' `;
+        sqlExpression = `"Status" = 'New'`;
         break;
       case FilterTicketsStatus.Escalated:
-        sqlExpression = `AND "Escalated" = 'Yes' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        sqlExpression = `"Escalated" = 'Yes' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
         break;
       case '':
+        sqlExpression = null; // No default filter applied
         break;
       default:
         throw new Error('Invalid query parameter.');
@@ -255,37 +256,47 @@ export const getFilteredTicketsForCustomer = async (
     // If The role is Ticket Handler Return all Tickets
     if (isTicketHandler) {
       // Build dynamic column filters
-      let columnFilters = '';
-      console.log('filters actions', filters);
-      Object.keys(filters).forEach((column) => {
-        if (columnAllowedForFilter(column as AllowedColumnsForFilteringType)) {
+      let columnFilters = Object.keys(filters)
+        .filter((column) =>
+          columnAllowedForFilter(column as AllowedColumnsForFilteringType)
+        )
+        .map((column) => {
           const values = filters[column];
           if (values.length > 0) {
             const valueList = values
               .map((value) => `'${value.replace("'", "''")}'`) // Escape single quotes
               .join(', ');
-            columnFilters += `AND "${column}" IN (${valueList}) `;
+            return `"${column}" IN (${valueList})`;
           }
-        }
-      });
+          return null;
+        })
+        .filter(Boolean) // Remove null/empty filters
+        .join(' AND '); // Combine with AND
 
-      const sqlQuery = `SELECT *, COUNT(1) over () total_records 
-        FROM tickets_v 
-        ${sqlExpression.replace('AND', 'WHERE')} 
-        ${columnFilters}
-        ${
-          allPages
-            ? ''
-            : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
-        }`;
-      console.log('columnFilters actions', columnFilters);
-      console.log('sqlQuery actions', sqlQuery);
+      // Construct the WHERE clause
+      const whereConditions = [sqlExpression, columnFilters]
+        .filter(Boolean) // Remove null/empty values
+        .join(' AND ');
+
+      // Construct the final query
+      const sqlQuery = `
+                        SELECT *, COUNT(1) over () total_records 
+                        FROM tickets_v 
+                        ${whereConditions ? `WHERE ${whereConditions}` : ''} 
+                        ${
+                          allPages
+                            ? ''
+                            : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
+                        }
+                        `;
+
+      console.log('sqlQuery', sqlQuery);
       const res = await pgB2Bpool.query(sqlQuery);
       const tickets = res?.rows;
       const numOfTotalRows = tickets[0]?.total_records;
       return { pageData: res?.rows, totalRows: numOfTotalRows };
     }
-    console.log('*** 285');
+
     // Filter Tickets View by Customer Name
     const sqlQuery = `SELECT *, COUNT(1) over () total_records FROM tickets_v where "customer_id" = $1 ${sqlExpression}
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
