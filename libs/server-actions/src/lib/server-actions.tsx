@@ -12,6 +12,7 @@ import {
   fromErrorToFormState,
   userHasRole,
   userHasPermission,
+  columnAllowedForFilter,
 } from '@b2b-tickets/utils';
 import {
   TicketCategory,
@@ -28,9 +29,14 @@ import {
   EmailNotificationType,
   TicketStatusIsFinal,
   TicketDetailForTicketCreator,
+  AllowedColumnsForFilteringType,
 } from '@b2b-tickets/shared-models';
 
-import { convertTo24HourFormat, mapToTicketCreator } from '@b2b-tickets/utils';
+import {
+  convertTo24HourFormat,
+  mapToTicketCreator,
+  allowedColumnsForFiltering,
+} from '@b2b-tickets/utils';
 import { redirect } from 'next/navigation';
 import { execSync } from 'child_process';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
@@ -131,9 +137,68 @@ export const getCcValuesForTicket = async ({
   }
 };
 
+export const getUniqueItemsForColumn = async (
+  columnName: AllowedColumnsForFilteringType
+) => {
+  try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
+
+    // Filter Applied only for Specific Columns
+    if (!allowedColumnsForFiltering.includes(columnName)) {
+      throw new Error(`Invalid column name: ${columnName}`);
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+    let sqlQuery = '';
+
+    const sqlQueryForCustomers = `select distinct cust.customer_id as id, cust.customer_name as value 
+                                  from customers as cust
+                                  inner join tickets as tick
+                                  on cust.customer_id = tick.customer_id;`;
+
+    const sqlQueryForCustType = `select ct.customer_type_id as id, ct.customer_type as value from customer_types as ct`;
+
+    const sqlQueryForTicketNumber = `select distinct tick.ticket_id as id, tick.ticket_number as value from tickets as tick;`;
+
+    const sqlQueryForTitle = `select distinct tick.ticket_id as id, tick.title as value from tickets as tick;`;
+
+    const sqlQueryForOpenedBy = `select distinct u.user_id as id, u.username as value
+                                  from tickets as tick
+                                  inner join users as u
+                                  on tick.open_user_id = u.user_id`;
+
+    switch (columnName) {
+      case AllowedColumnsForFilteringType.CUSTOMER:
+        sqlQuery = sqlQueryForCustomers;
+        break;
+      case AllowedColumnsForFilteringType.TICKET_NUMBER:
+        sqlQuery = sqlQueryForTicketNumber;
+        break;
+      case AllowedColumnsForFilteringType.CUST_TYPE:
+        sqlQuery = sqlQueryForCustType;
+        break;
+      case AllowedColumnsForFilteringType.TITLE:
+        sqlQuery = sqlQueryForTitle;
+        break;
+      case AllowedColumnsForFilteringType.OPENED_BY:
+        sqlQuery = sqlQueryForOpenedBy;
+        break;
+      default:
+        break;
+    }
+
+    // Construct and execute the SQL query
+    const res = await pgB2Bpool.query(sqlQuery);
+    return { data: res.rows };
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getFilteredTicketsForCustomer = async (
-  query: string,
   currentPage: number,
+  query: string,
+  filters: Record<string, string[]> = {}, // Added filters as an input
   allPages: boolean = false
 ) => {
   try {
@@ -157,68 +222,79 @@ export const getFilteredTicketsForCustomer = async (
       AppRoleTypes.B2B_TicketCreator
     );
 
+    // Create SQL expressions based on the query
     let sqlExpression = '';
-    if (query === FilterTicketsStatus.Open)
-      sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
-    if (query === FilterTicketsStatus.Closed)
-      sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.YES}' `;
-    if (query === FilterTicketsStatus.SeverityHigh)
-      sqlExpression = `AND "Severity" = '${FilterTicketsStatus.SeverityHigh.replace(
-        'Severity ',
-        ''
-      )}' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
-    if (query === FilterTicketsStatus.SeverityMedium)
-      sqlExpression = `AND "Severity" = '${FilterTicketsStatus.SeverityMedium.replace(
-        'Severity ',
-        ''
-      )}' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
-    if (query === FilterTicketsStatus.SeverityLow)
-      sqlExpression = `AND "Severity" = '${FilterTicketsStatus.SeverityLow.replace(
-        'Severity ',
-        ''
-      )}' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
-
-    if (query === FilterTicketsStatus.StatusNew)
-      sqlExpression = `AND "Status" = '${FilterTicketsStatus.StatusNew.replace(
-        'Status ',
-        ''
-      )}'`;
-
-    if (query === FilterTicketsStatus.Escalated)
-      sqlExpression = `AND "Escalated" = 'Yes' AND "Is Final Status" = '${TicketStatusIsFinal.NO}'`;
+    switch (query) {
+      case FilterTicketsStatus.Open:
+        sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        break;
+      case FilterTicketsStatus.Closed:
+        sqlExpression = `AND "Is Final Status" = '${TicketStatusIsFinal.YES}' `;
+        break;
+      case FilterTicketsStatus.SeverityHigh:
+        sqlExpression = `AND "Severity" = 'High' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        break;
+      case FilterTicketsStatus.SeverityMedium:
+        sqlExpression = `AND "Severity" = 'Medium' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        break;
+      case FilterTicketsStatus.SeverityLow:
+        sqlExpression = `AND "Severity" = 'Low' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        break;
+      case FilterTicketsStatus.StatusNew:
+        sqlExpression = `AND "Status" = 'New' `;
+        break;
+      case FilterTicketsStatus.Escalated:
+        sqlExpression = `AND "Escalated" = 'Yes' AND "Is Final Status" = '${TicketStatusIsFinal.NO}' `;
+        break;
+      case '':
+        break;
+      default:
+        throw new Error('Invalid query parameter.');
+    }
 
     // If The role is Ticket Handler Return all Tickets
     if (isTicketHandler) {
-      const sqlQueryCount = `SELECT COUNT(*) FROM tickets_v ${sqlExpression.replace(
-        'AND',
-        'WHERE'
-      )}`;
-      const sqlQuery = `SELECT * FROM tickets_v ${sqlExpression.replace(
-        'AND',
-        'WHERE'
-      )}
-      ${
-        allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
-      }
-      `;
+      // Build dynamic column filters
+      let columnFilters = '';
+      console.log('filters actions', filters);
+      Object.keys(filters).forEach((column) => {
+        if (columnAllowedForFilter(column as AllowedColumnsForFilteringType)) {
+          const values = filters[column];
+          if (values.length > 0) {
+            const valueList = values
+              .map((value) => `'${value.replace("'", "''")}'`) // Escape single quotes
+              .join(', ');
+            columnFilters += `AND "${column}" IN (${valueList}) `;
+          }
+        }
+      });
 
-      const count = await pgB2Bpool.query(sqlQueryCount);
-      const numOfTotalRows = count.rows[0].count;
+      const sqlQuery = `SELECT *, COUNT(1) over () total_records 
+        FROM tickets_v 
+        ${sqlExpression.replace('AND', 'WHERE')} 
+        ${columnFilters}
+        ${
+          allPages
+            ? ''
+            : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`
+        }`;
+      console.log('columnFilters actions', columnFilters);
+      console.log('sqlQuery actions', sqlQuery);
       const res = await pgB2Bpool.query(sqlQuery);
+      const tickets = res?.rows;
+      const numOfTotalRows = tickets[0]?.total_records;
       return { pageData: res?.rows, totalRows: numOfTotalRows };
     }
-
+    console.log('*** 285');
     // Filter Tickets View by Customer Name
-    const sqlQueryCount = `SELECT COUNT(*) FROM tickets_v where "customer_id" = $1 ${sqlExpression}`;
-    const sqlQuery = `SELECT * FROM tickets_v where "customer_id" = $1 ${sqlExpression}
+    const sqlQuery = `SELECT *, COUNT(1) over () total_records FROM tickets_v where "customer_id" = $1 ${sqlExpression}
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 
-    const count = await pgB2Bpool.query(sqlQueryCount, [customerId]);
-    const numOfTotalRows = count.rows[0].count;
-
     const res = await pgB2Bpool.query(sqlQuery, [customerId]);
     const tickets = res?.rows;
+
+    const numOfTotalRows = tickets[0].total_records;
 
     // If Ticket Creator, filter and map the result to TicketDetailForTicketCreator
     if (isTicketCreator) {

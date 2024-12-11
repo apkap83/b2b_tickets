@@ -1,7 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { userHasRole, formatDate } from '@b2b-tickets/utils';
+import {
+  userHasRole,
+  formatDate,
+  columnAllowedForFilter,
+} from '@b2b-tickets/utils';
 import {
   AppRoleTypes,
   TicketDetail,
@@ -13,7 +17,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { TicketRow } from './ticket-row';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocket, useEscKeyListener } from '@b2b-tickets/react-hooks';
 import styles from './css/tickets-list.module.scss';
 import { WebSocketMessage } from '@b2b-tickets/shared-models';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
@@ -21,24 +25,45 @@ import { AppRole } from '@/libs/db-access/src';
 import { late } from 'zod';
 import { Pagination } from '@b2b-tickets/ui';
 import { config } from '@b2b-tickets/config';
+import { ColumnFilter } from './column-filter';
+import { CiFilter } from 'react-icons/ci';
+import { FaFilter } from 'react-icons/fa';
 
 export const TicketsListTable = ({
   totalRows,
   ticketsList,
   setTicketsList,
   query,
+  filter,
   currentPage,
 }: {
   totalRows: number;
   ticketsList: TicketDetail[] | TicketDetailForTicketCreator[];
   setTicketsList: (a: TicketDetail[] | TicketDetailForTicketCreator[]) => void;
   query: string;
+  filter: Record<string, string[]>;
   currentPage: number;
 }) => {
   const { data: session, status } = useSession();
   const { latestEventEmitted } = useWebSocket(); // Access WebSocket instance
   const [isLoading, setIsLoading] = useState(false);
+  const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(
+    null
+  ); // Track which column's filter is active
+  console.log('52 filter', filter);
+  // ESC Key Listener
+  useEscKeyListener(() => {
+    setActiveFilterColumn(null);
+  });
 
+  if (totalRows === 0)
+    return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
+
+  const toggleFilter = (column: string) => {
+    setActiveFilterColumn((prev) => (prev === column ? null : column));
+  };
+
+  // Actions on Events
   useEffect(() => {
     const refreshTicketsList = async () => {
       setIsLoading(true);
@@ -46,11 +71,14 @@ export const TicketsListTable = ({
         const { event, data: ticket_id } = latestEventEmitted;
         const { ticket_id: eventTicketid } = ticket_id;
 
+        const filters: Record<string, string[]> = {};
+
         // Only for New Ticket
         if (event === WebSocketMessage.NEW_TICKET_CREATED) {
           const newTicketsList = await getFilteredTicketsForCustomer(
+            currentPage,
             query,
-            currentPage
+            filter
           );
 
           const newTicketShouldBeIncludedInCurrentView =
@@ -71,8 +99,9 @@ export const TicketsListTable = ({
         // Get Tickets List only if altered ticket exists in current user's view
         if (currentUserViewShowsThisTicket) {
           const newTicketsList = await getFilteredTicketsForCustomer(
+            currentPage,
             query,
-            currentPage
+            filter
           );
           setTicketsList(newTicketsList.pageData);
         }
@@ -121,9 +150,6 @@ export const TicketsListTable = ({
     }
   }, [latestEventEmitted]);
 
-  if (totalRows === 0)
-    return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
-
   const generateTableHeadAndColumns = () => {
     let columnsForTickets = [
       'Ticket Number',
@@ -149,11 +175,50 @@ export const TicketsListTable = ({
       <>
         <TableHead>
           <TableRow sx={{ whiteSpace: 'nowrap' }}>
-            {columnsForTickets.map((item: any, id: number) => (
-              <TableCell key={id} align="center">
-                {item}
-              </TableCell>
-            ))}
+            {columnsForTickets.map((item: any, id: number) => {
+              // Check if a filter is applied to this column
+              const isFiltered = !!filter[item]?.length;
+              return (
+                <TableCell
+                  key={id}
+                  align="center"
+                  sx={{
+                    position: 'relative',
+                    backgroundColor: isFiltered ? '#e0f7fa' : 'transparent', // Highlight if filtered
+                  }}
+                  className="relative group"
+                  onClick={() => toggleFilter(item)} // Toggle filter visibility
+                >
+                  <div className="flex justify-between items-center">
+                    {item}
+                    {columnAllowedForFilter(item) &&
+                      (isFiltered ? (
+                        <FaFilter
+                          className={`filter-icon ${
+                            isFiltered
+                              ? 'text-black visible'
+                              : 'invisible group-hover:visible'
+                          }`}
+                        />
+                      ) : (
+                        <CiFilter
+                          className={`filter-icon ${
+                            isFiltered
+                              ? 'text-black visible'
+                              : 'invisible group-hover:visible'
+                          }`}
+                        />
+                      ))}
+                  </div>
+                  {activeFilterColumn === item && (
+                    <ColumnFilter
+                      column={item}
+                      closeFilter={() => setActiveFilterColumn(null)}
+                    />
+                  )}
+                </TableCell>
+              );
+            })}
           </TableRow>
         </TableHead>
       </>
@@ -175,7 +240,6 @@ export const TicketsListTable = ({
   const totalPages = Math.ceil(
     Number(totalRows) / config.TICKET_ITEMS_PER_PAGE
   );
-
   return (
     <>
       <Table

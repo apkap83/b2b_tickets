@@ -5,19 +5,30 @@ import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 import { notFound } from 'next/navigation';
 
 const App: React.FC = async ({
-  searchParams,
+  searchParams = {}, // Provide a default empty object
 }: {
   searchParams?: {
     query?: string;
     page?: string;
+    [key: string]: string | undefined; // Handle dynamic filter keys
   };
 }) => {
-  const defeaultQuery = searchParams?.query || '';
-  const defaultPage = Number(searchParams?.page) || 1;
+  const query = searchParams.query || ''; // Use the query parameter or default to an empty string
+  const page = Number(searchParams.page) || 1; // Parse page number or default to 1
 
+  // Extract additional filters from searchParams
+  const filters: Record<string, string[]> = {};
+
+  Object.keys(searchParams).forEach((key) => {
+    filters[key] = decodeURIComponent(searchParams[key]!)
+      .split('\x1F') // Use the delimiter to split values
+      .filter(Boolean); // Remove empty values
+  });
+  console.log('filters page', filters);
   const { pageData, totalRows } = await getFilteredTicketsForCustomer(
-    defeaultQuery,
-    defaultPage
+    page,
+    query,
+    filters // Pass filters to the backend
   );
 
   if (!pageData) {
@@ -33,11 +44,7 @@ const App: React.FC = async ({
       }}
       className="relative"
     >
-      <TicketsList
-        searchParams={searchParams}
-        theTicketsList={pageData}
-        totalRows={totalRows}
-      />
+      <TicketsList theTicketsList={pageData} totalRows={totalRows} />
     </Container>
   );
 };

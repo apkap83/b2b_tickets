@@ -187,11 +187,11 @@ export function TicketDetails({
   const serviceType = ticketDetails[0].Service;
   const statusHTMLColor = getStatusColor(ticketStatus);
   const currentEscalationLevel = ticketDetails[0]['Current Escalation Level'];
+  const escalation_levels = ticketDetails[0]['escalation_levels'];
   const isFinalStatus =
     ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
 
   const startWorkPressed = ticketStatus !== '1';
-
   const customButtonBasedOnTicketStatus = () => {
     if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
       if (ticketStatus === TicketStatus.NEW) {
@@ -414,6 +414,7 @@ export function TicketDetails({
                   <div className="text-black/90 text-base font-normal font-['Roboto'] leading-[17.16px] tracking-tight text-right">
                     <div className="flex justify-center items-center gap-1">
                       <EscalationBars
+                        escalation_levels={Number(escalation_levels)}
                         level={currentEscalationLevel}
                         showNumbers={true}
                       />
