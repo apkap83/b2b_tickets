@@ -113,7 +113,10 @@ export const TicketRow = ({
           <TableCell data-label="Escalated" align="center">
             <div className="text-center">
               {!finalTicketStatus && (
-                <EscalationBars level={item['Current Escalation Level']!} />
+                <EscalationBars
+                  escalation_levels={Number(item.escalation_levels)!}
+                  level={item['Current Escalation Level']!}
+                />
               )}
             </div>
           </TableCell>
