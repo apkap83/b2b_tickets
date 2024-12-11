@@ -50,7 +50,7 @@ export const TicketsListTable = ({
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(
     null
   ); // Track which column's filter is active
-  console.log('52 filter', filter);
+
   // ESC Key Listener
   useEscKeyListener(() => {
     setActiveFilterColumn(null);
