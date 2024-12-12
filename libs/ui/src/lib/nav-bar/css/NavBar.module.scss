@@ -35,6 +35,14 @@
   font-weight: 900;
 }
 
+.myMenuLeft {
+  padding-right: 1.25rem;
+}
+
+.myMenu {
+  gap: 1.25rem;
+}
+
 @media (max-width: 580px) {
   .navBar {
     flex-direction: column;
@@ -51,6 +59,15 @@
   .myMenu {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .myMenuLeft {
+    display: flex;
+    flex-direction: column;
+    padding-right: 1.25rem;
+    justify-content: center;
+    align-items: center;
   }
 }

@@ -112,7 +112,6 @@ io.use(async (socket, next) => {
     }
 
     const sessionToken = getSessionToken(rawCookies);
-
     if (!sessionToken) {
       logger.error('Authentication error: Session token missing');
       return next(new Error('Authentication error: Session token missing'));
