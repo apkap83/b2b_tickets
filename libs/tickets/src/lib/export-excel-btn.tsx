@@ -13,10 +13,12 @@ import Tooltip from '@mui/material/Tooltip';
 export const ExportToExcelButton = ({
   query,
   currentPage,
+  filter,
   disabled,
 }: {
   query: string;
   currentPage: number;
+  filter: Record<string, string[]>;
   disabled: boolean;
 }) => {
   const [producingExcelFile, setProducingExcelFile] = useState(false);
@@ -26,7 +28,7 @@ export const ExportToExcelButton = ({
     const ticketsList = await getFilteredTicketsForCustomer(
       currentPage,
       query,
-      true
+      filter
     );
 
     setTimeout(() => {

@@ -382,7 +382,7 @@ export async function sendEmailsForUserCreation({
       const env =
         process.env['APP_ENV'] === 'staging'
           ? ApplicationEnvironment.Staging
-          : process.env['production']
+          : process.env['NODE_ENV'] === 'production'
           ? ApplicationEnvironment.Production
           : ApplicationEnvironment.Development;
 
@@ -459,7 +459,7 @@ export async function sendEmailForPasswordReset(
       const env =
         process.env['APP_ENV'] === 'staging'
           ? ApplicationEnvironment.Staging
-          : process.env['production']
+          : process.env['NODE_ENV'] === 'production'
           ? ApplicationEnvironment.Production
           : ApplicationEnvironment.Development;
 

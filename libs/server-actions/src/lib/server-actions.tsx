@@ -262,6 +262,11 @@ export const getFilteredTicketsForCustomer = async (
         )
         .map((column) => {
           const values = filters[column];
+
+          // Ticket Number = Ticket (in database)
+          if (column === AllowedColumnsForFilteringType.TICKET_NUMBER) {
+            column = 'Ticket';
+          }
           if (values.length > 0) {
             const valueList = values
               .map((value) => `'${value.replace("'", "''")}'`) // Escape single quotes
@@ -290,7 +295,6 @@ export const getFilteredTicketsForCustomer = async (
                         }
                         `;
 
-      console.log('sqlQuery', sqlQuery);
       const res = await pgB2Bpool.query(sqlQuery);
       const tickets = res?.rows;
       const numOfTotalRows = tickets[0]?.total_records;
@@ -298,7 +302,9 @@ export const getFilteredTicketsForCustomer = async (
     }
 
     // Filter Tickets View by Customer Name
-    const sqlQuery = `SELECT *, COUNT(1) over () total_records FROM tickets_v where "customer_id" = $1 ${sqlExpression}
+    const sqlQuery = `SELECT *, COUNT(1) over () total_records FROM tickets_v where "customer_id" = $1 ${
+      sqlExpression ? `AND ${sqlExpression}` : ''
+    }
     ${allPages ? '' : `LIMIT ${config.TICKET_ITEMS_PER_PAGE} OFFSET ${offset}`}
       `;
 

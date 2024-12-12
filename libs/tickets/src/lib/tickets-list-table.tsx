@@ -28,6 +28,9 @@ import { config } from '@b2b-tickets/config';
 import { ColumnFilter } from './column-filter';
 import { CiFilter } from 'react-icons/ci';
 import { FaFilter } from 'react-icons/fa';
+import { TbFilterCheck } from 'react-icons/tb';
+import { FcFilledFilter } from 'react-icons/fc';
+import { ImFilter } from 'react-icons/im';
 
 export const TicketsListTable = ({
   totalRows,
@@ -185,15 +188,26 @@ export const TicketsListTable = ({
                   sx={{
                     position: 'relative',
                     backgroundColor: isFiltered ? '#e0f7fa' : 'transparent', // Highlight if filtered
+                    cursor: userHasRole(session, AppRoleTypes.B2B_TicketHandler)
+                      ? 'pointer'
+                      : 'default',
+                    whiteSpace: 'wrap',
                   }}
                   className="relative group"
-                  onClick={() => toggleFilter(item)} // Toggle filter visibility
+                  onClick={() =>
+                    userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+                    toggleFilter(item)
+                  } // Toggle filter visibility
                 >
                   <div className="flex justify-between items-center">
                     {item}
-                    {columnAllowedForFilter(item) &&
+                    {/* Column Filter Only For Ticket Handlers */}
+                    {userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
+                      columnAllowedForFilter(item) &&
                       (isFiltered ? (
                         <FaFilter
+                          color="#00000085"
+                          size={14}
                           className={`filter-icon ${
                             isFiltered
                               ? 'text-black visible'
@@ -202,6 +216,8 @@ export const TicketsListTable = ({
                         />
                       ) : (
                         <CiFilter
+                          color="gray"
+                          size={16}
                           className={`filter-icon ${
                             isFiltered
                               ? 'text-black visible'

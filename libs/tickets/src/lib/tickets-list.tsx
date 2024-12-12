@@ -40,8 +40,6 @@ export const TicketsList = ({
     }
   });
 
-  // const filters = searchParams?.filter;
-
   // Get Tickets List on Search Param Change
   useEffect(() => {
     const getTicketList = async () => {
@@ -72,6 +70,7 @@ export const TicketsList = ({
         totalRows={totalRows}
         ticketsList={ticketsList}
         query={params.get('query') || ''}
+        filter={filters}
         currentPage={Number(currentPage)}
       />
       <TicketsListTable
