@@ -112,7 +112,9 @@ export const NavBar = () => {
                 }}
               />
             </Stack>
-            <div className={`${styles.b2b_logo_text}`}>Platinum Support</div>
+            <div className={`${styles.b2b_logo_text} whitespace-nowrap`}>
+              Platinum Support
+            </div>
           </Stack>
           {/* </Link> */}
         </div>
@@ -146,13 +148,13 @@ export const NavBar = () => {
               borderTop: '1px solid #5b5ea090',
               borderBottom: '1px solid #5b5ea090',
             }}
-            className={`rounded flex gap-5 ${styles.myMenu}`}
+            className={`rounded flex ${styles.myMenu}`}
             px={2}
           >
             <div
+              className={`${styles.myMenuLeft}`}
               style={{
                 borderRight: '1px dashed #5b5ea090',
-                paddingRight: '1.25rem',
               }}
             >
               {userHasPermission(

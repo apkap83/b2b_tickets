@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
@@ -83,6 +84,7 @@ export const TicketFilter = () => {
                   fontSize: '10px',
                   fontWeight: 800,
                   letterSpacing: '.5px',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {searchParams.get('query')?.toString()}

@@ -95,34 +95,34 @@ export const SessionIndicationAndPopup = () => {
 
   return (
     <>
-      {/* {userHasRole(mySession, AppRoleTypes.B2B_TicketHandler) && ( */}
-      <div
-        className="semi-circle-timer cursor-pointer"
-        onClick={() => {
-          extendSession();
-        }}
-      >
-        <svg width="50" height="25" viewBox="0 0 200 100">
-          <path
-            d="M10,100 A90,90 0 0,1 190,100"
-            fill="none"
-            stroke="#777"
-            strokeWidth="20"
-          />
-          <path
-            d="M10,100 A90,90 0 0,1 190,100"
-            fill="none"
-            stroke="#007700"
-            strokeWidth="20"
-            strokeDasharray="282"
-            strokeDashoffset={`${282 - (282 * (percentage || 1)) / 100}`}
-          />
-        </svg>
-        <div className="remaining-time">
-          {formatTimeMMSS(timeLeftInSeconds!)}
+      {userHasRole(mySession, AppRoleTypes.B2B_TicketHandler) && (
+        <div
+          className="semi-circle-timer cursor-pointer"
+          onClick={() => {
+            extendSession();
+          }}
+        >
+          <svg width="50" height="25" viewBox="0 0 200 100">
+            <path
+              d="M10,100 A90,90 0 0,1 190,100"
+              fill="none"
+              stroke="#777"
+              strokeWidth="20"
+            />
+            <path
+              d="M10,100 A90,90 0 0,1 190,100"
+              fill="none"
+              stroke="#007700"
+              strokeWidth="20"
+              strokeDasharray="282"
+              strokeDashoffset={`${282 - (282 * (percentage || 1)) / 100}`}
+            />
+          </svg>
+          <div className="remaining-time">
+            {formatTimeMMSS(timeLeftInSeconds!)}
+          </div>
         </div>
-      </div>
-      {/* )} */}
+      )}
       {/* Show popup if time left is less than 5 minutes */}
       {showPopup && (
         <div className="fixed z-10 inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none">

@@ -60,8 +60,13 @@ export const SeverityRow = ({
             }}
           />
         </div>
+        <ReactTooltip
+          id="editSeverity"
+          place="bottom"
+          content="Edit Severity"
+          style={{ zIndex: 99 }}
+        />
       </div>
-      <ReactTooltip id="editSeverity" place="bottom" content="Edit Severity" />
     </>
   );
 };

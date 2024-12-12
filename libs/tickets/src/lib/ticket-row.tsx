@@ -38,10 +38,10 @@ export const TicketRow = ({
       {userHasRole(session, AppRoleTypes.B2B_TicketHandler) ? (
         <>
           <TableCell data-label="Customer" align="center">
-            <span className="font-medium">{item.Customer}</span>
+            <span className="font-small text-wrap">{item.Customer}</span>
           </TableCell>
           <TableCell data-label="Type" align="center">
-            <span className="font-medium">{item['Cust. Type']}</span>
+            <span className="font-small">{item['Cust. Type']}</span>
           </TableCell>
         </>
       ) : null}

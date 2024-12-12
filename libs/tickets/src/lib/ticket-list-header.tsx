@@ -24,11 +24,13 @@ export const TicketListHeader = ({
   totalRows,
   ticketsList,
   query,
+  filter,
   currentPage,
 }: {
   totalRows: number;
   ticketsList: TicketDetail[] | TicketDetailForTicketCreator[];
   query: string;
+  filter: Record<string, string[]>;
   currentPage: number;
 }) => {
   const [showCreateTicketModal, setShowCreateTicketModal] = useState(false);
@@ -56,6 +58,7 @@ export const TicketListHeader = ({
         <ExportToExcelButton
           query={query}
           currentPage={currentPage}
+          filter={filter}
           disabled={totalRows === 0 ? true : false}
         />
         <TicketFilter />
