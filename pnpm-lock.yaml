@@ -158,6 +158,9 @@ importers:
       uuid:
         specifier: 10.0.0
         version: 10.0.0
+      validator:
+        specifier: 13.12.0
+        version: 13.12.0
       winston:
         specifier: 3.13.0
         version: 3.13.0
@@ -294,6 +297,9 @@ importers:
       '@types/styled-components':
         specifier: 5.1.26
         version: 5.1.26
+      '@types/validator':
+        specifier: ^13.12.2
+        version: 13.12.2
       '@typescript-eslint/eslint-plugin':
         specifier: 7.3.0
         version: 7.3.0(@typescript-eslint/parser@7.3.0(eslint@8.57.0)(typescript@5.4.2))(eslint@8.57.0)(typescript@5.4.2)

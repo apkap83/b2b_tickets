@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { useSession, getSession, signOut } from 'next-auth/react';
 import { toast } from 'react-hot-toast';
 import { FormState } from '@b2b-tickets/shared-models';
@@ -127,12 +127,18 @@ interface UseSocketReturn {
 export const useWebSocket = (): UseSocketReturn => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
-  const [latestEventEmitted, setLatestEventEmitted] = useState<any>(); // State to store the updated ticket list
+  const [latestEventEmitted, setLatestEventEmitted] = useState<{
+    event: WebSocketMessage;
+    data: WebSocketData[WebSocketMessage];
+  } | null>(null); // State to store the updated ticket list
 
-  const socketURL =
-    process.env.NODE_ENV === 'production'
-      ? config.webSiteUrl
-      : 'http://127.0.0.1:3455';
+  const socketURL = useMemo(
+    () =>
+      process.env.NODE_ENV === 'production'
+        ? config.webSiteUrl
+        : 'http://127.0.0.1:3455',
+    []
+  );
 
   useEffect(() => {
     const socketInstance = io(socketURL, {
@@ -140,8 +146,6 @@ export const useWebSocket = (): UseSocketReturn => {
       transports: ['websocket'], // Use WebSocket for persistent connection
       withCredentials: true, // Allow cookies to be sent with the request
     });
-
-    setSocket(socketInstance);
 
     socketInstance.on('connect', () => {
       setConnected(true);
@@ -151,116 +155,37 @@ export const useWebSocket = (): UseSocketReturn => {
       setConnected(false);
     });
 
+    socketInstance.on('connect_error', (error) => {
+      console.error('Socket Connection error:', error);
+    });
+
     // Listen for events and update the ticket list
-    socketInstance.on(
-      WebSocketMessage.NEW_TICKET_CREATED,
-      (data: WebSocketData[WebSocketMessage.NEW_TICKET_CREATED]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.NEW_TICKET_CREATED,
-          data,
-        });
-      }
-    );
+    Object.values(WebSocketMessage).forEach((message) => {
+      socketInstance.on(message, (data) =>
+        setLatestEventEmitted({ event: message, data })
+      );
+    });
 
-    socketInstance.on(
-      WebSocketMessage.TICKET_CLOSED,
-      (data: WebSocketData[WebSocketMessage.TICKET_CLOSED]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_CLOSED,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.TICKET_CANCELED,
-      (data: WebSocketData[WebSocketMessage.TICKET_CANCELED]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_CANCELED,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.TICKET_ESCALATED,
-      (data: WebSocketData[WebSocketMessage.TICKET_ESCALATED]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_ESCALATED,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.TICKET_ALTERED_SEVERITY,
-      (data: WebSocketData[WebSocketMessage.TICKET_ALTERED_SEVERITY]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_ALTERED_SEVERITY,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.TICKET_ALTERED_REMEDY_INC,
-      (data: WebSocketData[WebSocketMessage.TICKET_ALTERED_REMEDY_INC]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_ALTERED_REMEDY_INC,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE,
-      (
-        data: WebSocketData[WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE]
-      ) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.NEW_COMMENT_ADDED,
-      (data: WebSocketData[WebSocketMessage.NEW_COMMENT_ADDED]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.NEW_COMMENT_ADDED,
-          data,
-        });
-      }
-    );
-
-    socketInstance.on(
-      WebSocketMessage.TICKET_STARTED_WORK,
-      (data: WebSocketData[WebSocketMessage.TICKET_STARTED_WORK]) => {
-        setLatestEventEmitted({
-          event: WebSocketMessage.TICKET_STARTED_WORK,
-          data,
-        });
-      }
-    );
+    setSocket(socketInstance);
 
     // Clean up the socket when the component is unmounted
     return () => {
       socketInstance.disconnect();
+      setSocket(null);
     };
-  }, []); // Run the effect only once on mount
+  }, [socketURL]);
 
   // Emit an event to the server with correct data type
-  const emitEvent = <T extends WebSocketMessage>(
-    event: T,
-    data: WebSocketData[T]
-  ) => {
-    if (socket && connected) {
+  const emitEvent = useCallback(
+    <T extends WebSocketMessage>(event: T, data: WebSocketData[T]) => {
+      if (!socket || !connected) {
+        console.error('Socket is not connected');
+        return;
+      }
       socket.emit(event, data);
-    } else {
-      console.error('Socket is not connected');
-    }
-  };
+    },
+    [socket, connected]
+  );
 
   const resetLatestEventEmitted = () => {
     setLatestEventEmitted(null);

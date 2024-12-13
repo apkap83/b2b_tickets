@@ -13,6 +13,7 @@ import {
   userHasRole,
   userHasPermission,
   columnAllowedForFilter,
+  sanitizeInput,
 } from '@b2b-tickets/utils';
 import {
   TicketCategory,
@@ -195,7 +196,7 @@ export const getUniqueItemsForColumn = async (
   }
 };
 
-export const getFilteredTicketsForCustomer = async (
+export const getFilteredTicketsForCustomer2 = async (
   currentPage: number,
   query: string,
   filters: Record<string, string[]> = {}, // Added filters as an input
@@ -222,6 +223,9 @@ export const getFilteredTicketsForCustomer = async (
       AppRoleTypes.B2B_TicketCreator
     );
 
+    // Sanitize the query
+    query = sanitizeInput(query) || '';
+    console.log('query');
     // Create SQL expressions based on the query
     let sqlExpression: string | null = null;
     switch (query) {
@@ -250,7 +254,7 @@ export const getFilteredTicketsForCustomer = async (
         sqlExpression = null; // No default filter applied
         break;
       default:
-        throw new Error('Invalid query parameter.');
+        throw new Error('Invalid query parameter. ' + query);
     }
 
     // If The role is Ticket Handler Return all Tickets
@@ -261,17 +265,25 @@ export const getFilteredTicketsForCustomer = async (
           columnAllowedForFilter(column as AllowedColumnsForFilteringType)
         )
         .map((column) => {
-          const values = filters[column];
+          let sanitizedColumn = sanitizeInput(column);
+          if (!sanitizedColumn) return null;
+          console.log('*** 270', column);
+          const values = filters[sanitizedColumn] || [];
+          console.log('*** 272 values', values);
+          const sanitizedValues = values.map((value) => sanitizeInput(value));
+          console.log('*** 274 sanitizedValues', sanitizedValues);
 
           // Ticket Number = Ticket (in database)
-          if (column === AllowedColumnsForFilteringType.TICKET_NUMBER) {
-            column = 'Ticket';
+          if (
+            sanitizedColumn === AllowedColumnsForFilteringType.TICKET_NUMBER
+          ) {
+            sanitizedColumn = 'Ticket';
           }
-          if (values.length > 0) {
-            const valueList = values
-              .map((value) => `'${value.replace("'", "''")}'`) // Escape single quotes
+          if (sanitizedValues.length > 0) {
+            const valueList = sanitizedValues
+              .map((value) => `'${value}'`)
               .join(', ');
-            return `"${column}" IN (${valueList})`;
+            return `"${sanitizedColumn}" IN (${valueList})`;
           }
           return null;
         })
@@ -297,6 +309,11 @@ export const getFilteredTicketsForCustomer = async (
 
       const res = await pgB2Bpool.query(sqlQuery);
       const tickets = res?.rows;
+
+      if (!tickets || tickets.length === 0) {
+        return { pageData: [], totalRows: 0 };
+      }
+
       const numOfTotalRows = tickets[0]?.total_records;
       return { pageData: res?.rows, totalRows: numOfTotalRows };
     }
@@ -311,9 +328,185 @@ export const getFilteredTicketsForCustomer = async (
     const res = await pgB2Bpool.query(sqlQuery, [customerId]);
     const tickets = res?.rows;
 
+    if (!tickets || tickets.length === 0) {
+      return { pageData: [], totalRows: 0 };
+    }
+
     const numOfTotalRows = tickets[0].total_records;
 
     // If Ticket Creator, filter and map the result to TicketDetailForTicketCreator
+    if (isTicketCreator) {
+      return {
+        pageData: tickets.map((ticket) => mapToTicketCreator(ticket)),
+        totalRows: numOfTotalRows,
+      };
+    }
+
+    return { pageData: tickets, totalRows: numOfTotalRows };
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getFilteredTicketsForCustomer = async (
+  currentPage: number,
+  query: string,
+  filters: Record<string, string[]> = {}, // Added filters as an input
+  allPages: boolean = false
+) => {
+  try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Tickets_Page
+    );
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const offset = (currentPage - 1) * config.TICKET_ITEMS_PER_PAGE;
+    const customerId = session.user.customer_id;
+
+    // Check if the user belongs to the Ticket Handler role
+    const isTicketHandler = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketHandler
+    );
+
+    // Check if the user belongs to the Ticket Creator role
+    const isTicketCreator = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketCreator
+    );
+
+    // Define allowed columns for filtering
+    const allowedColumns = [
+      'Customer',
+      'Cust. Type',
+      'Ticket Number',
+      'Title',
+      'Opened By',
+      'Escalated',
+    ];
+
+    // Build SQL expression based on the query (using parameterized approach)
+    const sqlExpressions: string[] = [];
+    const queryParams: any[] = [];
+
+    switch (query) {
+      case FilterTicketsStatus.Open:
+        sqlExpressions.push(`"Is Final Status" = $${queryParams.length + 1}`);
+        queryParams.push(TicketStatusIsFinal.NO);
+        break;
+      case FilterTicketsStatus.Closed:
+        sqlExpressions.push(`"Is Final Status" = $${queryParams.length + 1}`);
+        queryParams.push(TicketStatusIsFinal.YES);
+        break;
+      case FilterTicketsStatus.SeverityHigh:
+        sqlExpressions.push(`"Severity" = $${queryParams.length + 1}`);
+        queryParams.push('High');
+        sqlExpressions.push(`"Is Final Status" = $${queryParams.length + 1}`);
+        queryParams.push(TicketStatusIsFinal.NO);
+        break;
+      case FilterTicketsStatus.SeverityMedium:
+        sqlExpressions.push(`"Severity" = $${queryParams.length + 1}`);
+        queryParams.push('Medium');
+        sqlExpressions.push(`"Is Final Status" = $${queryParams.length + 1}`);
+        queryParams.push(TicketStatusIsFinal.NO);
+        break;
+      case FilterTicketsStatus.SeverityLow:
+        sqlExpressions.push(`"Severity" = $${queryParams.length + 1}`);
+        queryParams.push('Low');
+        sqlExpressions.push(`"Is Final Status" = $${queryParams.length + 1}`);
+        queryParams.push(TicketStatusIsFinal.NO);
+        break;
+      case FilterTicketsStatus.StatusNew:
+        sqlExpressions.push(`"Status" = $${queryParams.length + 1}`);
+        queryParams.push('New');
+        break;
+      case FilterTicketsStatus.Escalated:
+        sqlExpressions.push(`"Escalated" = $${queryParams.length + 1}`);
+        queryParams.push('Yes');
+        sqlExpressions.push(`"Is Final Status" = $${queryParams.length + 1}`);
+        queryParams.push(TicketStatusIsFinal.NO);
+        break;
+      case '':
+        break;
+      default:
+        console.log('430', query);
+        throw new Error(`Invalid query parameter.${query}`);
+    }
+
+    // If the role is Ticket Handler, return all tickets
+    if (isTicketHandler) {
+      const filterConditions = Object.entries(filters)
+        .filter(([column]) => allowedColumns.includes(column))
+        .map(([column, values]) => {
+          if (column === 'Ticket Number') {
+            column = 'Ticket';
+          }
+          const placeholders = values.map(() => `$${queryParams.length + 1}`);
+          queryParams.push(...values);
+          return `"${column}" IN (${placeholders.join(', ')})`;
+        });
+
+      const whereConditions = [...sqlExpressions, ...filterConditions]
+        .filter(Boolean)
+        .join(' AND ');
+
+      const sqlQuery = `
+        SELECT *, COUNT(1) OVER () AS total_records 
+        FROM tickets_v 
+        ${whereConditions ? `WHERE ${whereConditions}` : ''} 
+        ${
+          allPages
+            ? ''
+            : `LIMIT $${queryParams.length + 1} OFFSET $${
+                queryParams.length + 2
+              }`
+        }
+      `;
+      console.log('sqlQuery', sqlQuery);
+      if (!allPages) {
+        queryParams.push(config.TICKET_ITEMS_PER_PAGE, offset);
+      }
+
+      const res = await pgB2Bpool.query(sqlQuery, queryParams);
+      const tickets = res?.rows;
+
+      if (!tickets || tickets.length === 0) {
+        return { pageData: [], totalRows: 0 };
+      }
+
+      const numOfTotalRows = tickets[0]?.total_records;
+      return { pageData: tickets, totalRows: numOfTotalRows };
+    }
+
+    // If not a Ticket Handler, filter tickets by customer
+    sqlExpressions.push(`"customer_id" = $${queryParams.length + 1}`);
+    queryParams.push(customerId);
+
+    const whereConditions = sqlExpressions.join(' AND ');
+    const sqlQuery = `
+      SELECT *, COUNT(1) OVER () AS total_records 
+      FROM tickets_v 
+      ${whereConditions ? `WHERE ${whereConditions}` : ''} 
+      ${
+        allPages
+          ? ''
+          : `LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`
+      }
+    `;
+    if (!allPages) {
+      queryParams.push(config.TICKET_ITEMS_PER_PAGE, offset);
+    }
+
+    const res = await pgB2Bpool.query(sqlQuery, queryParams);
+    const tickets = res?.rows;
+
+    if (!tickets || tickets.length === 0) {
+      return { pageData: [], totalRows: 0 };
+    }
+
+    const numOfTotalRows = tickets[0]?.total_records;
+
+    // If Ticket Creator, map the result
     if (isTicketCreator) {
       return {
         pageData: tickets.map((ticket) => mapToTicketCreator(ticket)),
