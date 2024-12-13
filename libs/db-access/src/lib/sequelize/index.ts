@@ -26,7 +26,7 @@ const sequelize = new Sequelize({
     charset: 'utf8',
     application_name: config.postgres_b2b_database.applicationNameSequelize,
     keepAlive: true,
-    idleTimeoutMillis: config.postgres_b2b_database.idleTimeout,
+    connectTimeout: config.postgres_b2b_database.connectionTimeout,
   },
 
   define: {
@@ -39,7 +39,7 @@ const sequelize = new Sequelize({
   pool: {
     max: config.postgres_b2b_database.sequelizeMaxConnections,
     min: config.postgres_b2b_database.sequelizeMinConnections,
-    acquire: config.postgres_b2b_database.connectionTimeout,
+    acquire: config.postgres_b2b_database.acquire,
     idle: config.postgres_b2b_database.idleTimeout,
   },
   logging: sequelizeLogger,
