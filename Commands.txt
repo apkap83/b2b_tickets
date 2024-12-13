@@ -110,6 +110,17 @@ nx build socket-server --configuration=production --verbose
 node dist/apps/socket-server/main.js
 
 
+# Altered Postgres configuration
+show statement_timeout;
+show idle_in_transaction_session_timeout;
+
+ALTER SYSTEM SET statement_timeout = '40000'; -- 40 seconds
+SET statement_timeout = '40000'; -- 40 seconds
+
+ALTER SYSTEM SET idle_in_transaction_session_timeout = '60000'; -- 1 minute
+
+SELECT pg_reload_conf();
+
 
 # Add Jest to a project
 nx g @nx/jest:configuration --project=tickets

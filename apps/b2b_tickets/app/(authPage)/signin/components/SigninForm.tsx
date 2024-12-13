@@ -170,7 +170,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
         window.location.href = callbackUrl;
       }
 
-      let error = response?.error?.replace('Error: ', '');
+      const error = response?.error?.replace('Error: ', '');
 
       // If no error field exists or it's empty, return early
       if (!error) return;

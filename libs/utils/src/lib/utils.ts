@@ -18,6 +18,7 @@ import * as Yup from 'yup';
 
 import { Socket } from 'socket.io-client';
 import { WebSocketMessage, WebSocketData } from '@b2b-tickets/shared-models'; // Import WebSocketMessage and WebSocketData types
+import { escape, trim } from 'validator';
 
 const ALGORITHM = 'aes-256-cbc';
 const INPUT_ENCODING = 'utf8';
@@ -375,6 +376,23 @@ export const allowedColumnsForFiltering = [
   AllowedColumnsForFilteringType.OPENED_BY,
 ];
 
-export const columnAllowedForFilter = (
-  column: AllowedColumnsForFilteringType
-) => allowedColumnsForFiltering.includes(column);
+export const columnAllowedForFilter = (column: string) =>
+  allowedColumnsForFiltering.includes(column as AllowedColumnsForFilteringType);
+
+export const sanitizeInput = (value: any): string | null => {
+  if (value === null || value === undefined) return null;
+
+  // Ensure value is a string
+  let sanitizedValue = String(value);
+
+  // Trim whitespace
+  sanitizedValue = trim(sanitizedValue);
+
+  // Escape potentially harmful characters
+  // sanitizedValue = escape(sanitizedValue); & is converted to &amp;
+
+  // Escape single quotes to prevent SQL injection
+  sanitizedValue = sanitizedValue.replace(/'/g, "''");
+
+  return sanitizedValue;
+};

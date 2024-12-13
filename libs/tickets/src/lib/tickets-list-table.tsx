@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import {
   userHasRole,
@@ -31,6 +31,7 @@ import { FaFilter } from 'react-icons/fa';
 import { TbFilterCheck } from 'react-icons/tb';
 import { FcFilledFilter } from 'react-icons/fc';
 import { ImFilter } from 'react-icons/im';
+import { debounce } from 'lodash';
 
 export const TicketsListTable = ({
   totalRows,
@@ -47,97 +48,80 @@ export const TicketsListTable = ({
   filter: Record<string, string[]>;
   currentPage: number;
 }) => {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { latestEventEmitted } = useWebSocket(); // Access WebSocket instance
-  const [isLoading, setIsLoading] = useState(false);
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(
     null
-  ); // Track which column's filter is active
+  );
+
+  const isFilterEmpty = Object.values(filter).every((arr) => arr.length === 0);
+  const isTicketHandler = userHasRole(session, AppRoleTypes.B2B_TicketHandler);
 
   // ESC Key Listener
   useEscKeyListener(() => {
     setActiveFilterColumn(null);
   });
 
-  if (totalRows === 0)
-    return <p className="pt-5 text-center">No Tickets Currently Exist</p>;
-
   const toggleFilter = (column: string) => {
     setActiveFilterColumn((prev) => (prev === column ? null : column));
   };
 
-  // Actions on Events
-  useEffect(() => {
-    const refreshTicketsList = async () => {
-      setIsLoading(true);
-      try {
-        const { event, data: ticket_id } = latestEventEmitted;
-        const { ticket_id: eventTicketid } = ticket_id;
-
-        const filters: Record<string, string[]> = {};
-
-        // Only for New Ticket
-        if (event === WebSocketMessage.NEW_TICKET_CREATED) {
-          const newTicketsList = await getFilteredTicketsForCustomer(
-            currentPage,
-            query,
-            filter
-          );
-
-          const newTicketShouldBeIncludedInCurrentView =
-            newTicketsList.pageData.some(
-              (item: any) => item.ticket_id === eventTicketid
-            );
-
-          if (newTicketShouldBeIncludedInCurrentView)
-            setTicketsList(newTicketsList.pageData);
-          return;
-        }
-
-        // For Every Other Kind of Event Message
-        const currentUserViewShowsThisTicket = ticketsList.some(
-          (item) => item.ticket_id === eventTicketid
-        );
-
-        // Get Tickets List only if altered ticket exists in current user's view
-        if (currentUserViewShowsThisTicket) {
-          const newTicketsList = await getFilteredTicketsForCustomer(
-            currentPage,
-            query,
-            filter
-          );
-          setTicketsList(newTicketsList.pageData);
-        }
-      } catch (error) {
-        console.error('Error refreshing tickets:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const refreshTicketsList = async () => {
     if (!latestEventEmitted) return;
 
-    const { event, data } = latestEventEmitted;
+    try {
+      const { event, data: ticket_id } = latestEventEmitted;
+      const { ticket_id: eventTicketid } = ticket_id;
+
+      const newTicketsList = await getFilteredTicketsForCustomer(
+        currentPage,
+        query,
+        filter
+      );
+
+      const newTicketShouldBeIncludedInCurrentView =
+        newTicketsList.pageData.some(
+          (item: any) => item.ticket_id === eventTicketid
+        );
+
+      const currentUserViewShowsThisTicket = ticketsList.some(
+        (item) => item.ticket_id === eventTicketid
+      );
+
+      if (event === WebSocketMessage.NEW_TICKET_CREATED) {
+        if (newTicketShouldBeIncludedInCurrentView) {
+          setTicketsList(newTicketsList.pageData);
+        }
+        return;
+      }
+
+      if (currentUserViewShowsThisTicket) {
+        setTicketsList(newTicketsList.pageData);
+      }
+    } catch (error) {
+      console.error('Error refreshing tickets:', error);
+    }
+  };
+
+  const debouncedRefreshTickets = useMemo(
+    () =>
+      debounce(() => {
+        refreshTicketsList();
+      }, 300),
+    [refreshTicketsList]
+  );
+
+  // Actions on Events
+  useEffect(() => {
+    if (!latestEventEmitted) return;
+
+    const { event } = latestEventEmitted;
 
     switch (event) {
       case WebSocketMessage.NEW_COMMENT_ADDED:
-        if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
-          //@ts-ignore
-          setTicketsList((prevTickets) =>
-            //@ts-ignore
-            prevTickets.map((ticket) =>
-              ticket.ticket_id === data.ticket_id
-                ? {
-                    ...ticket,
-                    'Last Cust. Comment Date': formatDate(new Date(data.date)),
-                  }
-                : ticket
-            )
-          );
-        }
+        debouncedRefreshTickets();
         break;
 
-      case WebSocketMessage.TICKET_ALTERED_REMEDY_INC: // No Action
-        break;
       case WebSocketMessage.NEW_TICKET_CREATED:
       case WebSocketMessage.TICKET_CLOSED:
       case WebSocketMessage.TICKET_CANCELED:
@@ -145,12 +129,16 @@ export const TicketsListTable = ({
       case WebSocketMessage.TICKET_ALTERED_SEVERITY:
       case WebSocketMessage.TICKET_STARTED_WORK:
       case WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE:
-        refreshTicketsList();
+        debouncedRefreshTickets();
         break;
 
       default:
         console.warn(`Unhandled WebSocket event: ${event}`);
     }
+
+    return () => {
+      debouncedRefreshTickets.cancel();
+    };
   }, [latestEventEmitted]);
 
   const generateTableHeadAndColumns = () => {
@@ -166,77 +154,69 @@ export const TicketsListTable = ({
       'Status Date',
     ];
 
-    if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
+    if (isTicketHandler) {
       columnsForTickets.unshift('Cust. Type');
       columnsForTickets.unshift('Customer');
       columnsForTickets.push('Escalation');
       columnsForTickets.push('Cust. Last Comment');
-      // columnsForTickets.push('Delayed Resp');
     }
 
     return (
       <>
-        <TableHead>
-          <TableRow sx={{ whiteSpace: 'nowrap' }}>
-            {columnsForTickets.map((item: any, id: number) => {
-              // Check if a filter is applied to this column
-              const isFiltered = !!filter[item]?.length;
-              return (
-                <TableCell
-                  key={id}
-                  align="center"
-                  sx={{
-                    position: 'relative',
-                    backgroundColor: isFiltered ? '#e0f7fa' : 'transparent', // Highlight if filtered
-                    cursor: userHasRole(session, AppRoleTypes.B2B_TicketHandler)
-                      ? 'pointer'
-                      : 'default',
-                    whiteSpace: 'wrap',
-                  }}
-                  className="relative group"
-                  onClick={() =>
-                    userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
-                    toggleFilter(item)
-                  } // Toggle filter visibility
-                >
-                  <div className="flex justify-between items-center">
-                    {item}
-                    {/* Column Filter Only For Ticket Handlers */}
-                    {userHasRole(session, AppRoleTypes.B2B_TicketHandler) &&
-                      columnAllowedForFilter(item) &&
-                      (isFiltered ? (
-                        <FaFilter
-                          color="#00000085"
-                          size={14}
-                          className={`filter-icon ${
-                            isFiltered
-                              ? 'text-black visible'
-                              : 'invisible group-hover:visible'
-                          }`}
-                        />
-                      ) : (
-                        <CiFilter
-                          color="gray"
-                          size={16}
-                          className={`filter-icon ${
-                            isFiltered
-                              ? 'text-black visible'
-                              : 'invisible group-hover:visible'
-                          }`}
-                        />
-                      ))}
-                  </div>
-                  {activeFilterColumn === item && (
-                    <ColumnFilter
-                      column={item}
-                      closeFilter={() => setActiveFilterColumn(null)}
-                    />
-                  )}
-                </TableCell>
-              );
-            })}
-          </TableRow>
-        </TableHead>
+        <TableRow sx={{ whiteSpace: 'nowrap' }}>
+          {columnsForTickets.map((item: any, id: number) => {
+            // Check if a filter is applied to this column
+            const isFiltered = !!filter[item]?.length;
+            return (
+              <TableCell
+                key={id}
+                align="center"
+                sx={{
+                  position: 'relative',
+                  backgroundColor: isFiltered ? '#e0f7fa' : 'transparent', // Highlight if filtered
+                  cursor: isTicketHandler ? 'pointer' : 'default',
+                  whiteSpace: 'wrap',
+                }}
+                className="relative group"
+                onClick={() => isTicketHandler && toggleFilter(item)} // Toggle filter visibility
+              >
+                <div className="flex justify-between items-center">
+                  {item}
+                  {/* Column Filter Only For Ticket Handlers */}
+                  {isTicketHandler &&
+                    columnAllowedForFilter(item) &&
+                    (isFiltered ? (
+                      <FaFilter
+                        color="#00000085"
+                        size={14}
+                        className={`filter-icon ${
+                          isFiltered
+                            ? 'text-black visible'
+                            : 'invisible group-hover:visible'
+                        }`}
+                      />
+                    ) : (
+                      <CiFilter
+                        color="gray"
+                        size={16}
+                        className={`filter-icon ${
+                          isFiltered
+                            ? 'text-black visible'
+                            : 'invisible group-hover:visible'
+                        }`}
+                      />
+                    ))}
+                </div>
+                {activeFilterColumn === item && (
+                  <ColumnFilter
+                    column={item}
+                    closeFilter={() => setActiveFilterColumn(null)}
+                  />
+                )}
+              </TableCell>
+            );
+          })}
+        </TableRow>
       </>
     );
   };
@@ -245,17 +225,21 @@ export const TicketsListTable = ({
     items: TicketDetail[] | TicketDetailForTicketCreator[]
   ) => {
     return (
-      <TableBody>
+      <>
         {items.map((item: any) => (
           <TicketRow key={item.ticket_id} session={session} item={item} />
         ))}
-      </TableBody>
+      </>
     );
   };
 
   const totalPages = Math.ceil(
     Number(totalRows) / config.TICKET_ITEMS_PER_PAGE
   );
+
+  if (ticketsList && ticketsList.length === 0 && isFilterEmpty)
+    return <p className="text-center">No Tickets Currently Exist</p>;
+
   return (
     <>
       <Table
@@ -267,8 +251,8 @@ export const TicketsListTable = ({
         aria-label="a dense table"
         className={`${styles.ticketsList}`}
       >
-        {generateTableHeadAndColumns()}
-        {generateTableBody(ticketsList)}
+        <TableHead>{generateTableHeadAndColumns()}</TableHead>
+        {<TableBody>{generateTableBody(ticketsList)}</TableBody>}
       </Table>
       {totalRows > 0 && (
         <div className="pt-5 flex justify-between items-center">
