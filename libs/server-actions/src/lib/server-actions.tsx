@@ -196,7 +196,7 @@ export const getUniqueItemsForColumn = async (
   }
 };
 
-export const getFilteredTicketsForCustomer2 = async (
+export const OLD_getFilteredTicketsForCustomer = async (
   currentPage: number,
   query: string,
   filters: Record<string, string[]> = {}, // Added filters as an input
@@ -225,7 +225,6 @@ export const getFilteredTicketsForCustomer2 = async (
 
     // Sanitize the query
     query = sanitizeInput(query) || '';
-    console.log('query');
     // Create SQL expressions based on the query
     let sqlExpression: string | null = null;
     switch (query) {
@@ -267,11 +266,8 @@ export const getFilteredTicketsForCustomer2 = async (
         .map((column) => {
           let sanitizedColumn = sanitizeInput(column);
           if (!sanitizedColumn) return null;
-          console.log('*** 270', column);
           const values = filters[sanitizedColumn] || [];
-          console.log('*** 272 values', values);
           const sanitizedValues = values.map((value) => sanitizeInput(value));
-          console.log('*** 274 sanitizedValues', sanitizedValues);
 
           // Ticket Number = Ticket (in database)
           if (
@@ -429,7 +425,6 @@ export const getFilteredTicketsForCustomer = async (
       case '':
         break;
       default:
-        console.log('430', query);
         throw new Error(`Invalid query parameter.${query}`);
     }
 
@@ -462,7 +457,6 @@ export const getFilteredTicketsForCustomer = async (
               }`
         }
       `;
-      console.log('sqlQuery', sqlQuery);
       if (!allPages) {
         queryParams.push(config.TICKET_ITEMS_PER_PAGE, offset);
       }
