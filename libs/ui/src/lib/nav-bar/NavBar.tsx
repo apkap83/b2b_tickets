@@ -22,7 +22,7 @@ import {
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
 import config from '@b2b-tickets/config';
 import styles from './css/NavBar.module.scss';
-import { SessionIndicationAndPopup } from '../session-popup/SessionIndicationAndPopup';
+import { SessionPopup } from '../session-popup/SessionPopup';
 
 export const NavBar = () => {
   const theme = useTheme();
@@ -120,14 +120,14 @@ export const NavBar = () => {
         </div>
 
         {process.env['NEXT_PUBLIC_APP_ENV'] === 'staging' && (
-          <div className="flex items-center justify-center h-12 rounded-md ">
-            <div className="text-center rounded-md text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-1 shadow-white shadow-sm">
+          <div className="absolute left-[40%] rounded-md hidden lg:flex items-center justify-center h-12">
+            <div className="rounded-md text-center text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-2 shadow-white shadow-sm">
               Staging Environment
             </div>
           </div>
         )}
         {process.env['NODE_ENV'] === 'development' && (
-          <div className="rounded-md flex items-center justify-center h-12">
+          <div className="absolute left-[40%] rounded-md hidden lg:flex items-center justify-center h-12">
             <div className="rounded-md text-center text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-2 shadow-white shadow-sm">
               Development Environment
             </div>
@@ -215,7 +215,7 @@ export const NavBar = () => {
                 session={session}
                 customerName={customerName}
               />
-              <SessionIndicationAndPopup />
+              <SessionPopup />
             </div>
           </Box>
         </Box>
