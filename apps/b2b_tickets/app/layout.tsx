@@ -13,6 +13,7 @@ import './sass/main.scss';
 import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
 import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import CookieConsentBanner from './CookieConsentBanner';
+import WebSocketWrapper from './WebSocketWrapper';
 
 // TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
@@ -42,11 +43,13 @@ export default async function RootLayout({
           <AppRouterCacheProvider>
             <AppThemeProvider>
               <ToastProvider>
-                <main>
-                  {/* {session ? <NavBar /> : null} */}
-                  {children}
-                  {/* {session ? <Footer /> : null} */}
-                </main>
+                <WebSocketWrapper>
+                  <main>
+                    {/* {session ? <NavBar /> : null} */}
+                    {children}
+                    {/* {session ? <Footer /> : null} */}
+                  </main>
+                </WebSocketWrapper>
                 <CookieConsentBanner />
               </ToastProvider>
             </AppThemeProvider>

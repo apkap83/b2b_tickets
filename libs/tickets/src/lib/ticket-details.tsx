@@ -42,7 +42,7 @@ import { CcFields } from './cc-fields-in-ticket-details';
 import clsx from 'clsx';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { EscalationBars } from '@b2b-tickets/ui';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
 import { getTicketDetailsForTicketNumber } from '@b2b-tickets/server-actions';
 
 const detailsRowClass =
@@ -100,7 +100,7 @@ export function TicketDetails({
   }, [theTicketNumber]);
   // Web Socket Connection
   const { emitEvent, latestEventEmitted, resetLatestEventEmitted } =
-    useWebSocket();
+    useWebSocketContext();
 
   useEffect(() => {
     const fetchFreshData = async () => {

@@ -13,7 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import { useTheme } from '@mui/material';
 import { useFormik } from 'formik';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
 
 export const SeverityPopup = ({
   ticketDetails,
@@ -29,7 +29,7 @@ export const SeverityPopup = ({
   const severityId = String(ticketDetails[0].severity_id);
 
   // Web Socket Connection
-  const { emitEvent } = useWebSocket();
+  const { emitEvent } = useWebSocketContext();
 
   const formik = useFormik<any>({
     initialValues: {
