@@ -44,7 +44,7 @@ export default async function RootLayout({
             <AppThemeProvider>
               <ToastProvider>
                 <WebSocketWrapper>
-                  <main>
+                  <main style={{ height: '100vh' }}>
                     {/* {session ? <NavBar /> : null} */}
                     {children}
                     {/* {session ? <Footer /> : null} */}

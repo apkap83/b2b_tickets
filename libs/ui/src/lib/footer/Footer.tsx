@@ -43,8 +43,11 @@ export const Footer: React.FC = () => {
           priority
           src={united_group_member}
           alt={'United Group Logo'}
-          height={24}
-          width={129}
+          height={29}
+          width={155}
+          style={{
+            objectFit: 'contain',
+          }}
         />
       </div>
     </footer>
