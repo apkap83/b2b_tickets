@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import Button from '@mui/material/Button';
 import { useTheme } from '@mui/material';
 import { tokens } from '@b2b-tickets/ui-theme';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
 
 export const RemedyIncPopup = ({
   ticketDetails,
@@ -23,7 +23,7 @@ export const RemedyIncPopup = ({
   const inputBox = useRef<any>();
 
   // Web Socket Connection
-  const { emitEvent } = useWebSocket();
+  const { emitEvent } = useWebSocketContext();
 
   const handleSubmit = async () => {
     if (inputBox && inputBox.current.value) {

@@ -50,7 +50,7 @@ import {
   WebSocketMessage,
 } from '@b2b-tickets/shared-models';
 import toast from 'react-hot-toast';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
 import 'react-quill/dist/quill.snow.css';
 
 const FieldError = ({ formik, name, ...rest }: any) => {
@@ -94,7 +94,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
 
   const [severities, setSeverities] = useState<Severity[]>([]);
 
-  const { emitEvent } = useWebSocket();
+  const { emitEvent } = useWebSocketContext();
 
   // Get Severities
   useEffect(() => {

@@ -58,7 +58,7 @@ import {
   TicketDetailsModalActions,
   WebSocketMessage,
 } from '@b2b-tickets/shared-models';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
 import styles from './css/new-comment-modal.module.scss';
 
 export function EscalateModal({
@@ -90,7 +90,7 @@ export function EscalateModal({
   const noScriptFallback = useToastMessage(formState);
 
   // Web Socket Connection
-  const { emitEvent } = useWebSocket();
+  const { emitEvent } = useWebSocketContext();
 
   useEffect(() => {
     const nextEscLevel = async () => {

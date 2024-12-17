@@ -24,7 +24,7 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { FieldError } from '@b2b-tickets/utils';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
 
 export const ChangeCategoryPopup = ({
   ticketDetails,
@@ -50,7 +50,7 @@ export const ChangeCategoryPopup = ({
   );
 
   // Web Socket Connection
-  const { emitEvent } = useWebSocket();
+  const { emitEvent } = useWebSocketContext();
 
   const noScriptFallback = useToastMessage(formState);
   const ticketSchema = yup.object().shape({

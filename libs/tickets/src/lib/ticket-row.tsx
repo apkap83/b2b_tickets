@@ -19,6 +19,11 @@ export const TicketRow = ({
   const router = useRouter();
 
   const handleClick = () => {
+    if (typeof window !== 'undefined' && window.sessionStorage)
+      sessionStorage.setItem(
+        'ticketFilter',
+        window.location.search.replace('?', '')
+      );
     router.push(`/ticket/${item.Ticket}`);
   };
 
