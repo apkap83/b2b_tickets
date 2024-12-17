@@ -11,7 +11,7 @@ import { createNewComment } from '@b2b-tickets/server-actions';
 import { EMPTY_FORM_STATE, userHasRole } from '@b2b-tickets/utils';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { SubmitButton } from '@b2b-tickets/ui';
-import { useWebSocket } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
 
 import {
   TicketDetail,
@@ -47,7 +47,7 @@ export function NewCommentModal({
   );
 
   // Web Socket Connection
-  const { emitEvent } = useWebSocket();
+  const { emitEvent } = useWebSocketContext();
 
   const noScriptFallback = useToastMessage(formState);
 

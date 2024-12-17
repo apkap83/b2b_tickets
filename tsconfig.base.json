@@ -28,6 +28,8 @@
       "@b2b-tickets/auth-options": ["libs/auth-options/src/index.ts"],
       "@b2b-tickets/auth-options/server": ["libs/auth-options/src/server.ts"],
       "@b2b-tickets/config": ["libs/config/src/index.ts"],
+      "@b2b-tickets/contexts": ["libs/contexts/src/index.ts"],
+      "@b2b-tickets/contexts/server": ["libs/contexts/src/server.ts"],
       "@b2b-tickets/db-access": ["libs/db-access/src/index.ts"],
       "@b2b-tickets/email-service": ["libs/email-service/src/index.ts"],
       "@b2b-tickets/email-service/server": ["libs/email-service/src/server.ts"],

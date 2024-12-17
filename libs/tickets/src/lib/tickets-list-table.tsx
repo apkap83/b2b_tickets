@@ -17,7 +17,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import { TicketRow } from './ticket-row';
-import { useWebSocket, useEscKeyListener } from '@b2b-tickets/react-hooks';
+import { useEscKeyListener } from '@b2b-tickets/react-hooks';
+import { useWebSocketContext } from '@b2b-tickets/contexts';
+
 import styles from './css/tickets-list.module.scss';
 import { WebSocketMessage } from '@b2b-tickets/shared-models';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
@@ -49,7 +51,7 @@ export const TicketsListTable = ({
   currentPage: number;
 }) => {
   const { data: session } = useSession();
-  const { latestEventEmitted } = useWebSocket(); // Access WebSocket instance
+  const { latestEventEmitted } = useWebSocketContext(); // Access WebSocket instance
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(
     null
   );

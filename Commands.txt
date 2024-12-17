@@ -77,6 +77,9 @@ nx g component EscalationBars --project ui --export --tags type:ui,scope=b2b_tic
 # Create Socket Server Application
 nx generate @nx/node:application Socket_Server --verbose
 
+# Create Context Library
+nx g @nx/next:library contexts --directory libs --tags type:ui,scope:b2b_tickets
+
 nx report
 nx show project socket-server
 

@@ -55,6 +55,7 @@ export const ColumnFilter = ({
       // No selection means clear the filter
       params.delete(column); // Remove the column from the query string
     }
+    sessionStorage.setItem('ticketFilter', params.toString());
 
     // Apply updated query parameters
     replace(`${pathname}?${params.toString()}`);

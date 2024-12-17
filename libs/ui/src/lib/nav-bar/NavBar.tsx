@@ -186,15 +186,23 @@ export const NavBar = () => {
               <IconButton
                 className="flex flex-col justify-center items-center"
                 onClick={() => {
-                  if (window) {
-                    const savedFilter = sessionStorage.getItem('ticketFilter');
-                    if (!savedFilter) return router.replace(`/tickets`);
+                  // if (window) {
+                  //   const savedFilter = sessionStorage.getItem('ticketFilter');
+                  //   if (!savedFilter) return router.replace(`/tickets`);
 
-                    router.replace(`/tickets?query=${savedFilter}&page=1`);
-                    return;
+                  //   router.replace(`/tickets?query=${savedFilter}&page=1`);
+                  //   return;
+                  // }
+
+                  // router.replace(`/tickets`);
+
+                  // Use the stored search params to navigate to the tickets page
+                  const savedFilter = sessionStorage.getItem('ticketFilter');
+                  if (savedFilter) {
+                    router.replace(`/tickets?${savedFilter}`);
+                  } else {
+                    router.replace(`/tickets`);
                   }
-
-                  router.replace(`/tickets`);
                 }}
                 sx={{
                   color: isTicketsPath

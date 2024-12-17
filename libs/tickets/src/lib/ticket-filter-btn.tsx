@@ -29,12 +29,12 @@ export const TicketFilter = () => {
   const { replace } = useRouter();
 
   // Get the saved filter from sessionStorage on mount
-  useEffect(() => {
-    const savedFilter = sessionStorage.getItem('ticketFilter');
-    if (savedFilter) {
-      handleFilter(savedFilter as FilterTicketsStatus);
-    }
-  }, []);
+  // useEffect(() => {
+  //   const savedFilter = sessionStorage.getItem('ticketFilter');
+  //   if (savedFilter) {
+  //     handleFilter(savedFilter as FilterTicketsStatus);
+  //   }
+  // }, []);
 
   const handleFilter = (term: FilterTicketsStatus) => {
     const params = new URLSearchParams(searchParams);
@@ -42,11 +42,14 @@ export const TicketFilter = () => {
       if (term === FilterTicketsStatus.All) {
         params.delete('query');
         params.set('page', '1');
-        sessionStorage.removeItem('ticketFilter');
+        // sessionStorage.removeItem('ticketFilter');
       } else {
         params.set('query', term);
         params.set('page', '1');
-        sessionStorage.setItem('ticketFilter', term);
+        sessionStorage.setItem(
+          'ticketFilter',
+          window.location.search.replace('?', '')
+        );
       }
     } else {
       params.delete('query');
