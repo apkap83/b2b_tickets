@@ -36,23 +36,6 @@ export const NavBar = () => {
 
   const { data: session, status } = useSession();
 
-  // useEffect(() => {
-  //   const calculateHeight = () => {
-  //     if (navbarRef.current) {
-  //       setNavbarHeight(navbarRef.current.offsetHeight);
-  //     }
-  //   };
-
-  //   // Calculate height on load
-  //   calculateHeight();
-
-  //   // Recalculate height on window resize
-  //   window.addEventListener('resize', calculateHeight);
-  //   return () => {
-  //     window.removeEventListener('resize', calculateHeight);
-  //   };
-  // }, []);
-
   const customerName = session?.user?.customer_name;
   const isAdminPath = pathname === '/admin';
   const isTicketsPath = pathname === '/tickets';
@@ -67,25 +50,15 @@ export const NavBar = () => {
         className={`${styles.navBar} z-10`}
       >
         <div>
-          {/* <Link
-            href={savedFilter ? `/tickets?${params}` : '/tickets'}
-            style={{
-              display: 'inline-block',
-              height: '100%',
-            }}
-          > */}
           <Stack
             className="hover:cursor-pointer"
             onClick={() => {
-              if (window) {
-                const savedFilter = sessionStorage.getItem('ticketFilter');
-                if (!savedFilter) return router.replace(`/tickets`);
-
-                router.replace(`/tickets?query=${savedFilter}&page=1`);
-                return;
+              const savedFilter = sessionStorage.getItem('ticketFilter');
+              if (savedFilter) {
+                router.replace(`/tickets?${savedFilter}`);
+              } else {
+                router.replace(`/tickets`);
               }
-
-              router.replace(`/tickets`);
             }}
           >
             <Stack
@@ -109,14 +82,15 @@ export const NavBar = () => {
                 style={{
                   width: '110px',
                   height: '18.2px',
+                  objectFit: 'cover',
                 }}
+                placeholder="empty"
               />
             </Stack>
             <div className={`${styles.b2b_logo_text} whitespace-nowrap`}>
               Platinum Support
             </div>
           </Stack>
-          {/* </Link> */}
         </div>
 
         {process.env['NEXT_PUBLIC_APP_ENV'] === 'staging' && (
@@ -186,16 +160,6 @@ export const NavBar = () => {
               <IconButton
                 className="flex flex-col justify-center items-center"
                 onClick={() => {
-                  // if (window) {
-                  //   const savedFilter = sessionStorage.getItem('ticketFilter');
-                  //   if (!savedFilter) return router.replace(`/tickets`);
-
-                  //   router.replace(`/tickets?query=${savedFilter}&page=1`);
-                  //   return;
-                  // }
-
-                  // router.replace(`/tickets`);
-
                   // Use the stored search params to navigate to the tickets page
                   const savedFilter = sessionStorage.getItem('ticketFilter');
                   if (savedFilter) {
@@ -228,8 +192,6 @@ export const NavBar = () => {
           </Box>
         </Box>
       </Box>
-
-      {/* <div style={{ height: `${navbarHeight}px` }}></div> */}
     </>
   );
 };

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import { Typography } from '@mui/material';
 import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
@@ -36,6 +36,11 @@ export const TicketListHeader = ({
   const [showCreateTicketModal, setShowCreateTicketModal] = useState(false);
   const { data: session, status } = useSession();
 
+  const permissionForTicketCreation = userHasPermission(
+    session,
+    AppPermissionTypes.Create_New_Ticket
+  );
+
   // ESC Key Listener
   useEscKeyListener(() => {
     setShowCreateTicketModal(false);
@@ -62,7 +67,7 @@ export const TicketListHeader = ({
           disabled={totalRows === 0 ? true : false}
         />
         <TicketFilter />
-        {userHasPermission(session, AppPermissionTypes.Create_New_Ticket) && (
+        {permissionForTicketCreation && (
           <Button
             variant="contained"
             onClick={() => setShowCreateTicketModal(true)}
