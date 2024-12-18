@@ -2,8 +2,8 @@
 FROM node:20 AS base
 
 ARG USE_PROXY=true
-ARG HTTP_PROXY=http://10.124.49.151:3129
-ARG HTTPS_PROXY=http://10.124.49.151:3129
+ARG HTTP_PROXY=http://10.9.112.70:8000
+ARG HTTPS_PROXY=http://10.9.112.70:8000
 
 ENV SHELL=/bin/sh \
     HOME=/home/centos \

@@ -17,7 +17,7 @@ RUN nx reset
 RUN chown -R centos:centos /app /home/centos/
 
 # Unset Proxy Settings
-RUN unset HTTP_PROXY && unset HTTPS_PROXY
+# RUN unset HTTP_PROXY && unset HTTPS_PROXY
 
 # Switch to centos user
 USER centos

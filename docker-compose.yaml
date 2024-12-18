@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.7}
+    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.8}
     ports:
       - '5001:3000'
     container_name: Staging_B2B_Tickets_PreEntry_1
@@ -17,6 +17,9 @@ services:
       - NODE_ENV=production
       - APP_ENV=staging
       - PORT=3000
+      - http_proxy=http://10.9.112.70:8000
+      - https_proxy=http://10.9.112.70:8000
+      - no_proxy=localhost,127.0.0.1,emailrelay,10.0.1.19,sms-gw1,10.131.12.77,sms-gw2,10.131.20.78,test-sms-gw1,10.131.28.73,b2b_database,172.27.52.177
     command: >
       sh -c "cp /app/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
              cp /app/env-files/staging.ts /app/libs/config/src/lib/production.ts &&
@@ -31,7 +34,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.7}
+    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.8}
     ports:
       - '5002:3000'
     container_name: Staging_B2B_Tickets_PreEntry_2
@@ -45,6 +48,9 @@ services:
       - NODE_ENV=production
       - APP_ENV=staging
       - PORT=3000
+      - http_proxy=http://10.9.112.70:8000
+      - https_proxy=http://10.9.112.70:8000
+      - no_proxy=localhost,127.0.0.1,emailrelay,10.0.1.19,sms-gw1,10.131.12.77,sms-gw2,10.131.20.78,test-sms-gw1,10.131.28.73,b2b_database,172.27.52.177
     command: >
       sh -c "cp /app/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
              cp /app/env-files/staging.ts /app/libs/config/src/lib/production.ts &&
@@ -59,7 +65,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_production:${PROD_B2B_VERSION:-1.0.7}
+    image: b2b_tickets_img_production:${PROD_B2B_VERSION:-1.0.8}
     ports:
       - '8001:3000'
     container_name: Prod_B2B_Tickets_1
@@ -72,6 +78,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - http_proxy=http://10.9.112.70:8000
+      - https_proxy=http://10.9.112.70:8000
+      - no_proxy=localhost,127.0.0.1,emailrelay,10.0.1.19,sms-gw1,10.131.12.77,sms-gw2,10.131.20.78,test-sms-gw1,10.131.28.73,b2b_database,172.27.52.177
     command: ['nx', 'start', 'b2b_tickets', '--verbose']
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
@@ -81,7 +90,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_production:${PROD_B2B_VERSION:-1.0.7}
+    image: b2b_tickets_img_production:${PROD_B2B_VERSION:-1.0.8}
     ports:
       - '8002:3000'
     container_name: Prod_B2B_Tickets_2
@@ -94,6 +103,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - http_proxy=http://10.9.112.70:8000
+      - https_proxy=http://10.9.112.70:8000
+      - no_proxy=localhost,127.0.0.1,emailrelay,10.0.1.19,sms-gw1,10.131.12.77,sms-gw2,10.131.20.78,test-sms-gw1,10.131.28.73,b2b_database,172.27.52.177
     command: ['nx', 'start', 'b2b_tickets', '--verbose']
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
@@ -103,7 +115,7 @@ services:
     build:
       context: .
       dockerfile: apps/socket-server/Dockerfile
-    image: staging_socket_server_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.5}
+    image: staging_socket_server_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.8}
     ports:
       - '3456:3456'
     container_name: Staging_Socket_Server_PreEntry_1
@@ -129,7 +141,7 @@ services:
     build:
       context: .
       dockerfile: apps/socket-server/Dockerfile
-    image: production_socket_server_img:${STAGING_B2B_VERSION_TEST:-1.0.5}
+    image: production_socket_server_img:${STAGING_B2B_VERSION_TEST:-1.0.8}
     ports:
       - '3457:3457'
     container_name: Production_Socket_Server_1

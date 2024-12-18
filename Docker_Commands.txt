@@ -4,7 +4,8 @@ pwd
 sudo docker build --build-arg USE_PROXY=false -t my-monorepo-base -f Dockerfile .
 
 # For Server
-sudo docker build --build-arg USE_PROXY=true --build-arg HTTP_PROXY=http://10.124.49.151:3129 --build-arg HTTPS_PROXY=http://10.124.49.151:3129 -t my-monorepo-base -f Dockerfile .
+# sudo docker build --build-arg USE_PROXY=true --build-arg HTTP_PROXY=http://10.124.49.151:3129 --build-arg HTTPS_PROXY=http://10.124.49.151:3129 -t my-monorepo-base -f Dockerfile .
+sudo docker build --build-arg USE_PROXY=true --build-arg HTTP_PROXY=http://10.9.112.70:8000 --build-arg HTTPS_PROXY=http://10.9.112.70:8000 -t my-monorepo-base -f Dockerfile .
 
 # Start new container from Image
 docker run -d --name nms_portal_backend -p 5001:5001 nms_portal_backend_5001
@@ -80,7 +81,7 @@ docker-compose -f docker-compose-stable.yml up -d --remove-orphans
 # Prune Unused Containers, Images, and Networks
 sudo docker system prune -a -f --volumes
 
-
-
+# Build Without Cache
+sudo docker compose build --no-cache prod_b2b_tickets_1
 
 
