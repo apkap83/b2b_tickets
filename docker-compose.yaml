@@ -155,7 +155,7 @@ services:
       - NODE_ENV=staging
       - DEBUG=1
       - PORT=3457
-      - SOCKET_CORS_ORIGIN=https://10.124.49.151
+      - SOCKET_CORS_ORIGIN=https://platinumsupport.nova.gr
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - NEXT_AUTH_SESSION_URL=https://10.124.49.151/api/auth/session
     command: >
