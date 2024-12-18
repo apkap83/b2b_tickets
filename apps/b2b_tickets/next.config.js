@@ -18,6 +18,7 @@ const nextConfig = {
     styledComponents: true,
   },
   poweredByHeader: false,
+  staticPageGenerationTimeout: 120,
 };
 
 const plugins = [
