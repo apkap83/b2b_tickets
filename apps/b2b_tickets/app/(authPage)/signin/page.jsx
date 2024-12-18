@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 import { background_nms_portal as imagePath } from '@b2b-tickets/assets';
 import { Footer } from '@b2b-tickets/ui';
+import { ReCaptchaProvider } from 'next-recaptcha-v3';
 
 export default async function SignIn() {
   const providers = await getProviders();
@@ -13,15 +14,19 @@ export default async function SignIn() {
   return (
     <>
       <div className="absolute inset-0 flex justify-center items-center">
-        <Image
-          src={imagePath}
-          alt="Login Page Background Image"
-          fill
-          className="blur-sm"
-          style={{ objectFit: 'cover' }}
-        />
-        <SignInForm providers={providers} csrfToken={csrfToken} />
-        <Footer />
+        <ReCaptchaProvider
+          reCaptchaKey={process.env['NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY']}
+        >
+          <Image
+            src={imagePath}
+            alt="Login Page Background Image"
+            fill
+            className="blur-sm"
+            style={{ objectFit: 'cover' }}
+          />
+          <SignInForm providers={providers} csrfToken={csrfToken} />
+          <Footer />
+        </ReCaptchaProvider>
       </div>
     </>
   );

@@ -682,6 +682,7 @@ function verifyJWTTokenForEmail({
 }
 
 const validateReCaptchaV3 = async (token: string) => {
+  const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
   const secretKey = process.env.RECAPTCHA_V3_SECRET_KEY;
 
   if (!secretKey) {
@@ -716,6 +717,7 @@ const validateReCaptchaV3 = async (token: string) => {
 };
 
 export const validateReCaptchaV2 = async (token: string) => {
+  const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
   const secretKey = process.env.RECAPTCHA_V2_SECRET_KEY;
 
   if (!secretKey) {
