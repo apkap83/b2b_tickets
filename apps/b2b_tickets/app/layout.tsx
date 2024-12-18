@@ -14,6 +14,7 @@ import { AuthProvider, ToastProvider } from '@b2b-tickets/utils';
 import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import CookieConsentBanner from './CookieConsentBanner';
 import WebSocketWrapper from './WebSocketWrapper';
+import { ReCaptchaProvider } from 'next-recaptcha-v3';
 
 // TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
@@ -29,34 +30,38 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <head>
-        <title>{metadata.title}</title>
-        <meta name="description" content={metadata.description} />
-        <meta name="color-scheme" content="light only" />
-        <meta name="viewport" content="initial-scale=1, width=device-width" />
-      </head>
-      <AuthProvider>
-        <body className={'subpixel-antialiased'}>
-          {/* <StyledComponentsRegistry> */}
-          <CssBaseline />
-          <AppRouterCacheProvider>
-            <AppThemeProvider>
-              <ToastProvider>
-                <WebSocketWrapper>
-                  <main style={{ height: '100vh' }}>
-                    {/* {session ? <NavBar /> : null} */}
-                    {children}
-                    {/* {session ? <Footer /> : null} */}
-                  </main>
-                </WebSocketWrapper>
-                <CookieConsentBanner />
-              </ToastProvider>
-            </AppThemeProvider>
-          </AppRouterCacheProvider>
-          {/* </StyledComponentsRegistry> */}
-        </body>
-      </AuthProvider>
-    </html>
+    <ReCaptchaProvider
+      reCaptchaKey={process.env['NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY']}
+    >
+      <html lang="en">
+        <head>
+          <title>{metadata.title}</title>
+          <meta name="description" content={metadata.description} />
+          <meta name="color-scheme" content="light only" />
+          <meta name="viewport" content="initial-scale=1, width=device-width" />
+        </head>
+        <AuthProvider>
+          <body className={'subpixel-antialiased'}>
+            {/* <StyledComponentsRegistry> */}
+            <CssBaseline />
+            <AppRouterCacheProvider>
+              <AppThemeProvider>
+                <ToastProvider>
+                  <WebSocketWrapper>
+                    <main style={{ height: '100vh' }}>
+                      {/* {session ? <NavBar /> : null} */}
+                      {children}
+                      {/* {session ? <Footer /> : null} */}
+                    </main>
+                  </WebSocketWrapper>
+                  <CookieConsentBanner />
+                </ToastProvider>
+              </AppThemeProvider>
+            </AppRouterCacheProvider>
+            {/* </StyledComponentsRegistry> */}
+          </body>
+        </AuthProvider>
+      </html>
+    </ReCaptchaProvider>
   );
 }
