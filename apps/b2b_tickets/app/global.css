@@ -25,6 +25,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.grecaptcha-badge {
+  bottom: 48px !important;
+}
+
 /* For Firefox */
 /* html {
   scrollbar-width: thin;
