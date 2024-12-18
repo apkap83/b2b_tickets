@@ -508,7 +508,7 @@ export function PasswordResetForm({
               <ReCAPTCHA
                 className="w-full"
                 ref={recaptchaRef}
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY!}
                 onChange={handleCaptchaChange}
               />
             </div>

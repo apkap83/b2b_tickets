@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import ReCAPTCHA from 'react-google-recaptcha';
 
 import Image from 'next/image';
 import { signIn, useSession } from 'next-auth/react';
@@ -17,6 +16,8 @@ import { ErrorCode } from '@b2b-tickets/shared-models';
 import { useCountdown } from '@b2b-tickets/react-hooks';
 import { formatTimeMMSS } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
+import { useReCaptcha } from 'next-recaptcha-v3';
+
 import Link from 'next/link';
 import styles from './css/signin.module.scss';
 
@@ -43,9 +44,6 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const { status } = useSession();
   const router = useRouter();
 
-  const [captcha, setCaptcha] = useState<string | null>(null);
-  const [captchaVerified, setCaptchaVerified] = useState(false); // State to track if ReCAPTCHA is completed
-
   const [showOTP, setShowOTP] = useState(false);
   const [totpCode, setTotpCode] = useState('');
 
@@ -55,20 +53,15 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
 
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit');
 
+  // Import 'executeRecaptcha' using 'useReCaptcha' hook
+  const { executeRecaptcha } = useReCaptcha();
+
   // Create references to User Name & Password fields
   const userNameRef = useRef<HTMLInputElement | null>(null);
   const userNameLabelRef = useRef(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const passwordLabelRef = useRef(null);
   const userNamePasswordGroupRef = useRef<HTMLDivElement | null>(null);
-
-  // Create a reference for reCAPTCHA
-  const recaptchaRef = useRef<any>(null); // New useRef for reCAPTCHA
-  // Handle the onChange event of the ReCAPTCHA
-  const handleCaptchaChange = (value: string | null) => {
-    setCaptcha(value);
-    // Set as verified when captcha value is present
-  };
 
   const { timeLeft, start, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
@@ -90,52 +83,6 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
     }
   }, [status, router, callbackUrl]);
 
-  const getReCaptchaJWTToken = async ({ setSubmitting }: any) => {
-    if (!captcha) {
-      setError('Verify reCAPTCHA!');
-      setSubmitting(false);
-      return;
-    }
-
-    try {
-      // Call your custom captcha validation API route
-      const captchaResponse = await fetch('/api/auth/captcha', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ captchaToken: captcha }),
-      });
-
-      const captchaResult = await captchaResponse.json();
-
-      if (!captchaResponse.ok) {
-        setError(captchaResult.message || 'Invalid reCAPTCHA');
-        setSubmitting(false);
-
-        // Reset the reCAPTCHA (if active)
-        if (config.CaptchaIsActive && recaptchaRef.current) {
-          recaptchaRef.current.reset();
-        }
-        return;
-      }
-
-      // Server Verified Captcha at this point
-      setCaptchaVerified(true);
-    } catch (error) {
-      setError(
-        'An error occurred while validating reCAPTCHA. Please try again.'
-      );
-      setSubmitting(false);
-
-      // Reset the reCAPTCHA (if active)
-      if (config.CaptchaIsActive && recaptchaRef.current) {
-        recaptchaRef.current.reset();
-      }
-      return;
-    }
-  };
-
   const validationSchema = Yup.object({
     userName: Yup.string().required('User name is required'),
     password: Yup.string().required('Password is required'),
@@ -151,16 +98,15 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       setSubmitting(true); // Disable the submit button
       setError(null);
 
-      // Get ReCaptcha JWT Token as a Secure & Http Only cookie
-      if (config.CaptchaIsActive && !captchaVerified) {
-        await getReCaptchaJWTToken({ setSubmitting });
-      }
+      // Generate ReCaptcha token
+      const captchaV3token = await executeRecaptcha('form_submit');
 
       const response = await signIn('credentials-login', {
         redirect: false,
         userName: values.userName,
         password: values.password,
-        captchaToken: captcha,
+        // captchaToken: captcha,
+        captchaToken: captchaV3token,
         totpCode,
       });
 
@@ -191,11 +137,6 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
         case ErrorCode.IncorrectUsernameOrPassword:
           setError('Invalid user name or password');
           setSubmitting(false);
-          if (config.CaptchaIsActive) {
-            if (recaptchaRef.current) {
-              recaptchaRef.current.reset();
-            }
-          }
           break;
         case ErrorCode.IncorrectTwoFactorCode:
           setError('Invalid OTP Code provided');
@@ -354,30 +295,17 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               </label>
               <FieldError formik={formik} name="password" />
             </div>
-            <div className="my-1 text-right">
-              <Link
-                className="text-xs text-[#6C757D] hover:text-[#4A90E2]"
-                href="/forgotCred"
-              >
-                Forgot Your Password ?
-              </Link>
-            </div>
+            {!showOTP && (
+              <div className="my-1 text-right">
+                <Link
+                  className="text-xs text-[#6C757D] hover:text-[#4A90E2]"
+                  href="/forgotCred"
+                >
+                  Forgot Your Password ?
+                </Link>
+              </div>
+            )}
           </div>
-          {config.CaptchaIsActive ? (
-            <div
-              style={
-                captchaVerified
-                  ? { pointerEvents: 'none', opacity: 0.6 } // Disable interaction and reduce opacity after verification
-                  : {}
-              }
-            >
-              <ReCAPTCHA
-                ref={recaptchaRef}
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
-                onChange={handleCaptchaChange}
-              />
-            </div>
-          ) : null}
           {showOTP && (
             <div>
               <p className="text-xs pt-2 pb-1 ">

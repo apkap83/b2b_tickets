@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serialize } from 'cookie';
 import jwt from 'jsonwebtoken';
-import { validateReCaptcha } from '@b2b-tickets/server-actions';
+import { validateReCaptchaV2 } from '@b2b-tickets/auth-options';
 import { TransportName } from '@b2b-tickets/shared-models';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const { emailProvided, captchaToken } = body;
 
     // Validate the captcha token
-    const reCaptchaSuccessResponse = await validateReCaptcha(captchaToken);
+    const reCaptchaSuccessResponse = await validateReCaptchaV2(captchaToken);
 
     if (!reCaptchaSuccessResponse) {
       return NextResponse.json(

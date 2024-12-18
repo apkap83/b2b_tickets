@@ -1302,30 +1302,6 @@ export async function setTicketWorking({
   }
 }
 
-export const validateReCaptcha = async (token: string) => {
-  const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-
-  if (!secretKey) {
-    throw new Error('reCAPTCHA secret key is missing.');
-  }
-
-  const params = new URLSearchParams();
-  params.append('secret', secretKey);
-  params.append('response', token);
-
-  try {
-    const response = await fetch(
-      'https://www.google.com/recaptcha/api/siteverify',
-      { method: 'POST', body: params }
-    );
-
-    const data = await response.json();
-    return data.success;
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const getAppVersion = async (): Promise<{
   data: string;
   error?: string;
