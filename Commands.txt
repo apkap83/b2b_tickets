@@ -80,6 +80,10 @@ nx generate @nx/node:application Socket_Server --verbose
 # Create Context Library
 nx g @nx/next:library contexts --directory libs --tags type:ui,scope:b2b_tickets
 
+
+# Create PasswordComplexityAnnouncement component
+nx g component PasswordComplexityAnnouncement --project ui --export --tags type:ui,scope=b2b_tickets
+
 nx report
 nx show project socket-server
 

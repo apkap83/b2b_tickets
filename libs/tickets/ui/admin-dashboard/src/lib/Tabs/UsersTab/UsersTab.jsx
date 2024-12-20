@@ -46,7 +46,7 @@ export function UsersTab({ usersList, rolesList }) {
     userDetails: userDetailsInitalState,
   });
 
-  const itemsPerPage = config.TICKET_ITEMS_PER_PAGE;
+  const itemsPerPage = 15000;
 
   const paginatedUsersList = slice(
     usersList,

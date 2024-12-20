@@ -180,7 +180,6 @@ const tryLocalAuthentication = async (
     ]);
 
     const customer_name = customerNameRes.rows[0]['customer_name'];
-
     const userDetails = {
       id: String(foundUser.user_id),
       user_id: foundUser.user_id,
@@ -211,11 +210,65 @@ const tryLocalAuthentication = async (
   }
 };
 
+const performPasswordReset = async (
+  credentials: any,
+  logRequest: CustomLogger
+) => {
+  try {
+    logRequest.debug(
+      `Performing Password Reset for user name: ${
+        credentials ? credentials.userName : 'Not Given'
+      }`
+    );
+
+    const foundUser = await B2BUser.scope('withPassword').findOne({
+      where: {
+        username: credentials!.userName,
+        authentication_type: AuthenticationTypes.LOCAL,
+      },
+      include: {
+        model: AppRole,
+        include: [AppPermission],
+      },
+    });
+
+    if (!foundUser) {
+      logRequest.error(`Incorrect user name provided`);
+      throw new Error(ErrorCode.IncorrectUsernameOrPassword);
+    }
+
+    const match = await bcrypt.compare(
+      credentials!.password,
+      foundUser.password
+    );
+
+    if (!match) {
+      logRequest.error(`Incorrect password provided`);
+      throw new Error(ErrorCode.IncorrectUsernameOrPassword);
+    }
+
+    logRequest.debug(`Given password and DB passwords match`);
+
+    if (!credentials?.newPassword) {
+      throw new Error(ErrorCode.NewPasswordRequired);
+    }
+
+    // Set New Password
+    foundUser.password = credentials?.newPassword;
+
+    // Reset Flag
+    foundUser.change_password = 'n';
+
+    await foundUser.save();
+    return true;
+  } catch (error) {}
+};
+
 export const options: NextAuthOptions = {
   providers: [
     Credentials({
       id: 'credentials-login',
-      name: 'Local & LDAP Authentication',
+      name: 'Local & LDAP Authentication & Forced Password Reset',
       credentials: {
         userName: {
           label: 'User Name',
@@ -225,11 +278,13 @@ export const options: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
         captchaToken: { label: 'captchaToken', type: 'text' },
         totpCode: { label: 'Time-Based One-Time Password', type: 'text' },
+        newPassword: { label: 'newPassword', type: 'text' },
       },
       async authorize(credentials: any, req: any) {
         const logRequest: CustomLogger = await getRequestLogger(
           TransportName.AUTH
         );
+
         try {
           if (!credentials?.userName || !credentials?.password) {
             throw new Error(ErrorCode.NoCredentialsProvided);
@@ -268,6 +323,14 @@ export const options: NextAuthOptions = {
 
           // Without Two Factor Authentication The User is Now Authenticated
           if (!config.TwoFactorEnabled) {
+            // Check if The User should be forced to change password
+            if (localAuthUserDetails?.forcedToChangePassword) {
+              if (!credentials.newPassword) {
+                throw new Error(ErrorCode.NewPasswordRequired);
+              }
+              performPasswordReset(credentials, logRequest);
+            }
+
             logRequest.info(
               `Local User '${credentials.userName}' has been successfully authenticated`
             );
@@ -305,6 +368,7 @@ export const options: NextAuthOptions = {
           logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
           if (localAuthUserDetails.mobilePhone)
             await sendOTP(localAuthUserDetails.mobilePhone, correctOTPCode!);
+
           if (!credentials.totpCode) {
             throw new Error(ErrorCode.SecondFactorRequired);
           }
@@ -340,6 +404,15 @@ export const options: NextAuthOptions = {
           logRequest.info(
             `Local User '${credentials.userName}' has been successfully authenticated`
           );
+
+          // Check if The User should be forced to change password
+          if (localAuthUserDetails?.forcedToChangePassword) {
+            if (!credentials.newPassword) {
+              throw new Error(ErrorCode.NewPasswordRequired);
+            }
+            performPasswordReset(credentials, logRequest);
+          }
+
           return localAuthUserDetails;
         } catch (error: unknown) {
           const permittedErrorsToFrontEnd: string[] = [
@@ -350,6 +423,7 @@ export const options: NextAuthOptions = {
             ErrorCode.CaptchaJWTTokenRequired,
             ErrorCode.EmailIsRequired,
             ErrorCode.TotpJWTTokenRequired,
+            ErrorCode.NewPasswordRequired,
           ].map(String);
 
           if (
