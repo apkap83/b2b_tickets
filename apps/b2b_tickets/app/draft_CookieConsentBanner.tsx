@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
-
 import { useSession } from 'next-auth/react';
 import cookie from 'js-cookie';
 import Button from '@mui/material/Button';
@@ -11,8 +9,6 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { signOut } from 'next-auth/react';
 import config from '@b2b-tickets/config';
-import { NovaLogo } from '@b2b-tickets/assets';
-import { FaChevronRight } from 'react-icons/fa6';
 
 const CookieDetails = () => (
   <div
@@ -229,96 +225,34 @@ const CookieConsentBanner = () => {
   return (
     <>
       <div className="fixed inset-0 bg-black opacity-40 z-10 "></div>
-      <div>
-        <div
-          className="flex justify-center"
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            width: '100%',
-            backgroundColor: '#fff',
-            padding: '1rem',
-            borderTop: '1px solid #ddd',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div className="flex gap-7 mx-auto justify-center">
-            <div className="flex justify-center items-center">
-              <Image
-                priority
-                src={NovaLogo}
-                alt={'Nova Logo'}
-                className="w-[250px]"
-              />
-            </div>
-            <div style={{ maxWidth: '60%' }}>
-              <p style={{ fontSize: '0.875rem', margin: '0.5rem 8px' }}>
-                <strong>This pages uses cookies</strong>
-              </p>
-              <p style={{ fontSize: '0.875rem', marginLeft: '8px' }}>
-                Cookies are essential for the proper functioning of the site and
-                for improving your browsing experience. Choose "Accept All,"
-                "Reject All," or "Customize" for the settings you prefer.
-              </p>
-              <Button
-                variant="text"
-                sx={{
-                  fontSize: '0.875rem',
-                  marginTop: '0.5rem',
-                  color: '#000',
-                  marginLeft: '0',
-                }}
-                // onClick={onCustomize}
-              >
-                View Details &nbsp;
-                <FaChevronRight size="12" />
-              </Button>
-            </div>
-            <div className="flex flex-col gap-3">
-              <Button
-                variant="contained"
-                style={{
-                  backgroundColor: '#000',
-                  color: '#fff',
-                  fontSize: '0.875rem',
-                  padding: '0.5rem 1rem',
-                  textTransform: 'none',
-                }}
-                onClick={handleAccept}
-              >
-                Accept All
-              </Button>
-              <Button
-                variant="outlined"
-                style={{
-                  fontSize: '0.875rem',
-                  padding: '0.5rem 1rem',
-                  textTransform: 'none',
-                  whiteSpace: 'nowrap',
-                }}
-                onClick={handleReject}
-              >
-                Customize &nbsp;
-                <FaChevronRight size="12" />
-              </Button>
-              <Button
-                variant="outlined"
-                style={{
-                  fontSize: '0.875rem',
-                  padding: '0.5rem 1rem',
-                  textTransform: 'none',
-                }}
-                onClick={handleReject}
-              >
-                Reject All
-              </Button>
-            </div>
+      <div className="w-full flex justify-center items-center fixed bottom-[75px] opacity-100 z-20">
+        <div className="w-[460px] flex-col justify-center items-center bg-white p-4 rounded-md text-sm">
+          <h3 className="font-extrabold mb-3">We value your privacy</h3>
+          <p className="mb-4">
+            We use cookies to enhance your browsing experience and ensure site
+            security. By clicking "Accept All," you consent to all cookies.
+          </p>
+          <Button
+            variant="text"
+            sx={{ color: '#0000aa', mb: '1rem' }}
+            onClick={togglePolicy}
+          >
+            View Cookie Policy
+          </Button>
+          <div className="flex justify-center items-center gap-4">
+            <Button variant="text" onClick={toggleDetails}>
+              View Cookies
+            </Button>
+            <Button variant="outlined" onClick={handleReject}>
+              Reject All
+            </Button>
+            <Button variant="contained" onClick={handleAccept}>
+              Accept All
+            </Button>
           </div>
         </div>
       </div>
+
       {/* Cookie Policy Modal */}
       <Dialog open={openPolicy} onClose={togglePolicy} maxWidth="sm" fullWidth>
         <DialogTitle>

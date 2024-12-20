@@ -19,6 +19,7 @@ import { formatTimeMMSS, passwordComplexitySchema } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import { PasswordComplexityAnnouncement } from '@b2b-tickets/ui';
 
 export function PasswordResetForm({
   csrfToken,
@@ -367,24 +368,24 @@ export function PasswordResetForm({
     }
   };
 
-  const PasswordComplexityAnnouncement = () => {
-    return (
-      <div className="text-xs border p-2">
-        <p className="text-center mb-2">Password Complexity Rules</p>
-        <ol className="font-light">
-          <li>At least 8 characters long</li>
-          <li>At least one uppercase letter</li>
-          <li>At least one lowercase letter</li>
-          <li>At least one number</li>
-          <li>
-            At least one special character [&#33; &#64; &#35; &#36; &#37; &#94;
-            &#38; &#42; &#40; &#41; &#44; &#46; &#63; &#58; &#34; &#123; &#125;
-            &#124; &#60; &#62;]
-          </li>
-        </ol>
-      </div>
-    );
-  };
+  // const PasswordComplexityAnnouncement = () => {
+  //   return (
+  //     <div className="text-xs border p-2">
+  //       <p className="text-center mb-2">Password Complexity Rules</p>
+  //       <ol className="font-light">
+  //         <li>At least 8 characters long</li>
+  //         <li>At least one uppercase letter</li>
+  //         <li>At least one lowercase letter</li>
+  //         <li>At least one number</li>
+  //         <li>
+  //           At least one special character [&#33; &#64; &#35; &#36; &#37; &#94;
+  //           &#38; &#42; &#40; &#41; &#44; &#46; &#63; &#58; &#34; &#123; &#125;
+  //           &#124; &#60; &#62;]
+  //         </li>
+  //       </ol>
+  //     </div>
+  //   );
+  // };
 
   return (
     <div

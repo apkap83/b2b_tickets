@@ -52,9 +52,9 @@ export const AdminDashboard = ({
           </div>
 
           {activeTab === 'Users' && (
-            // <div className="mb-[2rem]">
-            <UsersTab usersList={usersList} rolesList={rolesList} />
-            // </div>
+            <div className="mb-[2rem]">
+              <UsersTab usersList={usersList} rolesList={rolesList} />
+            </div>
           )}
 
           {activeTab === 'Roles' && (

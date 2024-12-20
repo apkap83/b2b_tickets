@@ -14,9 +14,10 @@ import { config } from '@b2b-tickets/config';
 import { TwoFactAuth } from './TwoFactAuth';
 import { ErrorCode } from '@b2b-tickets/shared-models';
 import { useCountdown } from '@b2b-tickets/react-hooks';
-import { formatTimeMMSS } from '@b2b-tickets/utils';
+import { formatTimeMMSS, passwordComplexitySchema } from '@b2b-tickets/utils';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { useReCaptcha } from 'next-recaptcha-v3';
+import { PasswordComplexityAnnouncement } from '@b2b-tickets/ui';
 
 import Link from 'next/link';
 import styles from './css/signin.module.scss';
@@ -45,7 +46,11 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const router = useRouter();
 
   const [showOTP, setShowOTP] = useState(false);
+  const [showNewPasswordFields, setShowNewPasswordFields] = useState(false);
+
   const [totpCode, setTotpCode] = useState('');
+
+  const [title, setTitle] = useState('Sign In');
 
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +73,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
     window.location.reload();
     // router.reload();
   });
+  const successMessage = 'Password Successfully updated!';
 
   useEffect(() => {
     // If user is already authenticated, redirect to the homepage
@@ -86,12 +92,24 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const validationSchema = Yup.object({
     userName: Yup.string().required('User name is required'),
     password: Yup.string().required('Password is required'),
+    newPassword: !showNewPasswordFields
+      ? Yup.string()
+      : config.PasswordComplexityActive
+      ? passwordComplexitySchema
+      : Yup.string().required('Password is required'),
+    repeatNewPassword: !showNewPasswordFields
+      ? Yup.string()
+      : Yup.string()
+          .oneOf([Yup.ref('newPassword')], 'Passwords must match')
+          .required('Please confirm your password'),
   });
 
   const formik = useFormik({
     initialValues: {
       userName: '',
       password: '',
+      newPassword: '',
+      repeatNewPassword: '',
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
@@ -108,6 +126,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
         // captchaToken: captcha,
         captchaToken: captchaV3token,
         totpCode,
+        newPassword: formik.values.newPassword,
       });
 
       if (!response) return;
@@ -174,6 +193,13 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           setError('No Role Assigned');
           setSubmitting(false);
           break;
+        case ErrorCode.NewPasswordRequired:
+          setShowNewPasswordFields(true);
+          setSubmitting(false);
+          setShowOTP(false);
+          setSubmitButtonLabel('Set New Password');
+          setTitle('Please Change Your Password');
+          break;
         default:
           setError('Internal Server Error');
           setSubmitting(false);
@@ -211,12 +237,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
             priority
             src={NovaLogo}
             alt={'Nova Logo'}
-            width={245}
-            height={40}
-            style={{
-              width: 'auto', // Adjust width to auto if the height is set
-              height: 'auto', // Adjust height to auto if the width is set
-            }}
+            className="w-[250px]"
           />
           <span>Platinum Support</span>
         </div>
@@ -235,77 +256,84 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
             </div>
           </div>
         )}
-        <div className="text-xl text-left mt-[.75rem] text-[black] font-semibold">
-          Sign in
+        <div
+          className={clsx('text-xl  mt-[.75rem] text-[black] font-semibold', {
+            'text-center': title === 'Please Change Your Password',
+            'text-left': title === 'Sign In',
+          })}
+        >
+          {title}
         </div>
       </div>
 
       <div className="w-[300px]">
         <form onSubmit={formik.handleSubmit} autoComplete="off">
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
-          <div ref={userNamePasswordGroupRef} className="mb-5">
-            {showOTP && (
-              <p className="text-xs text-center pb-2">Your Credentials</p>
-            )}
-            <div className="mb-5">
-              <label
-                ref={userNameLabelRef}
-                className="input input-bordered flex items-center gap-2 dark:bg-white "
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="currentColor"
-                  className="w-4 h-4 opacity-70"
+          {!showNewPasswordFields && (
+            <div ref={userNamePasswordGroupRef} className="mb-5">
+              {showOTP && (
+                <p className="text-xs text-center pb-2">Your Credentials</p>
+              )}
+              <div className="mb-5">
+                <label
+                  ref={userNameLabelRef}
+                  className="input input-bordered flex items-center gap-2 dark:bg-white "
                 >
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-                </svg>
-                <input
-                  ref={userNameRef}
-                  type="text"
-                  name="userName"
-                  value={formik.values.userName}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className="grow text-black"
-                  placeholder="User Name"
-                  autoComplete="false"
-                />
-              </label>
-              <FieldError formik={formik} name="userName" />
-            </div>
-
-            <div className="">
-              <label
-                ref={passwordLabelRef}
-                className="input input-bordered flex items-center gap-2 dark:bg-white dark:text-black"
-              >
-                <FaKey className="w-4 h-4 opacity-70" />
-                <input
-                  ref={passwordRef}
-                  type="password"
-                  name="password"
-                  value={formik.values.password}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className="grow text-black"
-                  placeholder="Password"
-                  autoComplete="false"
-                />
-              </label>
-              <FieldError formik={formik} name="password" />
-            </div>
-            {!showOTP && (
-              <div className="my-1 text-right">
-                <Link
-                  className="text-xs text-[#6C757D] hover:text-[#4A90E2]"
-                  href="/forgotCred"
-                >
-                  Forgot Your Password ?
-                </Link>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="w-4 h-4 opacity-70"
+                  >
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
+                  </svg>
+                  <input
+                    ref={userNameRef}
+                    type="text"
+                    name="userName"
+                    value={formik.values.userName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow text-black"
+                    placeholder="User Name"
+                    autoComplete="false"
+                  />
+                </label>
+                <FieldError formik={formik} name="userName" />
               </div>
-            )}
-          </div>
+
+              <div className="">
+                <label
+                  ref={passwordLabelRef}
+                  className="input input-bordered flex items-center gap-2 dark:bg-white dark:text-black"
+                >
+                  <FaKey className="w-4 h-4 opacity-70" />
+                  <input
+                    ref={passwordRef}
+                    type="password"
+                    name="password"
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow text-black"
+                    placeholder="Password"
+                    autoComplete="false"
+                  />
+                </label>
+                <FieldError formik={formik} name="password" />
+              </div>
+              {!showOTP && (
+                <div className="my-1 text-right">
+                  <Link
+                    className="text-xs text-[#6C757D] hover:text-[#4A90E2]"
+                    href="/forgotCred"
+                  >
+                    Forgot Your Password ?
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
           {showOTP && (
             <div>
               <p className="text-xs pt-2 pb-1 ">
@@ -319,6 +347,44 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                 onChange={(val) => setTotpCode(val)}
               />
             </div>
+          )}
+
+          {showNewPasswordFields && (
+            <>
+              <PasswordComplexityAnnouncement />
+              <div className="mb-5 border p-2">
+                <label className="input input-bordered flex items-center gap-2 dark:bg-white  ">
+                  <FaKey />
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={formik.values.newPassword}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className={clsx('grow text-black', {})}
+                    placeholder="New Password"
+                    readOnly={error === successMessage}
+                  />
+                </label>
+                <label className="mt-3 input input-bordered flex items-center gap-2 dark:bg-white  ">
+                  <FaKey />
+                  <input
+                    type="password"
+                    name="repeatNewPassword"
+                    value={formik.values.repeatNewPassword}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className={clsx('grow text-black', {})}
+                    placeholder="Repeat Password"
+                    readOnly={error === successMessage}
+                  />
+                </label>
+                <div className="text-xs text-red-900 mt-1">
+                  {formik.errors['newPassword'] ||
+                    formik.errors['repeatNewPassword']}
+                </div>
+              </div>
+            </>
           )}
 
           {error && <p className="pt-2 text-red-500 text-center">{error}</p>}
