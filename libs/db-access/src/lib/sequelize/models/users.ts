@@ -200,6 +200,7 @@ export class B2BUser extends Model<
               'is_active',
               'is_locked',
               'authentication_type',
+              'change_password',
               'two_factor_secret',
               'lastotpsent',
             ],

@@ -1,5 +1,5 @@
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
-
+import Script from 'next/script';
 import CssBaseline from '@mui/material/CssBaseline';
 
 import '@fontsource/roboto/300.css';
@@ -15,12 +15,14 @@ import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import CookieConsentBanner from './CookieConsentBanner';
 import WebSocketWrapper from './WebSocketWrapper';
 
+import GoogleAnalyticsLoader from './GoogleAnalyticsLoader';
+
 // TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
 
 export const metadata = {
-  title: 'Nova Platinum Ticketing',
-  description: 'Nova Business To Business Ticketing System',
+  title: 'Nova Platinum Support',
+  description: 'Nova Platinum Support',
 };
 
 export default async function RootLayout({
@@ -30,14 +32,9 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <title>{metadata.title}</title>
-        <meta name="description" content={metadata.description} />
-        <meta name="color-scheme" content="light only" />
-        <meta name="viewport" content="initial-scale=1, width=device-width" />
-      </head>
-      <AuthProvider>
-        <body className={'subpixel-antialiased'}>
+      <body className={'subpixel-antialiased'}>
+        <AuthProvider>
+          <GoogleAnalyticsLoader /> {/* Conditionally loads Google Analytics */}
           {/* <StyledComponentsRegistry> */}
           <CssBaseline />
           <AppRouterCacheProvider>
@@ -55,8 +52,8 @@ export default async function RootLayout({
             </AppThemeProvider>
           </AppRouterCacheProvider>
           {/* </StyledComponentsRegistry> */}
-        </body>
-      </AuthProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

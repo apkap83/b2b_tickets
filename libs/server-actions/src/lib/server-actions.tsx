@@ -1555,3 +1555,28 @@ export const setNewCategoryServiceTypeForTicket = async (
     return fromErrorToFormState(error);
   }
 };
+
+export async function logCookieConsent(
+  userId: string,
+  userName: string,
+  consentGiven: boolean
+) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  try {
+    const session = await getServerSession(options);
+
+    if (!session) {
+      redirect(`/api/auth/signin?callbackUrl=/`);
+    }
+
+    logRequest.info(
+      `User ${userName} (${userId}) cookie consented: ${consentGiven} ${
+        consentGiven && `for ${config.cookieConsentValidityInDays} days`
+      }`
+    );
+  } catch (error: any) {
+    logRequest.error('Error logging cookie consent:', error);
+  }
+}

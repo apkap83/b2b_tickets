@@ -1,3 +1,4 @@
+export * from './lib/password-complexity-announcement/PasswordComplexityAnnouncement';
 export * from './lib/escalation-bars/EscalationBars';
 export * from './lib/session-popup/SessionPopup';
 export * from './lib/footer/Footer';

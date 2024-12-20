@@ -36,12 +36,12 @@ const sequelize = new Sequelize({
   },
 
   // logging: sequelizeLogging,
-  pool: {
-    max: config.postgres_b2b_database.sequelizeMaxConnections,
-    min: config.postgres_b2b_database.sequelizeMinConnections,
-    acquire: config.postgres_b2b_database.acquire,
-    idle: config.postgres_b2b_database.idleTimeout,
-  },
+  // pool: {
+  //   max: config.postgres_b2b_database.sequelizeMaxConnections,
+  //   min: config.postgres_b2b_database.sequelizeMinConnections,
+  //   acquire: config.postgres_b2b_database.acquire,
+  //   idle: config.postgres_b2b_database.idleTimeout,
+  // },
   logging: sequelizeLogger,
 });
 
