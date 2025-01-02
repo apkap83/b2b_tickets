@@ -146,7 +146,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           setSubmitting(false);
           break;
         case ErrorCode.CaptchaJWTTokenInvalid:
-          setError('Captcha JWT Token Invalid');
+          setError('Captcha v3 Verification Failed');
           setSubmitting(false);
           break;
         case ErrorCode.UserIsLocked:

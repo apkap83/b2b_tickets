@@ -298,8 +298,8 @@ export const options: NextAuthOptions = {
             if (!data) {
               throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
             }
-
-            if (!data.success || data.score < 0.5) {
+            if (!data.success || data.score < config.CaptchaV3Threshold) {
+              logRequest.info('Captcha v3 Data:', data);
               throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
             }
           }
@@ -424,6 +424,7 @@ export const options: NextAuthOptions = {
             ErrorCode.EmailIsRequired,
             ErrorCode.TotpJWTTokenRequired,
             ErrorCode.NewPasswordRequired,
+            ErrorCode.CaptchaJWTTokenInvalid,
           ].map(String);
 
           if (
