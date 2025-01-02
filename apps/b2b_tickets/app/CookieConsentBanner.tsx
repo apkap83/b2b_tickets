@@ -58,12 +58,8 @@ const CookieDetails = () => (
           </td>
         </tr>
         <tr>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            _Secure-ENID
-          </td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Necessary
-          </td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>ENID</td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
             Ensures secure user authentication and stores preferences for Google
             services.
@@ -73,33 +69,29 @@ const CookieDetails = () => (
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
             next-auth.callback-url
           </td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Necessary
-          </td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
             Used by NextAuth.js to handle authentication redirects.
           </td>
         </tr>
-
         <tr>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>_ga</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Analytics
+            next-auth.session-token
           </td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Tracks user interactions and website performance for Google
-            Analytics.
+            Used by NextAuth.js to handle authentication.
           </td>
         </tr>
         <tr>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            _ga_&lt;property&gt;
+            cookieConsent
           </td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Analytics
+            Necessary
           </td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Tracks user interactions for specific Google Analytics properties.
+            Used by application for storing Consent response
           </td>
         </tr>
       </tbody>
@@ -256,12 +248,11 @@ const CookieConsentBanner = () => {
             </div>
             <div style={{ maxWidth: '60%' }}>
               <p style={{ fontSize: '0.875rem', margin: '0.5rem 8px' }}>
-                <strong>This pages uses cookies</strong>
+                <strong>This page uses cookies</strong>
               </p>
               <p style={{ fontSize: '0.875rem', marginLeft: '8px' }}>
                 Cookies are essential for the proper functioning of the site and
-                for improving your browsing experience. Choose "Accept All,"
-                "Reject All," or "Customize" for the settings you prefer.
+                for improving your browsing experience.
               </p>
               <Button
                 variant="text"
@@ -271,13 +262,13 @@ const CookieConsentBanner = () => {
                   color: '#000',
                   marginLeft: '0',
                 }}
-                // onClick={onCustomize}
+                onClick={toggleDetails}
               >
                 View Details &nbsp;
                 <FaChevronRight size="12" />
               </Button>
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 justify-center">
               <Button
                 variant="contained"
                 style={{
@@ -291,7 +282,7 @@ const CookieConsentBanner = () => {
               >
                 Accept All
               </Button>
-              <Button
+              {/* <Button
                 variant="outlined"
                 style={{
                   fontSize: '0.875rem',
@@ -303,7 +294,7 @@ const CookieConsentBanner = () => {
               >
                 Customize &nbsp;
                 <FaChevronRight size="12" />
-              </Button>
+              </Button> */}
               <Button
                 variant="outlined"
                 style={{

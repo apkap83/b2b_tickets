@@ -15,8 +15,6 @@ import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import CookieConsentBanner from './CookieConsentBanner';
 import WebSocketWrapper from './WebSocketWrapper';
 
-import GoogleAnalyticsLoader from './GoogleAnalyticsLoader';
-
 // TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
 
@@ -34,7 +32,6 @@ export default async function RootLayout({
     <html lang="en">
       <body className={'subpixel-antialiased'}>
         <AuthProvider>
-          <GoogleAnalyticsLoader /> {/* Conditionally loads Google Analytics */}
           {/* <StyledComponentsRegistry> */}
           <CssBaseline />
           <AppRouterCacheProvider>
