@@ -17,9 +17,10 @@ import { LockOrUnlock } from './Buttons/LockUnlockButton';
 import { DisableUser } from './Buttons/DisableUser';
 
 import clsx from 'clsx';
-import { updateAuthMethodForUser } from '@b2b-tickets/admin-server-actions';
+import { updateMFAMethodForUser } from '@b2b-tickets/admin-server-actions';
 import styles from './css/UsersTab.module.scss';
 import config from '@b2b-tickets/config';
+import toast from 'react-hot-toast';
 
 const userDetailsInitalState = {
   firstName: null,
@@ -68,7 +69,7 @@ export function UsersTab({ usersList, rolesList }) {
               <th>Mobile Phone</th>
               <th>Customer</th>
               <th className="text-center">Roles</th>
-              <th>Auth</th>
+              <th>MFA Method</th>
               <th>Locked</th>
               <th>Active</th>
               <th className="w-[150px] text-center">Actions</th>
@@ -116,21 +117,27 @@ export function UsersTab({ usersList, rolesList }) {
                   {/*{user.authenticationType}*/}
                   <select
                     className="text-left select max-w-xs"
-                    onChange={(e) =>
-                      // updateAuthMethodForUser({
-                      //   user,
-                      //   authType: e.target.value,
-                      // })
-                      pass
-                    }
+                    onChange={async (e) => {
+                      const resp = await updateMFAMethodForUser({
+                        username: user.username,
+                        mfaType: e.target.value,
+                      });
+
+                      if (resp.status === 'SUCCESS') {
+                        toast.success(resp.message);
+                      } else {
+                        toast.error(resp.message);
+                      }
+                    }}
                     style={{
                       backgroundColor: 'transparent',
                       fontSize: '12px',
                       outline: 'none',
                     }}
-                    defaultValue={user.authentication_type}
+                    defaultValue={user.mfa_method}
                   >
-                    <option value={'LOCAL'}>LOCAL</option>
+                    <option value={'m'}>Mobile</option>
+                    <option value={'e'}>Email</option>
                     {/* <option value={'LDAP'}>LDAP</option> */}
                   </select>
                 </td>

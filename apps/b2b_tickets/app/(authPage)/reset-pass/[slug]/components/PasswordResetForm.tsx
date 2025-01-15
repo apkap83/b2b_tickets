@@ -517,7 +517,7 @@ export function PasswordResetForm({
           {config.TwoFactorEnabledForPasswordReset && showOTP && !totpVerified && (
             <div>
               <p className="text-xs pt-2 pb-1 ">
-                Please enter your OTP code that you received by SMS
+                Please enter your OTP code that you have received
               </p>
               <p className="text-xs text-center pb-2">
                 Remaining time {formatTimeMMSS(timeLeft)}
