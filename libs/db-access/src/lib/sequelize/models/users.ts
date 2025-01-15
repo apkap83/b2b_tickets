@@ -42,6 +42,7 @@ export class B2BUser extends Model<
   declare last_update_process: string;
   declare two_factor_secret?: string;
   declare lastotpsent?: string;
+  declare mfa_method?: string;
 
   // Association methods for B2BUser
   declare getRoles: BelongsToManyGetAssociationsMixin<AppRole>;
@@ -159,7 +160,11 @@ export class B2BUser extends Model<
           allowNull: true,
         },
         lastotpsent: {
-          type: DataTypes.STRING(10),
+          type: DataTypes.STRING(140),
+          allowNull: true,
+        },
+        mfa_method: {
+          type: DataTypes.STRING(1),
           allowNull: true,
         },
       },
@@ -203,6 +208,7 @@ export class B2BUser extends Model<
               'change_password',
               'two_factor_secret',
               'lastotpsent',
+              'mfa_method',
             ],
           },
         },

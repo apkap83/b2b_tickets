@@ -195,6 +195,7 @@ const tryLocalAuthentication = async (
       permissions,
       two_factor_secret: foundUser.two_factor_secret,
       forcedToChangePassword: foundUser.change_password === 'y',
+      mfa_method: foundUser.mfa_method,
       // Overwriting the toString method
       toString: function () {
         return `User ID: ${this.user_id}, Customer ID: ${this.customer_id}, Customer Name: ${this.customer_name}, Name: ${this.firstName} ${this.lastName}, Username: ${this.userName} Email: ${this.email}, Mobile Phone: ${this.mobilePhone}, Auth Type: ${this.authenticationType}`;
@@ -366,8 +367,7 @@ export const options: NextAuthOptions = {
 
           // SEND SMS HERE
           logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
-          if (localAuthUserDetails.mobilePhone)
-            await sendOTP(localAuthUserDetails.mobilePhone, correctOTPCode!);
+          await sendOTP(localAuthUserDetails.userName, correctOTPCode!);
 
           if (!credentials.totpCode) {
             throw new Error(ErrorCode.SecondFactorRequired);
@@ -513,8 +513,7 @@ export const options: NextAuthOptions = {
 
             // SEND SMS HERE
             logRequest.info(`'*** OTP Code for Pass Reset: ${correctOTPCode}`);
-            if (foundUser.mobile_phone)
-              await sendOTP(foundUser.mobile_phone, correctOTPCode!);
+            await sendOTP(foundUser.userName, correctOTPCode!);
             verifyJWTTotp({ req });
           }
 
