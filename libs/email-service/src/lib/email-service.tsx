@@ -493,6 +493,53 @@ export async function sendEmailForPasswordReset(
   }
 }
 
+export async function sendEmailForTOTPCode(
+  emailNotificationType: EmailNotificationType,
+  email: string,
+  totpCode: string
+) {
+  if (!config.SendEmails) return;
+
+  const logRequest = await getRequestLogger(TransportName.AUTH);
+  try {
+    if (emailNotificationType === EmailNotificationType.TOTP_BY_EMAIL) {
+      const env =
+        process.env['APP_ENV'] === 'staging'
+          ? ApplicationEnvironment.Staging
+          : process.env['NODE_ENV'] === 'production'
+          ? ApplicationEnvironment.Production
+          : ApplicationEnvironment.Development;
+
+      let emailTemplate = EmailTemplate.TOTP_BY_EMAIL;
+      let subject = EmailTemplateSubject.TOTP_BY_EMAIL_NOTIFICATION;
+
+      // Load and populate the template
+      const templateforTOTPByEmail = populateTemplate(
+        loadTemplate(emailTemplate as EmailTemplate),
+        {
+          totpCode,
+        } as TemplateVariables[EmailTemplate.TOTP_BY_EMAIL]
+      );
+
+      // Send Email for Handler
+      await transporter.sendMail({
+        from: config.EmailFromAddress,
+        to: [email],
+        // cc: NMS_Team_Email_Address,
+        subject: subject as string,
+        text: stripHtmlTags(templateforTOTPByEmail),
+        html: templateforTOTPByEmail,
+      });
+
+      logRequest.info(
+        `Serv.A.F. - Sent E-mail Notification for TOTP Code to ${email}`
+      );
+    }
+  } catch (error) {
+    logRequest.error(error);
+  }
+}
+
 const getCcValuesForTicket = async ({
   ticketId,
 }: {

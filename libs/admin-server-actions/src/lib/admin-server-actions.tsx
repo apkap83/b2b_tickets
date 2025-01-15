@@ -358,6 +358,40 @@ export async function lockorUnlockUser({ username }: any) {
   }
 }
 
+export async function updateMFAMethodForUser({ username, mfaType }: any) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  try {
+    // Verify Security Permission
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.API_Security_Management
+    );
+
+    // Check if the user already exists
+    const user = await B2BUser.findOne({ where: { username } });
+    if (!user)
+      throw new Error(`User with user name ${username} was not found!`);
+
+    user.mfa_method = mfaType;
+    user.save();
+
+    logRequest.info(
+      `A.F.: ${session?.user.userName} - Altering MFA Method for User: ${username} to MFA: ${mfaType}`
+    );
+
+    revalidatePath('/admin');
+
+    return {
+      status: `SUCCESS`,
+      message: `User ${username} has now altered MFA Method`,
+    };
+  } catch (error: any) {
+    logRequest.error(error);
+    return { status: 'ERROR', message: error.message };
+  }
+}
+
 export async function activeorInactiveUser({ username }: any) {
   const logRequest: CustomLogger = await getRequestLogger(
     TransportName.ACTIONS

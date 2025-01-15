@@ -30,6 +30,7 @@ export interface B2BUserType {
   last_update_process: string;
   two_factor_secret?: string | null;
   lastotpsent?: string | null;
+  mfa_method: string | null;
 }
 
 export type FormState = {
@@ -312,6 +313,7 @@ export enum EmailNotificationType {
   TICKET_CLOSURE = 'ticket-closure',
   USER_CREATION = 'user-creation',
   RESET_TOKEN = 'reset-token',
+  TOTP_BY_EMAIL = 'totp-by-email',
 }
 
 export const EmailListOfHandlers = ['apostolos.kapetanios@nova.gr'];
@@ -331,6 +333,7 @@ export enum EmailTemplate {
   NEW_USER_CREATION_NOTIFICATION_PRODUCTION = 'NewUserNotification.html',
 
   EMAIL_TOKEN_NOTIFICATION = 'EmailToken.html',
+  TOTP_BY_EMAIL = 'TOTP_By_Email.html',
 }
 
 export interface TemplateVariables {
@@ -396,6 +399,10 @@ export interface TemplateVariables {
   [EmailTemplate.EMAIL_TOKEN_NOTIFICATION]: {
     verificationCode: string;
   };
+
+  [EmailTemplate.TOTP_BY_EMAIL]: {
+    totpCode: string;
+  };
 }
 
 export interface TicketEscalation {
@@ -459,6 +466,8 @@ export enum EmailTemplateSubject {
   NEW_USER_CREATION_PRODUCTION = 'Activate Your Nova Platinum Ticketing System Account',
 
   EMAIL_TOKEN_NOTIFICATION = 'Nova Platinum Ticketing - Reset Token',
+
+  TOTP_BY_EMAIL_NOTIFICATION = 'Nova Platinum Ticketing - OTP Code',
 }
 
 export interface EmailVariableTypes {
