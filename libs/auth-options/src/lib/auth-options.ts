@@ -756,7 +756,7 @@ function verifyJWTTokenForEmail({
 }
 
 const validateReCaptchaV3 = async (token: string) => {
-  const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
+  // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
   const secretKey = process.env.RECAPTCHA_V3_SECRET_KEY;
 
   if (!secretKey) {
@@ -769,16 +769,16 @@ const validateReCaptchaV3 = async (token: string) => {
 
   try {
     const response = await axios.post(
-      'https://www.google.com/recaptcha/api/siteverify',
+      'https://142.250.184.142/recaptcha/api/siteverify',
       params,
       {
-        proxy: proxyUrl
-          ? {
-              host: new URL(proxyUrl).hostname,
-              port: parseInt(new URL(proxyUrl).port || '80', 10),
-              protocol: new URL(proxyUrl).protocol.replace(':', ''),
-            }
-          : false,
+        // proxy: proxyUrl
+        //   ? {
+        //       host: new URL(proxyUrl).hostname,
+        //       port: parseInt(new URL(proxyUrl).port || '80', 10),
+        //       protocol: new URL(proxyUrl).protocol.replace(':', ''),
+        //     }
+        //   : false,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -791,7 +791,7 @@ const validateReCaptchaV3 = async (token: string) => {
 };
 
 export const validateReCaptchaV2 = async (token: string) => {
-  const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
+  // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
   const secretKey = process.env.RECAPTCHA_V2_SECRET_KEY;
 
   if (!secretKey) {
@@ -804,16 +804,16 @@ export const validateReCaptchaV2 = async (token: string) => {
 
   try {
     const response = await axios.post(
-      'https://www.google.com/recaptcha/api/siteverify',
+      'https://142.250.184.142/recaptcha/api/siteverify',
       params,
       {
-        proxy: proxyUrl
-          ? {
-              host: new URL(proxyUrl).hostname,
-              port: parseInt(new URL(proxyUrl).port || '80', 10),
-              protocol: new URL(proxyUrl).protocol.replace(':', ''),
-            }
-          : false,
+        // proxy: proxyUrl
+        //   ? {
+        //       host: new URL(proxyUrl).hostname,
+        //       port: parseInt(new URL(proxyUrl).port || '80', 10),
+        //       protocol: new URL(proxyUrl).protocol.replace(':', ''),
+        //     }
+        //   : false,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
