@@ -513,7 +513,7 @@ export const options: NextAuthOptions = {
 
             // SEND SMS HERE
             logRequest.info(`'*** OTP Code for Pass Reset: ${correctOTPCode}`);
-            await sendOTP(foundUser.userName, correctOTPCode!);
+            await sendOTP(foundUser.username, correctOTPCode!);
             verifyJWTTotp({ req });
           }
 

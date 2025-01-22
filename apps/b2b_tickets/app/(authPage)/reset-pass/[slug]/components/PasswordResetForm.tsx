@@ -424,72 +424,91 @@ export function PasswordResetForm({
         <form onSubmit={formik.handleSubmit} autoComplete="off">
           <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
           {!loadingState && linkIsValid ? (
-            <div className="mb-5">
-              {showOTP && (
-                <p className="text-xs text-center pb-2">Email Provided</p>
-              )}
+            <>
               <div className="mb-5">
-                <label
-                  style={{
-                    border: '1px solid #888',
-                  }}
-                  className={`input flex items-center gap-2`}
-                >
-                  <MdOutlineMailLock size={25} color="rgba(0,0,0,.55)" />
-                  <input
-                    type="text"
-                    name="email"
-                    value={formik.values.email}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="w-full pl-2 disabled:text-black/75 disabled:bg-gray dark:disabled:bg-gray"
-                    placeholder="Your Email Address"
-                    readOnly={true}
-                    disabled={true}
-                  />
-                </label>
-                <div className="text-center mt-3">
-                  <FieldError formik={formik} name="email" />
-                </div>
-              </div>
-              {showNewPasswordField && (
-                <>
-                  <PasswordComplexityAnnouncement />
-                  <div className="mb-5 border p-2">
-                    <label className="input input-bordered flex items-center gap-2 dark:bg-white  ">
-                      <FaKey />
-                      <input
-                        type="password"
-                        name="newPassword"
-                        value={formik.values.newPassword}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={clsx('grow text-black', {})}
-                        placeholder="New Password"
-                        readOnly={error === successMessage}
-                      />
-                    </label>
-                    <label className="mt-3 input input-bordered flex items-center gap-2 dark:bg-white  ">
-                      <FaKey />
-                      <input
-                        type="password"
-                        name="repeatNewPassword"
-                        value={formik.values.repeatNewPassword}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={clsx('grow text-black', {})}
-                        placeholder="Repeat Password"
-                        readOnly={error === successMessage}
-                      />
-                    </label>
-                    <div className="text-xs text-red-900 mt-1">
-                      {formik.errors['newPassword'] ||
-                        formik.errors['repeatNewPassword']}
-                    </div>
+                {showOTP && (
+                  <p className="text-xs text-center pb-2">Email Provided</p>
+                )}
+                <div className="mb-5">
+                  <label
+                    style={{
+                      border: '1px solid #888',
+                    }}
+                    className={`input flex items-center gap-2`}
+                  >
+                    <MdOutlineMailLock size={25} color="rgba(0,0,0,.55)" />
+                    <input
+                      type="text"
+                      name="email"
+                      value={formik.values.email}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="w-full pl-2 disabled:text-black/75 disabled:bg-gray dark:disabled:bg-gray"
+                      placeholder="Your Email Address"
+                      readOnly={true}
+                      disabled={true}
+                    />
+                  </label>
+                  <div className="text-center mt-3">
+                    <FieldError formik={formik} name="email" />
                   </div>
-                </>
+                </div>
+                {showNewPasswordField && (
+                  <>
+                    <PasswordComplexityAnnouncement />
+                    <div className="mb-5 border p-2">
+                      <label className="input input-bordered flex items-center gap-2 dark:bg-white  ">
+                        <FaKey />
+                        <input
+                          type="password"
+                          name="newPassword"
+                          value={formik.values.newPassword}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          className={clsx('grow text-black', {})}
+                          placeholder="New Password"
+                          readOnly={error === successMessage}
+                        />
+                      </label>
+                      <label className="mt-3 input input-bordered flex items-center gap-2 dark:bg-white  ">
+                        <FaKey />
+                        <input
+                          type="password"
+                          name="repeatNewPassword"
+                          value={formik.values.repeatNewPassword}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          className={clsx('grow text-black', {})}
+                          placeholder="Repeat Password"
+                          readOnly={error === successMessage}
+                        />
+                      </label>
+                      <div className="text-xs text-red-900 mt-1">
+                        {formik.errors['newPassword'] ||
+                          formik.errors['repeatNewPassword']}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+              {config.CaptchaIsActiveForPasswordReset && !captchaVerified && (
+                <div
+                  style={{
+                    transform: 'scale(1.16)',
+                    WebkitTransform: 'scale(1.16)',
+                    transformOrigin: '0 0',
+                    WebkitTransformOrigin: '0 0',
+                  }}
+                >
+                  <ReCAPTCHA
+                    className="w-full"
+                    ref={recaptchaRef}
+                    sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY!}
+                    onChange={handleCaptchaChange}
+                  />
+                </div>
               )}
-            </div>
+            </>
           ) : (
             loadingState && (
               <Box sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -497,27 +516,13 @@ export function PasswordResetForm({
               </Box>
             )
           )}
-          {config.CaptchaIsActiveForPasswordReset && !captchaVerified && (
-            <div
-              style={{
-                transform: 'scale(1.16)',
-                WebkitTransform: 'scale(1.16)',
-                transformOrigin: '0 0',
-                WebkitTransformOrigin: '0 0',
-              }}
-            >
-              <ReCAPTCHA
-                className="w-full"
-                ref={recaptchaRef}
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY!}
-                onChange={handleCaptchaChange}
-              />
-            </div>
-          )}
+
           {config.TwoFactorEnabledForPasswordReset && showOTP && !totpVerified && (
             <div>
-              <p className="text-xs pt-2 pb-1 ">
-                Please enter your OTP code that you have received
+              <p className="text-xs pt-2 mb-2 text-center">
+                Please enter the OTP code that you have received
+                <br />
+                by E-mail/SMS
               </p>
               <p className="text-xs text-center pb-2">
                 Remaining time {formatTimeMMSS(timeLeft)}
@@ -534,7 +539,7 @@ export function PasswordResetForm({
           {showEmailTokenField && (
             <div className="my-5 border p-3 rounded-md">
               <p className="text-sm text-center mb-3">
-                Please provide the token that you have received in your e-mail
+                Please provide the token that you have received at your E-mail
                 address
               </p>
               <label className="input input-bordered flex items-center gap-2 dark:bg-white ">

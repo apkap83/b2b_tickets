@@ -296,7 +296,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                     onBlur={formik.handleBlur}
                     className="grow text-black"
                     placeholder="User Name"
-                    autoComplete="false"
+                    autoComplete="off"
                   />
                 </label>
                 <FieldError formik={formik} name="userName" />
@@ -317,7 +317,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                     onBlur={formik.handleBlur}
                     className="grow text-black"
                     placeholder="Password"
-                    autoComplete="false"
+                    autoComplete="off"
                   />
                 </label>
                 <FieldError formik={formik} name="password" />
@@ -336,8 +336,10 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           )}
           {showOTP && (
             <div>
-              <p className="text-xs pt-2 pb-1 ">
-                Please enter your OTP code that you have received
+              <p className="text-xs pt-2 mb-2 text-center">
+                Please enter the OTP code that you have received
+                <br />
+                by E-mail/SMS
               </p>
               <p className="text-xs text-center pb-2">
                 Remaining time {formatTimeMMSS(timeLeft)}

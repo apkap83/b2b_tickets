@@ -497,8 +497,10 @@ export default function ForgotPassForm({
           )}
           {config.TwoFactorEnabledForPasswordReset && showOTP && !totpVerified && (
             <div>
-              <p className="text-xs pt-2 pb-1 ">
+              <p className="text-xs pt-2 mb-2 text-center ">
                 Please enter your OTP code that you received
+                <br />
+                by E-mail/SMS
               </p>
               <p className="text-xs text-center pb-2">
                 Remaining time {formatTimeMMSS(timeLeft)}
@@ -515,7 +517,7 @@ export default function ForgotPassForm({
           {showEmailTokenField && (
             <div className="my-5 border p-3 rounded-md">
               <p className="text-sm text-center mb-3">
-                Please provide the token that you have received in your e-mail
+                Please provide the token that you have received at your E-mail
                 address
               </p>
               <label className="input input-bordered flex items-center gap-2 dark:bg-white ">
