@@ -252,6 +252,7 @@ export async function createUser(formState: any, formData: any) {
       creation_date: new Date(),
       creation_user: 'admin',
       last_update_process: 'b2btickets',
+      mfa_method: 'e',
     });
 
     logRequest.info(
