@@ -37,11 +37,7 @@ const App: React.FC = async ({
   return (
     <Container
       maxWidth="xl"
-      sx={{
-        marginTop: 2,
-        paddingBottom: '55px',
-      }}
-      className="relative"
+      className="relative mt-[20px] mb-[64px] sm:mt-[96px]"
     >
       <TicketsList theTicketsList={pageData} totalRows={totalRows} />
     </Container>

@@ -16,10 +16,16 @@ export const AdminDashboard = ({
 
   return (
     <>
-      <div className="relative m-0 p-5 flex flex-col overflow-y-auto mb-[2.5rem] z-5">
+      <div className="relative m-0 py-1 px-5 flex flex-col overflow-y-auto z-5">
         <div className="text-center text-4xl"></div>
 
         <div className="pt-5 flex flex-col flex-grow ">
+          <h1 className="text-4xl font-thin text-left inline-block">
+            <span className="text-black inline-block w-[300px] rounded-md tracking-wider text-left">
+              Users List
+            </span>
+          </h1>
+          <div className="my-3 border-b border-gray-200"></div>
           <div className="border-b">
             <div
               role="tablist"
@@ -58,15 +64,18 @@ export const AdminDashboard = ({
           )}
 
           {activeTab === 'Roles' && (
-            // <div className="mb-[2rem]">
-            <RolesTab rolesList={rolesList} permissionsList={permissionsList} />
-            // </div>
+            <div className="mb-[2rem]">
+              <RolesTab
+                rolesList={rolesList}
+                permissionsList={permissionsList}
+              />
+            </div>
           )}
 
           {activeTab === 'Permissions' && (
-            // <div className="mb-[2rem]">
-            <PermissionsTab permissionsList={permissionsList} />
-            // </div>
+            <div className="mb-[2rem]">
+              <PermissionsTab permissionsList={permissionsList} />
+            </div>
           )}
         </div>
       </div>
