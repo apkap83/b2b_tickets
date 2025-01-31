@@ -114,7 +114,6 @@ export function UsersTab({ usersList, rolesList }) {
                   })}
                 </td>
                 <td>
-                  {/*{user.authenticationType}*/}
                   <select
                     className="text-left select max-w-xs"
                     onChange={async (e) => {
