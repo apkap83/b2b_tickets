@@ -448,7 +448,12 @@ export const getFilteredTicketsForCustomer = async (
       const sqlQuery = `
         SELECT *, COUNT(1) OVER () AS total_records 
         FROM tickets_v 
-        ${whereConditions ? `WHERE ${whereConditions}` : ''} 
+        ${
+          whereConditions
+            ? `WHERE ${whereConditions} ORDER BY "Status Date" DESC`
+            : ''
+        }
+
         ${
           allPages
             ? ''
@@ -480,7 +485,11 @@ export const getFilteredTicketsForCustomer = async (
     const sqlQuery = `
       SELECT *, COUNT(1) OVER () AS total_records 
       FROM tickets_v 
-      ${whereConditions ? `WHERE ${whereConditions}` : ''} 
+      ${
+        whereConditions
+          ? `WHERE ${whereConditions} ORDER BY "Status Date" DESC`
+          : ''
+      } 
       ${
         allPages
           ? ''
