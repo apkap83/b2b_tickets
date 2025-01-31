@@ -38,10 +38,8 @@ export default async function RootLayout({
             <AppThemeProvider>
               <ToastProvider>
                 <WebSocketWrapper>
-                  <main style={{ height: '100vh' }}>
-                    {/* {session ? <NavBar /> : null} */}
+                  <main className="mt-[0] mb-[49.92px] sm:mt-[75.2px]">
                     {children}
-                    {/* {session ? <Footer /> : null} */}
                   </main>
                 </WebSocketWrapper>
                 <CookieConsentBanner />
