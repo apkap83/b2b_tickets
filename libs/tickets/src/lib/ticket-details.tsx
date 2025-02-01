@@ -350,7 +350,7 @@ export function TicketDetails({
         <div
           className={`${styles.header} w-full h-[80px] px-6 border-b border-black justify-between items-center inline-flex`}
         >
-          <div className="self-stretch mt-2 flex-col justify-center items-center inline-flex">
+          <div className="self-stretch flex-col justify-center items-center inline-flex mt-3 sm:mt-0">
             <div className="text-black/90 text-5xl font-bold ">
               Ticket Details
             </div>
@@ -358,7 +358,7 @@ export function TicketDetails({
           <div className="flex gap-2">{customButtonBasedOnTicketStatus()}</div>
         </div>
         <div
-          className={`self-stretch pl-8 pr-6 pt-3.5 flex-col justify-start items-start gap-6 flex`}
+          className={`self-stretch pl-8 pr-6 pt-2 flex-col justify-start items-start gap-6 flex`}
         >
           <div
             className={`${styles.statusAndDescriptionDiv} self-stretch justify-start items-center gap-5 inline-flex`}

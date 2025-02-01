@@ -55,7 +55,7 @@ export function TicketsUiComments({
             Ticket Comments
           </div>
         </div>
-        <div className="self-stretch p-4 bg-[#f3f4ff] flex-col justify-start items-center gap-4 flex">
+        <div className="self-stretch p-4 bg-[#f3f4ff] rounded-md flex-col justify-start items-center gap-4 flex">
           {comments.length === 0 ? (
             <span>No comments yet</span>
           ) : (
