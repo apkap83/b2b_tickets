@@ -46,12 +46,15 @@ export const NavBar = () => {
         ref={navbarRef}
         display="flex"
         justifyContent="space-between"
-        p={1.3}
-        className={`${styles.navBar} z-10`}
+        className={`${styles.navBar}`}
       >
-        <div>
+        <>
           <Stack
-            className="hover:cursor-pointer"
+            className="hover:cursor-pointer "
+            sx={{
+              borderTopLeftRadius: '5px',
+              borderTopRightRadius: '5px',
+            }}
             onClick={() => {
               const savedFilter = sessionStorage.getItem('ticketFilter');
               if (savedFilter) {
@@ -91,7 +94,7 @@ export const NavBar = () => {
               Platinum Support
             </div>
           </Stack>
-        </div>
+        </>
 
         {process.env['NEXT_PUBLIC_APP_ENV'] === 'staging' && (
           <div className="absolute left-[40%] rounded-md hidden lg:flex items-center justify-center h-12">
@@ -107,89 +110,67 @@ export const NavBar = () => {
             </div>
           </div>
         )}
+
         <Box className={`${styles.menuAndLoggedIndication}`}>
-          <Box
-            sx={{
-              display: 'flex',
-              height: '50px',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginRight: '8px',
+          <div
+            className="border-y border-solid border-[#5b5ea090] pr-1 sm:pr-5"
+            style={{
+              borderRight: '1px dashed #5b5ea090',
             }}
-          ></Box>
-          <Box
-            sx={{
-              borderTop: '1px solid #5b5ea090',
-              borderBottom: '1px solid #5b5ea090',
-            }}
-            className={`rounded flex ${styles.myMenu}`}
-            px={2}
           >
-            <div
-              className={`${styles.myMenuLeft}`}
-              style={{
-                borderRight: '1px dashed #5b5ea090',
+            {userHasPermission(session, AppPermissionTypes.Users_List_Page) ? (
+              <>
+                <IconButton
+                  className="flex flex-col"
+                  onClick={() => {
+                    router.push('/admin');
+                  }}
+                  sx={{
+                    color: isAdminPath
+                      ? colors.blueAccent[500]
+                      : colors.grey[800], // Conditionally apply color
+                    borderRadius: '5px',
+                    '&:hover': {
+                      backgroundColor: '#3d3d3f',
+                    },
+                  }}
+                >
+                  <SettingsOutlinedIcon />
+                  <span className="text-xs">Users List</span>
+                </IconButton>
+              </>
+            ) : null}
+
+            <IconButton
+              className="flex flex-col justify-center items-center "
+              onClick={() => {
+                // Use the stored search params to navigate to the tickets page
+                const savedFilter = sessionStorage.getItem('ticketFilter');
+                if (savedFilter) {
+                  router.replace(`/tickets?${savedFilter}`);
+                } else {
+                  router.replace(`/tickets`);
+                }
+              }}
+              sx={{
+                color: isTicketsPath
+                  ? colors.blueAccent[500]
+                  : colors.grey[800], // Conditionally apply color
+                borderRadius: '5px',
+                '&:hover': {
+                  backgroundColor: '#3d3d3f',
+                },
               }}
             >
-              {userHasPermission(
-                session,
-                AppPermissionTypes.Users_List_Page
-              ) ? (
-                <>
-                  <IconButton
-                    className="flex flex-col"
-                    onClick={() => {
-                      router.push('/admin');
-                    }}
-                    sx={{
-                      color: isAdminPath
-                        ? colors.blueAccent[500]
-                        : colors.grey[800], // Conditionally apply color
-                      borderRadius: '5px',
-                      '&:hover': {
-                        backgroundColor: '#3d3d3f',
-                      },
-                    }}
-                  >
-                    <SettingsOutlinedIcon />
-                    <span className="text-xs">Users List</span>
-                  </IconButton>
-                </>
-              ) : null}
+              <IoListSharp />
+              <span className="text-xs">Tickets List</span>
+            </IconButton>
+          </div>
 
-              <IconButton
-                className="flex flex-col justify-center items-center"
-                onClick={() => {
-                  // Use the stored search params to navigate to the tickets page
-                  const savedFilter = sessionStorage.getItem('ticketFilter');
-                  if (savedFilter) {
-                    router.replace(`/tickets?${savedFilter}`);
-                  } else {
-                    router.replace(`/tickets`);
-                  }
-                }}
-                sx={{
-                  color: isTicketsPath
-                    ? colors.blueAccent[500]
-                    : colors.grey[800], // Conditionally apply color
-                  borderRadius: '5px',
-                  '&:hover': {
-                    backgroundColor: '#3d3d3f',
-                  },
-                }}
-              >
-                <IoListSharp />
-                <span className="text-xs">Tickets List</span>
-              </IconButton>
-            </div>
-            <div className="flex justify-center items-center gap-2">
-              <LoggedInIndication
-                session={session}
-                customerName={customerName}
-              />
-              <SessionPopup />
-            </div>
-          </Box>
+          <div className="pl-1 sm:pl-5 flex justify-center items-center gap-2 border-y border-[#5b5ea090] border-solid">
+            <LoggedInIndication session={session} customerName={customerName} />
+            <SessionPopup />
+          </div>
         </Box>
       </Box>
     </>

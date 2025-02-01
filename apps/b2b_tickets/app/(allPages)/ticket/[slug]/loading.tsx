@@ -9,7 +9,7 @@ export default function Loading() {
   //     </div>
   //   );
   return (
-    <Box sx={{ width: '100%', marginTop: '.1rem' }}>
+    <Box sx={{ width: '100%', position: 'fixed', top: '71px' }}>
       <LinearProgress />
     </Box>
   );
