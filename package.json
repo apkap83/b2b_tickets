@@ -138,5 +138,6 @@
     "vite": "5.0.0",
     "vite-plugin-dts": "3.8.1",
     "vitest": "1.3.1"
-  }
+  },
+  "packageManager": "pnpm@9.12.0"
 }
