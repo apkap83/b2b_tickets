@@ -449,6 +449,7 @@ export const options: NextAuthOptions = {
           type: 'email',
           placeholder: 'Your email',
         },
+        captchaToken: { label: 'captchaToken', type: 'text' },
         tokenForEmail: {
           label: 'Token',
           type: 'text',
@@ -463,14 +464,28 @@ export const options: NextAuthOptions = {
         try {
           const { email, tokenForEmail, newPassword } = credentials;
 
+          // Validate JWT Token for Captcha Validation
+          if (config.CaptchaIsActiveForPasswordReset) {
+            // verifyJWTCaptcha({ req });
+            // Recaptcha response
+            const data = await validateReCaptchaV3(credentials.captchaToken);
+            if (!data) {
+              throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
+            }
+            if (!data.success || data.score < config.CaptchaV3Threshold) {
+              logRequest.info('Captcha v3 Data:', data);
+              throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
+            }
+          }
+
           if (!email) {
             throw new Error(ErrorCode.EmailIsRequired);
           }
 
           // Validate JWT Token for Captcha Validation
-          if (config.CaptchaIsActiveForPasswordReset) {
-            verifyJWTCaptcha({ req });
-          }
+          // if (config.CaptchaIsActiveForPasswordReset) {
+          //   verifyJWTCaptcha({ req });
+          // }
 
           const foundUser = await B2BUser.findOne({
             where: {
