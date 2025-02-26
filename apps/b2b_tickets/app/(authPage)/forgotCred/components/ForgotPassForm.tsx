@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import ReCAPTCHA from 'react-google-recaptcha';
+// import ReCAPTCHA from 'react-google-recaptcha';
+import { useReCaptcha } from 'next-recaptcha-v3';
 
 import { useFormik, FormikTouched, FormikErrors } from 'formik';
 import * as Yup from 'yup';
@@ -71,10 +72,7 @@ export default function ForgotPassForm({
   const successMessage = 'Password Successfully updated!';
   const recaptchaRef = useRef<any>(); // New useRef for reCAPTCHA
 
-  // Handle the onChange event of the ReCAPTCHA
-  const handleCaptchaChange = (value: string | null) => {
-    setCaptcha(value);
-  };
+  const { executeRecaptcha } = useReCaptcha();
 
   const { timeLeft, start, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
@@ -228,19 +226,24 @@ export default function ForgotPassForm({
       setSubmitting(true); // Disable the submit button
       setError(null);
 
-      if (config.CaptchaIsActiveForPasswordReset) {
-        if (!captcha) {
-          setError('Verify reCAPTCHA!');
-          return;
-        }
+      let captchaV3token = null;
+      // Generate ReCaptcha token
+      if (config.CaptchaIsActiveForPasswordReset)
+        captchaV3token = await executeRecaptcha('form_submit');
 
-        if (!captchaVerified) {
-          await getReCaptchaJWTToken({
-            emailProvided: formik.values.email,
-            setSubmitting,
-          });
-        }
-      }
+      // if (config.CaptchaIsActiveForPasswordReset) {
+      //   if (!captcha) {
+      //     setError('Verify reCAPTCHA!');
+      //     return;
+      //   }
+
+      //   if (!captchaVerified) {
+      //     await getReCaptchaJWTToken({
+      //       emailProvided: formik.values.email,
+      //       setSubmitting,
+      //     });
+      //   }
+      // }
 
       if (
         config.TwoFactorEnabledForPasswordReset &&
@@ -256,6 +259,7 @@ export default function ForgotPassForm({
       const response = await signIn('credentials-password-reset', {
         redirect: false,
         email: values.email,
+        captchaToken: captchaV3token,
         tokenForEmail: formik.values.tokenForEmail,
         newPassword: formik.values.newPassword,
       });
@@ -486,14 +490,7 @@ export default function ForgotPassForm({
                 transformOrigin: '0 0',
                 WebkitTransformOrigin: '0 0',
               }}
-            >
-              <ReCAPTCHA
-                className="w-full"
-                ref={recaptchaRef}
-                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_V2_SITE_KEY!}
-                onChange={handleCaptchaChange}
-              />
-            </div>
+            ></div>
           )}
           {config.TwoFactorEnabledForPasswordReset && showOTP && !totpVerified && (
             <div>
