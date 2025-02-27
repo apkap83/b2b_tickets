@@ -116,6 +116,14 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       setSubmitting(true); // Disable the submit button
       setError(null);
 
+      if (userNameRef.current) {
+        userNameRef.current.readOnly = true;
+      }
+
+      if (passwordRef.current) {
+        passwordRef.current.readOnly = true;
+      }
+
       // Generate ReCaptcha token
       const captchaV3token = await executeRecaptcha('form_submit');
 
@@ -176,13 +184,13 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
             userNamePasswordGroupRef.current.style.padding = '10px';
           }
 
-          if (userNameRef.current) {
-            userNameRef.current.readOnly = true;
-          }
+          // if (userNameRef.current) {
+          //   userNameRef.current.readOnly = true;
+          // }
 
-          if (passwordRef.current) {
-            passwordRef.current.readOnly = true;
-          }
+          // if (passwordRef.current) {
+          //   passwordRef.current.readOnly = true;
+          // }
 
           break;
         case ErrorCode.InternalServerError:
