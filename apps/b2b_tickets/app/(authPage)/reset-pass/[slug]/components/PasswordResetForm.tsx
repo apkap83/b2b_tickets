@@ -236,7 +236,7 @@ export function PasswordResetForm({
     getEmail();
   }, []);
 
-  const { timeLeft, start, resetTimer } = useCountdown(0, () => {
+  const { timeLeft, start, stopTimer, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
     window.location.reload();
   });
@@ -330,7 +330,7 @@ export function PasswordResetForm({
       }
 
       // Server Verified Totp at this point
-      resetTimer(300);
+      stopTimer();
       setTotpVerified(true);
     } catch (error) {
       setError('An error occurred while validating TOTP. Please try again.');

@@ -128,7 +128,7 @@ const tryLocalAuthentication = async (
     if (!foundUser) {
       logRequest.error(`Incorrect user name provided`);
 
-      // Introduce a 450ms delay before returning error response
+      // Introduce a 1500ms delay before returning error response
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
@@ -506,7 +506,7 @@ export const options: NextAuthOptions = {
               'Incorrect E-mail provided for Password Reset Procedure'
             );
 
-            // Introduce a 450ms delay before returning error response
+            // Introduce a 1500ms delay before returning error response
             await new Promise((resolve) => setTimeout(resolve, 1500));
 
             throw new Error(
