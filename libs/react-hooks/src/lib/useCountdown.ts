@@ -22,10 +22,12 @@ export const useCountdown = (initialTime: number, onExpire: () => void) => {
   }, [isRunning, onExpire]);
 
   const start = () => setIsRunning(true);
+  const stopTimer = () => setIsRunning(false);
+
   const resetTimer = (newTime: number) => {
     setTimeLeft(newTime);
     setIsRunning(false);
   };
 
-  return { timeLeft, isRunning, start, resetTimer };
+  return { timeLeft, isRunning, start, stopTimer, resetTimer };
 };
