@@ -59,6 +59,7 @@ export default function ForgotPassForm({
   // const [totpCode, setTotpCode] = useState('');
 
   const [buttonIsDisabled, setButtonIsDisabled] = useState(false);
+  const [buttonIsShown, setButtonIsShown] = useState(true);
 
   const [showOTP, setShowOTP] = useState(false);
 
@@ -173,7 +174,9 @@ export default function ForgotPassForm({
   };
 
   const validationSchema = Yup.object({
-    email: Yup.string().required('Email is required'),
+    email: Yup.string()
+      .email('Must be a valid E-mail address')
+      .required('Email is required'),
     totpCode: !showOTP
       ? Yup.string()
       : Yup.string()
@@ -281,8 +284,10 @@ export default function ForgotPassForm({
           setError('Email is Required');
           setSubmitting(false);
           break;
-        case ErrorCode.IncorrectEmailProvided:
-          setError('Email is incorrect');
+        case ErrorCode.IfAccountExistsYouWillReceivePasswordResetLink:
+          setError(
+            'If an account with this email exists, you will receive a password reset link shortly.'
+          );
           setSubmitting(false);
           if (config.CaptchaIsActiveForPasswordReset) {
             setCaptchaVerified(false);
@@ -290,6 +295,8 @@ export default function ForgotPassForm({
               recaptchaRef.current.reset();
             }
           }
+          setButtonIsShown(false);
+          setEmailFieldIsReadOnly(true);
           break;
         case ErrorCode.TotpJWTTokenRequired:
           resetTimer(
@@ -544,7 +551,7 @@ export default function ForgotPassForm({
           {error && (
             <p
               className={clsx('mt-3 text-center text-green-500', {
-                'text-red-500': error !== successMessage,
+                'text-gray-500': error !== successMessage,
               })}
             >
               {error}
@@ -553,13 +560,15 @@ export default function ForgotPassForm({
 
           {error !== successMessage ? (
             <div className="mt-5 flex justify-around">
-              <SignInButton
-                pending={formik.isSubmitting}
-                label={submitButtonLabel}
-                loadingText="Loading ..."
-                isValid={formik.isValid && !buttonIsDisabled}
-                // className="btn btn-primary py-4 px-5 font-semibold text-white "
-              />
+              {buttonIsShown && (
+                <SignInButton
+                  pending={formik.isSubmitting}
+                  label={submitButtonLabel}
+                  loadingText="Loading ..."
+                  isValid={formik.isValid && !buttonIsDisabled}
+                  // className="btn btn-primary py-4 px-5 font-semibold text-white "
+                />
+              )}
             </div>
           ) : (
             <div className="mt-5 mb-2 flex justify-around border bg-[#2b2b44] py-1 text-white rounded-md">
