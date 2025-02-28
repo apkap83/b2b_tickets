@@ -75,7 +75,7 @@ export default function ForgotPassForm({
 
   const { executeRecaptcha } = useReCaptcha();
 
-  const { timeLeft, start, resetTimer } = useCountdown(0, () => {
+  const { timeLeft, start, stopTimer, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
     window.location.reload();
   });
@@ -376,7 +376,7 @@ export default function ForgotPassForm({
       }
 
       // Server Verified Totp at this point
-      resetTimer(300);
+      stopTimer();
       setTotpVerified(true);
     } catch (error) {
       setError('An error occurred while validating TOTP. Please try again.');
@@ -550,8 +550,10 @@ export default function ForgotPassForm({
           {/* </div> */}
           {error && (
             <p
-              className={clsx('mt-3 text-center text-green-500', {
-                'text-gray-500': error !== successMessage,
+              className={clsx('mt-3 text-center text-gray-500', {
+                'text-red-500':
+                  error === 'Token Provided is invalid' ||
+                  error === 'Incorrect Token provided',
               })}
             >
               {error}

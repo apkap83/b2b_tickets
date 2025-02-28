@@ -68,7 +68,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const passwordLabelRef = useRef(null);
   const userNamePasswordGroupRef = useRef<HTMLDivElement | null>(null);
 
-  const { timeLeft, start, resetTimer } = useCountdown(0, () => {
+  const { timeLeft, start, stopTimer, resetTimer } = useCountdown(0, () => {
     // When the Token Remainng Time reaches 0, perform full web page refresh
     window.location.reload();
     // router.reload();
@@ -150,6 +150,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       if (!response) return;
 
       if (response.ok) {
+        stopTimer();
         window.location.href = callbackUrl;
       }
 
