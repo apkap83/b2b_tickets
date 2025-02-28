@@ -6,7 +6,7 @@ import { ReCaptchaProvider } from 'next-recaptcha-v3';
 
 import { background_nms_portal as imagePath } from '@b2b-tickets/assets';
 
-export default async function SignIn() {
+export default async function ForgotCred() {
   const csrfToken = await getCsrfToken();
 
   return (

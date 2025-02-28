@@ -96,13 +96,23 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       ? Yup.string()
       : config.PasswordComplexityActive
       ? passwordComplexitySchema
-      : Yup.string().required('Password is required'),
+      : Yup.string().required('New Password is required'),
     repeatNewPassword: !showNewPasswordFields
       ? Yup.string()
       : Yup.string()
           .oneOf([Yup.ref('newPassword')], 'Passwords must match')
           .required('Please confirm your password'),
   });
+
+  const reEnableUserNameAndPasswordFields = () => {
+    if (userNameRef.current) {
+      userNameRef.current.readOnly = false;
+    }
+
+    if (passwordRef.current) {
+      passwordRef.current.readOnly = false;
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -152,18 +162,22 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
         case ErrorCode.CaptchaJWTTokenRequired:
           setError('Captcha Verification is Required');
           setSubmitting(false);
+          reEnableUserNameAndPasswordFields();
           break;
         case ErrorCode.CaptchaJWTTokenInvalid:
           setError('Captcha v3 Verification Failed');
           setSubmitting(false);
+          reEnableUserNameAndPasswordFields();
           break;
         case ErrorCode.UserIsLocked:
           setError('User is currently locked');
           setSubmitting(false);
+          reEnableUserNameAndPasswordFields();
           break;
         case ErrorCode.IncorrectUsernameOrPassword:
           setError('Invalid user name or password');
           setSubmitting(false);
+          reEnableUserNameAndPasswordFields();
           break;
         case ErrorCode.IncorrectTwoFactorCode:
           setError('Invalid OTP Code provided');
@@ -184,22 +198,16 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
             userNamePasswordGroupRef.current.style.padding = '10px';
           }
 
-          // if (userNameRef.current) {
-          //   userNameRef.current.readOnly = true;
-          // }
-
-          // if (passwordRef.current) {
-          //   passwordRef.current.readOnly = true;
-          // }
-
           break;
         case ErrorCode.InternalServerError:
           setError('Internal Server Error');
           setSubmitting(false);
+          reEnableUserNameAndPasswordFields();
           break;
         case ErrorCode.NoRoleAssignedToUser:
           setError('No Role Assigned');
           setSubmitting(false);
+          reEnableUserNameAndPasswordFields();
           break;
         case ErrorCode.NewPasswordRequired:
           setShowNewPasswordFields(true);
@@ -425,20 +433,20 @@ const SignInButton = ({
   isValid: boolean;
 }) => {
   return (
+    // hover:scale-105 hover:from-gray-700 hover:via-gray-800 hover:to-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-600 focus:ring-offset-gray-100
     <button
       className={clsx(
-        `btn transition-all duration-300 ease-in-out bg-gradient-to-r from-gray-800 via-black to-gray-900
-         text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:from-gray-700 hover:via-gray-800 hover:to-gray-700 
-         hover:scale-105 transform border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 
-         focus:ring-gray-600 focus:ring-offset-gray-100 disabled:bg-gray-500 disabled:text-gray-300 
+        `w-[105px] py-2 px-4 btn transition-all duration-300 
+         ease-in-out bg-gradient-to-r from-gray-800 via-black to-gray-900
+         text-white font-bold rounded-lg shadow-lg 
+          transform border border-transparent  
+          disabled:bg-gray-500 disabled:text-gray-300
+          hover:scale-[1.1]
         `,
         {
           'cursor-not-allowed opacity-70': pending,
         }
       )}
-      style={{
-        width: '105px',
-      }}
       disabled={pending || !isValid}
       type="submit"
       aria-disabled={pending || !isValid}
