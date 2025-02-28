@@ -39,6 +39,8 @@ export function PasswordResetForm({
   // const [totpCode, setTotpCode] = useState('');
 
   const [buttonIsDisabled, setButtonIsDisabled] = useState(false);
+  const [buttonIsShown, setButtonIsShown] = useState(true);
+
   const [showOTP, setShowOTP] = useState(false);
 
   const [showEmailTokenField, setShowEmailTokenField] = useState(false);
@@ -110,20 +112,6 @@ export function PasswordResetForm({
       if (config.CaptchaIsActiveForPasswordReset)
         captchaV3token = await executeRecaptcha('form_submit');
 
-      // if (config.CaptchaIsActiveForPasswordReset) {
-      //   if (!captcha) {
-      //     setError('Verify reCAPTCHA!');
-      //     return;
-      //   }
-
-      //   if (!captchaVerified) {
-      //     await getReCaptchaJWTToken({
-      //       emailProvided: formik.values.email,
-      //       setSubmitting,
-      //     });
-      //   }
-      // }
-
       if (
         config.TwoFactorEnabledForPasswordReset &&
         !totpVerified &&
@@ -160,8 +148,10 @@ export function PasswordResetForm({
           setError('Email is Required');
           setSubmitting(false);
           break;
-        case ErrorCode.IncorrectEmailProvided:
-          setError('Email is incorrect');
+        case ErrorCode.IfAccountExistsYouWillReceivePasswordResetLink:
+          setError(
+            'If an account with this email exists, you will receive a password reset link shortly.'
+          );
           setSubmitting(false);
           if (config.CaptchaIsActiveForPasswordReset) {
             setCaptchaVerified(false);
@@ -169,6 +159,7 @@ export function PasswordResetForm({
               recaptchaRef.current.reset();
             }
           }
+          setButtonIsShown(false);
           break;
         case ErrorCode.TotpJWTTokenRequired:
           resetTimer(
@@ -571,13 +562,15 @@ export function PasswordResetForm({
             !loadingState &&
             linkIsValid && (
               <div className="mt-5 flex justify-around">
-                <SignInButton
-                  pending={formik.isSubmitting}
-                  label={submitButtonLabel}
-                  loadingText="Loading ..."
-                  isValid={formik.isValid && !buttonIsDisabled}
-                  // className="btn btn-primary py-4 px-5 font-semibold text-white "
-                />
+                {buttonIsShown && (
+                  <SignInButton
+                    pending={formik.isSubmitting}
+                    label={submitButtonLabel}
+                    loadingText="Loading ..."
+                    isValid={formik.isValid && !buttonIsDisabled}
+                    // className="btn btn-primary py-4 px-5 font-semibold text-white "
+                  />
+                )}
               </div>
             )
           ) : (

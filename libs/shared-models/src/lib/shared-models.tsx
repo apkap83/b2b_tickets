@@ -286,6 +286,8 @@ export enum ErrorCode {
 
   IncorrectEmailProvided = 'incorrect-email-provided',
 
+  IfAccountExistsYouWillReceivePasswordResetLink = 'if-account-exists-you-will-receive-password-reset-link',
+
   TotpJWTTokenRequired = 'totp-jwt-token-required',
   TotpJWTTokenInvalid = 'totp-jwt-token-invalid',
 

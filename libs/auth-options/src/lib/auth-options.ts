@@ -127,6 +127,10 @@ const tryLocalAuthentication = async (
 
     if (!foundUser) {
       logRequest.error(`Incorrect user name provided`);
+
+      // Introduce a 450ms delay before returning error response
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
@@ -501,7 +505,13 @@ export const options: NextAuthOptions = {
             logRequest.error(
               'Incorrect E-mail provided for Password Reset Procedure'
             );
-            throw new Error(ErrorCode.IncorrectEmailProvided);
+
+            // Introduce a 450ms delay before returning error response
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            throw new Error(
+              ErrorCode.IfAccountExistsYouWillReceivePasswordResetLink
+            );
           }
 
           if (config.TwoFactorEnabledForPasswordReset) {
@@ -608,7 +618,7 @@ export const options: NextAuthOptions = {
         } catch (error: unknown) {
           const permittedErrorsToFrontEnd: string[] = [
             ErrorCode.EmailIsRequired,
-            ErrorCode.IncorrectEmailProvided,
+            ErrorCode.IfAccountExistsYouWillReceivePasswordResetLink,
             ErrorCode.TotpJWTTokenRequired,
             ErrorCode.IncorrectPassResetTokenProvided,
             ErrorCode.CaptchaJWTTokenRequired,
