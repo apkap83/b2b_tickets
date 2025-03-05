@@ -11,6 +11,9 @@ import { symmetricDecrypt, symmetricEncrypt } from '@b2b-tickets/utils';
 import { sendEmailForTOTPCode } from '@b2b-tickets/email-service/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
 
+import { NextRequest, NextResponse } from 'next/server';
+import { redisClient } from '@b2b-tickets/redis-service';
+
 export async function sendOTP(userName: string, OTPCode: string) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   try {
@@ -149,4 +152,45 @@ export async function sendOTP(userName: string, OTPCode: string) {
   } catch (error) {
     logRequest.info(`Error During sending TOTP Message ${error}`);
   }
+}
+
+export async function logFaultyOTPAttempt(req: NextRequest): Promise<{
+  eligibleForNewOtpAttempt: boolean;
+  remainingOTPAttempts: number;
+}> {
+  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  const key = `otp_attempts:${ip}`;
+
+  let numfOfAttemptsInRedis = Number(await redisClient.get(key)) || 0;
+
+  await redisClient.set(
+    key,
+    numfOfAttemptsInRedis + 1,
+    'EX',
+    config.maxOTPAttemptsBanTimeInSec
+  );
+
+  numfOfAttemptsInRedis += 1;
+
+  const remainingOTPAttempts = config.maxOTPAttemps - numfOfAttemptsInRedis;
+
+  if (numfOfAttemptsInRedis >= config.maxOTPAttemps) {
+    return {
+      eligibleForNewOtpAttempt: false,
+      remainingOTPAttempts: 0,
+    };
+  }
+
+  return {
+    eligibleForNewOtpAttempt: true,
+    remainingOTPAttempts,
+  };
+}
+
+export async function clearFaultyOTPAttempts(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  const key = `otp_attempts:${ip}`;
+
+  // Clear OTP Attempts on Success
+  await redisClient.del(key);
 }
