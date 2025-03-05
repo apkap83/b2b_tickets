@@ -6,6 +6,11 @@ import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 import { authenticator } from 'otplib';
 import { B2BUser } from '@b2b-tickets/db-access';
 import { symmetricDecrypt } from '@b2b-tickets/utils';
+import { config } from '@b2b-tickets/config';
+import {
+  logFaultyOTPAttempt,
+  clearFaultyOTPAttempts,
+} from '@b2b-tickets/totp-service/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
@@ -30,22 +35,54 @@ export async function POST(req: NextRequest) {
     });
 
     if (!foundUser) {
+      // Introduce a delay before returning error response
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       return NextResponse.json(
-        { message: 'Email address invalid' },
+        { message: 'Error during TOTP operation' },
+        { status: 400 }
+      );
+    }
+
+    if (!foundUser.two_factor_secret) {
+      // Introduce a delay before returning error response
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      return NextResponse.json(
+        { message: '2FA is not set up' },
         { status: 400 }
       );
     }
 
     // Validate OTP
     const secret = symmetricDecrypt(foundUser.two_factor_secret!);
-
     const isValidToken = authenticator.check(totpCode, secret);
+
     if (!isValidToken) {
       logRequest.error(
         `Invalid Token Provided for Password Reset -> ${totpCode}`
       );
+
+      const { eligibleForNewOtpAttempt, remainingOTPAttempts } =
+        await logFaultyOTPAttempt(req);
+
+      if (!eligibleForNewOtpAttempt) {
+        return NextResponse.json(
+          {
+            error: `Too many OTP attempts. Banned for ${Math.floor(
+              config.maxOTPAttemptsBanTimeInSec / 60
+            )} minutes`,
+            remainingAttempts: 0,
+          },
+          { status: 429 }
+        );
+      }
+
       return NextResponse.json(
-        { message: `Token Provided is invalid` },
+        {
+          message: `Incorrect Token provided`,
+          remainingAttempts: remainingOTPAttempts,
+        },
         { status: 400 }
       );
     }
@@ -70,10 +107,13 @@ export async function POST(req: NextRequest) {
       serialize('totpJWTToken', token, {
         path: '/',
         httpOnly: true, // Ensure cookie is not accessible via JavaScript
-        maxAge: 300, // 300 seconds (5 minutes)
+        maxAge: config.totpJWTTokenCookieValidityInSec, // 300 seconds (5 minutes)
         secure: process.env.NODE_ENV === 'production', // Set to true in production
       })
     );
+
+    // Clear Faulty OTP Attempts on Success
+    clearFaultyOTPAttempts(req);
 
     return response;
   } catch (error) {

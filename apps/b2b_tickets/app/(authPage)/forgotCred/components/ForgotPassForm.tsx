@@ -69,6 +69,11 @@ export default function ForgotPassForm({
   const [emailFieldIsReadOnly, setEmailFieldIsReadOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [abortPassReset, setAbortPassReset] = useState(false);
+  const [remainingOTPAttempts, setRemainingOTPAttempts] = useState(
+    Number(config.maxOTPAttemps)
+  );
+
   const submitButtonLabel = 'Submit';
   const successMessage = 'Password Successfully updated!';
   const recaptchaRef = useRef<any>(); // New useRef for reCAPTCHA
@@ -91,13 +96,6 @@ export default function ForgotPassForm({
 
     clearCookies();
   }, []);
-
-  // If user is already authenticated, redirect to the homepage
-  // useEffect(() => {
-  //   if (status === 'authenticated') {
-  //     router.push('/');
-  //   }
-  // }, [status, router]);
 
   const getReCaptchaJWTToken = async ({
     emailProvided,
@@ -370,8 +368,17 @@ export default function ForgotPassForm({
       const totpResult = await totpResponse.json();
 
       if (!totpResponse.ok) {
-        setError(totpResult.message || 'Invalid TOTP Code');
+        setError(totpResult.message || totpResult.error || 'Invalid TOTP Code');
         setSubmitting(false);
+
+        if (totpResult.remainingAttempts > 0)
+          setRemainingOTPAttempts(totpResult.remainingAttempts);
+
+        if (totpResult.remainingAttempts <= 0) {
+          setAbortPassReset(true);
+          setButtonIsShown(false);
+        }
+
         return;
       }
 
@@ -489,35 +496,30 @@ export default function ForgotPassForm({
               </>
             )}
           </div>
-          {config.CaptchaIsActiveForPasswordReset && !captchaVerified && (
-            <div
-              style={{
-                transform: 'scale(1.16)',
-                WebkitTransform: 'scale(1.16)',
-                transformOrigin: '0 0',
-                WebkitTransformOrigin: '0 0',
-              }}
-            ></div>
-          )}
-          {config.TwoFactorEnabledForPasswordReset && showOTP && !totpVerified && (
-            <div>
-              <p className="text-xs pt-2 mb-2 text-center ">
-                Please enter your OTP code that you received
-                <br />
-                by E-mail/SMS
-              </p>
-              <p className="text-xs text-center pb-2">
-                Remaining time {formatTimeMMSS(timeLeft)}
-              </p>
-              <TwoFactAuth
-                value={formik.values.totpCode}
-                onChange={(val) => formik.setFieldValue('totpCode', val)}
-              />
-              <div className="text-center mt-3">
-                <FieldError formik={formik} name="totpCode" />
+          {config.TwoFactorEnabledForPasswordReset &&
+            showOTP &&
+            !totpVerified &&
+            !abortPassReset && (
+              <div>
+                <p className="text-xs pt-2 mb-2 text-center ">
+                  Please enter your OTP code that you received
+                  <br />
+                  by E-mail/SMS
+                </p>
+                <p className="text-xs my-4 text-center">
+                  Remaining Attempts: <b>{remainingOTPAttempts}</b> | Remaining
+                  Time:&nbsp;<b>{formatTimeMMSS(timeLeft)}</b>
+                </p>
+
+                <TwoFactAuth
+                  value={formik.values.totpCode}
+                  onChange={(val) => formik.setFieldValue('totpCode', val)}
+                />
+                <div className="text-center mt-3">
+                  <FieldError formik={formik} name="totpCode" />
+                </div>
               </div>
-            </div>
-          )}
+            )}
           {showEmailTokenField && (
             <div className="my-5 border p-3 rounded-md">
               <p className="text-sm text-center mb-3">
@@ -541,13 +543,17 @@ export default function ForgotPassForm({
               </div>
             </div>
           )}
-          {/* <div className="mt-5 mb-2 flex justify-around border bg-[#2b2b44] py-1 text-white rounded-md"> */}
-          <div className="my-3 text-right">
-            <Link className="text-xs text-[#6C757D] " href="/signin">
-              Back to <span className="text-blue-500">Login</span> Page
-            </Link>
-          </div>
-          {/* </div> */}
+
+          {!abortPassReset &&
+            !showOTP &&
+            !showNewPasswordField &&
+            !showEmailTokenField && (
+              <div className="my-3 text-right">
+                <Link className="text-xs text-[#6C757D] " href="/signin">
+                  Back to <span className="text-blue-500">Login</span> Page
+                </Link>
+              </div>
+            )}
           {error && (
             <p
               className={clsx('mt-3 text-center text-gray-500', {
@@ -568,7 +574,6 @@ export default function ForgotPassForm({
                   label={submitButtonLabel}
                   loadingText="Loading ..."
                   isValid={formik.isValid && !buttonIsDisabled}
-                  // className="btn btn-primary py-4 px-5 font-semibold text-white "
                 />
               )}
             </div>
