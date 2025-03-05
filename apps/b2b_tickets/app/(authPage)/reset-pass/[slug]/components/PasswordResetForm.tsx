@@ -48,11 +48,17 @@ export function PasswordResetForm({
 
   const [error, setError] = useState<string | null>(null);
 
+  const [abortPassReset, setAbortPassReset] = useState(false);
+
   const { executeRecaptcha } = useReCaptcha();
 
   const submitButtonLabel = 'Submit';
   const successMessage = 'Password Successfully updated!';
   const recaptchaRef = useRef<any>(); // New useRef for reCAPTCHA
+
+  const [remainingOTPAttempts, setRemainingOTPAttempts] = useState(
+    Number(config.maxOTPAttemps)
+  );
 
   const validationSchema = Yup.object({
     email: Yup.string().required('Email is required'),
@@ -324,8 +330,17 @@ export function PasswordResetForm({
       const totpResult = await totpResponse.json();
 
       if (!totpResponse.ok) {
-        setError(totpResult.message || 'Invalid TOTP Code');
+        setError(totpResult.message || totpResult.error || 'Invalid TOTP Code');
         setSubmitting(false);
+
+        if (totpResult.remainingAttempts > 0)
+          setRemainingOTPAttempts(totpResult.remainingAttempts);
+
+        if (totpResult.remainingAttempts <= 0) {
+          setAbortPassReset(true);
+          setButtonIsShown(false);
+        }
+
         return;
       }
 
@@ -506,25 +521,31 @@ export function PasswordResetForm({
             )
           )}
 
-          {config.TwoFactorEnabledForPasswordReset && showOTP && !totpVerified && (
-            <div>
-              <p className="text-xs pt-2 mb-2 text-center">
-                Please enter the OTP code that you have received
-                <br />
-                by E-mail/SMS
-              </p>
-              <p className="text-xs text-center pb-2">
-                Remaining time {formatTimeMMSS(timeLeft)}
-              </p>
-              <TwoFactAuth
-                value={formik.values.totpCode}
-                onChange={(val) => formik.setFieldValue('totpCode', val)}
-              />
-              <div className="text-center mt-3">
-                <FieldError formik={formik} name="totpCode" />
+          {config.TwoFactorEnabledForPasswordReset &&
+            showOTP &&
+            !totpVerified &&
+            !abortPassReset && (
+              <div>
+                <p className="text-xs pt-2 mb-2 text-center">
+                  Please enter the OTP code that you have received
+                  <br />
+                  by E-mail/SMS
+                </p>
+                <p className="text-xs mb-2 text-center">
+                  Remaining Attempts: {remainingOTPAttempts}
+                </p>
+                <p className="text-xs text-center pb-2">
+                  Remaining time {formatTimeMMSS(timeLeft)}
+                </p>
+                <TwoFactAuth
+                  value={formik.values.totpCode}
+                  onChange={(val) => formik.setFieldValue('totpCode', val)}
+                />
+                <div className="text-center mt-3">
+                  <FieldError formik={formik} name="totpCode" />
+                </div>
               </div>
-            </div>
-          )}
+            )}
           {showEmailTokenField && (
             <div className="my-5 border p-3 rounded-md">
               <p className="text-sm text-center mb-3">

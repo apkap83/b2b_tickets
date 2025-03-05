@@ -35,6 +35,7 @@
       "@b2b-tickets/email-service/server": ["libs/email-service/src/server.ts"],
       "@b2b-tickets/logging": ["libs/logging/src/index.ts"],
       "@b2b-tickets/react-hooks": ["libs/react-hooks/src/index.ts"],
+      "@b2b-tickets/redis-service": ["libs/redis-service/src/index.ts"],
       "@b2b-tickets/server-actions": ["libs/server-actions/src/index.ts"],
       "@b2b-tickets/server-actions/server": [
         "libs/server-actions/src/server.ts"
