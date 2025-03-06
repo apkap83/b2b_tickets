@@ -531,12 +531,11 @@ export function PasswordResetForm({
                   <br />
                   by E-mail/SMS
                 </p>
-                <p className="text-xs mb-2 text-center">
-                  Remaining Attempts: {remainingOTPAttempts}
+                <p className="text-xs my-4 text-center">
+                  Remaining Attempts: <b>{remainingOTPAttempts}</b> | Remaining
+                  Time:&nbsp;<b>{formatTimeMMSS(timeLeft)}</b>
                 </p>
-                <p className="text-xs text-center pb-2">
-                  Remaining time {formatTimeMMSS(timeLeft)}
-                </p>
+
                 <TwoFactAuth
                   value={formik.values.totpCode}
                   onChange={(val) => formik.setFieldValue('totpCode', val)}
