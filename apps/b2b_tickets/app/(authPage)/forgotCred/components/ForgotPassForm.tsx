@@ -395,7 +395,7 @@ export default function ForgotPassForm({
   return (
     <div
       className={`w-[450px] relative shadow-md rounded-2xl flex flex-col justify-center items-center p-6  backdrop-blur-lg bg-gray-100 border border-[#26295375]`}
-      style={{ transform: 'translateY(-20%)' }}
+      style={{ transform: 'translateY(-15%)' }}
     >
       <div className={`w-[350px] mb-2`}>
         <div
