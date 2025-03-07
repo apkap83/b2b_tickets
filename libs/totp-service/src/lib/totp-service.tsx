@@ -194,3 +194,36 @@ export async function clearFaultyOTPAttempts(req: NextRequest) {
   // Clear OTP Attempts on Success
   await redisClient.del(key);
 }
+
+export async function logTokenOTPAttempt(req: NextRequest): Promise<{
+  eligibleForNewOtpAttempt: boolean;
+  remainingOTPAttempts: number;
+}> {
+  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  const key = `token_attempts:${ip}`;
+
+  let numfOfAttemptsInRedis = Number(await redisClient.get(key)) || 0;
+
+  await redisClient.set(
+    key,
+    numfOfAttemptsInRedis + 1,
+    'EX',
+    config.maxTokenAttemptsBanTimeInSec
+  );
+
+  numfOfAttemptsInRedis += 1;
+
+  const remainingOTPAttempts = config.maxTokenAttempts - numfOfAttemptsInRedis;
+
+  if (numfOfAttemptsInRedis >= config.maxTokenAttempts) {
+    return {
+      eligibleForNewOtpAttempt: false,
+      remainingOTPAttempts: 0,
+    };
+  }
+
+  return {
+    eligibleForNewOtpAttempt: true,
+    remainingOTPAttempts,
+  };
+}
