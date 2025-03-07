@@ -7,6 +7,8 @@ import { B2BUser } from '@b2b-tickets/db-access';
 import { generateResetToken, symmetricEncrypt } from '@b2b-tickets/utils';
 import { sendEmailForPasswordReset } from '@/libs/email-service/src/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
+import { config } from '@b2b-tickets/config';
+import { logTokenOTPAttempt } from '@b2b-tickets/totp-service/server';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
@@ -17,6 +19,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { message: 'Method Not Allowed' },
         { status: 405 }
+      );
+    }
+
+    const { eligibleForNewOtpAttempt, remainingOTPAttempts } =
+      await logTokenOTPAttempt(req);
+
+    if (!eligibleForNewOtpAttempt) {
+      // Introduce a delay before returning error response
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      return NextResponse.json(
+        {
+          error: `Too many Token attempts. Banned for ${Math.floor(
+            config.maxTokenAttemptsBanTimeInSec / 60
+          )} minutes`,
+          remainingAttempts: 0,
+        },
+        { status: 429 }
       );
     }
 
@@ -31,6 +51,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (!foundUser) {
+      // Introduce a delay before returning error response
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       return NextResponse.json(
         { message: 'Email address invalid' },
         { status: 400 }
@@ -67,7 +90,7 @@ export async function POST(req: NextRequest) {
       serialize('emailJWTToken', token, {
         path: '/',
         httpOnly: true, // Ensure cookie is not accessible via JavaScript
-        maxAge: 300, // 300 seconds (5 minutes)
+        maxAge: config.emailJWTTokenCookieValidityInSec, // 300 seconds (5 minutes)
         secure: process.env.NODE_ENV === 'production', // Set to true in production
       })
     );
