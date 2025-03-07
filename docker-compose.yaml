@@ -101,6 +101,7 @@ services:
       - 'sms-gw2:10.131.20.78'
       - 'test-sms-gw1:10.131.28.73'
       - 'b2b_database:172.27.52.177'
+      - 'redis_host:10.124.49.151'
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -124,7 +125,6 @@ services:
       - 'sms-gw2:10.131.20.78'
       - 'test-sms-gw1:10.131.28.73'
       - 'b2b_database:172.27.52.177'
-      - 'redis_host:10.124.49.151'
     environment:
       - NODE_ENV=staging
       - DEBUG=1
