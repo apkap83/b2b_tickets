@@ -20,10 +20,13 @@ import {
 } from '@b2b-tickets/admin-server-actions';
 import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { passwordComplexitySchema } from '@b2b-tickets/utils';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 import styles from './CreateUserModal.module.scss';
 
 function CreateUserModal({ closeModal }) {
+  const [loading, setLoading] = useState(false);
   const [customersList, setCustomersList] = useState([]);
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
 
@@ -76,182 +79,192 @@ function CreateUserModal({ closeModal }) {
       const customerList = await getCustomersList();
 
       setCustomersList(customerList);
+      setLoading(false);
     };
 
+    setLoading(true);
     getCustList();
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white px-10 py-5 rounded-lg max-h-[800px] overflow-y-auto">
-        <h3 className="font-bold text-lg text-center">Create User Form</h3>
-
-        <form className="flex flex-col gap-3 pt-3" action={action}>
-          <div>
-            <span className={styles.inputDescription}>Customer Name</span>
-            <select
-              name="company"
-              // className="text-left select max-w-xs"
-              value={formik.values.company}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={styles.selectStyle}
-            >
-              <option value="" hidden>
-                Select Customer
-              </option>
-              {customersList.map((item) => {
-                return (
-                  <option key={item.customer_id} value={item.customer_id}>
-                    {item.customer_display_name}
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">
+        {loading ? (
+          <Box className="flex flex-col gap-3 justify-center items-center">
+            <CircularProgress />
+            <p>Loading...</p>
+          </Box>
+        ) : (
+          <>
+            <h3 className="font-bold text-lg text-center">Create User Form</h3>
+            <form className="flex flex-col gap-3 pt-3" action={action}>
+              <div>
+                <span className={styles.inputDescription}>Customer Name</span>
+                <select
+                  name="company"
+                  // className="text-left select max-w-xs"
+                  value={formik.values.company}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className={styles.selectStyle}
+                >
+                  <option value="" hidden>
+                    Select Customer
                   </option>
-                );
-              })}
-            </select>
-          </div>
-          <FieldError formik={formik} name="company" />
+                  {customersList.map((item) => {
+                    return (
+                      <option key={item.customer_id} value={item.customer_id}>
+                        {item.customer_display_name}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+              <FieldError formik={formik} name="company" />
 
-          <div>
-            <span className={styles.inputDescription}>First Name</span>
-            <div className="input input-bordered flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                className="w-4 h-4 opacity-70"
+              <div>
+                <span className={styles.inputDescription}>First Name</span>
+                <div className="input input-bordered flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="w-4 h-4 opacity-70"
+                  >
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
+                  </svg>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formik.values.first_name}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow"
+                  />
+                </div>
+              </div>
+              <FieldError formik={formik} name="first_name" />
+
+              <div>
+                <span className={styles.inputDescription}>Last Name</span>
+                <label className="input input-bordered flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="w-4 h-4 opacity-70"
+                  >
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
+                  </svg>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formik.values.last_name}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow"
+                  />
+                </label>
+              </div>
+              <FieldError formik={formik} name="last_name" />
+
+              <div>
+                <span className={styles.inputDescription}>User Name</span>
+                <label className="input input-bordered flex items-center gap-2">
+                  <CgNametag className="w-4 h-4 opacity-70" />
+                  <input
+                    type="text"
+                    name="username"
+                    value={formik.values.username}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow"
+                  />
+                </label>
+              </div>
+              <FieldError formik={formik} name="username" />
+
+              <div>
+                <span className={styles.inputDescription}>Password</span>
+                <label className="input input-bordered flex items-center gap-2">
+                  <FaKey className="w-4 h-4 opacity-70" />
+                  <input
+                    type="password"
+                    name="password"
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow"
+                  />
+                </label>
+              </div>
+              <FieldError formik={formik} name="password" />
+
+              <div>
+                <span className={styles.inputDescription}>E-mail</span>
+                <label className="input input-bordered flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="w-4 h-4 opacity-70"
+                  >
+                    <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
+                    <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
+                  </svg>
+                  <input
+                    type="text"
+                    name="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow"
+                  />
+                </label>
+              </div>
+              <FieldError formik={formik} name="email" />
+
+              <div>
+                <span className={styles.inputDescription}>Mobile Phone</span>
+                <label className="input input-bordered flex items-center gap-2">
+                  <FaMobileRetro className="w-4 h-4 opacity-70" />
+
+                  <input
+                    type="text"
+                    name="mobile_phone"
+                    value={formik.values.mobile_phone}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="grow"
+                  />
+                </label>
+              </div>
+              <FieldError formik={formik} name="mobile_phone" />
+
+              <div
+                className="flex h-2 items-end space-x-1"
+                aria-live="polite"
+                aria-atomic="true"
               >
-                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-              </svg>
-              <input
-                type="text"
-                name="first_name"
-                value={formik.values.first_name}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow"
-              />
-            </div>
-          </div>
-          <FieldError formik={formik} name="first_name" />
+                <FormStateError formState={formState} />
+              </div>
+              <div className="mt-1 mb-2 flex justify-around">
+                <SubmitButton
+                  label="Create"
+                  loading="Creating ..."
+                  isValid={formik.isValid}
+                  isDirty={formik.dirty}
+                />
 
-          <div>
-            <span className={styles.inputDescription}>Last Name</span>
-            <label className="input input-bordered flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                className="w-4 h-4 opacity-70"
-              >
-                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-              </svg>
-              <input
-                type="text"
-                name="last_name"
-                value={formik.values.last_name}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow"
-              />
-            </label>
-          </div>
-          <FieldError formik={formik} name="last_name" />
+                <button className="btn btn- px-4" onClick={closeModal}>
+                  Close
+                </button>
 
-          <div>
-            <span className={styles.inputDescription}>User Name</span>
-            <label className="input input-bordered flex items-center gap-2">
-              <CgNametag className="w-4 h-4 opacity-70" />
-              <input
-                type="text"
-                name="username"
-                value={formik.values.username}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow"
-              />
-            </label>
-          </div>
-          <FieldError formik={formik} name="username" />
-
-          <div>
-            <span className={styles.inputDescription}>Password</span>
-            <label className="input input-bordered flex items-center gap-2">
-              <FaKey className="w-4 h-4 opacity-70" />
-              <input
-                type="password"
-                name="password"
-                value={formik.values.password}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow"
-              />
-            </label>
-          </div>
-          <FieldError formik={formik} name="password" />
-
-          <div>
-            <span className={styles.inputDescription}>E-mail</span>
-            <label className="input input-bordered flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                className="w-4 h-4 opacity-70"
-              >
-                <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
-                <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
-              </svg>
-              <input
-                type="text"
-                name="email"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow"
-              />
-            </label>
-          </div>
-          <FieldError formik={formik} name="email" />
-
-          <div>
-            <span className={styles.inputDescription}>Mobile Phone</span>
-            <label className="input input-bordered flex items-center gap-2">
-              <FaMobileRetro className="w-4 h-4 opacity-70" />
-
-              <input
-                type="text"
-                name="mobile_phone"
-                value={formik.values.mobile_phone}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="grow"
-              />
-            </label>
-          </div>
-          <FieldError formik={formik} name="mobile_phone" />
-
-          <div
-            className="flex h-2 items-end space-x-1"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <FormStateError formState={formState} />
-          </div>
-          <div className="mt-1 mb-2 flex justify-around">
-            <SubmitButton
-              label="Create"
-              loading="Creating ..."
-              isValid={formik.isValid}
-              isDirty={formik.dirty}
-            />
-
-            <button className="btn btn- px-4" onClick={closeModal}>
-              Close
-            </button>
-
-            {noScriptFallback}
-          </div>
-        </form>
+                {noScriptFallback}
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

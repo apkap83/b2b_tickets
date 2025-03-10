@@ -58,6 +58,16 @@ export function UsersTab({ usersList, rolesList }) {
   return (
     <>
       <div className="mb-[2rem] border-b">
+        <div className="py-5 flex gap-1 items-center justify-end -translate-y-[67px]">
+          <button
+            className="btn btn-sm  bg-black text-white hover:bg-gray-700"
+            onClick={() => {
+              setShowCreateUserModal(true);
+            }}
+          >
+            Create New User
+          </button>
+        </div>
         <table className={`${styles.myTable} table border-b`}>
           <thead>
             <tr>
@@ -185,12 +195,12 @@ export function UsersTab({ usersList, rolesList }) {
       <div className="pt-5 flex justify-between items-center">
         <div className="py-5 flex gap-1 ">
           <button
-            className="btn btn-primary btn-sm"
+            className="btn btn-sm bg-black text-white"
             onClick={() => {
               setShowCreateUserModal(true);
             }}
           >
-            Create User
+            Create New User
           </button>
         </div>
         <PaginationOld
