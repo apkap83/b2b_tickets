@@ -13,7 +13,7 @@ export const SubmitButton = ({ label, loading, isValid }: any) => {
 
   return (
     <button
-      className="btn btn-primary px-4"
+      className="btn btn-sm  bg-black text-white hover:bg-gray-700"
       disabled={!isValid || pending}
       type="submit"
       aria-disabled={pending}

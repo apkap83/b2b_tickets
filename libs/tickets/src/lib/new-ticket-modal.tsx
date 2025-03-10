@@ -149,11 +149,12 @@ export function NewTicketModal({ closeModal, userId }: any) {
     contactPerson: yup.string().required('Contact Person is required'),
     contactPhoneNum: yup
       .string()
+
       .test(
         'is-valid-phone-list',
         'Must be a comma-separated list of valid Mobile Phone numbers',
         (value) => {
-          if (!value) return true; // Allow empty since it is not required
+          if (!value) return false; // Does not Allow empty since it is required
           const phones = value.split(',').map((phone) => phone.trim());
           const phoneRegex = /^[0-9]{10,15}$/; // Adjust the regex as needed for your phone number format
           return phones.every((phone) => phoneRegex.test(phone));
@@ -753,7 +754,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                   <SubmitButton
                     label="Submit Ticket"
                     loadingText="Creating..."
-                    isValid={formik.isValid}
+                    isValid={formik.dirty && formik.isValid}
                   />
                 </div>
               </>

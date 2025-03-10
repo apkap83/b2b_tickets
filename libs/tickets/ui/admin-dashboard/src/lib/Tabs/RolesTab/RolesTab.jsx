@@ -28,7 +28,19 @@ export const RolesTab = ({ rolesList, permissionsList }) => {
   return (
     // <div>
     <>
-      {/* Render roles content */}
+      <div
+        className="w-[8%] float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]"
+        style={{ marginTop: '-50px' }}
+      >
+        <button
+          className="btn btn-sm bg-black text-white hover:bg-gray-700"
+          onClick={() => {
+            setShowCreateRoleModal({ visible: true });
+          }}
+        >
+          Create New Role
+        </button>
+      </div>
       <table className="table table-s">
         <thead>
           <tr>
@@ -84,24 +96,7 @@ export const RolesTab = ({ rolesList, permissionsList }) => {
         <tfoot></tfoot>
       </table>
 
-      <div className="pt-5 flex justify-between items-center">
-        <div className="py-5 flex gap-1 ">
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => {
-              setShowCreateRoleModal({ visible: true });
-            }}
-          >
-            Create Role
-          </button>
-        </div>
-        {/* <Pagination
-          totalItems={usersList?.length || 0}
-          pageSize={itemsPerPage}
-          activePage={activePage}
-          onPageChange={(page) => setActivePage(page)}
-        /> */}
-      </div>
+      <div className="pt-5 flex justify-between items-center"></div>
 
       {showDeleteRoleModal.visible && (
         <DeleteRoleModal
