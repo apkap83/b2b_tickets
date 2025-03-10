@@ -58,7 +58,7 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white w-[800px] h-[630px] px-8 py-4 border-[1px] border-blue-900 shadow-2xl rounded-lg">
+      <div className="bg-white w-[800px] max-h-[75vh] px-8 py-4 border-[1px] border-blue-900 shadow-2xl rounded-lg overflow-y-auto">
         <h3 className="font-bold text-lg text-center">Edit User Form</h3>
 
         <form className="flex flex-col gap-3 pt-3" action={action}>
@@ -239,7 +239,7 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
           >
             <FormStateError formState={formState} />
           </div>
-          <div className="mt-5 flex justify-around">
+          <div className="my-3 flex justify-around">
             <SubmitButton
               label="Update"
               loading="Updating ..."
@@ -247,7 +247,7 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
               isDirty={formik.dirty}
             />
 
-            <button className="btn btn-lg" onClick={closeModal}>
+            <button className="btn btn-sm" onClick={closeModal}>
               Close
             </button>
 

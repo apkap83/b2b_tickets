@@ -28,7 +28,7 @@ function DeleteUserModal({ userDetails, closeModal }) {
           </ul>
         </div>
 
-        <div className="mt-5 mb-5 flex justify-around">
+        <div className="my-5 mb-5 flex justify-around">
           <ConfirmButton
             className="text-red-400 shadow-md"
             disabled={isPending}

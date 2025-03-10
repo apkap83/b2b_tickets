@@ -97,7 +97,7 @@ const CreatePermissionModal = ({ closeModal }) => {
             <SubmitButton
               label="Create Permission"
               loading="Creating ..."
-              isValid={formik.isValid}
+              isValid={formik.dirty && formik.isValid}
               isDirty={formik.dirty}
             />
 
