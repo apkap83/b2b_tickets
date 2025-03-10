@@ -57,7 +57,10 @@ export function UsersTab({ usersList, rolesList }) {
 
   return (
     <>
-      <div className="mb-[2rem] border-b" style={{ marginTop: '-50px' }}>
+      <div
+        className="mb-[2rem] border-b  rounded-lg"
+        style={{ marginTop: '-50px' }}
+      >
         <div className="w-[8%] float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]">
           <button
             className="btn btn-sm  bg-black text-white hover:bg-gray-700"
@@ -68,131 +71,133 @@ export function UsersTab({ usersList, rolesList }) {
             Create New User
           </button>
         </div>
-        <table className={`${styles.myTable} table border-b`}>
-          <thead>
-            <tr>
-              <th></th>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>User Name</th>
-              <th>E-mail</th>
-              <th>Mobile Phone</th>
-              <th>Customer</th>
-              <th className="text-center">Roles</th>
-              <th>MFA Method</th>
-              <th>Locked</th>
-              <th>Active</th>
-              <th className="w-[150px] text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedUsersList.map((user, index) => (
-              <tr key={user.username + index} className="hover:bg-slate-100">
-                <th>{index + 1 + itemsPerPage * (activePage - 1)}</th>
-                <td>{user.first_name}</td>
-                <td>{user.last_name}</td>
-                <td>{user.username}</td>
-                <td>{user.email}</td>
-                <td>{user.mobile_phone}</td>
-                <td>
-                  <span className="whitespace-nowrap">
-                    {user.customer_name}
-                  </span>
-                </td>
-                <td>
-                  {user.AppRoles.map((role) => {
-                    return (
-                      <span
-                        className={clsx(
-                          'bg-gray-200 whitespace-nowrap rounded-full text-xs px-2 inline-block m-1 font-bold text-i ',
-                          {
-                            'text-red-500': role.roleName === 'Admin',
-                            'text-blue-500':
-                              role.roleName === 'B2B Ticket Creator',
-                            'text-purple-500': role.roleName === 'Other',
-                            'text-green-500':
-                              role.roleName === 'B2B Ticket Handler',
-                            'text-cyan-500': role.roleName === 'Smartcare',
-                            'text-yellow-500': role.roleName === 'Zabbix',
-                          }
-                        )}
-                        key={role.id}
-                      >
-                        {role.roleName}
-                      </span>
-                    );
-                  })}
-                </td>
-                <td>
-                  <select
-                    className="text-left select max-w-xs"
-                    onChange={async (e) => {
-                      const resp = await updateMFAMethodForUser({
-                        username: user.username,
-                        mfaType: e.target.value,
-                      });
-
-                      if (resp.status === 'SUCCESS') {
-                        toast.success(resp.message);
-                      } else {
-                        toast.error(resp.message);
-                      }
-                    }}
-                    style={{
-                      backgroundColor: 'transparent',
-                      fontSize: '12px',
-                      outline: 'none',
-                    }}
-                    defaultValue={user.mfa_method}
-                  >
-                    <option value={'m'}>Mobile</option>
-                    <option value={'e'}>Email</option>
-                    {/* <option value={'LDAP'}>LDAP</option> */}
-                  </select>
-                </td>
-                <td>
-                  {user.is_locked === 'y' ? (
-                    <span className="bg-red-400 p-2 rounded-full text-white">
-                      Locked
-                    </span>
-                  ) : (
-                    <span className="bg-green-400 p-2 rounded-lg text-white">
-                      Unlocked
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {user.is_active === 'y' ? (
-                    <span className="bg-green-400 p-2 rounded-lg text-white">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="bg-red-400 p-2 rounded-full text-white">
-                      Inactive
-                    </span>
-                  )}
-                </td>
-                <td>
-                  <div className="flex bg-purple-50 shadow-xl py-2 px-2 gap-3 w-fit">
-                    {LockOrUnlock({ user })}
-                    {DisableUser({ user })}
-                    {EditButton({ user, setShowEditUserModal })}
-                    {user.authentication_type === AuthenticationTypes.LOCAL
-                      ? PasswordChangeButton({
-                          user,
-                          setShowPasswordResetModal,
-                        })
-                      : null}
-                    {DeleteButton({ user, setShowDeleteUserModal })}
-                  </div>
-                </td>
+        <div className="px-3">
+          <table className={`${styles.myTable} table`}>
+            <thead className="sticky top-10">
+              <tr>
+                <th></th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>User Name</th>
+                <th>E-mail</th>
+                <th>Mobile Phone</th>
+                <th>Customer</th>
+                <th className="text-center">Roles</th>
+                <th>MFA Method</th>
+                <th>Locked</th>
+                <th>Active</th>
+                <th className="w-[150px] text-center">Actions</th>
               </tr>
-            ))}
-          </tbody>
-          <tfoot></tfoot>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedUsersList.map((user, index) => (
+                <tr key={user.username + index} className="hover:bg-slate-100">
+                  <th>{index + 1 + itemsPerPage * (activePage - 1)}</th>
+                  <td>{user.first_name}</td>
+                  <td>{user.last_name}</td>
+                  <td>{user.username}</td>
+                  <td>{user.email}</td>
+                  <td>{user.mobile_phone}</td>
+                  <td>
+                    <span className="whitespace-nowrap">
+                      {user.customer_name}
+                    </span>
+                  </td>
+                  <td>
+                    {user.AppRoles.map((role) => {
+                      return (
+                        <span
+                          className={clsx(
+                            'bg-gray-200 whitespace-nowrap rounded-full text-xs px-2 inline-block m-1 font-bold text-i ',
+                            {
+                              'text-red-500': role.roleName === 'Admin',
+                              'text-blue-500':
+                                role.roleName === 'B2B Ticket Creator',
+                              'text-purple-500': role.roleName === 'Other',
+                              'text-green-500':
+                                role.roleName === 'B2B Ticket Handler',
+                              'text-cyan-500': role.roleName === 'Smartcare',
+                              'text-yellow-500': role.roleName === 'Zabbix',
+                            }
+                          )}
+                          key={role.id}
+                        >
+                          {role.roleName}
+                        </span>
+                      );
+                    })}
+                  </td>
+                  <td>
+                    <select
+                      className="text-left select max-w-xs"
+                      onChange={async (e) => {
+                        const resp = await updateMFAMethodForUser({
+                          username: user.username,
+                          mfaType: e.target.value,
+                        });
+
+                        if (resp.status === 'SUCCESS') {
+                          toast.success(resp.message);
+                        } else {
+                          toast.error(resp.message);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: 'transparent',
+                        fontSize: '12px',
+                        outline: 'none',
+                      }}
+                      defaultValue={user.mfa_method}
+                    >
+                      <option value={'m'}>Mobile</option>
+                      <option value={'e'}>Email</option>
+                      {/* <option value={'LDAP'}>LDAP</option> */}
+                    </select>
+                  </td>
+                  <td>
+                    {user.is_locked === 'y' ? (
+                      <span className="bg-red-400 p-2 rounded-full text-white">
+                        Locked
+                      </span>
+                    ) : (
+                      <span className="bg-green-400 p-2 rounded-lg text-white">
+                        Unlocked
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {user.is_active === 'y' ? (
+                      <span className="bg-green-400 p-2 rounded-lg text-white">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="bg-red-400 p-2 rounded-full text-white">
+                        Inactive
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="flex bg-purple-50 shadow-xl py-2 px-2 gap-3 w-fit">
+                      {LockOrUnlock({ user })}
+                      {DisableUser({ user })}
+                      {EditButton({ user, setShowEditUserModal })}
+                      {user.authentication_type === AuthenticationTypes.LOCAL
+                        ? PasswordChangeButton({
+                            user,
+                            setShowPasswordResetModal,
+                          })
+                        : null}
+                      {DeleteButton({ user, setShowDeleteUserModal })}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot></tfoot>
+          </table>
+        </div>
       </div>
-      <div className="pt-5 flex justify-between items-center">
+      <div className="px-5 pt-5 flex justify-between items-center">
         <div className="py-5 flex gap-1 ">
           <button
             className="btn btn-sm bg-black text-white"
