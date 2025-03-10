@@ -57,8 +57,8 @@ export function UsersTab({ usersList, rolesList }) {
 
   return (
     <>
-      <div className="mb-[2rem] border-b">
-        <div className="py-5 flex gap-1 items-center justify-end -translate-y-[67px]">
+      <div className="mb-[2rem] border-b" style={{ marginTop: '-50px' }}>
+        <div className="w-[8%] float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]">
           <button
             className="btn btn-sm  bg-black text-white hover:bg-gray-700"
             onClick={() => {

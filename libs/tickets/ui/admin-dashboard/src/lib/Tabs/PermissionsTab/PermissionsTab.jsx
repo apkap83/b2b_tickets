@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import CreatePermissionModal from "../../Modals/CreatePermission/CreatePermissionModal";
-import DeletePermissionModal from "../../Modals/DeletePermission/DeletePermissionModal";
-import { DeleteButton } from "./Buttons/DeleteButton";
+import React, { useState } from 'react';
+import CreatePermissionModal from '../../Modals/CreatePermission/CreatePermissionModal';
+import DeletePermissionModal from '../../Modals/DeletePermission/DeletePermissionModal';
+import { DeleteButton } from './Buttons/DeleteButton';
 
 export const PermissionsTab = ({ permissionsList }) => {
   const [showCreatePermissionModal, setShowCreatePermissionModal] = useState({
@@ -11,14 +11,23 @@ export const PermissionsTab = ({ permissionsList }) => {
   const [showDeletePermissionModal, setShowDeletePermissionModal] = useState({
     visible: false,
     permission: {
-      permissionName: "",
-      permissionDescription: "",
+      permissionName: '',
+      permissionDescription: '',
     },
   });
 
   return (
-    <div>
-      {/* Render permission content */}
+    <div style={{ marginTop: '-50px' }}>
+      <div className="w-[8%] float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]">
+        <button
+          className="btn btn-sm  bg-black text-white hover:bg-gray-700"
+          onClick={() => {
+            setShowCreatePermissionModal({ visible: true });
+          }}
+        >
+          Create New Permission
+        </button>
+      </div>
       <table className="table table-s">
         <thead>
           <tr>
@@ -48,24 +57,7 @@ export const PermissionsTab = ({ permissionsList }) => {
         <tfoot></tfoot>
       </table>
 
-      <div className="pt-5 flex justify-between items-center">
-        <div className="py-5 flex gap-1 ">
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => {
-              setShowCreatePermissionModal({ visible: true });
-            }}
-          >
-            Create Permission
-          </button>
-        </div>
-        {/* <Pagination
-          totalItems={usersList?.length || 0}
-          pageSize={itemsPerPage}
-          activePage={activePage}
-          onPageChange={(page) => setActivePage(page)}
-        /> */}
-      </div>
+      <div className="pt-5 flex justify-between items-center"></div>
 
       {showDeletePermissionModal.visible && (
         <DeletePermissionModal

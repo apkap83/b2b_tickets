@@ -32,7 +32,7 @@ const CreatePermissionModal = ({ closeModal }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white px-8 py-3 rounded-lg">
+      <div className="bg-white px-8 py-5 rounded-lg">
         <h3 className="font-bold text-lg text-center">
           Create Permission Form
         </h3>
@@ -92,13 +92,7 @@ const CreatePermissionModal = ({ closeModal }) => {
           </div>
           <FieldError formik={formik} name="permissionDescription" />
 
-          <div
-            className="flex h-8 items-end space-x-1"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <FormStateError formState={formState} />
-          </div>
+          <FormStateError formState={formState} />
           <div className="mt-5 flex justify-around gap-4">
             <SubmitButton
               label="Create Permission"
@@ -107,7 +101,7 @@ const CreatePermissionModal = ({ closeModal }) => {
               isDirty={formik.dirty}
             />
 
-            <button className="btn btn-" onClick={closeModal}>
+            <button className="btn btn-sm" onClick={closeModal}>
               Close
             </button>
 
