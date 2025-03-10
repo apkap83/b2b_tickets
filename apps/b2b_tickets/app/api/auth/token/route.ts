@@ -14,6 +14,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an enviro
 
 export async function POST(req: NextRequest) {
   const logRequest = await getRequestLogger(TransportName.AUTH);
+
+  // Introduce a delay
+  await new Promise((resolve) => setTimeout(resolve, 750));
+
   try {
     if (req.method !== 'POST') {
       return NextResponse.json(

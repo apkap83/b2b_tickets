@@ -84,10 +84,10 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
 export const getCustomersList = async () => {
   try {
     // Verify Security Permission
-    const session = (await verifySecurityPermission([
+    await verifySecurityPermission([
       AppPermissionTypes.API_Security_Management,
       AppPermissionTypes.Create_New_App_User,
-    ])) as Session;
+    ]);
 
     await setSchemaAndTimezone(pgB2Bpool);
 
