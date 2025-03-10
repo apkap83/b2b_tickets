@@ -31,7 +31,7 @@ const CreateRoleModal = ({ closeModal }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white px-8 py-3 rounded-lg">
+      <div className="bg-white px-8 py-5 rounded-lg">
         <h3 className="font-bold text-lg text-center">Create Role Form</h3>
 
         <form
@@ -70,13 +70,7 @@ const CreateRoleModal = ({ closeModal }) => {
           </div>
           <FieldError formik={formik} name="roleDescription" />
 
-          <div
-            className="flex h-8 items-end space-x-1"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <FormStateError formState={formState} />
-          </div>
+          <FormStateError formState={formState} />
           <div className="mt-5 flex justify-around">
             <SubmitButton
               label="Create Role"
@@ -85,7 +79,7 @@ const CreateRoleModal = ({ closeModal }) => {
               isDirty={formik.dirty}
             />
 
-            <button className="btn btn-" onClick={closeModal}>
+            <button className="btn btn-sm" onClick={closeModal}>
               Close
             </button>
 

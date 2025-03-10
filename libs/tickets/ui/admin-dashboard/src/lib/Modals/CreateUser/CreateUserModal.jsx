@@ -250,13 +250,13 @@ function CreateUserModal({ closeModal }) {
               </div>
               <div className="mt-1 mb-2 flex justify-around">
                 <SubmitButton
-                  label="Create"
+                  label="Create User"
                   loading="Creating ..."
-                  isValid={formik.isValid}
+                  isValid={formik.dirty && formik.isValid}
                   isDirty={formik.dirty}
                 />
 
-                <button className="btn btn- px-4" onClick={closeModal}>
+                <button className="btn btn-sm" onClick={closeModal}>
                   Close
                 </button>
 

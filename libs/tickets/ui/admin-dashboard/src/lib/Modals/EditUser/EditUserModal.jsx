@@ -247,7 +247,7 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
               isDirty={formik.dirty}
             />
 
-            <button className="btn btn-" onClick={closeModal}>
+            <button className="btn btn-lg" onClick={closeModal}>
               Close
             </button>
 
