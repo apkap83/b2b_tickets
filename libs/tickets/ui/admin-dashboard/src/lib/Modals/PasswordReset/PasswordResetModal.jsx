@@ -132,7 +132,7 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
                 {Object.values(formik.errors).join(", ")}
               </p>
             )} */}
-            <div className="mt-5 flex justify-around">
+            <div className="my-3 flex justify-around">
               <SubmitButton
                 label="Update"
                 loading="Updating ..."
@@ -140,7 +140,7 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
                 isDirty={formik.dirty}
               />
 
-              <button className="btn btn-lg" onClick={closeModal}>
+              <button className="btn btn-sm" onClick={closeModal}>
                 Close
               </button>
 
