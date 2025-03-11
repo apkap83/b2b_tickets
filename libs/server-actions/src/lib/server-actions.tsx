@@ -428,6 +428,13 @@ export const getFilteredTicketsForCustomer = async (
         throw new Error(`Invalid query parameter.${query}`);
     }
 
+    // Example Values
+    // sqlExpressions [ '"Is Final Status" = $1' ]
+    // filters { Customer: [ 'Customer 1', 'Nova' ] }
+    // placeholders [ '$2', '$3' ]
+    // queryParams [ 'n', 'Customer 1', 'Nova' ]
+    // whereConditions "Is Final Status" = $1 AND "Customer" IN ($2, $3)
+
     // If the role is Ticket Handler, return all tickets
     if (isTicketHandler) {
       const filterConditions = Object.entries(filters)
@@ -436,8 +443,10 @@ export const getFilteredTicketsForCustomer = async (
           if (column === 'Ticket Number') {
             column = 'Ticket';
           }
-          const placeholders = values.map(() => `$${queryParams.length + 1}`);
-          queryParams.push(...values);
+          const placeholders = values.map((val) => {
+            queryParams.push(val);
+            return `$${queryParams.length}`;
+          });
           return `"${column}" IN (${placeholders.join(', ')})`;
         });
 

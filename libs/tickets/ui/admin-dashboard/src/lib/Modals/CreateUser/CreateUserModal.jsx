@@ -45,8 +45,6 @@ function CreateUserModal({ closeModal }) {
       .required('Email is required'),
     mobile_phone: Yup.string(),
     inform_user_for_new_account_by_email: Yup.boolean(),
-    // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
-    // .required('Mobile phone is required'),
   });
 
   const formik = useFormik({
@@ -229,7 +227,9 @@ function CreateUserModal({ closeModal }) {
               <FieldError formik={formik} name="email" />
 
               <div>
-                <span className={styles.inputDescription}>Mobile Phone</span>
+                <span className={styles.inputDescription}>
+                  Mobile Phone (optional)
+                </span>
                 <label className="input input-bordered flex items-center gap-2">
                   <FaMobileRetro className="w-4 h-4 opacity-70" />
 
@@ -256,13 +256,12 @@ function CreateUserModal({ closeModal }) {
                 />
                 <label
                   style={{
-                    color: 'rgba(0, 0, 0, 0.5)',
                     fontSize: '0.75rem',
                   }}
                   htmlFor="inform_user_for_new_account_by_email"
                 >
                   {' '}
-                  &nbsp; Inform User by Email for the new account
+                  &nbsp; Inform the User by Email for the new account
                 </label>
               </div>
               <FieldError formik={formik} name="mobile_phone" />

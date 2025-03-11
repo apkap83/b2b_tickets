@@ -18,9 +18,7 @@ const validationSchema = Yup.object({
   email: Yup.string()
     .email('Invalid email address')
     .required('Email is required'),
-  mobilePhone: Yup.string()
-    // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
-    .required('Mobile phone is required'),
+  mobilePhone: Yup.string(),
 });
 
 const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
