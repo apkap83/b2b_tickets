@@ -43,9 +43,10 @@ function CreateUserModal({ closeModal }) {
     email: Yup.string()
       .email('Invalid email address')
       .required('Email is required'),
-    mobile_phone: Yup.string()
-      // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
-      .required('Mobile phone is required'),
+    mobile_phone: Yup.string(),
+    inform_user_for_new_account_by_email: Yup.boolean(),
+    // .matches(/^\d{10}$/, "Mobile phone must be 10 digits")
+    // .required('Mobile phone is required'),
   });
 
   const formik = useFormik({
@@ -67,6 +68,7 @@ function CreateUserModal({ closeModal }) {
       password: '',
       email: '',
       mobile_phone: '',
+      inform_user_for_new_account_by_email: false,
     },
     validationSchema: validationSchema,
     // onSubmit: async (values, { setSubmitting }) => {},
@@ -239,6 +241,28 @@ function CreateUserModal({ closeModal }) {
                     onBlur={formik.handleBlur}
                     className="grow"
                   />
+                </label>
+              </div>
+              <FieldError formik={formik} name="mobile_phone" />
+
+              <div className="flex ">
+                <input
+                  id="inform_user_for_new_account_by_email"
+                  type="checkbox"
+                  name="inform_user_for_new_account_by_email"
+                  value={formik.values.inform_user_for_new_account_by_email}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                />
+                <label
+                  style={{
+                    color: 'rgba(0, 0, 0, 0.5)',
+                    fontSize: '0.75rem',
+                  }}
+                  htmlFor="inform_user_for_new_account_by_email"
+                >
+                  {' '}
+                  &nbsp; Inform User by Email for the new account
                 </label>
               </div>
               <FieldError formik={formik} name="mobile_phone" />
