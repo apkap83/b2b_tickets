@@ -190,6 +190,9 @@ export async function createUser(formState: any, formData: any) {
     const password = formData.get('password');
     const email = formData.get('email');
     const mobilePhone = formData.get('mobile_phone');
+    const inform_user_for_new_account_by_email = formData.get(
+      'inform_user_for_new_account_by_email'
+    );
 
     const userData = {
       firstName,
@@ -215,8 +218,8 @@ export async function createUser(formState: any, formData: any) {
     if (existingEmail) throw new Error('User with this email already exists.');
     if (existingUserName)
       throw new Error('User with this user name already exists.');
-    if (existingMobilePhone)
-      throw new Error('User with this mobile phone already exists.');
+    // if (existingMobilePhone)
+    //   throw new Error('User with this mobile phone already exists.');
 
     // Get next user_id from sequence
     await setSchemaAndTimezone(pgB2Bpool);
@@ -231,7 +234,7 @@ export async function createUser(formState: any, formData: any) {
       throw error;
     }
 
-    //   // Create and save the new user
+    // Create and save the new user
     const newUser = await B2BUser.create({
       user_id,
       customer_id: customerId,
@@ -268,11 +271,12 @@ export async function createUser(formState: any, formData: any) {
       })}`
     );
 
-    sendEmailsForUserCreation({
-      emailNotificationType: EmailNotificationType.USER_CREATION,
-      email,
-      userName,
-    });
+    if (inform_user_for_new_account_by_email)
+      sendEmailsForUserCreation({
+        emailNotificationType: EmailNotificationType.USER_CREATION,
+        email,
+        userName,
+      });
 
     revalidatePath('/admin');
 
