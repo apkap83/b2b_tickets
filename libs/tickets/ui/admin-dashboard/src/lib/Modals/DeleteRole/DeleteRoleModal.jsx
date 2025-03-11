@@ -1,7 +1,7 @@
 import React, { useTransition } from 'react';
 import { toast } from 'react-hot-toast';
 import { deleteRole } from '@b2b-tickets/admin-server-actions';
-import { CloseButton } from '../../common/CloseButton';
+import { CancelButton } from '../../common/CancelButton';
 import { ConfirmButton } from '../../common/ConfirmButton';
 
 function DeleteRoleModal({ role, closeModal }) {
@@ -53,7 +53,7 @@ function DeleteRoleModal({ role, closeModal }) {
             label={isPending ? 'Deleting...' : 'Confirm'}
           />
 
-          <CloseButton label="Close" onClick={closeModal} />
+          <CancelButton onClick={closeModal} />
         </div>
       </div>
     </div>

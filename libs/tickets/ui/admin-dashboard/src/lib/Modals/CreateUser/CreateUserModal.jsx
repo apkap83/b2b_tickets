@@ -13,6 +13,8 @@ import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { SubmitButton } from '../../common/SubmitButton';
+import { CancelButton } from '../../common/CancelButton';
+
 import { IoListCircle } from 'react-icons/io5';
 import {
   createUser,
@@ -253,12 +255,9 @@ function CreateUserModal({ closeModal }) {
                   label="Create User"
                   loading="Creating ..."
                   isValid={formik.dirty && formik.isValid}
-                  isDirty={formik.dirty}
                 />
 
-                <button className="btn btn-sm" onClick={closeModal}>
-                  Close
-                </button>
+                <CancelButton onClick={closeModal} />
 
                 {noScriptFallback}
               </div>
