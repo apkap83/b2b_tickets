@@ -7,6 +7,7 @@ import { CgNametag } from 'react-icons/cg';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { SubmitButton } from '../../common/SubmitButton';
+import { CancelButton } from '../../common/CancelButton';
 import { editUser } from '@b2b-tickets/admin-server-actions';
 import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 
@@ -247,9 +248,7 @@ const EditUserModal = ({ userDetails, rolesList, closeModal }) => {
               isDirty={formik.dirty}
             />
 
-            <button className="btn btn-sm" onClick={closeModal}>
-              Close
-            </button>
+            <CancelButton onClick={closeModal} />
 
             {noScriptFallback}
           </div>

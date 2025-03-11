@@ -8,6 +8,7 @@ import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { SubmitButton } from '../../common/SubmitButton';
+import { CancelButton } from '../../common/CancelButton';
 
 import styles from './CreateRoleModal.module.scss';
 
@@ -82,9 +83,7 @@ const CreateRoleModal = ({ closeModal }) => {
               isDirty={formik.dirty}
             />
 
-            <button className="btn btn-sm" onClick={closeModal}>
-              Close
-            </button>
+            <CancelButton onClick={closeModal} />
 
             {noScriptFallback}
           </div>

@@ -10,6 +10,7 @@ import { updateUserPassword } from '@b2b-tickets/admin-server-actions';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { SubmitButton } from '../../common/SubmitButton';
+import { CancelButton } from '../../common/CancelButton';
 import { FaUserLarge } from 'react-icons/fa6';
 import { passwordComplexitySchema } from '@b2b-tickets/utils';
 
@@ -140,9 +141,7 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
                 isDirty={formik.dirty}
               />
 
-              <button className="btn btn-sm" onClick={closeModal}>
-                Close
-              </button>
+              <CancelButton onClick={closeModal} />
 
               {noScriptFallback}
             </div>
