@@ -19,6 +19,8 @@ const App: React.FC = async ({
   // Extract additional filters from searchParams
   const filters: Record<string, string[]> = {};
 
+  // console.log('searchParams', searchParams);
+
   Object.keys(searchParams).forEach((key) => {
     filters[key] = decodeURIComponent(searchParams[key]!)
       .split('\x1F') // Use the delimiter to split values
