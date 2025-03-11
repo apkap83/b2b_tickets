@@ -165,7 +165,7 @@ const userSchema = yup.object().shape({
   lastName: yup.string().required('Last name is required'),
   userName: yup.string().required('Username is required'),
   email: yup.string().email('Invalid email').required('Email is required'),
-  mobilePhone: yup.string().required('Mobile phone is required'),
+  mobilePhone: yup.string(),
   password: yup
     .string()
     .min(8, 'Password must be at least 8 characters long')
@@ -446,7 +446,7 @@ const userSchema_updateUser = yup.object().shape({
   lastName: yup.string().required('Last name is required'),
   userName: yup.string().required('Username is required'),
   email: yup.string().email('Invalid email').required('Email is required'),
-  mobilePhone: yup.string().required('Mobile phone is required'),
+  mobilePhone: yup.string(),
 });
 
 function getRoleData(formData: any) {
