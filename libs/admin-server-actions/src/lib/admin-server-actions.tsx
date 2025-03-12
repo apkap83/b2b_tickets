@@ -161,6 +161,8 @@ export const getAdminDashboardData = async () => {
 };
 
 const userSchema = yup.object().shape({
+  company: yup.string().required('Company is required'),
+  role: yup.string().required('Role is required'),
   firstName: yup.string().required('First name is required'),
   lastName: yup.string().required('Last name is required'),
   userName: yup.string().required('Username is required'),
@@ -176,6 +178,10 @@ export async function createUser(formState: any, formData: any) {
   const logRequest: CustomLogger = await getRequestLogger(
     TransportName.ACTIONS
   );
+
+  // Start a transaction from your connection and save it into a variable
+  const t = await sequelize.transaction();
+
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission([
@@ -184,6 +190,7 @@ export async function createUser(formState: any, formData: any) {
     ])) as Session;
 
     const customerId = formData.get('company');
+    const roleId = formData.get('role');
     const firstName = formData.get('first_name');
     const lastName = formData.get('last_name');
     const userName = formData.get('username');
@@ -195,6 +202,8 @@ export async function createUser(formState: any, formData: any) {
     );
 
     const userData = {
+      company: customerId,
+      role: roleId,
       firstName,
       lastName,
       userName,
@@ -211,9 +220,9 @@ export async function createUser(formState: any, formData: any) {
     const existingUserName = await B2BUser.findOne({
       where: { username: userName },
     });
-    const existingMobilePhone = await B2BUser.findOne({
-      where: { mobile_phone: mobilePhone },
-    });
+    // const existingMobilePhone = await B2BUser.findOne({
+    //   where: { mobile_phone: mobilePhone },
+    // });
 
     if (existingEmail) throw new Error('User with this email already exists.');
     if (existingUserName)
@@ -235,28 +244,45 @@ export async function createUser(formState: any, formData: any) {
     }
 
     // Create and save the new user
-    const newUser = await B2BUser.create({
-      user_id,
-      customer_id: customerId,
-      username: userName,
-      password,
-      password_change_date: new Date(),
-      first_name: firstName,
-      last_name: lastName,
-      mobile_phone: mobilePhone,
-      email,
-      authentication_type: AuthenticationTypes.LOCAL,
-      change_password: 'n',
-      is_active: 'y',
-      is_locked: 'n',
-      last_login_attempt: new Date('1970-01-01T00:00:00Z'),
-      last_login_status: 'i',
-      record_version: 1,
-      creation_date: new Date(),
-      creation_user: 'admin',
-      last_update_process: 'b2btickets',
-      mfa_method: 'e',
-    });
+    const newUser = await B2BUser.create(
+      {
+        user_id,
+        customer_id: customerId,
+        username: userName,
+        password,
+        password_change_date: new Date(),
+        first_name: firstName,
+        last_name: lastName,
+        mobile_phone: mobilePhone,
+        email,
+        authentication_type: AuthenticationTypes.LOCAL,
+        change_password: 'n',
+        is_active: 'y',
+        is_locked: 'n',
+        last_login_attempt: new Date('1970-01-01T00:00:00Z'),
+        last_login_status: 'i',
+        record_version: 1,
+        creation_date: new Date(),
+        creation_user: 'admin',
+        last_update_process: 'b2btickets',
+        mfa_method: 'e',
+      },
+      { transaction: t }
+    );
+
+    // Assigning Role to User
+
+    // Empty All Roles of User
+    //@ts-ignore
+    await newUser.setAppRoles([]);
+
+    const foundRoleInDB = await AppRole.findByPk(roleId);
+
+    if (!foundRoleInDB)
+      throw new Error(`Role with id ${roleId} was not found!`);
+
+    //@ts-ignore
+    await newUser.addAppRole(foundRoleInDB, { transaction: t });
 
     logRequest.info(
       `A.F.: ${
@@ -271,6 +297,10 @@ export async function createUser(formState: any, formData: any) {
       })}`
     );
 
+    // If the execution reaches this line, no errors were thrown.
+    // We commit the transaction.
+    await t.commit();
+
     if (inform_user_for_new_account_by_email)
       sendEmailsForUserCreation({
         emailNotificationType: EmailNotificationType.USER_CREATION,
@@ -284,6 +314,7 @@ export async function createUser(formState: any, formData: any) {
   } catch (error) {
     logRequest.error(error);
     return fromErrorToFormState(error);
+  } finally {
   }
 }
 
