@@ -130,10 +130,8 @@ function CreateUserModal({ rolesList, closeModal }) {
       formik.values.company.value ===
       String(config.databaseIDOfTicketingSystemCompany)
     ) {
-      console.log(138);
       setRoles(rolesList);
     } else {
-      console.log(132);
       setRoles((prev) =>
         prev.filter((role) => role.roleName === 'B2B Ticket Creator')
       );
@@ -155,7 +153,7 @@ function CreateUserModal({ rolesList, closeModal }) {
     ...roles.map((role) => ({
       value: role.id,
       label: role.roleName,
-      isDiabled: false,
+      isDisabled: false,
     })),
   ];
   // console.log('formik', formik);
@@ -181,7 +179,7 @@ function CreateUserModal({ rolesList, closeModal }) {
                 <Select
                   name="company"
                   value={customersSelectOptions.find(
-                    (option) => option.value === formik.values.company
+                    (option) => option === formik.values.company
                   )}
                   onChange={(option) => {
                     formik.setFieldValue('company', option);
@@ -212,7 +210,7 @@ function CreateUserModal({ rolesList, closeModal }) {
                 <Select
                   name="role"
                   value={rolesSelectOptions.find(
-                    (option) => option.value === formik.values.role
+                    (option) => option === formik.values.role
                   )}
                   onChange={(option) => formik.setFieldValue('role', option)}
                   onBlur={formik.handleBlur}
@@ -395,7 +393,7 @@ function CreateUserModal({ rolesList, closeModal }) {
               <FieldError formik={formik} name="mobile_phone" />
 
               <div
-                className="flex h-2 items-end space-x-1"
+                className="flex my-3 items-end space-x-1"
                 aria-live="polite"
                 aria-atomic="true"
               >
