@@ -24,18 +24,50 @@ import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { passwordComplexitySchema } from '@b2b-tickets/utils';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
+import BusinessIcon from '@mui/icons-material/Business';
+import { GiRank3 } from 'react-icons/gi';
+import Select from 'react-select';
+
+import { config } from '@b2b-tickets/config';
 
 import styles from './CreateUserModal.module.scss';
 
-function CreateUserModal({ closeModal }) {
+function CreateUserModal({ rolesList, closeModal }) {
   const [loading, setLoading] = useState(false);
   const [customersList, setCustomersList] = useState([]);
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
 
+  const [roles, setRoles] = useState(rolesList);
+
   const noScriptFallback = useToastMessage(formState);
 
+  const checkIfUserHasRole = (user, role) => {
+    if (!userDetails.hasOwnProperty('AppRoles')) return false;
+
+    for (let i = 0; i < user.AppRoles.length; i++) {
+      if (role.id === userDetails.AppRoles[i].id) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const validationSchema = Yup.object({
-    company: Yup.string().min(1, '').required('Company is required'),
+    // company: Yup.object().required('Company is required'),
+    // role: Yup.object().required('Role is required'),
+
+    company: Yup.object({
+      value: Yup.string().required('Company value is required'),
+      label: Yup.string().required('Company label is required'),
+      isDisabled: Yup.boolean(),
+    }).required('Company is required'),
+
+    role: Yup.object({
+      value: Yup.string().required('Role value is required'),
+      label: Yup.string().required('Role label is required'),
+      isDisabled: Yup.boolean(),
+    }),
+
     first_name: Yup.string().required('First name is required'),
     last_name: Yup.string().required('Last name is required'),
     username: Yup.string().required('User name is required'),
@@ -66,6 +98,7 @@ function CreateUserModal({ closeModal }) {
       password: '',
       email: '',
       mobile_phone: '',
+      role: '',
       inform_user_for_new_account_by_email: false,
     },
     validationSchema: validationSchema,
@@ -80,14 +113,52 @@ function CreateUserModal({ closeModal }) {
     const getCustList = async () => {
       const customerList = await getCustomersList();
 
-      setCustomersList(customerList);
-      setLoading(false);
+      setTimeout(() => {
+        setCustomersList(customerList);
+        setLoading(false);
+      }, 850);
     };
 
     setLoading(true);
     getCustList();
   }, []);
 
+  // Update Available Roles Based on Company Selection
+  useEffect(() => {
+    // If it is not "Nova" Company
+    if (
+      formik.values.company.value ===
+      String(config.databaseIDOfTicketingSystemCompany)
+    ) {
+      console.log(138);
+      setRoles(rolesList);
+    } else {
+      console.log(132);
+      setRoles((prev) =>
+        prev.filter((role) => role.roleName === 'B2B Ticket Creator')
+      );
+    }
+
+    // Reset Role when Company is Updated
+    formik.setFieldValue('role', null);
+  }, [formik.values.company]);
+
+  const customersSelectOptions = [
+    ...customersList.map((item) => ({
+      value: item.customer_id,
+      label: item.customer_display_name,
+      isDisabled: false,
+    })),
+  ];
+
+  let rolesSelectOptions = [
+    ...roles.map((role) => ({
+      value: role.id,
+      label: role.roleName,
+      isDiabled: false,
+    })),
+  ];
+  // console.log('formik', formik);
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">
@@ -99,34 +170,81 @@ function CreateUserModal({ closeModal }) {
         ) : (
           <>
             <h3 className="font-bold text-lg text-center">Create User Form</h3>
-            <form className="flex flex-col gap-3 pt-3" action={action}>
-              <div>
-                <span className={styles.inputDescription}>Customer Name</span>
-                <select
+            <form className="flex flex-col gap-1 pt-3" action={action}>
+              <div
+                style={{
+                  width: '600px',
+                }}
+              >
+                <span className={styles.inputDescription}>Company Name</span>
+
+                <Select
                   name="company"
-                  // className="text-left select max-w-xs"
-                  value={formik.values.company}
-                  onChange={formik.handleChange}
+                  value={customersSelectOptions.find(
+                    (option) => option.value === formik.values.company
+                  )}
+                  onChange={(option) => {
+                    formik.setFieldValue('company', option);
+                  }}
                   onBlur={formik.handleBlur}
-                  className={styles.selectStyle}
-                >
-                  <option value="" hidden>
-                    Select Customer
-                  </option>
-                  {customersList.map((item) => {
-                    return (
-                      <option key={item.customer_id} value={item.customer_id}>
-                        {item.customer_display_name}
-                      </option>
-                    );
-                  })}
-                </select>
+                  // onChange={formik.handleChange}
+                  options={customersSelectOptions}
+                  placeholder={
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                        gap: '.4rem',
+                        fontSize: '.95rem',
+                      }}
+                    >
+                      <BusinessIcon />
+                      <span>Select Company</span>
+                    </div>
+                  }
+                />
               </div>
               <FieldError formik={formik} name="company" />
 
               <div>
+                <span className={styles.inputDescription}>App Role</span>
+                <Select
+                  name="role"
+                  value={rolesSelectOptions.find(
+                    (option) => option.value === formik.values.role
+                  )}
+                  onChange={(option) => formik.setFieldValue('role', option)}
+                  onBlur={formik.handleBlur}
+                  options={rolesSelectOptions}
+                  placeholder={
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                        // gap: '.1rem',
+                        fontSize: '.95rem',
+                      }}
+                    >
+                      <GiRank3
+                        size={26}
+                        style={{
+                          transform: 'translateX(-4px)',
+                        }}
+                      />
+                      <span>Select Role</span>
+                    </div>
+                  }
+                />
+              </div>
+              <FieldError formik={formik} name="role" />
+
+              <div>
                 <span className={styles.inputDescription}>First Name</span>
-                <div className="input input-bordered flex items-center gap-2">
+                <div
+                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 16 16"
@@ -149,7 +267,9 @@ function CreateUserModal({ closeModal }) {
 
               <div>
                 <span className={styles.inputDescription}>Last Name</span>
-                <label className="input input-bordered flex items-center gap-2">
+                <div
+                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 16 16"
@@ -166,13 +286,15 @@ function CreateUserModal({ closeModal }) {
                     onBlur={formik.handleBlur}
                     className="grow"
                   />
-                </label>
+                </div>
               </div>
               <FieldError formik={formik} name="last_name" />
 
               <div>
                 <span className={styles.inputDescription}>User Name</span>
-                <label className="input input-bordered flex items-center gap-2">
+                <div
+                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                >
                   <CgNametag className="w-4 h-4 opacity-70" />
                   <input
                     type="text"
@@ -182,13 +304,15 @@ function CreateUserModal({ closeModal }) {
                     onBlur={formik.handleBlur}
                     className="grow"
                   />
-                </label>
+                </div>
               </div>
               <FieldError formik={formik} name="username" />
 
               <div>
                 <span className={styles.inputDescription}>Password</span>
-                <label className="input input-bordered flex items-center gap-2">
+                <div
+                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                >
                   <FaKey className="w-4 h-4 opacity-70" />
                   <input
                     type="password"
@@ -198,13 +322,15 @@ function CreateUserModal({ closeModal }) {
                     onBlur={formik.handleBlur}
                     className="grow"
                   />
-                </label>
+                </div>
               </div>
               <FieldError formik={formik} name="password" />
 
               <div>
                 <span className={styles.inputDescription}>E-mail</span>
-                <label className="input input-bordered flex items-center gap-2">
+                <div
+                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 16 16"
@@ -222,7 +348,7 @@ function CreateUserModal({ closeModal }) {
                     onBlur={formik.handleBlur}
                     className="grow"
                   />
-                </label>
+                </div>
               </div>
               <FieldError formik={formik} name="email" />
 
@@ -230,7 +356,9 @@ function CreateUserModal({ closeModal }) {
                 <span className={styles.inputDescription}>
                   Mobile Phone (optional)
                 </span>
-                <label className="input input-bordered flex items-center gap-2">
+                <div
+                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                >
                   <FaMobileRetro className="w-4 h-4 opacity-70" />
 
                   <input
@@ -241,11 +369,11 @@ function CreateUserModal({ closeModal }) {
                     onBlur={formik.handleBlur}
                     className="grow"
                   />
-                </label>
+                </div>
               </div>
               <FieldError formik={formik} name="mobile_phone" />
 
-              <div className="flex ">
+              <div className="flex mt-3 ">
                 <input
                   id="inform_user_for_new_account_by_email"
                   type="checkbox"
@@ -261,7 +389,7 @@ function CreateUserModal({ closeModal }) {
                   htmlFor="inform_user_for_new_account_by_email"
                 >
                   {' '}
-                  &nbsp; Inform the User by Email for the new account
+                  &nbsp; Inform User by Email
                 </label>
               </div>
               <FieldError formik={formik} name="mobile_phone" />

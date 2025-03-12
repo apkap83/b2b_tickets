@@ -217,7 +217,10 @@ export function UsersTab({ usersList, rolesList }) {
       </div>
 
       {showCreateUserModal && (
-        <CreateUserModal closeModal={() => setShowCreateUserModal(false)} />
+        <CreateUserModal
+          rolesList={rolesList}
+          closeModal={() => setShowCreateUserModal(false)}
+        />
       )}
 
       {showDeleteUserModal.visible && (
