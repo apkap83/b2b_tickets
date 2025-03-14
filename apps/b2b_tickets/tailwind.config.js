@@ -28,4 +28,7 @@ module.exports = {
     },
   },
   plugins: [require('daisyui')],
+  daisyui: {
+    themes: ['light'], // Only enable light mode
+  },
 };
