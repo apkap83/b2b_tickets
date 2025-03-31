@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useFormState } from 'react-dom';
 
 import { useFormik } from 'formik';
@@ -36,6 +36,8 @@ function CreateUserModal({ rolesList, closeModal }) {
   const [loading, setLoading] = useState(false);
   const [customersList, setCustomersList] = useState([]);
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
+
+  const userRoleRef = useRef();
 
   const [roles, setRoles] = useState(rolesList);
 
@@ -125,6 +127,11 @@ function CreateUserModal({ rolesList, closeModal }) {
 
   // Update Available Roles Based on Company Selection
   useEffect(() => {
+    // When formik.values.company is updated the Roles Select value is set to null to force the user to re-select the Role
+    if (userRoleRef && userRoleRef.current) {
+      userRoleRef.current.clearValue();
+    }
+
     // If it is not "Nova" Company
     if (
       formik.values.company.value ===
@@ -209,6 +216,7 @@ function CreateUserModal({ rolesList, closeModal }) {
                 <span className={styles.inputDescription}>App Role</span>
                 <Select
                   name="role"
+                  ref={userRoleRef}
                   value={rolesSelectOptions.find(
                     (option) => option === formik.values.role
                   )}
