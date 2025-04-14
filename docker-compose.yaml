@@ -7,6 +7,8 @@ services:
     ports:
       - '5001:3000'
     container_name: Staging_B2B_Tickets_PreEntry_1
+    dns:
+      - 10.0.1.13
     extra_hosts:
       - 'emailrelay:10.0.1.19'
       - 'sms-gw1:10.131.12.77'
@@ -41,6 +43,8 @@ services:
     ports:
       - '5002:3000'
     container_name: Staging_B2B_Tickets_PreEntry_2
+    dns:
+      - 10.0.1.13
     extra_hosts:
       - 'emailrelay:10.0.1.19'
       - 'sms-gw1:10.131.12.77'
@@ -71,6 +75,8 @@ services:
     ports:
       - '8001:3000'
     container_name: Prod_B2B_Tickets_1
+    dns:
+      - 10.0.1.13
     extra_hosts:
       - 'emailrelay:10.0.1.19'
       - 'sms-gw1:10.131.12.77'
@@ -95,6 +101,8 @@ services:
     ports:
       - '8002:3000'
     container_name: Prod_B2B_Tickets_2
+    dns:
+      - 10.0.1.13
     extra_hosts:
       - 'emailrelay:10.0.1.19'
       - 'sms-gw1:10.131.12.77'
