@@ -2,8 +2,8 @@
 FROM node:20 AS base
 
 ARG USE_PROXY=true
-ARG HTTP_PROXY=http://10.9.112.70:8000
-ARG HTTPS_PROXY=http://10.9.112.70:8000
+ARG HTTP_PROXY=http://10.124.49.151:3129
+ARG HTTPS_PROXY=http://10.124.49.151:3129
 
 ENV SHELL=/bin/sh \
     HOME=/home/centos \
@@ -53,3 +53,10 @@ RUN set -x && \
       echo "Not using proxy settings for pnpm" ;\
     fi && \
     pnpm install -g env-cmd nx@19.4.2
+
+# RUN apt-get update && \
+#     apt-get install -y dnsutils && \
+#     rm -rf /var/lib/apt/lists/*
+
+
+
