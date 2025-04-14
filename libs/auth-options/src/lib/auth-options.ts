@@ -794,7 +794,7 @@ const validateReCaptchaV3 = async (token: string) => {
 
   try {
     const response = await axios.post(
-      'https://142.250.184.142/recaptcha/api/siteverify',
+      'https://www.google.com/recaptcha/api/siteverify',
       params,
       {
         // proxy: proxyUrl
@@ -829,7 +829,7 @@ export const validateReCaptchaV2 = async (token: string) => {
 
   try {
     const response = await axios.post(
-      'https://142.250.184.142/recaptcha/api/siteverify',
+      'https://www.google.com/recaptcha/api/siteverify',
       params,
       {
         // proxy: proxyUrl
