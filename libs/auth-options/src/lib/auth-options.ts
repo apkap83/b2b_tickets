@@ -64,7 +64,7 @@ function getRequestLogger(transportName: TransportName) {
     throw new Error('getRequestLogger must be used in a server-side context.');
   }
 }
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
+const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key'; // Use an environment variable in production
 
 // Set the length to 4 digits and 120 seconds
 authenticator.options = {
@@ -350,12 +350,12 @@ export const options: NextAuthOptions = {
           let correctOTPCode: string | undefined = undefined;
 
           // if Two Factor Secret does not exist then generate it
-          if (!localAuthUserDetails.two_factor_secret) {
-            newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
-              localAuthUserDetails.user_id,
-              logRequest
-            );
-          }
+          // if (!localAuthUserDetails.two_factor_secret) {
+          newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
+            localAuthUserDetails.user_id,
+            logRequest
+          );
+          // }
 
           // Secret Already Exists
           if (newlyGeneratedSecret == undefined) {
@@ -652,7 +652,7 @@ export const options: NextAuthOptions = {
   jwt: {
     secret: process.env.NEXTAUTH_SECRET,
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env['NEXTAUTH_SECRET'],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
