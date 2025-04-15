@@ -7,12 +7,17 @@ import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 import { CustomLogger } from '@b2b-tickets/logging';
 import { TransportName, B2BUserType } from '@b2b-tickets/shared-models';
 import { B2BUser } from '@b2b-tickets/db-access';
-import { symmetricDecrypt, symmetricEncrypt } from '@b2b-tickets/utils';
+import {
+  symmetricDecrypt,
+  symmetricEncrypt,
+  generateOtp,
+} from '@b2b-tickets/utils';
 import { sendEmailForTOTPCode } from '@b2b-tickets/email-service/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { redisClient } from '@b2b-tickets/redis-service';
+import { NextApiRequest } from 'next';
 
 export async function sendOTP(userName: string, OTPCode: string) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
@@ -208,7 +213,7 @@ export async function logTokenOTPAttempt(req: NextRequest): Promise<{
     key,
     numfOfAttemptsInRedis + 1,
     'EX',
-    config.maxTokenAttemptsBanTimeInSec
+    config.TwoFactorValiditySeconds
   );
 
   numfOfAttemptsInRedis += 1;
@@ -226,4 +231,91 @@ export async function logTokenOTPAttempt(req: NextRequest): Promise<{
     eligibleForNewOtpAttempt: true,
     remainingOTPAttempts,
   };
+}
+
+export async function generateAndRedisStoreNewOTPForUser(
+  req: NextApiRequest
+): Promise<string | undefined> {
+  const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
+  try {
+    const newOTP = generateOtp(config.TwoFactorDigitsLength);
+
+    const ip =
+      req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+
+    const key = `otp_value:${ip}`;
+
+    // Verify if OTP Value for User already exists in Redis
+    const savedOTP = await redisClient.get(key);
+
+    // Return saved OTP from Redis
+    if (savedOTP) return savedOTP;
+
+    await redisClient.set(key, newOTP, 'EX', config.TwoFactorValiditySeconds);
+    logRequest.info(`'*** OTP Code: ${newOTP}`);
+    return newOTP;
+  } catch (error) {
+    logRequest.error(error);
+    // throw error;
+  }
+}
+
+export async function validateOTPCodeForUserThroughRedis(
+  req: NextApiRequest,
+  userProvidedOTP: string
+): Promise<
+  | {
+      eligibleForNewOtpAttempt: boolean;
+      remainingOTPAttempts: number;
+    }
+  | boolean
+  | undefined
+> {
+  const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
+  try {
+    const ip =
+      req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const keyOTPValue = `otp_value:${ip}`;
+    const keyOtpAttempts = `otp_attempts:${ip}`;
+
+    const savedOTP = await redisClient.get(keyOTPValue);
+
+    // Wrong OTP Provided By User
+    if (userProvidedOTP !== savedOTP) {
+      let numfOfAttemptsInRedis =
+        Number(await redisClient.get(keyOtpAttempts)) || 0;
+
+      await redisClient.set(
+        keyOtpAttempts,
+        numfOfAttemptsInRedis + 1,
+        'EX',
+        config.maxOTPAttemptsBanTimeInSec
+      );
+
+      numfOfAttemptsInRedis += 1;
+
+      const remainingOTPAttempts = config.maxOTPAttemps - numfOfAttemptsInRedis;
+
+      if (numfOfAttemptsInRedis >= config.maxOTPAttemps) {
+        return {
+          eligibleForNewOtpAttempt: false,
+          remainingOTPAttempts: 0,
+        };
+      }
+
+      return {
+        eligibleForNewOtpAttempt: true,
+        remainingOTPAttempts,
+      };
+    }
+
+    // User passed OTP test successfully - Clear both OTP and Attempts
+    await redisClient.del(keyOtpAttempts);
+    await redisClient.del(keyOTPValue);
+
+    return true;
+  } catch (error) {
+    logRequest.error(error);
+    // throw error;
+  }
 }
