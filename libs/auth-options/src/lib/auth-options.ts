@@ -33,7 +33,11 @@ import { headers } from 'next/headers';
 import { createRequestLogger } from '@b2b-tickets/logging';
 import { CustomLogger } from '@b2b-tickets/logging';
 import { generateResetToken } from '@b2b-tickets/utils';
-import { sendOTP } from '@b2b-tickets/totp-service/server';
+import {
+  sendOTP,
+  generateAndRedisStoreNewOTPForUser,
+  validateOTPCodeForUserThroughRedis,
+} from '@b2b-tickets/totp-service/server';
 import axios from 'axios';
 
 const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
@@ -346,34 +350,14 @@ export const options: NextAuthOptions = {
             `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
           );
 
-          let newlyGeneratedSecret: string | undefined = undefined;
-          let correctOTPCode: string | undefined = undefined;
-
-          // if Two Factor Secret does not exist then generate it
-          // if (!localAuthUserDetails.two_factor_secret) {
-          newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
-            localAuthUserDetails.user_id,
-            logRequest
-          );
-          // }
-
-          // Secret Already Exists
-          if (newlyGeneratedSecret == undefined) {
-            correctOTPCode = generateOtpCode(
-              localAuthUserDetails.two_factor_secret!
-            );
-          }
-
-          // Secret was just created
-          if (newlyGeneratedSecret !== undefined) {
-            correctOTPCode = generateOtpCode(newlyGeneratedSecret);
-          }
-
-          // SEND SMS HERE
-          logRequest.info(`'*** OTP Code: ${correctOTPCode}`);
-          await sendOTP(localAuthUserDetails.userName, correctOTPCode!);
-
           if (!credentials.totpCode) {
+            // Generate and store in Redis the New OTP Code
+            const newOTP = await generateAndRedisStoreNewOTPForUser(req);
+
+            // Send New OTP To The User depending on MFA Method
+            sendOTP(localAuthUserDetails.userName, newOTP!);
+
+            // Require OTP From The User
             throw new Error(ErrorCode.SecondFactorRequired);
           }
 
@@ -389,20 +373,16 @@ export const options: NextAuthOptions = {
             return localAuthUserDetails;
           }
 
-          // Validate OTP
-          const secret = symmetricDecrypt(
-            localAuthUserDetails.two_factor_secret!
+          // Validate Saved OTP In Redis for Source IP
+          const otpProvidedCorrect = await validateOTPCodeForUserThroughRedis(
+            req,
+            credentials.totpCode
           );
-
-          const isValidToken = authenticator.check(
-            credentials.totpCode,
-            secret
-          );
-          if (!isValidToken) {
-            logRequest.error(
-              `Invalid Token Provided -> ${credentials.totpCode}`
-            );
-            throw new Error(ErrorCode.IncorrectTwoFactorCode);
+          if (typeof otpProvidedCorrect === 'object') {
+            if (otpProvidedCorrect.eligibleForNewOtpAttempt) {
+              throw new Error(ErrorCode.IncorrectTwoFactorCode);
+            }
+            throw new Error(ErrorCode.MaxOtpAttemptsRequested);
           }
 
           logRequest.info(
@@ -429,6 +409,7 @@ export const options: NextAuthOptions = {
             ErrorCode.TotpJWTTokenRequired,
             ErrorCode.NewPasswordRequired,
             ErrorCode.CaptchaJWTTokenInvalid,
+            ErrorCode.MaxOtpAttemptsRequested,
           ].map(String);
 
           if (
@@ -650,7 +631,7 @@ export const options: NextAuthOptions = {
     updateAge: config.SessionUpdateAge, // Session is refreshed every X minutes (in seconds)
   },
   jwt: {
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: process.env['NEXTAUTH_SECRET'],
   },
   secret: process.env['NEXTAUTH_SECRET'],
   callbacks: {
@@ -704,7 +685,7 @@ function verifyJWTCaptcha({ req }: { req: any }) {
     if (!captchaJWTToken) {
       throw new Error(ErrorCode.CaptchaJWTTokenRequired);
     }
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key';
     const decoded = jwt.verify(captchaJWTToken, JWT_SECRET) as {
       captchaValidated: boolean;
     };
@@ -726,7 +707,7 @@ function verifyJWTTotp({ req }: { req: any }) {
     if (!totpJWTToken) {
       throw new Error(ErrorCode.TotpJWTTokenRequired);
     }
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key';
     const decoded = jwt.verify(totpJWTToken, JWT_SECRET);
     //@ts-ignore
     if (!decoded.otpValidatedForEmailAddress)
@@ -754,7 +735,7 @@ function verifyJWTTokenForEmail({
       throw new Error(ErrorCode.EmailJWTTokenRequired);
     }
 
-    const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key';
     const decoded = jwt.verify(emailJWTToken, JWT_SECRET) as {
       emailProvided: string;
       token: string;
@@ -782,7 +763,7 @@ function verifyJWTTokenForEmail({
 
 const validateReCaptchaV3 = async (token: string) => {
   // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
-  const secretKey = process.env.RECAPTCHA_V3_SECRET_KEY;
+  const secretKey = process.env['RECAPTCHA_V3_SECRET_KEY'];
 
   if (!secretKey) {
     throw new Error('reCAPTCHA secret key is missing.');
@@ -817,7 +798,7 @@ const validateReCaptchaV3 = async (token: string) => {
 
 export const validateReCaptchaV2 = async (token: string) => {
   // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
-  const secretKey = process.env.RECAPTCHA_V2_SECRET_KEY;
+  const secretKey = process.env['RECAPTCHA_V2_SECRET_KEY'];
 
   if (!secretKey) {
     throw new Error('reCAPTCHA secret key is missing.');

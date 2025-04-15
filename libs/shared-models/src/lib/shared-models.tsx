@@ -300,6 +300,8 @@ export enum ErrorCode {
   NewPasswordRequired = 'new-password-required',
   NoRoleAssignedToUser = 'no-role-assigned-to-user',
   DecryptionFailed = 'decryption-failed',
+
+  MaxOtpAttemptsRequested = 'max-otp-attempts-requested',
 }
 
 export enum EscalationStatus {
