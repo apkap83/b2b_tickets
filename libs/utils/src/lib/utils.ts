@@ -396,3 +396,13 @@ export const sanitizeInput = (value: any): string | null => {
 
   return sanitizedValue;
 };
+
+export function generateOtp(length: number): string {
+  const digits = '0123456789';
+  const array = new Uint8Array(length);
+  crypto.randomFillSync(array);
+
+  return Array.from(array)
+    .map((x) => digits[x % 10])
+    .join('');
+}

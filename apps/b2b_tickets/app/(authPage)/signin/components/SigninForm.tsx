@@ -158,7 +158,6 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
 
       // If no error field exists or it's empty, return early
       if (!error) return;
-
       switch (error) {
         case ErrorCode.CaptchaJWTTokenRequired:
           setError('Captcha Verification is Required');
@@ -185,10 +184,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           setSubmitting(false);
           break;
         case ErrorCode.SecondFactorRequired:
-          resetTimer(
-            config.TwoFactorValiditySeconds -
-              (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
-          );
+          resetTimer(config.TwoFactorValiditySeconds);
           start();
           setShowOTP(true);
           setSubmitting(false);
@@ -216,6 +212,19 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
           setShowOTP(false);
           setSubmitButtonLabel('Set New Password');
           setTitle('Please Change Your Password');
+          break;
+        case ErrorCode.MaxOtpAttemptsRequested:
+          setSubmitting(false);
+          setError(
+            `Max OTP Attempts - You are banned for ${Math.floor(
+              config.maxOTPAttemptsBanTimeInSec / 60
+            )} minutes`
+          );
+          setTimeout(() => {
+            window.location.reload();
+          }, 4000);
+          setShowOTP(false);
+          setSubmitting(true);
           break;
         default:
           setError('Internal Server Error');
