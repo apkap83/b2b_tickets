@@ -206,6 +206,15 @@ export function PasswordResetForm({
           setError('');
           setButtonIsDisabled(true);
           break;
+        case ErrorCode.MaxOtpAttemptsRequested:
+          setAbortPassReset(true);
+          setButtonIsShown(false);
+          setError(
+            `Too many OTP attempts. Banned for ${Math.floor(
+              config.maxOTPAttemptsBanTimeInSec / 60
+            )} minutes`
+          );
+          break;
         default:
           setError('Internal Server Error');
           setSubmitting(false);
