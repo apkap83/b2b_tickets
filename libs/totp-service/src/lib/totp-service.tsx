@@ -338,11 +338,11 @@ export async function maxOTPAttemptsReached(
     const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
 
     const numOfOTPAttempts = (await redisClient.get(keyOtpAttempts)) || 0;
-    console.log('numOfOTPAttempts', numOfOTPAttempts);
-    console.log('config.maxOTPAttemps', config.maxOTPAttemps);
     if (Number(numOfOTPAttempts) >= Number(config.maxOTPAttemps)) {
       return true;
     }
     return false;
-  } catch (error) {}
+  } catch (error) {
+    logRequest.error(error);
+  }
 }

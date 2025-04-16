@@ -361,8 +361,10 @@ export const options: NextAuthOptions = {
             // Generate and store in Redis the New OTP Code
             const newOTP = await generateAndRedisStoreNewOTPForUser(req);
 
-            // Send New OTP To The User depending on MFA Method
-            sendOTP(localAuthUserDetails.userName, newOTP!);
+            if (newOTP) {
+              // Send New OTP To The User depending on MFA Method
+              sendOTP(localAuthUserDetails.userName, newOTP!);
+            }
 
             // Require OTP From The User
             throw new Error(ErrorCode.SecondFactorRequired);
@@ -522,10 +524,12 @@ export const options: NextAuthOptions = {
               foundUser.username
             );
 
-            // SEND SMS HERE
-            logRequest.info(`'*** OTP Code for Pass Reset: ${newOTP}`);
-            await sendOTP(foundUser.username, newOTP!);
-            verifyJWTTotp({ req });
+            if (newOTP) {
+              // SEND OTP HERE
+              logRequest.info(`'*** OTP Code for Pass Reset: ${newOTP}`);
+              await sendOTP(foundUser.username, newOTP!);
+              verifyJWTTotp({ req });
+            }
           }
 
           if (!tokenForEmail) {
