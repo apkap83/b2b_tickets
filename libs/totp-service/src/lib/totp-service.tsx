@@ -238,12 +238,13 @@ export async function generateAndRedisStoreNewOTPForUser(
 ): Promise<string | undefined> {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   try {
+    console.log(req);
     const newOTP = generateOtp(config.TwoFactorDigitsLength);
 
     const ip =
       req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-
-    const key = `otp_value:${ip}`;
+    const userName = req.body['userName'];
+    const key = `otp_value:${ip}:${userName}`;
 
     // Verify if OTP Value for User already exists in Redis
     const savedOTP = await redisClient.get(key);
@@ -275,8 +276,9 @@ export async function validateOTPCodeForUserThroughRedis(
   try {
     const ip =
       req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    const keyOTPValue = `otp_value:${ip}`;
-    const keyOtpAttempts = `otp_attempts:${ip}`;
+    const userName = req.body['userName'];
+    const keyOTPValue = `otp_value:${ip}:${userName}`;
+    const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
 
     const savedOTP = await redisClient.get(keyOTPValue);
 
@@ -329,7 +331,8 @@ export async function maxOTPAttemptsReached(req: NextApiRequest) {
   try {
     const ip =
       req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    const keyOtpAttempts = `otp_attempts:${ip}`;
+    const userName = req.body['userName'];
+    const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
 
     const numOfOTPAttempts = (await redisClient.get(keyOtpAttempts)) || 0;
     console.log('numOfOTPAttempts', numOfOTPAttempts);

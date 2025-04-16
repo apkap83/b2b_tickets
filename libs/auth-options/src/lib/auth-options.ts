@@ -351,7 +351,7 @@ export const options: NextAuthOptions = {
             `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
           );
 
-          // Check If Max OTP Attempts have Already Reached
+          // Check If Max OTP Attempts have Already been Reached
           const maxOTPsReached = await maxOTPAttemptsReached(req);
           if (maxOTPsReached) {
             throw new Error(ErrorCode.MaxOtpAttemptsRequested);
