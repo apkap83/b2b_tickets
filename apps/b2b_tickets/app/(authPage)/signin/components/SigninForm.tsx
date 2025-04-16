@@ -160,12 +160,11 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       }
 
       const error = response?.error?.replace('Error: ', '');
-      console.log(error);
+
       // Get Remaining OTP Attempts from this Error
       if (error?.startsWith(`${ErrorCode.IncorrectTwoFactorCode}__`)) {
         const [, attempts] = error.split('__');
-        let remainingOTPAttempts = parseInt(attempts, 10);
-        setRemainingOTPAttempts(remainingOTPAttempts);
+        setRemainingOTPAttempts(parseInt(attempts, 10));
         setError('Invalid OTP Code provided');
         setSubmitting(false);
         return;
