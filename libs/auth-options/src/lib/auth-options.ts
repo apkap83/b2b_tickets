@@ -528,8 +528,8 @@ export const options: NextAuthOptions = {
               // SEND OTP HERE
               logRequest.info(`'*** OTP Code for Pass Reset: ${newOTP}`);
               await sendOTP(foundUser.username, newOTP!);
-              verifyJWTTotp({ req });
             }
+            verifyJWTTotp({ req });
           }
 
           if (!tokenForEmail) {
