@@ -236,7 +236,7 @@ export async function logTokenOTPAttempt(req: NextRequest): Promise<{
 export async function generateAndRedisStoreNewOTPForUser(
   req: NextApiRequest,
   definedUsername?: string
-): Promise<string | undefined> {
+): Promise<string | undefined | null> {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   try {
     const newOTP = generateOtp(config.TwoFactorDigitsLength);
@@ -249,8 +249,9 @@ export async function generateAndRedisStoreNewOTPForUser(
     // Verify if OTP Value for User already exists in Redis
     const savedOTP = await redisClient.get(key);
 
-    // Return saved OTP from Redis
-    if (savedOTP) return savedOTP;
+    // Return null to indicate that no new OTP Generated
+    // Avoid Sending a new OTP Notification
+    if (savedOTP) return null;
 
     await redisClient.set(key, newOTP, 'EX', config.TwoFactorValiditySeconds);
     logRequest.info(`'*** OTP Code: ${newOTP}`);
