@@ -48,6 +48,8 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const [showOTP, setShowOTP] = useState(false);
   const [showNewPasswordFields, setShowNewPasswordFields] = useState(false);
 
+  const [showSubmitButton, setShowSubmitButton] = useState(true);
+
   const [totpCode, setTotpCode] = useState('');
 
   const [title, setTitle] = useState('Sign In');
@@ -57,6 +59,9 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   const [callbackUrl, setCallbackUrl] = useState('/');
 
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit');
+  const [remainingOTPAttempts, setRemainingOTPAttempts] = useState(
+    Number(config.maxOTPAttemps)
+  );
 
   // Import 'executeRecaptcha' using 'useReCaptcha' hook
   const { executeRecaptcha } = useReCaptcha();
@@ -155,6 +160,16 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
       }
 
       const error = response?.error?.replace('Error: ', '');
+      console.log(error);
+      // Get Remaining OTP Attempts from this Error
+      if (error?.startsWith(`${ErrorCode.IncorrectTwoFactorCode}__`)) {
+        const [, attempts] = error.split('__');
+        let remainingOTPAttempts = parseInt(attempts, 10);
+        setRemainingOTPAttempts(remainingOTPAttempts);
+        setError('Invalid OTP Code provided');
+        setSubmitting(false);
+        return;
+      }
 
       // If no error field exists or it's empty, return early
       if (!error) return;
@@ -220,11 +235,11 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
               config.maxOTPAttemptsBanTimeInSec / 60
             )} minutes`
           );
-          setTimeout(() => {
-            window.location.reload();
-          }, 4000);
+
           setShowOTP(false);
           setSubmitting(true);
+          setShowSubmitButton(false);
+
           break;
         default:
           setError('Internal Server Error');
@@ -368,7 +383,9 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                 by E-mail/SMS
               </p>
               <p className="text-xs text-center pb-2">
-                Remaining time {formatTimeMMSS(timeLeft)}
+                Remaining Attempts: <b>{remainingOTPAttempts}</b> | Remaining
+                Time:&nbsp;<b>{formatTimeMMSS(timeLeft)}</b>
+                {/* Remaining time {formatTimeMMSS(timeLeft)} */}
               </p>
               <TwoFactAuth
                 value={totpCode}
@@ -417,13 +434,15 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
 
           {error && <p className="pt-2 text-red-500 text-center">{error}</p>}
           <div className="mt-5 flex justify-around">
-            <SignInButton
-              pending={formik.isSubmitting}
-              label={submitButtonLabel}
-              loadingText="Loading ..."
-              isValid={formik.isValid}
-              // className="btn btn-primary py-4 px-5 font-semibold text-white "
-            />
+            {showSubmitButton && (
+              <SignInButton
+                pending={formik.isSubmitting}
+                label={submitButtonLabel}
+                loadingText="Loading ..."
+                isValid={formik.isValid}
+                // className="btn btn-primary py-4 px-5 font-semibold text-white "
+              />
+            )}
           </div>
         </form>
       </div>
