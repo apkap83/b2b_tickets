@@ -10,7 +10,10 @@ import { config } from '@b2b-tickets/config';
 import {
   logFaultyOTPAttempt,
   clearFaultyOTPAttempts,
+  maxOTPAttemptsReached,
 } from '@b2b-tickets/totp-service/server';
+import { validateOTPCodeForUserThroughRedis } from '@b2b-tickets/totp-service/server';
+import { NextApiRequest } from 'next';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
@@ -23,9 +26,9 @@ export async function POST(req: NextRequest) {
         { status: 405 }
       );
     }
-
-    const body = await req.json(); // Extract JSON from request
+    const body = await req.json();
     const { emailProvided, totpCode } = body;
+    const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
 
     // Find User By email address
     const foundUser = await B2BUser.findOne({
@@ -44,29 +47,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!foundUser.two_factor_secret) {
-      // Introduce a delay before returning error response
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+    const userName = foundUser.username;
 
-      return NextResponse.json(
-        { message: '2FA is not set up' },
-        { status: 400 }
-      );
-    }
+    const myRequestObj = {
+      headers: {
+        'x-forwarded-for': ip,
+      },
+      body: {
+        userName,
+      },
+    };
 
-    // Validate OTP
-    const secret = symmetricDecrypt(foundUser.two_factor_secret!);
-    const isValidToken = authenticator.check(totpCode, secret);
+    // Validate Saved OTP In Redis for Source IP & User Name
+    const otpProvidedCorrect = await validateOTPCodeForUserThroughRedis(
+      //@ts-ignore
+      myRequestObj as NextApiRequest,
+      totpCode
+    );
+    let remainingAttempts;
+    if (typeof otpProvidedCorrect === 'object') {
+      remainingAttempts = otpProvidedCorrect.remainingOTPAttempts;
 
-    if (!isValidToken) {
-      logRequest.error(
-        `Invalid Token Provided for Password Reset -> ${totpCode}`
-      );
-
-      const { eligibleForNewOtpAttempt, remainingOTPAttempts } =
-        await logFaultyOTPAttempt(req);
-
-      if (!eligibleForNewOtpAttempt) {
+      // Max Attempts Reached
+      if (remainingAttempts! <= 0) {
         return NextResponse.json(
           {
             error: `Too many OTP attempts. Banned for ${Math.floor(
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           message: `Incorrect Token provided`,
-          remainingAttempts: remainingOTPAttempts,
+          remainingAttempts: remainingAttempts,
         },
         { status: 400 }
       );
@@ -111,9 +114,6 @@ export async function POST(req: NextRequest) {
         secure: process.env.NODE_ENV === 'production', // Set to true in production
       })
     );
-
-    // Clear Faulty OTP Attempts on Success
-    clearFaultyOTPAttempts(req);
 
     return response;
   } catch (error) {
