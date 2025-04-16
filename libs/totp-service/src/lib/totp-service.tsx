@@ -297,6 +297,9 @@ export async function validateOTPCodeForUserThroughRedis(
       const remainingOTPAttempts = config.maxOTPAttemps - numfOfAttemptsInRedis;
 
       if (numfOfAttemptsInRedis >= config.maxOTPAttemps) {
+        // Max OTP Attempts - Clear OTP Value
+        await redisClient.del(keyOTPValue);
+
         return {
           eligibleForNewOtpAttempt: false,
           remainingOTPAttempts: 0,
@@ -318,4 +321,22 @@ export async function validateOTPCodeForUserThroughRedis(
     logRequest.error(error);
     // throw error;
   }
+}
+
+export async function maxOTPAttemptsReached(req: NextApiRequest) {
+  const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
+
+  try {
+    const ip =
+      req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+    const keyOtpAttempts = `otp_attempts:${ip}`;
+
+    const numOfOTPAttempts = (await redisClient.get(keyOtpAttempts)) || 0;
+    console.log('numOfOTPAttempts', numOfOTPAttempts);
+    console.log('config.maxOTPAttemps', config.maxOTPAttemps);
+    if (Number(numOfOTPAttempts) >= Number(config.maxOTPAttemps)) {
+      return true;
+    }
+    return false;
+  } catch (error) {}
 }

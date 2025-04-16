@@ -5,4 +5,5 @@ export {
   sendOTP,
   generateAndRedisStoreNewOTPForUser,
   validateOTPCodeForUserThroughRedis,
+  maxOTPAttemptsReached,
 } from './lib/totp-service';

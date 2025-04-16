@@ -37,6 +37,7 @@ import {
   sendOTP,
   generateAndRedisStoreNewOTPForUser,
   validateOTPCodeForUserThroughRedis,
+  maxOTPAttemptsReached,
 } from '@b2b-tickets/totp-service/server';
 import axios from 'axios';
 
@@ -350,6 +351,12 @@ export const options: NextAuthOptions = {
             `Requesting OTP Autentication from user ${localAuthUserDetails.userName}`
           );
 
+          // Check If Max OTP Attempts have Already Reached
+          const maxOTPsReached = await maxOTPAttemptsReached(req);
+          if (maxOTPsReached) {
+            throw new Error(ErrorCode.MaxOtpAttemptsRequested);
+          }
+
           if (!credentials.totpCode) {
             // Generate and store in Redis the New OTP Code
             const newOTP = await generateAndRedisStoreNewOTPForUser(req);
@@ -378,9 +385,12 @@ export const options: NextAuthOptions = {
             req,
             credentials.totpCode
           );
+
           if (typeof otpProvidedCorrect === 'object') {
             if (otpProvidedCorrect.eligibleForNewOtpAttempt) {
-              throw new Error(ErrorCode.IncorrectTwoFactorCode);
+              throw new Error(
+                `${ErrorCode.IncorrectTwoFactorCode}__${otpProvidedCorrect.remainingOTPAttempts}`
+              );
             }
             throw new Error(ErrorCode.MaxOtpAttemptsRequested);
           }
@@ -414,7 +424,8 @@ export const options: NextAuthOptions = {
 
           if (
             error instanceof Error &&
-            permittedErrorsToFrontEnd.includes(error.message)
+            (permittedErrorsToFrontEnd.includes(error.message) ||
+              error.message.startsWith(ErrorCode.IncorrectTwoFactorCode))
           ) {
             logRequest.error(error.message);
             throw error;
