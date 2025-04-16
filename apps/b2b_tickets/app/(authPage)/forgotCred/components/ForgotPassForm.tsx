@@ -297,10 +297,7 @@ export default function ForgotPassForm({
           setEmailFieldIsReadOnly(true);
           break;
         case ErrorCode.TotpJWTTokenRequired:
-          resetTimer(
-            config.TwoFactorValiditySeconds -
-              (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
-          );
+          resetTimer(config.TwoFactorValiditySeconds);
           start();
 
           setShowOTP(true);
@@ -337,6 +334,15 @@ export default function ForgotPassForm({
           setShowNewPasswordField(true);
           setError('');
           setButtonIsDisabled(true);
+          break;
+        case ErrorCode.MaxOtpAttemptsRequested:
+          setAbortPassReset(true);
+          setButtonIsShown(false);
+          setError(
+            `Too many OTP attempts. Banned for ${Math.floor(
+              config.maxOTPAttemptsBanTimeInSec / 60
+            )} minutes`
+          );
           break;
         default:
           setError('Internal Server Error');

@@ -507,30 +507,24 @@ export const options: NextAuthOptions = {
           }
 
           if (config.TwoFactorEnabledForPasswordReset) {
-            let newlyGeneratedSecret: string | undefined = undefined;
-            let correctOTPCode: string | undefined = undefined;
-
-            // if Two Factor Secret does not exist then generate it
-            if (!foundUser.two_factor_secret) {
-              newlyGeneratedSecret = await generateTwoFactorSecretForUserId(
-                foundUser.user_id,
-                logRequest
-              );
+            // Check If Max OTP Attempts have Already been Reached
+            const maxOTPsReached = await maxOTPAttemptsReached(
+              req,
+              foundUser.username
+            );
+            if (maxOTPsReached) {
+              throw new Error(ErrorCode.MaxOtpAttemptsRequested);
             }
 
-            // Secret Already Exists
-            if (newlyGeneratedSecret == undefined) {
-              correctOTPCode = generateOtpCode(foundUser.two_factor_secret!);
-            }
-
-            // Secret was just created
-            if (newlyGeneratedSecret !== undefined) {
-              correctOTPCode = generateOtpCode(newlyGeneratedSecret);
-            }
+            // Generate and store in Redis the New OTP Code
+            const newOTP = await generateAndRedisStoreNewOTPForUser(
+              req,
+              foundUser.username
+            );
 
             // SEND SMS HERE
-            logRequest.info(`'*** OTP Code for Pass Reset: ${correctOTPCode}`);
-            await sendOTP(foundUser.username, correctOTPCode!);
+            logRequest.info(`'*** OTP Code for Pass Reset: ${newOTP}`);
+            await sendOTP(foundUser.username, newOTP!);
             verifyJWTTotp({ req });
           }
 
@@ -548,11 +542,7 @@ export const options: NextAuthOptions = {
             throw new Error(ErrorCode.NewPasswordRequired);
           }
 
-          // Verify Complexity
-          // try {
-          // @ts-ignore
           foundUser.password = newPassword;
-
           await foundUser.save();
 
           const roles = foundUser.AppRoles.map(
@@ -617,6 +607,7 @@ export const options: NextAuthOptions = {
             ErrorCode.TokenForEmailRequired,
             ErrorCode.NewPasswordRequired,
             ErrorCode.NoRoleAssignedToUser,
+            ErrorCode.MaxOtpAttemptsRequested,
           ].map(String);
 
           if (
