@@ -38,6 +38,8 @@ import {
   generateAndRedisStoreNewOTPForUser,
   validateOTPCodeForUserThroughRedis,
   maxOTPAttemptsReached,
+  removeOTPKey,
+  removeOTPAttemptsKey,
 } from '@b2b-tickets/totp-service/server';
 import axios from 'axios';
 
@@ -401,6 +403,10 @@ export const options: NextAuthOptions = {
             `Local User '${credentials.userName}' has been successfully authenticated`
           );
 
+          // After Successful Login - Remove OTP Key & Attempts
+          removeOTPKey(req);
+          removeOTPAttemptsKey(req);
+
           // Check if The User should be forced to change password
           if (localAuthUserDetails?.forcedToChangePassword) {
             if (!credentials.newPassword) {
@@ -548,6 +554,10 @@ export const options: NextAuthOptions = {
 
           foundUser.password = newPassword;
           await foundUser.save();
+
+          // After Successful Password Change - Remove OTP Key & Attempts
+          removeOTPKey(req);
+          removeOTPAttemptsKey(req);
 
           const roles = foundUser.AppRoles.map(
             (role: any) => role.roleName as AppRoleTypes

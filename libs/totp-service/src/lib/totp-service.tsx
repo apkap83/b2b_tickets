@@ -315,10 +315,6 @@ export async function validateOTPCodeForUserThroughRedis(
       };
     }
 
-    // User passed OTP test successfully - Clear both OTP and Attempts
-    await redisClient.del(keyOtpAttempts);
-    await redisClient.del(keyOTPValue);
-
     return true;
   } catch (error) {
     logRequest.error(error);
@@ -346,4 +342,22 @@ export async function maxOTPAttemptsReached(
   } catch (error) {
     logRequest.error(error);
   }
+}
+
+export async function removeOTPAttemptsKey(req: NextApiRequest) {
+  const ip =
+    req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  const userName = req.body['userName'];
+  const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
+
+  await redisClient.del(keyOtpAttempts);
+}
+
+export async function removeOTPKey(req: NextApiRequest) {
+  const ip =
+    req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  const userName = req.body['userName'];
+  const keyOTPValue = `otp_value:${ip}:${userName}`;
+
+  await redisClient.del(keyOTPValue);
 }
