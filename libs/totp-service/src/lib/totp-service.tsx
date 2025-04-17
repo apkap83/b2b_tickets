@@ -344,20 +344,48 @@ export async function maxOTPAttemptsReached(
   }
 }
 
-export async function removeOTPAttemptsKey(req: NextApiRequest) {
+export async function removeOTPAttemptsKey(
+  req: NextApiRequest,
+  definedUserName?: string
+) {
+  const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   const ip =
     req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-  const userName = req.body['userName'];
+  const userName = definedUserName || req.body['userName'];
   const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
 
+  logRequest.info(
+    `Removing OTP Attempts Value from Redis instance: ${keyOtpAttempts}`
+  );
   await redisClient.del(keyOtpAttempts);
 }
 
-export async function removeOTPKey(req: NextApiRequest) {
+export async function removeTokenKey(
+  req: NextApiRequest,
+  definedUserName?: string
+) {
+  const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   const ip =
     req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-  const userName = req.body['userName'];
+  const userName = definedUserName || req.body['userName'];
+  const keyTokenAttempts = `token_attempts:${ip}`;
+
+  logRequest.info(
+    `Removing Token Attempts Value from Redis instance: ${keyTokenAttempts}`
+  );
+  await redisClient.del(keyTokenAttempts);
+}
+
+export async function removeOTPKey(
+  req: NextApiRequest,
+  definedUserName?: string
+) {
+  const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
+  const ip =
+    req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  const userName = definedUserName || req.body['userName'];
   const keyOTPValue = `otp_value:${ip}:${userName}`;
 
+  logRequest.info(`Removing OTP Value from Redis instance: ${keyOTPValue}`);
   await redisClient.del(keyOTPValue);
 }

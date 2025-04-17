@@ -10,4 +10,5 @@ export {
   maxOTPAttemptsReached,
   removeOTPAttemptsKey,
   removeOTPKey,
+  removeTokenKey,
 } from './lib/totp-service';

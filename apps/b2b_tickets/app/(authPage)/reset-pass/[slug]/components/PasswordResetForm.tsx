@@ -168,10 +168,7 @@ export function PasswordResetForm({
           setButtonIsShown(false);
           break;
         case ErrorCode.TotpJWTTokenRequired:
-          resetTimer(
-            config.TwoFactorValiditySeconds -
-              (Math.floor(Date.now() / 1000) % config.TwoFactorValiditySeconds)
-          );
+          resetTimer(config.TwoFactorValiditySeconds);
           start();
 
           setShowOTP(true);
