@@ -95,7 +95,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
   }, [status, router, callbackUrl]);
 
   const validationSchema = Yup.object({
-    userName: Yup.string().required('User name is required'),
+    userName: Yup.string().required('Field is required'),
     password: Yup.string().required('Password is required'),
     newPassword: !showNewPasswordFields
       ? Yup.string()
