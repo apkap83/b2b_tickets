@@ -382,21 +382,21 @@ export interface TemplateVariables {
   };
   [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_STAGING]: {
     secureLink: string;
-    userName: string;
+    email: string;
     appEnvironment: string;
     appURL: string;
   };
 
   [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_DEVELOPMENT]: {
     secureLink: string;
-    userName: string;
+    email: string;
     appEnvironment: string;
     appURL: string;
   };
 
   [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_PRODUCTION]: {
     secureLink: string;
-    userName: string;
+    email: string;
     appURL: string;
   };
 
