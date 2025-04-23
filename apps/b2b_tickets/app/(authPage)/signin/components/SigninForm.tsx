@@ -335,7 +335,7 @@ export default function SignInForm({ csrfToken }: { csrfToken: string }) {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     className="grow text-black"
-                    placeholder="User Name"
+                    placeholder="E-mail or User Name"
                     autoComplete="off"
                   />
                 </label>

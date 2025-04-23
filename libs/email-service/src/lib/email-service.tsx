@@ -418,7 +418,7 @@ export async function sendEmailsForUserCreation({
         loadTemplate(emailTemplate as EmailTemplate),
         {
           secureLink,
-          userName,
+          email,
           appEnvironment: env,
           appURL: config.webSiteUrl,
         } as
