@@ -123,10 +123,12 @@ export function PasswordResetForm({
         !totpVerified &&
         formik.values.totpCode
       ) {
-        await getTotpJWTToken({
+        const res = await getTotpJWTToken({
           emailProvided: formik.values.email,
           setSubmitting,
         });
+
+        if (!res) return;
       }
 
       const response = await signIn('credentials-password-reset', {
@@ -347,16 +349,17 @@ export function PasswordResetForm({
           setButtonIsShown(false);
         }
 
-        return;
+        return false;
       }
 
       // Server Verified Totp at this point
       stopTimer();
       setTotpVerified(true);
+      return true;
     } catch (error) {
       setError('An error occurred while validating TOTP. Please try again.');
       setSubmitting(false);
-      return;
+      return false;
     }
   };
 
