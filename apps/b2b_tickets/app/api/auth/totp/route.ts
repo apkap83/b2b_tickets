@@ -5,7 +5,7 @@ import { TransportName } from '@b2b-tickets/shared-models';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 import { authenticator } from 'otplib';
 import { B2BUser } from '@b2b-tickets/db-access';
-import { symmetricDecrypt } from '@b2b-tickets/utils';
+import { validateReCaptchaV3 } from '@b2b-tickets/utils';
 import { config } from '@b2b-tickets/config';
 import {
   logFaultyOTPAttempt,
@@ -27,8 +27,27 @@ export async function POST(req: NextRequest) {
       );
     }
     const body = await req.json();
-    const { emailProvided, totpCode } = body;
+    const { emailProvided, totpCode, captchaV3token } = body;
     const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+
+    // Validate the captcha token
+    if (config.CaptchaIsActiveForPasswordReset) {
+      const data = await validateReCaptchaV3(captchaV3token);
+
+      if (!data) {
+        return NextResponse.json(
+          { message: 'Invalid reCAPTCHA' },
+          { status: 400 }
+        );
+      }
+      if (!data.success || data.score < config.CaptchaV3Threshold) {
+        logRequest.info('Captcha v3 Data:', data);
+        return NextResponse.json(
+          { message: 'Invalid reCAPTCHA' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Find User By email address
     const foundUser = await B2BUser.findOne({
@@ -117,6 +136,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
+    logRequest.error(error);
     // Catch any unexpected errors and return a JSON response
     return NextResponse.json(
       { message: 'Internal Server Error' },

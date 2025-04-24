@@ -33,7 +33,7 @@ import jwt from 'jsonwebtoken';
 import { headers } from 'next/headers';
 import { createRequestLogger } from '@b2b-tickets/logging';
 import { CustomLogger } from '@b2b-tickets/logging';
-import { generateResetToken } from '@b2b-tickets/utils';
+import { validateReCaptchaV3 } from '@b2b-tickets/utils';
 import {
   sendOTP,
   generateAndRedisStoreNewOTPForUser,
@@ -44,8 +44,6 @@ import {
   removeTokenKey,
 } from '@b2b-tickets/totp-service/server';
 import axios from 'axios';
-
-const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
 
 function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
@@ -796,77 +794,6 @@ function verifyJWTTokenForEmail({
     throw error;
   }
 }
-
-const validateReCaptchaV3 = async (token: string) => {
-  // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
-  const secretKey = process.env['RECAPTCHA_V3_SECRET_KEY'];
-
-  if (!secretKey) {
-    throw new Error('reCAPTCHA secret key is missing.');
-  }
-
-  const params = new URLSearchParams();
-  params.append('secret', secretKey);
-  params.append('response', token);
-
-  try {
-    const response = await axios.post(
-      'https://www.google.com/recaptcha/api/siteverify',
-      params,
-      {
-        // proxy: proxyUrl
-        //   ? {
-        //       host: new URL(proxyUrl).hostname,
-        //       port: parseInt(new URL(proxyUrl).port || '80', 10),
-        //       protocol: new URL(proxyUrl).protocol.replace(':', ''),
-        //     }
-        //   : false,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const validateReCaptchaV2 = async (token: string) => {
-  // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
-  const secretKey = process.env['RECAPTCHA_V2_SECRET_KEY'];
-
-  if (!secretKey) {
-    throw new Error('reCAPTCHA secret key is missing.');
-  }
-
-  const params = new URLSearchParams();
-  params.append('secret', secretKey);
-  params.append('response', token);
-
-  try {
-    const response = await axios.post(
-      'https://www.google.com/recaptcha/api/siteverify',
-      params,
-      {
-        // proxy: proxyUrl
-        //   ? {
-        //       host: new URL(proxyUrl).hostname,
-        //       port: parseInt(new URL(proxyUrl).port || '80', 10),
-        //       protocol: new URL(proxyUrl).protocol.replace(':', ''),
-        //     }
-        //   : false,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
-
-    return response.data.success;
-  } catch (error) {
-    throw error;
-  }
-};
 
 // Extend User and JWT interfaces
 declare module 'next-auth' {

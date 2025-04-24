@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serialize } from 'cookie';
 import jwt from 'jsonwebtoken';
-import { validateReCaptchaV2 } from '@b2b-tickets/auth-options';
+import { validateReCaptchaV2 } from '@b2b-tickets/utils';
 import { TransportName } from '@b2b-tickets/shared-models';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 
