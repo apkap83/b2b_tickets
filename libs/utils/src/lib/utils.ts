@@ -19,11 +19,14 @@ import * as Yup from 'yup';
 import { Socket } from 'socket.io-client';
 import { WebSocketMessage, WebSocketData } from '@b2b-tickets/shared-models'; // Import WebSocketMessage and WebSocketData types
 import { escape, trim } from 'validator';
+import axios from 'axios';
 
 const ALGORITHM = 'aes-256-cbc';
 const INPUT_ENCODING = 'utf8';
 const OUTPUT_ENCODING = 'hex';
 const IV_LENGTH = 16; // AES blocksize
+
+const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
 
 // Set the length to 4 digits and 120 seconds
 authenticator.options = {
@@ -411,3 +414,74 @@ export function isValidEmail(email: string) {
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return regex.test(email);
 }
+
+export const validateReCaptchaV2 = async (token: string) => {
+  // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
+  const secretKey = process.env['RECAPTCHA_V2_SECRET_KEY'];
+
+  if (!secretKey) {
+    throw new Error('reCAPTCHA secret key is missing.');
+  }
+
+  const params = new URLSearchParams();
+  params.append('secret', secretKey);
+  params.append('response', token);
+
+  try {
+    const response = await axios.post(
+      'https://www.google.com/recaptcha/api/siteverify',
+      params,
+      {
+        // proxy: proxyUrl
+        //   ? {
+        //       host: new URL(proxyUrl).hostname,
+        //       port: parseInt(new URL(proxyUrl).port || '80', 10),
+        //       protocol: new URL(proxyUrl).protocol.replace(':', ''),
+        //     }
+        //   : false,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    return response.data.success;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const validateReCaptchaV3 = async (token: string) => {
+  // const proxyUrl = process.env['https_proxy'] || process.env['http_proxy'];
+  const secretKey = process.env['RECAPTCHA_V3_SECRET_KEY'];
+
+  if (!secretKey) {
+    throw new Error('reCAPTCHA secret key is missing.');
+  }
+
+  const params = new URLSearchParams();
+  params.append('secret', secretKey);
+  params.append('response', token);
+
+  try {
+    const response = await axios.post(
+      'https://www.google.com/recaptcha/api/siteverify',
+      params,
+      {
+        // proxy: proxyUrl
+        //   ? {
+        //       host: new URL(proxyUrl).hostname,
+        //       port: parseInt(new URL(proxyUrl).port || '80', 10),
+        //       protocol: new URL(proxyUrl).protocol.replace(':', ''),
+        //     }
+        //   : false,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

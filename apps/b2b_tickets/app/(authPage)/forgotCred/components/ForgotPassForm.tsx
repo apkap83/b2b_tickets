@@ -228,34 +228,23 @@ export default function ForgotPassForm({
       setError(null);
 
       let captchaV3token = null;
-      // Generate ReCaptcha token
-      if (config.CaptchaIsActiveForPasswordReset)
-        captchaV3token = await executeRecaptcha('form_submit');
-
-      // if (config.CaptchaIsActiveForPasswordReset) {
-      //   if (!captcha) {
-      //     setError('Verify reCAPTCHA!');
-      //     return;
-      //   }
-
-      //   if (!captchaVerified) {
-      //     await getReCaptchaJWTToken({
-      //       emailProvided: formik.values.email,
-      //       setSubmitting,
-      //     });
-      //   }
-      // }
 
       if (
         config.TwoFactorEnabledForPasswordReset &&
         !totpVerified &&
         formik.values.totpCode
       ) {
+        // Generate ReCaptcha token
+        if (config.CaptchaIsActiveForPasswordReset)
+          captchaV3token = await executeRecaptcha('form_submit');
         await getTotpJWTToken({
           emailProvided: formik.values.email,
+          captchaV3token,
           setSubmitting,
         });
       }
+
+      captchaV3token = await executeRecaptcha('form_submit');
 
       const response = await signIn('credentials-password-reset', {
         redirect: false,
@@ -352,7 +341,11 @@ export default function ForgotPassForm({
     },
   });
 
-  const getTotpJWTToken = async ({ emailProvided, setSubmitting }: any) => {
+  const getTotpJWTToken = async ({
+    emailProvided,
+    captchaV3token,
+    setSubmitting,
+  }: any) => {
     if (!formik.values.totpCode) {
       setError('Verify TOTP Code!');
       setSubmitting(false);
@@ -367,6 +360,7 @@ export default function ForgotPassForm({
         },
         body: JSON.stringify({
           emailProvided,
+          captchaV3token,
           totpCode: formik.values.totpCode,
         }),
       });
