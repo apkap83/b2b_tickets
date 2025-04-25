@@ -36,14 +36,14 @@ export async function POST(req: NextRequest) {
 
       if (!data) {
         return NextResponse.json(
-          { message: 'Invalid reCAPTCHA' },
+          { message: 'Invalid CAPTCHA' },
           { status: 400 }
         );
       }
       if (!data.success || data.score < config.CaptchaV3Threshold) {
         logRequest.info('Captcha v3 Data:', data);
         return NextResponse.json(
-          { message: 'Invalid reCAPTCHA' },
+          { message: 'Invalid CAPTCHA' },
           { status: 400 }
         );
       }
