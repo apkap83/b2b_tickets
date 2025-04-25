@@ -120,7 +120,7 @@ export default function ForgotPassForm({
       const captchaResult = await captchaResponse.json();
 
       if (!captchaResponse.ok) {
-        setError(captchaResult.message || 'Invalid reCAPTCHA');
+        setError(captchaResult.message || 'Invalid CAPTCHA');
         setSubmitting(false);
 
         // Reset the reCAPTCHA (if active)
