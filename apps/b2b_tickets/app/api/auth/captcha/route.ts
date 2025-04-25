@@ -24,10 +24,7 @@ export async function POST(req: NextRequest) {
     const reCaptchaSuccessResponse = await validateReCaptchaV2(captchaToken);
 
     if (!reCaptchaSuccessResponse) {
-      return NextResponse.json(
-        { message: 'Invalid reCAPTCHA' },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: 'Invalid CAPTCHA' }, { status: 400 });
     }
 
     logRequest.info('Trying to validate ReCaptcha in Google..');
