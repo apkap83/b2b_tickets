@@ -72,8 +72,8 @@ function CreateUserModal({ rolesList, closeModal }) {
 
     first_name: Yup.string().required('First name is required'),
     last_name: Yup.string().required('Last name is required'),
-    username: Yup.string().required('User name is required'),
-    password: passwordComplexitySchema,
+    // username: Yup.string().required('User name is required'),
+    // password: passwordComplexitySchema,
     email: Yup.string()
       .email('Invalid email address')
       .required('Email is required'),
@@ -96,8 +96,8 @@ function CreateUserModal({ rolesList, closeModal }) {
       // Empty Values
       first_name: '',
       last_name: '',
-      username: '',
-      password: '',
+      // username: '',
+      // password: '',
       email: '',
       mobile_phone: '',
       role: '',
@@ -295,42 +295,6 @@ function CreateUserModal({ rolesList, closeModal }) {
                 </div>
               </div>
               <FieldError formik={formik} name="last_name" />
-
-              <div>
-                <span className={styles.inputDescription}>User Name</span>
-                <div
-                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
-                >
-                  <CgNametag className="w-4 h-4 opacity-70" />
-                  <input
-                    type="text"
-                    name="username"
-                    value={formik.values.username}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="grow"
-                  />
-                </div>
-              </div>
-              <FieldError formik={formik} name="username" />
-
-              <div>
-                <span className={styles.inputDescription}>Password</span>
-                <div
-                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
-                >
-                  <FaKey className="w-4 h-4 opacity-70" />
-                  <input
-                    type="password"
-                    name="password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="grow"
-                  />
-                </div>
-              </div>
-              <FieldError formik={formik} name="password" />
 
               <div>
                 <span className={styles.inputDescription}>E-mail</span>
