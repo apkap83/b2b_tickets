@@ -58,13 +58,13 @@ export const AdminDashboard = ({
           </div>
 
           {activeTab === 'Users' && (
-            <div className="mb-[2rem] bg-slate-100">
+            <div className="mb-[2rem] ">
               <UsersTab usersList={usersList} rolesList={rolesList} />
             </div>
           )}
 
           {activeTab === 'Roles' && (
-            <div className="mb-[2rem] bg-slate-100">
+            <div className="mb-[2rem] ">
               <RolesTab
                 rolesList={rolesList}
                 permissionsList={permissionsList}
@@ -73,7 +73,7 @@ export const AdminDashboard = ({
           )}
 
           {activeTab === 'Permissions' && (
-            <div className="mb-[2rem] bg-slate-100">
+            <div className="mb-[2rem]">
               <PermissionsTab permissionsList={permissionsList} />
             </div>
           )}
