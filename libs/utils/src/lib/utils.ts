@@ -11,6 +11,8 @@ import {
   TicketDetail,
   TicketDetailForTicketCreator,
   AllowedColumnsForFilteringType,
+  AuthenticationTypes,
+  CredentialsType,
 } from '@b2b-tickets/shared-models';
 import { Session } from 'next-auth';
 import * as crypto from 'crypto';
@@ -413,6 +415,33 @@ export function generateOtp(length: number): string {
 export function isValidEmail(email: string) {
   const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return regex.test(email);
+}
+
+export function getWhereObj(
+  credentials: CredentialsType,
+  emailProvided: boolean
+): {
+  username?: string;
+  email?: string;
+  authentication_type: AuthenticationTypes;
+} {
+  let whereObj: {
+    username?: string;
+    email?: string;
+    authentication_type: AuthenticationTypes;
+  } = {
+    username: credentials!.userName,
+    authentication_type: AuthenticationTypes.LOCAL,
+  };
+
+  if (emailProvided) {
+    whereObj = {
+      email: credentials!.userName,
+      authentication_type: AuthenticationTypes.LOCAL,
+    };
+  }
+
+  return whereObj;
 }
 
 export const validateReCaptchaV2 = async (token: string) => {

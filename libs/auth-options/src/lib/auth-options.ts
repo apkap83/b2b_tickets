@@ -7,6 +7,7 @@ import {
   symmetricDecrypt,
   generateOtpCode,
   isValidEmail,
+  getWhereObj,
 } from '@b2b-tickets/utils';
 import { authenticator } from 'otplib';
 import bcrypt from 'bcryptjs';
@@ -17,6 +18,7 @@ import {
   TransportName,
   AppPermissionType,
   AppRoleTypes,
+  CredentialsType,
 } from '@b2b-tickets/shared-models';
 import {
   AppPermission,
@@ -79,8 +81,6 @@ authenticator.options = {
   step: config.TwoFactorValiditySeconds,
 };
 
-type CredentialsType = Record<'userName' | 'password', string> | undefined;
-
 export const generateTwoFactorSecretForUserId = async (
   userId: number,
   logRequest: CustomLogger
@@ -124,24 +124,8 @@ const tryLocalAuthentication = async (
 
     const emailProvided = isValidEmail(credentials?.userName!);
 
-    let whereObj: {
-      username?: string;
-      email?: string;
-      authentication_type: AuthenticationTypes;
-    } = {
-      username: credentials!.userName,
-      authentication_type: AuthenticationTypes.LOCAL,
-    };
-
-    if (emailProvided) {
-      whereObj = {
-        email: credentials!.userName,
-        authentication_type: AuthenticationTypes.LOCAL,
-      };
-    }
-
     const foundUser = await B2BUser.scope('withPassword').findOne({
-      where: whereObj,
+      where: getWhereObj(credentials, emailProvided),
       include: {
         model: AppRole,
         include: [AppPermission],
@@ -251,24 +235,8 @@ const performPasswordReset = async (
 
     const emailProvided = isValidEmail(credentials?.userName!);
 
-    let whereObj: {
-      username?: string;
-      email?: string;
-      authentication_type: AuthenticationTypes;
-    } = {
-      username: credentials!.userName,
-      authentication_type: AuthenticationTypes.LOCAL,
-    };
-
-    if (emailProvided) {
-      whereObj = {
-        email: credentials!.userName,
-        authentication_type: AuthenticationTypes.LOCAL,
-      };
-    }
-
     const foundUser = await B2BUser.scope('withPassword').findOne({
-      where: whereObj,
+      where: getWhereObj(credentials, emailProvided),
       include: {
         model: AppRole,
         include: [AppPermission],
