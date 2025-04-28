@@ -1,3 +1,7 @@
+export type CredentialsType =
+  | Record<'userName' | 'password', string>
+  | undefined;
+
 export interface AppPermissionType {
   permissionName: AppPermissionTypes;
   permissionEndPoint: string;
