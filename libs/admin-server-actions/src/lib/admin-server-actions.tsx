@@ -19,6 +19,7 @@ import {
   toFormState,
   userHasPermission,
   userHasRole,
+  generateResetToken,
 } from '@b2b-tickets/utils';
 import { config } from '@b2b-tickets/config';
 
@@ -193,13 +194,21 @@ export async function createUser(formState: any, formData: any) {
     const roleId = formData.get('role');
     const firstName = formData.get('first_name');
     const lastName = formData.get('last_name');
-    const userName = formData.get('username');
-    const password = formData.get('password');
+    // const userName = formData.get('username');
+    // const password = formData.get('password');
     const email = formData.get('email');
     const mobilePhone = formData.get('mobile_phone');
     const inform_user_for_new_account_by_email = formData.get(
       'inform_user_for_new_account_by_email'
     );
+
+    // Username === email
+    const userName = email;
+
+    // Generate a Random Password and add Some More Complexity
+    // This password will never be used from the User since it is unknown even to admin
+    // Exists only for filling the field in DB
+    const password = generateResetToken() + 'ak!!';
 
     const userData = {
       company: customerId,
