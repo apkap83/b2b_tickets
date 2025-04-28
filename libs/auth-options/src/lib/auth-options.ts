@@ -249,11 +249,26 @@ const performPasswordReset = async (
       }`
     );
 
-    const foundUser = await B2BUser.scope('withPassword').findOne({
-      where: {
-        username: credentials!.userName,
+    const emailProvided = isValidEmail(credentials?.userName!);
+
+    let whereObj: {
+      username?: string;
+      email?: string;
+      authentication_type: AuthenticationTypes;
+    } = {
+      username: credentials!.userName,
+      authentication_type: AuthenticationTypes.LOCAL,
+    };
+
+    if (emailProvided) {
+      whereObj = {
+        email: credentials!.userName,
         authentication_type: AuthenticationTypes.LOCAL,
-      },
+      };
+    }
+
+    const foundUser = await B2BUser.scope('withPassword').findOne({
+      where: whereObj,
       include: {
         model: AppRole,
         include: [AppPermission],
