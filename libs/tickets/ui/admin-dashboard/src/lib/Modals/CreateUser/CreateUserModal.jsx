@@ -176,9 +176,8 @@ function CreateUserModal({ rolesList, closeModal }) {
           <>
             <h3 className="font-bold text-lg text-center">Create User Form</h3>
             <form
-              className="flex flex-col gap-1 pt-3"
+              className="flex flex-col gap-1 pt-3 md:min-w-[600px]"
               action={action}
-              className="md:min-w-[600px]"
             >
               <div>
                 <span className={styles.inputDescription}>Company Name</span>

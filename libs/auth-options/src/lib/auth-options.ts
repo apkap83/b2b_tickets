@@ -419,11 +419,6 @@ export const options: NextAuthOptions = {
             `Local User '${credentials.userName}' has been successfully authenticated`
           );
 
-          // After Successful Login - Remove OTP Key & Attempts & Token
-          removeOTPKey(req, localAuthUserDetails.userName);
-          removeOTPAttemptsKey(req, localAuthUserDetails.userName);
-          removeTokenKey(req, localAuthUserDetails.userName);
-
           // Check if The User should be forced to change password
           if (localAuthUserDetails?.forcedToChangePassword) {
             if (!credentials.newPassword) {
@@ -431,6 +426,11 @@ export const options: NextAuthOptions = {
             }
             performPasswordReset(credentials, logRequest);
           }
+
+          // After Successful Login - Remove OTP Key & Attempts & Token
+          removeOTPKey(req, localAuthUserDetails.userName);
+          removeOTPAttemptsKey(req, localAuthUserDetails.userName);
+          removeTokenKey(req, localAuthUserDetails.userName);
 
           return localAuthUserDetails;
         } catch (error: unknown) {
