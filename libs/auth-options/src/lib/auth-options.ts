@@ -411,9 +411,9 @@ export const options: NextAuthOptions = {
           }
 
           // After Successful Login - Remove OTP Key & Attempts & Token
-          removeOTPKey(req, localAuthUserDetails.userName);
-          removeOTPAttemptsKey(req, localAuthUserDetails.userName);
-          removeTokenKey(req, localAuthUserDetails.userName);
+          removeOTPKey(req, req.body.userName);
+          removeOTPAttemptsKey(req, req.body.userName);
+          removeTokenKey(req, req.body.userName);
 
           return localAuthUserDetails;
         } catch (error: unknown) {
@@ -556,9 +556,9 @@ export const options: NextAuthOptions = {
           await foundUser.save();
 
           // After Successful Password Change - Remove OTP Key & Attempts & Token
-          removeOTPKey(req, foundUser.username);
-          removeOTPAttemptsKey(req, foundUser.username);
-          removeTokenKey(req, foundUser.username);
+          removeOTPKey(req, req.body.email);
+          removeOTPAttemptsKey(req, req.body.email);
+          removeTokenKey(req, req.body.email);
 
           const roles = foundUser.AppRoles.map(
             (role: any) => role.roleName as AppRoleTypes
