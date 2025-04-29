@@ -117,18 +117,6 @@ nx build socket-server --configuration=production --verbose
 node dist/apps/socket-server/main.js
 
 
-# Altered Postgres configuration
-show statement_timeout;
-show idle_in_transaction_session_timeout;
-
-ALTER SYSTEM SET statement_timeout = '40000'; -- 40 seconds
-SET statement_timeout = '40000'; -- 40 seconds
-
-ALTER SYSTEM SET idle_in_transaction_session_timeout = '60000'; -- 1 minute
-
-SELECT pg_reload_conf();
-
-
 # Add Jest to a project
 nx g @nx/jest:configuration --project=tickets
 
@@ -138,3 +126,41 @@ npx playwright test --project chromium
 
 # OR using nx
 nx run b2b_tickets-e2e:e2e  
+
+# Testing Commands
+# Preparation
+# In libs/config/jest.config.ts
+import type { Config } from 'jest';
+
+const config: Config = {
+  displayName: 'config',
+  preset: 'ts-jest',
+  testMatch: ['<rootDir>/src/lib/__tests__/**/*.spec.ts'],
+  transform: {
+    '^.+\\.ts$': 'ts-jest',
+  },
+};
+
+export default config;
+
+
+# In libs/config/workspace.json
+{
+  "name": "config",
+  "root": "libs/config",
+  "sourceRoot": "libs/config/src",
+  "projectType": "library",
+  "targets": {
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "libs/config/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  }
+}
+
+
+# Run Tests within libs/config
+nx test config --verbose 

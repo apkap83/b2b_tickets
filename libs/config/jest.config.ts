@@ -1,7 +1,7 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  displayName: 'utils',
+  displayName: 'config',
   preset: '../../jest.preset.js',
   testMatch: ['<rootDir>/src/lib/__tests__/**/*.spec.ts'],
   transform: {

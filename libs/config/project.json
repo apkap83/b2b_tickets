@@ -14,6 +14,13 @@
         "tsConfig": "libs/config/tsconfig.lib.json",
         "assets": ["libs/config/*.md"]
       }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "options": {
+        "jestConfig": "libs/config/jest.config.ts",
+        "passWithNoTests": true
+      }
     }
   }
 }
