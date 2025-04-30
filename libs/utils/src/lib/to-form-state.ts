@@ -5,7 +5,7 @@ export type FormState = {
   status: 'UNSET' | 'SUCCESS' | 'ERROR';
   message: string;
   extraData?: string;
-  fieldErrors: Record<string, string[] | undefined>;
+  fieldErrors: Record<string, string[]> | string | undefined;
   timestamp: number;
 };
 
@@ -16,7 +16,21 @@ export const EMPTY_FORM_STATE: FormState = {
   timestamp: Date.now(),
 };
 
-export const fromErrorToFormState = (error: unknown) => {
+export const toFormState = (
+  status: FormState['status'],
+  message: string,
+  extraData?: string
+): FormState => {
+  return {
+    status,
+    message,
+    extraData: extraData,
+    fieldErrors: {},
+    timestamp: Date.now(),
+  };
+};
+
+export const fromErrorToFormState = (error: unknown): FormState => {
   // if (error instanceof yup.ValidationError) {
   if (error instanceof ZodError) {
     const validationErrors = error.errors.map((err) => ({
@@ -45,18 +59,4 @@ export const fromErrorToFormState = (error: unknown) => {
       timestamp: Date.now(),
     };
   }
-};
-
-export const toFormState = (
-  status: FormState['status'],
-  message: string,
-  extraData?: string
-): FormState => {
-  return {
-    status,
-    message,
-    extraData: extraData,
-    fieldErrors: {},
-    timestamp: Date.now(),
-  };
 };
