@@ -1,3 +1,22 @@
+import { DefaultUser } from 'next-auth';
+interface User extends DefaultUser {
+  user_id: number;
+  customer_id: number;
+  customer_name: string;
+  userName: string;
+  firstName: string;
+  lastName: string;
+  mobilePhone: string;
+  roles: AppRoleTypes[];
+  permissions: AppPermissionType[];
+  authenticationType: string;
+}
+
+export interface Session {
+  user: User;
+  expiresAt: number;
+}
+
 export type CredentialsType =
   | Record<'userName' | 'password', string>
   | undefined;

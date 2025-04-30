@@ -28,6 +28,10 @@ node_modules
 /.sass-cache
 /connect.lock
 /coverage
+
+# Ignore all 'coverage' folders in the project
+**/coverage/
+
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
