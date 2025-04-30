@@ -1,3 +1,4 @@
+import { Session } from '@b2b-tickets/shared-models';
 import { authenticator } from 'otplib';
 import { config } from '@b2b-tickets/config';
 import {
@@ -14,7 +15,7 @@ import {
   AuthenticationTypes,
   CredentialsType,
 } from '@b2b-tickets/shared-models';
-import { Session } from 'next-auth';
+
 import * as crypto from 'crypto';
 import * as Yup from 'yup';
 
@@ -40,7 +41,7 @@ export const userHasPermission = (
   session: Session | null,
   permissionName: AppPermissionTypes | AppPermissionTypes[]
 ): boolean => {
-  if (!session || !session.user) return false; // Return false if session or user is missing
+  if (!session || !session.user) return false;
 
   // Normalize permissionName to an array for consistent handling
   const permissionsToCheck = Array.isArray(permissionName)
@@ -55,6 +56,9 @@ export const userHasPermission = (
 };
 
 export const endPointPermitted = (session: any, endpoint: any) => {
+  if (!session || !session.user) return false;
+
+  // If Role is Admin All Permissions Are Allowed
   if (session?.user?.roles.includes(AppRoleTypes.Admin)) return true;
 
   return session?.user?.permissions.some((perm: any) =>
@@ -66,7 +70,7 @@ export const userHasRole = (
   session: Session | null,
   roleName: AppRoleTypes | AppRoleTypes[]
 ) => {
-  if (!session) return false;
+  if (!session || !session.user) return false;
 
   // Normalize roleName to an array for consistent handling
   const rolesToCheck = Array.isArray(roleName) ? roleName : [roleName];
@@ -82,7 +86,7 @@ export function formatDate(date: Date | null) {
   return date
     .toLocaleString('en-GB', {
       day: '2-digit',
-      month: 'numeric',
+      month: '2-digit',
       year: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
@@ -92,47 +96,22 @@ export function formatDate(date: Date | null) {
     .replace(',', '');
 }
 
-// utils.ts
-export const getEnvVariable = (variableName: string): string => {
-  const value = process.env[variableName];
-  if (!value) {
-    throw new Error(`${variableName} environment variable is not set.`);
-  }
-  return value;
-};
-
 export const getGreekDateFormat = (dateObj: Date) => {
   // Format the date as DD/MM/YYYY
-  const formattedDate = dateObj.toLocaleDateString('el-GR');
+  const formattedDate = dateObj.toLocaleDateString('el-GR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 
   // Format the time as HH:MM AM/PM in Greek (πμ for AM and μμ for PM)
   const formattedTime = dateObj.toLocaleTimeString('el-GR', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit', // Include seconds
+    // second: '2-digit', // Include seconds
     hour12: true, // This ensures AM/PM format (πμ/μμ in Greek)
   });
   return `${formattedDate} ${formattedTime}`;
-};
-
-export const convertToISODate = (dateStr: string) => {
-  // Replace Greek AM/PM with standard AM/PM
-  let standardizedDateStr = dateStr.replace('πμ', 'AM').replace('μμ', 'PM');
-
-  // Swap day and month
-  const dateRegex = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2} [AP]M)/;
-  const match = standardizedDateStr.match(dateRegex);
-
-  if (match) {
-    const [, day, month, year, time] = match;
-    standardizedDateStr = `${month}/${day}/${year} ${time}`;
-  }
-
-  // Parse the standardized date string to a JavaScript Date object
-  const parsedDate = new Date(standardizedDateStr);
-
-  // Convert the Date object to an ISO string
-  return parsedDate.toISOString();
 };
 
 export const convertTo24HourFormat = (dateStr: string): string | null => {
@@ -147,8 +126,12 @@ export const convertTo24HourFormat = (dateStr: string): string | null => {
 
   let [, day, month, year, hour, minute, period] = match;
 
-  // Convert hour to 24-hour format
+  // Convert hour to 24-hour format, ensure valid AM/PM logic
   let hourNumber = parseInt(hour);
+
+  // Validate time range
+  if (hourNumber < 1 || hourNumber > 12) return null;
+
   if (period === 'PM' && hourNumber < 12) {
     hourNumber += 12;
   } else if (period === 'AM' && hourNumber === 12) {
@@ -167,20 +150,19 @@ export const convertTo24HourFormat = (dateStr: string): string | null => {
 /**
  *
  * @param text Value to be encrypted
- * @param key Key used to encrypt value must be 32 bytes for AES256 encryption algorithm
  *
  * @returns Encrypted value using key
  */
 export const symmetricEncrypt = function (text: string): string {
+  if (!text || typeof text !== 'string') {
+    throw new Error('Invalid text. Must be a non-empty string.');
+  }
+
   const _key = Buffer.from(process.env['ENCRYPTION_KEY']!, 'hex');
 
   // Validate inputs
   if (!_key || _key.length !== 32) {
     throw new Error('Invalid encryption key length. Must be 32 bytes.');
-  }
-
-  if (!text || typeof text !== 'string') {
-    throw new Error('Invalid text. Must be a non-empty string.');
   }
 
   try {
@@ -264,21 +246,6 @@ export const getStatusColor = (status_id: string) => {
   }
 };
 
-// export const getStatusColorDesc = (ticketStatus: string) => {
-//   switch (ticketStatus) {
-//     case TicketStatusName.NEW:
-//       return TicketStatusColors.NEW;
-//     case TicketStatusName.WORKING:
-//       return TicketStatusColors.WORKING;
-//     case TicketStatusName.CANCELLED:
-//       return TicketStatusColors.CANCELLED;
-//     case TicketStatusName.CLOSED:
-//       return TicketStatusColors.CLOSED;
-//     default:
-//       return '#000'; // Fallback color
-//   }
-// };
-
 // Format the time left into MM:SS format
 export const formatTimeMMSS = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -300,7 +267,7 @@ export const getSeverityStatusColor = (severityId: string) => {
 };
 
 export function generateResetToken() {
-  const buffer = crypto.randomBytes(18); // generates 18 random bytes
+  const buffer = crypto.randomBytes(24);
   return buffer.toString('base64').replace(/[/+=]/g, '').substring(0, 25); // convert to base64, remove non-alphanumeric characters, and trim to 25 chars
 }
 
@@ -319,6 +286,11 @@ export const passwordComplexitySchema = Yup.string()
   .required('Password is required');
 
 export function stripHtmlTags(html: string): string {
+  // Remove <script> and <style> tags and their content
+  html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  html = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+  // Remove all other HTML tags
   return html.replace(/<[^>]*>/g, '');
 }
 
@@ -387,21 +359,18 @@ export const columnAllowedForFilter = (column: string) =>
 export const sanitizeInput = (value: any): string | null => {
   if (value === null || value === undefined) return null;
 
-  // Ensure value is a string
-  let sanitizedValue = String(value);
+  // If the value is a number, convert it to a string
+  let sanitizedValue =
+    typeof value === 'number' ? value.toString() : String(value);
 
   // Trim whitespace
-  sanitizedValue = trim(sanitizedValue);
-
-  // Escape potentially harmful characters
-  // sanitizedValue = escape(sanitizedValue); & is converted to &amp;
+  sanitizedValue = sanitizedValue.trim();
 
   // Escape single quotes to prevent SQL injection
   sanitizedValue = sanitizedValue.replace(/'/g, "''");
 
   return sanitizedValue;
 };
-
 export function generateOtp(length: number): string {
   const digits = '0123456789';
   const array = new Uint8Array(length);
@@ -413,7 +382,7 @@ export function generateOtp(length: number): string {
 }
 
 export function isValidEmail(email: string) {
-  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const regex = /^(?!.*\.\.)[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return regex.test(email);
 }
 
@@ -424,19 +393,23 @@ export function getWhereObj(
   username?: string;
   email?: string;
   authentication_type: AuthenticationTypes;
-} {
+} | null {
+  if (!credentials) {
+    return null; // Return null if credentials are undefined
+  }
+
   let whereObj: {
     username?: string;
     email?: string;
     authentication_type: AuthenticationTypes;
   } = {
-    username: credentials!.userName,
+    username: credentials.userName,
     authentication_type: AuthenticationTypes.LOCAL,
   };
 
   if (emailProvided) {
     whereObj = {
-      email: credentials!.userName,
+      email: credentials.userName,
       authentication_type: AuthenticationTypes.LOCAL,
     };
   }
