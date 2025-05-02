@@ -1,7 +1,7 @@
 import type { Config } from 'jest';
 
 const config: Config = {
-  displayName: 'redis-service',
+  displayName: 'totp-service',
   preset: '../../jest.preset.js',
   // // testMatch: ['<rootDir>/src/lib/__tests__/**/*.spec.ts'],
   // testMatch: [

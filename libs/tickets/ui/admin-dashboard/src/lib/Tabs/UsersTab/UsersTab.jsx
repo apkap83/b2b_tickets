@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { PaginationOld } from '@b2b-tickets/ui';
-import { renderActiveness } from '@b2b-tickets/ui';
 import slice from 'lodash/slice';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
 
