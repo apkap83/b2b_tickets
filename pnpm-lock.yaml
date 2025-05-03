@@ -104,9 +104,6 @@ importers:
       pg-hstore:
         specifier: 2.3.4
         version: 2.3.4
-      playwright:
-        specifier: 1.47.2
-        version: 1.47.2
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -6771,16 +6768,6 @@ packages:
   playwright-core@1.36.0:
     resolution: {integrity: sha512-7RTr8P6YJPAqB+8j5ATGHqD6LvLLM39sYVNsslh78g8QeLcBs5750c6+msjrHUwwGt+kEbczBj1XB22WMwn+WA==}
     engines: {node: '>=16'}
-    hasBin: true
-
-  playwright-core@1.47.2:
-    resolution: {integrity: sha512-3JvMfF+9LJfe16l7AbSmU555PaTl2tPyQsVInqm3id16pdDfvZ8TTZ/pyzmkbDrZTQefyzU7AIHlZqQnxpqHVQ==}
-    engines: {node: '>=18'}
-    hasBin: true
-
-  playwright@1.47.2:
-    resolution: {integrity: sha512-nx1cLMmQWqmA3UsnjaaokyoUpdVaaDhJhMoxX2qj3McpjnsqFHs516QAKYhqHAgOP+oCFTEOCOAaD1RgD/RQfA==}
-    engines: {node: '>=18'}
     hasBin: true
 
   portfinder@1.0.32:
@@ -16710,14 +16697,6 @@ snapshots:
       pathe: 2.0.2
 
   playwright-core@1.36.0: {}
-
-  playwright-core@1.47.2: {}
-
-  playwright@1.47.2:
-    dependencies:
-      playwright-core: 1.47.2
-    optionalDependencies:
-      fsevents: 2.3.2
 
   portfinder@1.0.32:
     dependencies:

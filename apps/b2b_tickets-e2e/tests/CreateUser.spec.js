@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const siteAddress = 'http://localhost:3000';
 const adminUser = {
   userName: 'admin',
-  password: 'a12345',
+  password: 'wiHQoE5b-~?h^iKp*"',
 };
 
 const testUser = {
@@ -16,8 +16,25 @@ const testUser = {
 };
 
 const userNameHeader = 'User Name';
-
 const columnsOnUsersTable = 12;
+
+test.only('test', async ({ page }) => {
+  await page.goto('http://127.0.0.1:3000');
+  await page.getByRole('button', { name: 'Accept All' }).click();
+  await page.getByPlaceholder('E-mail or User Name').click();
+  await page.getByPlaceholder('E-mail or User Name').fill('admin');
+  await page.getByPlaceholder('Password').click();
+  await page.getByPlaceholder('Password').fill('wiHQoE5b-~?h^iKp*"');
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await page
+    .locator('form div')
+    .filter({ hasText: 'Please enter the OTP code' })
+    .getByRole('textbox')
+    .first()
+    .fill('1');
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.goto('http://127.0.0.1:3000/tickets');
+});
 
 test('Test Creation of New User', async ({ page }) => {
   await page.goto(siteAddress);

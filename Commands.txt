@@ -162,5 +162,6 @@ export default config;
 }
 
 
-# Run Tests within libs/config
-nx test config --verbose 
+# Run Tests within libs
+nx test config --coverage --verbose --watch
+nx test utils --coverage --verbose --watch
