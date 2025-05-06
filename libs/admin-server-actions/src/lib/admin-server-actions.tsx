@@ -1,6 +1,7 @@
 'use server';
 
-import { options, Session } from '@b2b-tickets/auth-options';
+import { options } from '@b2b-tickets/auth-options';
+import { Session } from '@b2b-tickets/shared-models';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 
