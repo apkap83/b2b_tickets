@@ -43,7 +43,7 @@ RUN set -x && \
       echo "Not using proxy settings for npm" ;\
     fi && \
     export PATH=$PNPM_HOME:$PATH && \
-    npm install -g pnpm@9.12.0 && \
+    npm install -g pnpm@10.10.0 && \
     pnpm config set strict-ssl false --global && \
     if [ "$USE_PROXY" = "true" ]; then \
       echo "Using proxy settings for pnpm" && \
@@ -52,7 +52,7 @@ RUN set -x && \
     else \
       echo "Not using proxy settings for pnpm" ;\
     fi && \
-    pnpm install -g env-cmd nx@19.4.2
+    pnpm install -g env-cmd nx@21.0.0
 
 # RUN apt-get update && \
 #     apt-get install -y dnsutils && \
