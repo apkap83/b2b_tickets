@@ -45,7 +45,7 @@ const verifySecurityPermission = async (
   try {
     const session = await getServerSession(options);
 
-    if (!session || !session.user) {
+    if (!session || !session?.user) {
       throw new Error('Unauthenticated or missing user information');
     }
 

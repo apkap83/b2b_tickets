@@ -49,7 +49,7 @@ export const SessionPopup = () => {
   useEffect(() => {
     if (mySession && mySession.expiresAt) {
       const intervalId = setInterval(() => {
-        const timeLeft = calculateTimeLeft(mySession.expiresAt);
+        const timeLeft = calculateTimeLeft(mySession.expiresAt as number);
         setTimeLeftInSeconds(timeLeft > 0 ? timeLeft : 0);
         if (timeLeft <= 0) {
           clearInterval(intervalId);
