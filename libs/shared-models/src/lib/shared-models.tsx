@@ -13,8 +13,8 @@ interface User extends DefaultUser {
 }
 
 export interface Session {
-  user: User;
-  expiresAt: number;
+  user?: User | undefined;
+  expiresAt?: number;
 }
 
 export type CredentialsType =

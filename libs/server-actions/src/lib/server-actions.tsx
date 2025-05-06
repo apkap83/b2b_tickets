@@ -2,7 +2,8 @@
 
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
-import { options, Session } from '@b2b-tickets/auth-options';
+import { options } from '@b2b-tickets/auth-options';
+import { Session } from '@b2b-tickets/shared-models';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { pgB2Bpool, setSchemaAndTimezone } from '@b2b-tickets/db-access';

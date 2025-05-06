@@ -778,25 +778,25 @@ function verifyJWTTokenForEmail({
 }
 
 // Extend User and JWT interfaces
-// declare module 'next-auth' {
-//   interface User extends DefaultUser {
-//     user_id: number;
-//     customer_id: number;
-//     customer_name: string;
-//     userName: string;
-//     firstName: string;
-//     lastName: string;
-//     mobilePhone: string;
-//     roles: AppRoleTypes[];
-//     permissions: AppPermissionType[];
-//     authenticationType: string;
-//   }
+declare module 'next-auth' {
+  interface User extends DefaultUser {
+    user_id: number;
+    customer_id: number;
+    customer_name: string;
+    userName: string;
+    firstName: string;
+    lastName: string;
+    mobilePhone: string;
+    roles: AppRoleTypes[];
+    permissions: AppPermissionType[];
+    authenticationType: string;
+  }
 
-//   interface Session {
-//     user: User;
-//     expiresAt: number;
-//   }
-// }
+  interface Session {
+    user: User;
+    expiresAt: number;
+  }
+}
 
 declare module 'next-auth/jwt' {
   interface JWT {
