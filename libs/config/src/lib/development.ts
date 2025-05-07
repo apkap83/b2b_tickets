@@ -68,7 +68,7 @@ export const developmentConfig = {
   EmailRelayServerTCPPort: '25',
   EmailFromAddress: process.env['EMAIL_FROM_ADDRESS'] as string,
 
-  userCreationSecureLinkValidity: '2d', // How many days the secure link of user creation / reset password is valid
+  userCreationSecureLinkValidity: 172800, // 2 days
 
   cookieConsentValidityInDays: 365,
 
