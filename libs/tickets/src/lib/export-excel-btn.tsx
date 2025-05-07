@@ -7,7 +7,7 @@ import {
   TicketDetailForTicketCreator,
 } from '@b2b-tickets/shared-models';
 import * as XLSX from 'xlsx';
-import { SiMicrosoftexcel } from 'react-icons/si';
+import { PiMicrosoftExcelLogoFill } from 'react-icons/pi';
 import Tooltip from '@mui/material/Tooltip';
 
 export const ExportToExcelButton = ({
@@ -61,7 +61,7 @@ export const ExportToExcelButton = ({
           disabled={disabled}
         >
           <div className="flex flex-col justify-center items-center">
-            <SiMicrosoftexcel size={16} />
+            <PiMicrosoftExcelLogoFill size={16} />
             {producingExcelFile ? (
               <div
                 style={{
