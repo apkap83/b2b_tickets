@@ -97,7 +97,7 @@
     "@types/jest": "29.5.14",
     "@types/js-cookie": "3.0.6",
     "@types/jsonwebtoken": "9.0.7",
-    "@types/lodash": "4.17.7",
+    "@types/lodash": "4.17.16",
     "@types/node": "18.19.41",
     "@types/nodemailer": "6.4.16",
     "@types/pg": "8.11.6",
