@@ -59,6 +59,9 @@ out
 # Ignore Env files
 .env*
 
+# But don't ignore .env.example
+!.env.example
+
 # Playwright
 test-results/
 playwright-report/
