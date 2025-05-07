@@ -5,6 +5,19 @@ This is a B2B ticketing system built as an Nx monorepo. The system consists of m
 - `b2b_tickets`: The main Next.js web application
 - `socket-server`: A WebSocket server for real-time communication
 
+### Key Features
+
+- B2B ticketing system built with modern web technologies
+- Nx monorepo architecture enabling code sharing and modularity
+- Next.js application with server and client components
+- Separate WebSocket server for real-time updates
+- PostgreSQL database with Sequelize ORM
+- Well-organized library structure with clear separation of concerns
+- Secure authentication with NextAuth.js and TOTP (Time-based One-Time Password)
+- Modern frontend stack (React, Material UI, Tailwind CSS)
+- Docker-based deployment with support for both staging and production
+- Comprehensive testing setup with Jest and Playwright
+
 ## Common Commands
 
 ### Development
