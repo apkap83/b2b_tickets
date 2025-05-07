@@ -36,8 +36,7 @@ import { pgB2Bpool, setSchemaAndTimezone } from '@b2b-tickets/db-access';
 
 import { B2BUser } from '@b2b-tickets/db-access';
 
-import * as jwt from 'jsonwebtoken';
-import { JwtPayload } from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
 const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
   try {
@@ -610,7 +609,7 @@ const generateSecureLinkForPasswordCreation = async (
     },
   });
 
-  const payload: MyJwtPayload = {
+  const payload = {
     userName: foundUser.username,
     email: foundUser.email as string,
     is_active: foundUser.is_active,
@@ -618,9 +617,11 @@ const generateSecureLinkForPasswordCreation = async (
   };
 
   // Generate a JWT token
+  const secretKey = process.env.JWT_SECRET!;
+
   const token = jwt.sign(
     payload, // Payload
-    process.env['JWT_SECRET']!, // Secret key
+    secretKey, // Secret key
     { expiresIn: config.userCreationSecureLinkValidity } // Token is valid for X days
   );
 
