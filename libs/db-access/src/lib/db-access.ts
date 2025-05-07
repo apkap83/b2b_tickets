@@ -10,7 +10,6 @@ export const pgB2Bpool = new Pool({
   host: config.postgres_b2b_database.host,
   port: config.postgres_b2b_database.port,
   database: config.postgres_b2b_database.db,
-  min: config.postgres_b2b_database.minConnections,
   max: config.postgres_b2b_database.maxConnections,
   application_name: config.postgres_b2b_database.applicationName,
   connectionTimeoutMillis: config.postgres_b2b_database.connectionTimeout,
