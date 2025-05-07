@@ -618,7 +618,7 @@ const generateSecureLinkForPasswordCreation = async (
 
   // Generate a JWT token
   const secretKey = process.env.JWT_SECRET!;
-
+  //@ts-ignore
   const token = jwt.sign(
     payload, // Payload
     secretKey, // Secret key
