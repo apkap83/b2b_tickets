@@ -1,8 +1,13 @@
 {
   "name": "@b2b-tickets/source",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "version:major": "node tools/scripts/version.js major",
+    "version:minor": "node tools/scripts/version.js minor",
+    "version:patch": "node tools/scripts/version.js patch",
+    "version:push": "node tools/scripts/version.js patch --push"
+  },
   "private": true,
   "dependencies": {
     "@emotion/cache": "11.14.0",
