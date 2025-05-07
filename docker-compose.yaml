@@ -5,17 +5,17 @@ services:
       dockerfile: apps/b2b_tickets/Dockerfile
     image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.18}
     ports:
-      - '5001:3000'
+      - '${B2B_TICKETS_PORT_1:-5001}:3000'
     container_name: Staging_B2B_Tickets_PreEntry_1
     dns:
-      - 10.0.1.13
+      - ${DNS_SERVER:-1.1.1.1}
     extra_hosts:
-      - 'emailrelay:10.0.1.19'
-      - 'sms-gw1:10.131.12.77'
-      - 'sms-gw2:10.131.20.78'
-      - 'test-sms-gw1:10.131.28.73'
-      - 'b2b_database:172.27.52.177'
-      - 'redis_host:10.124.49.151'
+      - 'emailrelay:${EMAIL_RELAY_IP}'
+      - 'sms-gw1:${SMS_GW1_IP}'
+      - 'sms-gw2:${SMS_GW2_IP}'
+      - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
+      - 'b2b_database:${B2B_DATABASE_IP}'
+      - 'redis_host:${REDIS_HOST_IP}'
     environment:
       - NODE_ENV=production
       - APP_ENV=staging
@@ -39,19 +39,19 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.18}
+    image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION:-1.0.18}
     ports:
-      - '5002:3000'
+      - '${B2B_TICKETS_PORT_2:-5002}:3000'
     container_name: Staging_B2B_Tickets_PreEntry_2
     dns:
-      - 10.0.1.13
+      - ${DNS_SERVER:-1.1.1.1}
     extra_hosts:
-      - 'emailrelay:10.0.1.19'
-      - 'sms-gw1:10.131.12.77'
-      - 'sms-gw2:10.131.20.78'
-      - 'test-sms-gw1:10.131.28.73'
-      - 'b2b_database:172.27.52.177'
-      - 'redis_host:10.124.49.151'
+      - 'emailrelay:${EMAIL_RELAY_IP}'
+      - 'sms-gw1:${SMS_GW1_IP}'
+      - 'sms-gw2:${SMS_GW2_IP}'
+      - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
+      - 'b2b_database:${B2B_DATABASE_IP}'
+      - 'redis_host:${REDIS_HOST_IP}'
     environment:
       - NODE_ENV=production
       - APP_ENV=staging
@@ -73,17 +73,17 @@ services:
       dockerfile: apps/b2b_tickets/Dockerfile
     image: b2b_tickets_img_production:${PROD_B2B_VERSION:-1.0.18}
     ports:
-      - '8001:3000'
+      - '${PROD_B2B_PORT_1:-8001}:3000'
     container_name: Prod_B2B_Tickets_1
     dns:
-      - 10.0.1.13
+      - ${DNS_SERVER:-1.1.1.1}
     extra_hosts:
-      - 'emailrelay:10.0.1.19'
-      - 'sms-gw1:10.131.12.77'
-      - 'sms-gw2:10.131.20.78'
-      - 'test-sms-gw1:10.131.28.73'
-      - 'b2b_database:172.27.52.177'
-      - 'redis_host:10.124.49.151'
+      - 'emailrelay:${EMAIL_RELAY_IP}'
+      - 'sms-gw1:${SMS_GW1_IP}'
+      - 'sms-gw2:${SMS_GW2_IP}'
+      - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
+      - 'b2b_database:${B2B_DATABASE_IP}'
+      - 'redis_host:${REDIS_HOST_IP}'
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -99,17 +99,17 @@ services:
       dockerfile: apps/b2b_tickets/Dockerfile
     image: b2b_tickets_img_production:${PROD_B2B_VERSION:-1.0.18}
     ports:
-      - '8002:3000'
+      - '${PROD_B2B_PORT_2:-8002}:3000'
     container_name: Prod_B2B_Tickets_2
     dns:
-      - 10.0.1.13
+      - ${DNS_SERVER:-1.1.1.1}
     extra_hosts:
-      - 'emailrelay:10.0.1.19'
-      - 'sms-gw1:10.131.12.77'
-      - 'sms-gw2:10.131.20.78'
-      - 'test-sms-gw1:10.131.28.73'
-      - 'b2b_database:172.27.52.177'
-      - 'redis_host:10.124.49.151'
+      - 'emailrelay:${EMAIL_RELAY_IP}'
+      - 'sms-gw1:${SMS_GW1_IP}'
+      - 'sms-gw2:${SMS_GW2_IP}'
+      - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
+      - 'b2b_database:${B2B_DATABASE_IP}'
+      - 'redis_host:${REDIS_HOST_IP}'
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -125,21 +125,21 @@ services:
       dockerfile: apps/socket-server/Dockerfile
     image: staging_socket_server_img_preentry:${STAGING_B2B_SOCKET_VERSION:-1.0.9}
     ports:
-      - '3456:3456'
+      - '${SOCKET_SERVER_PORT:-3456}:3456'
     container_name: Staging_Socket_Server_PreEntry_1
     extra_hosts:
-      - 'emailrelay:10.0.1.19'
-      - 'sms-gw1:10.131.12.77'
-      - 'sms-gw2:10.131.20.78'
-      - 'test-sms-gw1:10.131.28.73'
-      - 'b2b_database:172.27.52.177'
+      - 'emailrelay:${EMAIL_RELAY_IP}'
+      - 'sms-gw1:${SMS_GW1_IP}'
+      - 'sms-gw2:${SMS_GW2_IP}'
+      - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
+      - 'b2b_database:${B2B_DATABASE_IP}'
     environment:
       - NODE_ENV=staging
       - DEBUG=1
       - PORT=3456
-      - SOCKET_CORS_ORIGIN=https://10.124.49.151:8444
+      - SOCKET_CORS_ORIGIN=${SOCKET_CORS_ORIGIN_STAGING}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
-      - NEXT_AUTH_SESSION_URL=https://10.124.49.151:8444/api/auth/session
+      - NEXT_AUTH_SESSION_URL=${NEXT_AUTH_SESSION_URL_STAGING}
     command: >
       sh -c "nx build socket-server --configuration=staging --verbose &&
              node dist/apps/socket-server/main.js"
@@ -151,21 +151,21 @@ services:
       dockerfile: apps/socket-server/Dockerfile
     image: production_socket_server_img:${PRODUCTION_B2B_SOCKET_VERSION:-1.0.9}
     ports:
-      - '3457:3457'
+      - '${PROD_SOCKET_SERVER_PORT:-3457}:3457'
     container_name: Production_Socket_Server_1
     extra_hosts:
-      - 'emailrelay:10.0.1.19'
-      - 'sms-gw1:10.131.12.77'
-      - 'sms-gw2:10.131.20.78'
-      - 'test-sms-gw1:10.131.28.73'
-      - 'b2b_database:172.27.52.177'
+      - 'emailrelay:${EMAIL_RELAY_IP}'
+      - 'sms-gw1:${SMS_GW1_IP}'
+      - 'sms-gw2:${SMS_GW2_IP}'
+      - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
+      - 'b2b_database:${B2B_DATABASE_IP}'
     environment:
       - NODE_ENV=production
       - DEBUG=1
       - PORT=3457
-      - SOCKET_CORS_ORIGIN=https://platinumsupport.nova.gr
+      - SOCKET_CORS_ORIGIN=${SOCKET_CORS_ORIGIN_PROD}
       - NODE_TLS_REJECT_UNAUTHORIZED=0
-      - NEXT_AUTH_SESSION_URL=https://10.124.49.151/api/auth/session
+      - NEXT_AUTH_SESSION_URL=${NEXT_AUTH_SESSION_URL_PROD}
     command: >
       sh -c "nx build socket-server --configuration=staging --verbose &&
              node dist/apps/socket-server/main.js"

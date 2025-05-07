@@ -5,14 +5,17 @@ services:
       dockerfile: apps/b2b_tickets/Dockerfile
     image: b2b_tickets_img_preentry:${STAGING_B2B_VERSION_TEST:-1.0.2}
     ports:
-      - '5001:3000'
+      - '${B2B_TICKETS_PORT_1:-5001}:3000'
     container_name: Staging_B2B_Tickets_PreEntry_1
+    dns:
+      - ${DNS_SERVER:-1.1.1.1}
     extra_hosts:
-      - 'emailrelay:10.0.1.19'
-      - 'sms-gw1:10.131.12.77'
-      - 'sms-gw2:10.131.20.78'
-      - 'test-sms-gw1:10.131.28.73'
-      - 'b2b_database:172.27.52.177'
+      - 'emailrelay:${EMAIL_RELAY_IP}'
+      - 'sms-gw1:${SMS_GW1_IP}'
+      - 'sms-gw2:${SMS_GW2_IP}'
+      - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
+      - 'b2b_database:${B2B_DATABASE_IP}'
+      - 'redis_host:127.0.0.1'
     environment:
       - NODE_ENV=production
       - APP_ENV=staging
