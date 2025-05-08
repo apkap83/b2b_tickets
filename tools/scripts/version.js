@@ -40,7 +40,7 @@ try {
   execSync(`git commit -m "chore: bump version to ${newVersion}"`);
   execSync(`git tag -a v${newVersion} -m "Release version ${newVersion}"`);
   console.log(`Created git tag v${newVersion}`);
-  
+
   const shouldPush = process.argv.includes('--push');
   if (shouldPush) {
     execSync('git push');
@@ -56,41 +56,31 @@ try {
     if (fs.existsSync(dockerComposePath)) {
       console.log('Updating version in docker-compose.yaml...');
       let dockerComposeContent = fs.readFileSync(dockerComposePath, 'utf8');
-      
+
       // Update image version tags
       dockerComposeContent = dockerComposeContent.replace(
-        /STAGING_B2B_VERSION(?:_TEST)?:-[0-9.]+/g, 
-        `STAGING_B2B_VERSION:-${newVersion}`
+        /:[0-9.]{5,}/g,
+        `:${newVersion}`
       );
-      
-      dockerComposeContent = dockerComposeContent.replace(
-        /PROD_B2B_VERSION:-[0-9.]+/g, 
-        `PROD_B2B_VERSION:-${newVersion}`
-      );
-      
-      dockerComposeContent = dockerComposeContent.replace(
-        /STAGING_B2B_SOCKET_VERSION:-[0-9.]+/g, 
-        `STAGING_B2B_SOCKET_VERSION:-${newVersion}`
-      );
-      
-      dockerComposeContent = dockerComposeContent.replace(
-        /PRODUCTION_B2B_SOCKET_VERSION:-[0-9.]+/g, 
-        `PRODUCTION_B2B_SOCKET_VERSION:-${newVersion}`
-      );
-      
+
       fs.writeFileSync(dockerComposePath, dockerComposeContent);
       execSync('git add docker-compose.yaml');
       execSync(`git commit --amend --no-edit`);
-      execSync(`git tag -f -a v${newVersion} -m "Release version ${newVersion}"`);
+      execSync(
+        `git tag -f -a v${newVersion} -m "Release version ${newVersion}"`
+      );
       console.log('Updated docker-compose.yaml with new version');
-      
+
       if (shouldPush) {
         execSync('git push -f');
         execSync('git push --tags -f');
       }
     }
   } catch (dockerError) {
-    console.warn('Warning: Could not update docker-compose.yaml', dockerError.message);
+    console.warn(
+      'Warning: Could not update docker-compose.yaml',
+      dockerError.message
+    );
   }
 } catch (error) {
   console.error('Error:', error.message);
