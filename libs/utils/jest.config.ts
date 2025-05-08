@@ -12,7 +12,6 @@ const config: Config = {
     '/node_modules/(?!your-esm-package|another-esm-package)', // Make sure Jest can process ESM modules
   ],
 
-  coverageReporters: ['text', 'lcov'],
   coverageThreshold: {
     global: {
       statements: 80,
