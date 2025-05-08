@@ -12,6 +12,7 @@ export const Footer: React.FC = () => {
       `}
     >
       <div
+        className="ml-auto"
         style={{
           width: '100%',
           display: 'flex',
@@ -42,6 +43,9 @@ export const Footer: React.FC = () => {
             }}
           />
         </div>
+      </div>
+      <div className="ml-auto text-xs text-gray-500 mr-[16px]">
+        version: {process.env.version}
       </div>
     </footer>
   );
