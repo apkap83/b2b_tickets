@@ -70,3 +70,6 @@ playwright/.cache/
 
 # Claude AI assistance file - duplicates info in README.md
 CLAUDE.md
+
+Commands.txt
+Docker_Commands.txt
