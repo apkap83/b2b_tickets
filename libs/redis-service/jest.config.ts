@@ -17,7 +17,6 @@ const config: Config = {
   ],
 
   collectCoverage: true,
-  coverageReporters: ['text', 'lcov'],
   coverageThreshold: {
     global: {
       statements: 80,
