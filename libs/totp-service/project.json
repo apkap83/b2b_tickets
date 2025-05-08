@@ -7,7 +7,7 @@
   "// targets": "to see all targets run: nx show project totp-service --web",
   "targets": {
     "test": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "options": {
         "jestConfig": "libs/totp-service/jest.config.ts",
         "passWithNoTests": true

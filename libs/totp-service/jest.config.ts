@@ -8,18 +8,8 @@ const config: Config = {
   //   '**/?(*.)+(spec|test).[jt]s?(x)', // This pattern will match .spec.ts, .spec.tsx, .test.ts, .test.tsx files
   // ],
   transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      {
-        isolatedModules: true,
-      },
-    ], // Ensure ts-jest is transforming .ts files
-    '^.+\\.tsx$': [
-      'ts-jest',
-      {
-        isolatedModules: true,
-      },
-    ], // Also ensure .tsx files are handled
+    '^.+\\.ts$': ['ts-jest', {}], // Ensure ts-jest is transforming .ts files
+    '^.+\\.tsx$': ['ts-jest', {}], // Also ensure .tsx files are handled
   },
 
   transformIgnorePatterns: [
