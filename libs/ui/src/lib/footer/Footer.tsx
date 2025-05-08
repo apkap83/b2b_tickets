@@ -6,15 +6,12 @@ export const Footer: React.FC = () => {
     <footer
       className={`flex justify-center 
       items-center bg-black text-white
-      text-center text-sm py-2 z-10 fixed w-full bottom-0
-      border-gray-600 
-      border-2
-      `}
+      text-center text-sm py-2 z-10 fixed w-full bottom-0`}
     >
       <div
-        className="ml-auto"
         style={{
-          width: '100%',
+          marginLeft: 'auto',
+          width: '450px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -22,30 +19,40 @@ export const Footer: React.FC = () => {
           fontFamily: 'Manrope, sans-serif',
         }}
       >
-        <div className="flex flex-col text-gray-300 m-auto">
-          <p>
-            &copy;&nbsp; NOVA&nbsp;Platinum Support&nbsp;
-            {new Date().getFullYear()}&nbsp;
-          </p>
-          <p className="text-xs">version: {process.env.version}</p>
-        </div>
-        <div className="mr-3">
-          <Image
-            priority
-            src={united_group_member}
-            alt={'United Group Logo'}
-            height={29}
-            width={155}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '5px',
+          }}
+        >
+          &copy;&nbsp;
+          {/* <NovaLogoSVG
             style={{
-              objectFit: 'contain',
-              justifySelf: 'flex-end',
-              filter: 'brightness(0.9)',
+              height: '30px',
+              width: '70px',
+              color: '#ffffff',
+              fill: 'white',
             }}
-          />
+          />{' '} */}
+          NOVA&nbsp;
+          {new Date().getFullYear()}
         </div>
+
+        <Image
+          priority
+          src={united_group_member}
+          alt={'United Group Logo'}
+          height={29}
+          width={155}
+          style={{
+            objectFit: 'contain',
+          }}
+        />
       </div>
       <div className="ml-auto text-xs text-gray-500 mr-[16px]">
-        version: {process.env.version}
+        Ver. {process.env.version}
       </div>
     </footer>
   );
