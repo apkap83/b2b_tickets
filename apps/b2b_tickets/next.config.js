@@ -1,4 +1,5 @@
 //@ts-check
+const { version } = require('../../package.json');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
@@ -19,6 +20,9 @@ const nextConfig = {
   },
   poweredByHeader: false,
   staticPageGenerationTimeout: 120,
+  env: {
+    version,
+  },
 };
 
 const plugins = [
