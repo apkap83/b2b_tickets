@@ -1,18 +1,10 @@
-import { User, DefaultUser } from 'next-auth';
+import { User, DefaultUser, NextAuthOptions } from 'next-auth';
+import { headers } from 'next/headers';
 import Credentials from 'next-auth/providers/credentials';
-import { NextApiResponse } from 'next';
-import {
-  symmetricEncrypt,
-  symmetricDecrypt,
-  generateOtpCode,
-  isValidEmail,
-  getWhereObj,
-} from '@b2b-tickets/utils';
-import { authenticator } from 'otplib';
+import { isValidEmail, getWhereObj } from '@b2b-tickets/utils';
 import bcrypt from 'bcryptjs';
 import { config } from '@b2b-tickets/config';
 import {
-  AuthenticationTypes,
   ErrorCode,
   TransportName,
   AppPermissionType,
@@ -27,11 +19,6 @@ import {
   setSchemaAndTimezone,
 } from '@b2b-tickets/db-access';
 
-import { NextAuthOptions } from 'next-auth';
-import jwt from 'jsonwebtoken';
-
-// utils/requestLogger.ts - used for server-side only
-import { headers } from 'next/headers';
 import { createRequestLogger } from '@b2b-tickets/logging';
 import { CustomLogger } from '@b2b-tickets/logging';
 import { validateReCaptchaV3 } from '@b2b-tickets/utils';
@@ -44,7 +31,8 @@ import {
   removeOTPAttemptsKey,
   removeTokenKey,
 } from '@b2b-tickets/totp-service/server';
-import axios from 'axios';
+
+import { verifyJWTTotp, verifyJWTTokenForEmail } from './jwtVerification';
 
 function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
@@ -72,45 +60,8 @@ function getRequestLogger(transportName: TransportName) {
     throw new Error('getRequestLogger must be used in a server-side context.');
   }
 }
-const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key'; // Use an environment variable in production
 
-// Set the length to 4 digits and 120 seconds
-authenticator.options = {
-  digits: config.TwoFactorDigitsLength,
-  step: config.TwoFactorValiditySeconds,
-};
-
-export const generateTwoFactorSecretForUserId = async (
-  userId: number,
-  logRequest: CustomLogger
-) => {
-  if (!process.env['ENCRYPTION_KEY']!) {
-    logRequest.error(
-      `Missing 'ENCRYPTION_KEY' environment variable, cannot proceed with two factor login.`
-    );
-    throw new Error(ErrorCode.InternalServerError);
-  }
-
-  const foundUser = await B2BUser.findOne({
-    where: {
-      user_id: userId,
-    },
-  });
-
-  logRequest.debug(
-    `Generating Random Two Factor Secret for user ${foundUser.username}`
-  );
-
-  const newSecret = authenticator.generateSecret();
-  const encryptedSecret = symmetricEncrypt(newSecret);
-
-  foundUser.two_factor_secret = encryptedSecret;
-  await foundUser.save();
-
-  return encryptedSecret;
-};
-
-const tryLocalAuthentication = async (
+export const tryLocalAuthentication = async (
   credentials: CredentialsType,
   logRequest: CustomLogger
 ) => {
@@ -271,7 +222,9 @@ const performPasswordReset = async (
 
     await foundUser.save();
     return true;
-  } catch (error) {}
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const options: NextAuthOptions = {
@@ -691,91 +644,6 @@ export const options: NextAuthOptions = {
     },
   },
 };
-
-function verifyJWTCaptcha({ req }: { req: any }) {
-  const cookies = req.headers?.cookie || '';
-  const captchaJWTToken = cookies.match(/captchaJWTToken=([^;]+)/)?.[1];
-
-  // Verify the JWT token
-  try {
-    if (!captchaJWTToken) {
-      throw new Error(ErrorCode.CaptchaJWTTokenRequired);
-    }
-    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key';
-    const decoded = jwt.verify(captchaJWTToken, JWT_SECRET) as {
-      captchaValidated: boolean;
-    };
-
-    if (!decoded.captchaValidated)
-      throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
-  } catch (error) {
-    // Handle invalid token error (expired, tampered with, etc.)
-    throw error;
-  }
-}
-
-function verifyJWTTotp({ req }: { req: any }) {
-  const cookies = req.headers?.cookie || '';
-  const totpJWTToken = cookies.match(/totpJWTToken=([^;]+)/)?.[1];
-
-  // Verify the JWT token
-  try {
-    if (!totpJWTToken) {
-      throw new Error(ErrorCode.TotpJWTTokenRequired);
-    }
-    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key';
-    const decoded = jwt.verify(totpJWTToken, JWT_SECRET);
-    //@ts-ignore
-    if (!decoded.otpValidatedForEmailAddress)
-      throw new Error(ErrorCode.TotpJWTTokenInvalid);
-  } catch (error) {
-    // Handle invalid token error (expired, tampered with, etc.)
-    throw error;
-  }
-}
-
-function verifyJWTTokenForEmail({
-  req,
-  email,
-  tokenProvidedFromUser,
-}: {
-  req: any;
-  email: string;
-  tokenProvidedFromUser: string;
-}) {
-  const cookies = req.headers?.cookie || '';
-  const emailJWTToken = cookies.match(/emailJWTToken=([^;]+)/)?.[1];
-  // Verify the JWT token
-  try {
-    if (!emailJWTToken) {
-      throw new Error(ErrorCode.EmailJWTTokenRequired);
-    }
-
-    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key';
-    const decoded = jwt.verify(emailJWTToken, JWT_SECRET) as {
-      emailProvided: string;
-      token: string;
-    };
-
-    if (email !== decoded.emailProvided) {
-      throw new Error(ErrorCode.EmailJWTTokenInvalid);
-    }
-
-    if (!decoded.token) {
-      throw new Error(ErrorCode.EmailJWTTokenInvalid);
-    }
-
-    // Decrypt token in JWT
-    const decryptedToken = symmetricDecrypt(decoded.token);
-
-    if (decryptedToken !== tokenProvidedFromUser) {
-      throw new Error(ErrorCode.IncorrectPassResetTokenProvided);
-    }
-  } catch (error) {
-    // Handle invalid token error (expired, tampered with, etc.)
-    throw error;
-  }
-}
 
 // Extend User and JWT interfaces
 declare module 'next-auth' {
