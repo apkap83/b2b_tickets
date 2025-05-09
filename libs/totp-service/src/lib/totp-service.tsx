@@ -258,7 +258,7 @@ export async function generateAndRedisStoreNewOTPForUser(
     return newOTP;
   } catch (error) {
     logRequest.error(error);
-    // throw error;
+    throw error;
   }
 }
 
@@ -318,7 +318,7 @@ export async function validateOTPCodeForUserThroughRedis(
     return true;
   } catch (error) {
     logRequest.error(error);
-    // throw error;
+    throw error;
   }
 }
 
@@ -341,6 +341,7 @@ export async function maxOTPAttemptsReached(
     return false;
   } catch (error) {
     logRequest.error(error);
+    throw error;
   }
 }
 
