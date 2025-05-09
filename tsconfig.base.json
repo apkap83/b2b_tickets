@@ -16,7 +16,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
       "@b2b-tickets/admin-server-actions": [
         "libs/admin-server-actions/src/index.ts"
       ],
