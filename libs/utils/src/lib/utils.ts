@@ -394,7 +394,7 @@ export function getWhereObj(
   email?: string;
   authentication_type: AuthenticationTypes;
 } | null {
-  if (!credentials) {
+  if (!credentials || !credentials?.userName) {
     return null; // Return null if credentials are undefined
   }
 
