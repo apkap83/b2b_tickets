@@ -1014,4 +1014,16 @@ describe('getWhereObj', () => {
     const result = getWhereObj(undefined, false);
     expect(result).toBeNull(); // Expect null when credentials are undefined
   });
+
+  it('should return null if user name is null', () => {
+    const result = getWhereObj(
+      {
+        //@ts-ignore
+        userName: null,
+      },
+      false
+    );
+
+    expect(result).toBeNull();
+  });
 });
