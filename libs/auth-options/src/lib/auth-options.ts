@@ -172,7 +172,7 @@ export const tryLocalAuthentication = async (
   }
 };
 
-const performPasswordReset = async (
+export const performPasswordReset = async (
   credentials: any,
   logRequest: CustomLogger
 ) => {
@@ -182,6 +182,10 @@ const performPasswordReset = async (
         credentials ? credentials.userName : 'Not Given'
       }`
     );
+
+    if (!credentials || !credentials.userName) {
+      throw new Error(ErrorCode.UserNotFound);
+    }
 
     const emailProvided = isValidEmail(credentials?.userName!);
 
