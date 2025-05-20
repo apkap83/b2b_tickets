@@ -567,6 +567,10 @@ export const options: NextAuthOptions = {
             throw new Error(ErrorCode.NoRoleAssignedToUser);
           }
 
+          logRequest.info(
+            `Local User '${foundUser.username}' has been successfully authenticated`
+          );
+
           return userDetails;
         } catch (error: unknown) {
           const permittedErrorsToFrontEnd: string[] = [
