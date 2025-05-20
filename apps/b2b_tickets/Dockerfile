@@ -10,6 +10,9 @@ COPY ../../ .
 # RUN pnpm ci || cat /app/.npm/_logs/*
 RUN pnpm install --frozen-lockfile || cat /app/.npm/_logs/*
 
+# Run all tests before proceeding with the build
+RUN nx run-many --target=test --all
+
 # Build the NMS_Portal project using nx
 RUN nx reset
 
