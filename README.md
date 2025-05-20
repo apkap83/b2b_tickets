@@ -59,6 +59,9 @@ nx build socket-server --configuration=production --verbose
 nx test config --coverage --verbose --watch
 nx test utils --coverage --verbose --watch
 
+# Run all tests in the monorepo
+nx run-many --target=test --all
+
 # Run E2E tests with Playwright
 cd apps/b2b_tickets-e2e
 npx playwright test --project chromium
