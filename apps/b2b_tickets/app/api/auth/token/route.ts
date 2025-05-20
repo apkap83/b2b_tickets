@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     const emailToken = generateResetToken();
     // SEND EMAIL HERE to email
     logRequest.info(
-      `'*** Emai: ${emailProvided} - Token Code for Pass Reset: ${emailToken}`
+      `'*** Email: ${emailProvided} - Token Code for Pass Reset: ${emailToken}`
     );
     sendEmailForPasswordReset(
       EmailNotificationType.RESET_TOKEN,
