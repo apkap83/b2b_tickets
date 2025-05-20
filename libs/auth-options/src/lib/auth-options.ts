@@ -568,7 +568,7 @@ export const options: NextAuthOptions = {
           }
 
           logRequest.info(
-            `Local User '${foundUser.username}' has been successfully authenticated`
+            `Local User '${foundUser.username}' has been successfully authenticated (through password reset procedure)`
           );
 
           return userDetails;
