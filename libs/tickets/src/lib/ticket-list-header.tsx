@@ -18,7 +18,7 @@ import {
   FilterTicketsStatus,
 } from '@b2b-tickets/shared-models';
 import { ExportToExcelButton } from './export-excel-btn';
-import { useEscKeyListener } from '@/libs/react-hooks/src';
+import { useEscKeyListener } from '@b2b-tickets/react-hooks';
 
 export const TicketListHeader = ({
   totalRows,

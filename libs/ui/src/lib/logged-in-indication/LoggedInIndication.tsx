@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import { userHasRole } from '@b2b-tickets/utils';
-import { AppRoleTypes } from '@/libs/shared-models/src';
+import { AppRoleTypes } from '@b2b-tickets/shared-models';
 
 export const LoggedInIndication = ({ session, customerName }: any) => {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);

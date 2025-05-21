@@ -8,7 +8,7 @@ import { signOut } from 'next-auth/react';
 import { extendSessionAction } from '@b2b-tickets/server-actions';
 import { getSession } from 'next-auth/react';
 import { Session } from '@b2b-tickets/shared-models';
-import { AppRoleTypes } from '@/libs/shared-models/src';
+import { AppRoleTypes } from '@b2b-tickets/shared-models';
 import toast from 'react-hot-toast';
 import './SessionTimer.css';
 

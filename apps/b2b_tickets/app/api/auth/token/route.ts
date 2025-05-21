@@ -5,7 +5,7 @@ import { TransportName } from '@b2b-tickets/shared-models';
 import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 import { B2BUser } from '@b2b-tickets/db-access';
 import { generateResetToken, symmetricEncrypt } from '@b2b-tickets/utils';
-import { sendEmailForPasswordReset } from '@/libs/email-service/src/server';
+import { sendEmailForPasswordReset } from '@b2b-tickets/email-service/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
 import { config } from '@b2b-tickets/config';
 import { logTokenOTPAttempt } from '@b2b-tickets/totp-service/server';

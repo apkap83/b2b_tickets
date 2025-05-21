@@ -6,8 +6,8 @@ import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { AppRoleTypes, FilterTicketsStatus } from '@b2b-tickets/shared-models';
 import { VscFilterFilled } from 'react-icons/vsc';
 import Button from '@mui/material/Button';
-import { userHasRole } from '@/libs/utils/src';
-import { useEscKeyListener } from '@/libs/react-hooks/src';
+import { userHasRole } from '@b2b-tickets/utils';
+import { useEscKeyListener } from '@b2b-tickets/react-hooks';
 
 export const TicketFilter = () => {
   const { data: session, status } = useSession();
