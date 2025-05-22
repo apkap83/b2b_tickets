@@ -18,6 +18,66 @@ This is a B2B ticketing system built as an Nx monorepo. The system consists of m
 - Docker-based deployment with support for both staging and production
 - Comprehensive testing setup with Jest and Playwright
 
+## Project Architecture
+
+### Application Structure
+
+The project follows the Nx monorepo architecture with:
+
+1. **Apps Directory** - Contains the main applications:
+
+   - `b2b_tickets`: Next.js web application for the ticketing system
+   - `socket-server`: Node.js WebSocket server for real-time updates
+
+2. **Libs Directory** - Contains shared libraries:
+   - `admin-server-actions`: Server-side admin operations
+   - `assets`: Shared assets like logos and images
+   - `auth-options`: Authentication configuration
+   - `config`: Environment configuration
+   - `contexts`: React contexts for state management
+   - `db-access`: Database access layer using Sequelize
+   - `email-service`: Email functionality
+   - `logging`: Logging utilities
+   - `react-hooks`: Custom React hooks
+   - `redis-service`: Redis caching service
+   - `server-actions`: General server actions
+   - `shared-models`: Shared data models
+   - `tickets`: Ticket-related components
+   - `totp-service`: Time-based One-Time Password service
+   - `ui`: Shared UI components
+   - `ui-theme`: Theme configuration
+   - `utils`: Utility functions
+
+### Authentication System
+
+The project uses NextAuth.js for authentication with:
+
+- TOTP (Time-based One-Time Password) support
+- Email-based password reset
+- Role-based access control
+
+### Database
+
+- PostgreSQL database with Sequelize as the ORM
+- Database migrations handled via Sequelize
+
+### Frontend
+
+- Next.js application with both client and server components
+- MUI (Material UI) for component library
+- Tailwind CSS for styling
+
+### Real-time Communication
+
+- Socket.IO for real-time updates via WebSockets
+- Separate socket-server application to handle socket connections
+
+### Deployment
+
+- Docker-based deployment with multiple containers
+- Support for staging and production environments
+- Redis for session storage and caching
+
 ## Common Commands
 
 ### Development
@@ -102,62 +162,3 @@ sudo docker compose up -d --build --no-cache --remove-orphans staging_b2b_ticket
 sudo docker system prune -a -f --volumes
 ```
 
-## Project Architecture
-
-### Application Structure
-
-The project follows the Nx monorepo architecture with:
-
-1. **Apps Directory** - Contains the main applications:
-
-   - `b2b_tickets`: Next.js web application for the ticketing system
-   - `socket-server`: Node.js WebSocket server for real-time updates
-
-2. **Libs Directory** - Contains shared libraries:
-   - `admin-server-actions`: Server-side admin operations
-   - `assets`: Shared assets like logos and images
-   - `auth-options`: Authentication configuration
-   - `config`: Environment configuration
-   - `contexts`: React contexts for state management
-   - `db-access`: Database access layer using Sequelize
-   - `email-service`: Email functionality
-   - `logging`: Logging utilities
-   - `react-hooks`: Custom React hooks
-   - `redis-service`: Redis caching service
-   - `server-actions`: General server actions
-   - `shared-models`: Shared data models
-   - `tickets`: Ticket-related components
-   - `totp-service`: Time-based One-Time Password service
-   - `ui`: Shared UI components
-   - `ui-theme`: Theme configuration
-   - `utils`: Utility functions
-
-### Authentication System
-
-The project uses NextAuth.js for authentication with:
-
-- TOTP (Time-based One-Time Password) support
-- Email-based password reset
-- Role-based access control
-
-### Database
-
-- PostgreSQL database with Sequelize as the ORM
-- Database migrations handled via Sequelize
-
-### Frontend
-
-- Next.js application with both client and server components
-- MUI (Material UI) for component library
-- Tailwind CSS for styling
-
-### Real-time Communication
-
-- Socket.IO for real-time updates via WebSockets
-- Separate socket-server application to handle socket connections
-
-### Deployment
-
-- Docker-based deployment with multiple containers
-- Support for staging and production environments
-- Redis for session storage and caching
