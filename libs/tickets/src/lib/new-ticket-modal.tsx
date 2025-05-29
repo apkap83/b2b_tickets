@@ -318,7 +318,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                  
                  "
                     style={{
-                      border: `1px solid ${colors.blueAccent[800]}`,
+                      border: `1px solid ${colors.blueAccent[900]}`,
                       backgroundColor: `${colors.grey[900]}`,
                     }}
                   >
@@ -471,7 +471,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                 
                 `}
                     style={{
-                      border: `1px solid ${colors.blueAccent[800]}`,
+                      border: `1px solid ${colors.blueAccent[900]}`,
                       backgroundColor: `${colors.grey[900]}`,
                     }}
                   >
