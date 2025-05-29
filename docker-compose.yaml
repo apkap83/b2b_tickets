@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_preentry:1.0.8
+    image: b2b_tickets_img_preentry:1.0.10
     ports:
       - '${B2B_TICKETS_PORT_1:-5001}:3000'
     container_name: Staging_B2B_Tickets_PreEntry_1
@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_preentry:1.0.8
+    image: b2b_tickets_img_preentry:1.0.10
     ports:
       - '${B2B_TICKETS_PORT_2:-5002}:3000'
     container_name: Staging_B2B_Tickets_PreEntry_2
@@ -71,7 +71,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_production:1.0.8
+    image: b2b_tickets_img_production:1.0.10
     ports:
       - '${PROD_B2B_PORT_1:-8001}:3000'
     container_name: Prod_B2B_Tickets_1
@@ -97,7 +97,7 @@ services:
     build:
       context: .
       dockerfile: apps/b2b_tickets/Dockerfile
-    image: b2b_tickets_img_production:1.0.8
+    image: b2b_tickets_img_production:1.0.10
     ports:
       - '${PROD_B2B_PORT_2:-8002}:3000'
     container_name: Prod_B2B_Tickets_2
@@ -123,7 +123,7 @@ services:
     build:
       context: .
       dockerfile: apps/socket-server/Dockerfile
-    image: staging_socket_server_img_preentry:1.0.8
+    image: staging_socket_server_img_preentry:1.0.10
     ports:
       - '${SOCKET_SERVER_PORT:-3456}:3456'
     container_name: Staging_Socket_Server_PreEntry_1
@@ -149,7 +149,7 @@ services:
     build:
       context: .
       dockerfile: apps/socket-server/Dockerfile
-    image: production_socket_server_img:1.0.8
+    image: production_socket_server_img:1.0.10
     ports:
       - '${PROD_SOCKET_SERVER_PORT:-3457}:3457'
     container_name: Production_Socket_Server_1
