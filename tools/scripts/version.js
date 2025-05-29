@@ -43,11 +43,22 @@ try {
 
   const shouldPush = process.argv.includes('--push');
   if (shouldPush) {
+    // Fetch existing tags from remote to avoid conflicts
+    try {
+      console.log('Fetching existing tags from remote...');
+      execSync('git fetch --tags');
+    } catch (fetchError) {
+      console.warn('Warning: Failed to fetch tags:', fetchError.message);
+    }
+    
+    // Push changes to remote
     execSync('git push');
-    execSync('git push --tags');
-    console.log('Pushed changes and tags to remote');
+    
+    // Push only the new tag instead of all tags
+    execSync(`git push origin v${newVersion}`);
+    console.log(`Pushed changes and tag v${newVersion} to remote`);
   } else {
-    console.log('To push changes: git push && git push --tags');
+    console.log(`To push changes: git push && git push origin v${newVersion}`);
   }
 
   // Optional: Update docker-compose version
@@ -73,7 +84,7 @@ try {
 
       if (shouldPush) {
         execSync('git push -f');
-        execSync('git push --tags -f');
+        execSync(`git push origin v${newVersion} -f`);
       }
     }
   } catch (dockerError) {
