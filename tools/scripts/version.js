@@ -43,20 +43,27 @@ try {
 
   const shouldPush = process.argv.includes('--push');
   if (shouldPush) {
-    // Fetch existing tags from remote to avoid conflicts
-    try {
-      console.log('Fetching existing tags from remote...');
-      execSync('git fetch --tags');
-    } catch (fetchError) {
-      console.warn('Warning: Failed to fetch tags:', fetchError.message);
-    }
+    // Skip fetching tags altogether - we only need to push our new tag
+    console.log('Skipping tag fetch to avoid conflicts with existing tags...');
     
     // Push changes to remote
     execSync('git push');
     
     // Push only the new tag instead of all tags
-    execSync(`git push origin v${newVersion}`);
-    console.log(`Pushed changes and tag v${newVersion} to remote`);
+    try {
+      console.log(`Pushing tag v${newVersion} to remote...`);
+      execSync(`git push origin v${newVersion}`);
+      console.log(`Successfully pushed tag v${newVersion} to remote`);
+    } catch (pushError) {
+      console.error(`Failed to push tag v${newVersion}:`, pushError.message);
+      console.log('Trying to force push the tag...');
+      try {
+        execSync(`git push origin v${newVersion} -f`);
+        console.log(`Successfully force-pushed tag v${newVersion} to remote`);
+      } catch (forcePushError) {
+        console.error(`Failed to force-push tag:`, forcePushError.message);
+      }
+    }
   } else {
     console.log(`To push changes: git push && git push origin v${newVersion}`);
   }
@@ -83,8 +90,13 @@ try {
       console.log('Updated docker-compose.yaml with new version');
 
       if (shouldPush) {
-        execSync('git push -f');
-        execSync(`git push origin v${newVersion} -f`);
+        try {
+          execSync('git push -f');
+          execSync(`git push origin v${newVersion} -f`);
+          console.log(`Successfully pushed updated tag v${newVersion} to remote`);
+        } catch (dockerPushError) {
+          console.error(`Failed to push docker updates:`, dockerPushError.message);
+        }
       }
     }
   } catch (dockerError) {
