@@ -8,8 +8,13 @@ jest.mock('next/navigation', () => ({
   redirect: jest.fn(),
 }));
 
-describe('Page 1', () => {
-  it('should redirect to /tickets', () => {
-    expect(1).toBe(1);
+describe('Home Page', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should redirect to /tickets', async () => {
+    await Page();
+    expect(redirect).toHaveBeenCalledWith('/tickets');
   });
 });

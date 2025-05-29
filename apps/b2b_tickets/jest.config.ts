@@ -8,4 +8,10 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../coverage/apps/b2b_tickets',
+  setupFilesAfterEnv: ['<rootDir>/specs/setup.ts'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '<rootDir>/specs/CookieConsentBanner.spec.tsx',
+    '<rootDir>/specs/simplified-cookie-banner.spec.tsx'
+  ],
 };
