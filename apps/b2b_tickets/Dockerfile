@@ -12,9 +12,8 @@ RUN pnpm install --frozen-lockfile || cat /app/.npm/_logs/*
 
 # Run all tests before proceeding with the build
 RUN chmod +x ./run-all-tests.sh
-# Set SKIP_BROWSER_TESTS to avoid browser installation in Docker
-ENV SKIP_BROWSER_TESTS=1
-RUN ./run-all-tests.sh
+# Run only safe tests that don't need browsers or external services
+RUN npm run test:safe
 
 # Build the NMS_Portal project using nx
 RUN nx reset

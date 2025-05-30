@@ -12,30 +12,53 @@ async function globalSetup(config: FullConfig) {
   
   // Ensure all tests know they're running in mock mode
   process.env.USE_MOCK_DATA = '1';
-  
-  // Launch a browser to set up any global state if needed
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+
+  // In Docker/CI environments, skip browser setup
+  if (process.env.CI || process.env.SKIP_BROWSER_TESTS) {
+    console.log('CI/Docker environment detected, skipping browser setup');
+    return;
+  }
   
   try {
-    // Navigate to a real page instead of about:blank to avoid localStorage security issues
-    await page.goto('https://example.com');
+    // Try to launch browser - if it fails, log but continue
+    console.log('Attempting to launch browser for global setup...');
     
-    // Try to set up test flags (may not be necessary, but good to verify browser works)
-    await page.evaluate(() => {
-      try {
-        localStorage.setItem('TEST_MODE', 'mock');
-        console.log('Storage accessible');
-      } catch (e) {
-        console.log('Storage not accessible in global setup (this is okay)');
-      }
+    // Launch with reduced timeouts to fail faster if browsers aren't installed
+    const browser = await chromium.launch({ timeout: 10000 }).catch(error => {
+      console.log('Browser launch failed (this is okay in CI/Docker):', error.message);
+      return null;
     });
     
-    console.log('Browser environment tested and ready');
+    // If browser failed to launch, skip the rest
+    if (!browser) {
+      console.log('Skipping browser-based setup');
+      return;
+    }
+    
+    const page = await browser.newPage();
+    
+    try {
+      // Instead of navigating to a real page which could fail, just set content
+      await page.setContent('<html><body><div>Test Setup</div></body></html>');
+      
+      // Try to set up test flags
+      await page.evaluate(() => {
+        try {
+          localStorage.setItem('TEST_MODE', 'mock');
+          console.log('Storage accessible');
+        } catch (e) {
+          console.log('Storage not accessible in global setup (this is okay)');
+        }
+      });
+      
+      console.log('Browser environment tested and ready');
+    } catch (error) {
+      console.log('Browser setup completed with warnings (this is okay):', error.message);
+    } finally {
+      await browser.close();
+    }
   } catch (error) {
-    console.log('Browser setup completed with warnings (this is okay)');
-  } finally {
-    await browser.close();
+    console.log('Global setup completed with errors (continuing anyway):', error.message);
   }
   
   console.log('Mock data environment is ready');
