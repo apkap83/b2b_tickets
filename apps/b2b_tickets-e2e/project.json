@@ -6,12 +6,33 @@
     "e2e": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npx playwright test",
+        "command": "./run-headless-tests.sh",
         "cwd": "apps/b2b_tickets-e2e"
       },
       "configurations": {
         "ci": {
-          "command": "npx playwright test --reporter=dot"
+          "command": "npx playwright test tests/mock-test.spec.ts tests/example.spec.ts --reporter=dot",
+          "cwd": "apps/b2b_tickets-e2e"
+        },
+        "headless": {
+          "command": "./run-headless-tests.sh --headless",
+          "cwd": "apps/b2b_tickets-e2e"
+        },
+        "skip": {
+          "command": "./run-headless-tests.sh --skip",
+          "cwd": "apps/b2b_tickets-e2e"
+        },
+        "mock": {
+          "command": "./run-headless-tests.sh --mock",
+          "cwd": "apps/b2b_tickets-e2e"
+        },
+        "debug": {
+          "command": "./run-headless-tests.sh --debug",
+          "cwd": "apps/b2b_tickets-e2e"
+        },
+        "mock-only": {
+          "command": "./run-mock-tests.sh",
+          "cwd": "apps/b2b_tickets-e2e"
         }
       }
     }

@@ -21,17 +21,21 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
+  /* Skip all tests when SKIP_BROWSER_TESTS is set */
+  testIgnore: process.env.SKIP_BROWSER_TESTS ? '**/*.spec.{js,ts}' : [],
+  /* Use the test-projects-mock.ts file when USE_MOCK_DATA is set */
+  globalSetup: process.env.USE_MOCK_DATA ? './tests/global-setup.ts' : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://127.0.0.1:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
 
-    headless: false,
+    headless: true,
   },
 
   /* Configure projects for major browsers */

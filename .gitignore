@@ -75,3 +75,4 @@ Commands.txt
 Docker_Commands.txt
 
 /database
+**/.claude/settings.local.json

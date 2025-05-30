@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headless": "./run-headless-tests.sh",
+    "test:skip": "./run-headless-tests.sh --skip",
+    "test:mock": "./run-headless-tests.sh --mock",
+    "test:debug": "./run-headless-tests.sh --debug",
+    "test:mock-only": "./run-mock-tests.sh"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
