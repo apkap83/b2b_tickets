@@ -18,7 +18,9 @@ const testUser = {
 const userNameHeader = 'User Name';
 const columnsOnUsersTable = 12;
 
-test.only('test', async ({ page }) => {
+// We'll comment out this test as it was only for testing purposes
+/* 
+test('test', async ({ page }) => {
   await page.goto('http://127.0.0.1:3000');
   await page.getByRole('button', { name: 'Accept All' }).click();
   await page.getByPlaceholder('E-mail or User Name').click();
@@ -35,6 +37,7 @@ test.only('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Submit' }).click();
   await page.goto('http://127.0.0.1:3000/tickets');
 });
+*/
 
 test('Test Creation of New User', async ({ page }) => {
   await page.goto(siteAddress);

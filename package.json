@@ -6,7 +6,15 @@
     "version:major": "node tools/scripts/version.js major",
     "version:minor": "node tools/scripts/version.js minor",
     "version:patch": "node tools/scripts/version.js patch",
-    "version:push": "node tools/scripts/version.js patch --push"
+    "version:push": "node tools/scripts/version.js patch --push",
+    "test:e2e": "nx run b2b_tickets-e2e:e2e",
+    "test:e2e:headless": "nx run b2b_tickets-e2e:e2e --configuration=headless",
+    "test:e2e:skip": "nx run b2b_tickets-e2e:e2e --configuration=skip",
+    "test:e2e:mock": "nx run b2b_tickets-e2e:e2e --configuration=mock",
+    "test:e2e:debug": "nx run b2b_tickets-e2e:e2e --configuration=debug",
+    "test:e2e:mock-only": "nx run b2b_tickets-e2e:e2e --configuration=mock-only",
+    "test:unit": "nx run-many --target=test --projects=config,utils,auth-options,redis-service --detectOpenHandles",
+    "test:all": "./run-all-tests.sh"
   },
   "private": true,
   "dependencies": {

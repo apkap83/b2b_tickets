@@ -11,7 +11,8 @@ COPY ../../ .
 RUN pnpm install --frozen-lockfile || cat /app/.npm/_logs/*
 
 # Run all tests before proceeding with the build
-RUN nx run-many --target=test --all
+RUN chmod +x ./run-all-tests.sh
+RUN ./run-all-tests.sh
 
 # Build the NMS_Portal project using nx
 RUN nx reset
