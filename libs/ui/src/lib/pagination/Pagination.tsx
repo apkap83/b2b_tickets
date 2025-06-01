@@ -4,20 +4,24 @@ import Link from 'next/link';
 import { clsx } from 'clsx';
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { memo, useCallback, useMemo } from 'react';
 
-export const Pagination = ({ totalPages }: { totalPages: number }) => {
+export const Pagination = memo(({ totalPages }: { totalPages: number }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get('page')) || 1;
 
-  const createPageURL = (pageNumber: number | string) => {
+  const createPageURL = useCallback((pageNumber: number | string) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', pageNumber.toString());
 
     return `${pathname}?${params.toString()}`;
-  };
+  }, [pathname, searchParams]);
 
-  const allPages = generatePagination(currentPage, totalPages);
+  const allPages = useMemo(() => 
+    generatePagination(currentPage, totalPages),
+    [currentPage, totalPages]
+  );
 
   return (
     <div className="join">
@@ -55,9 +59,9 @@ export const Pagination = ({ totalPages }: { totalPages: number }) => {
       />
     </div>
   );
-};
+});
 
-function PaginationNumber({
+const PaginationNumber = memo(({
   page,
   href,
   isActive,
@@ -67,8 +71,8 @@ function PaginationNumber({
   href: string;
   position?: 'first' | 'last' | 'middle' | 'single';
   isActive: boolean;
-}) {
-  const className = clsx(
+}) => {
+  const className = useMemo(() => clsx(
     'flex h-10 w-10 items-center justify-center text-sm border',
     {
       'rounded-l-md': position === 'first' || position === 'single',
@@ -77,7 +81,7 @@ function PaginationNumber({
       'hover:bg-gray-100': !isActive && position !== 'middle',
       'text-gray-300': position === 'middle',
     }
-  );
+  ), [position, isActive]);
 
   return isActive || position === 'middle' ? (
     <div className={className}>{page}</div>
@@ -86,9 +90,9 @@ function PaginationNumber({
       {page}
     </Link>
   );
-}
+});
 
-function PaginationArrow({
+const PaginationArrow = memo(({
   href,
   direction,
   isDisabled,
@@ -96,8 +100,8 @@ function PaginationArrow({
   href: string;
   direction: 'left' | 'right';
   isDisabled?: boolean;
-}) {
-  const className = clsx(
+}) => {
+  const className = useMemo(() => clsx(
     'flex h-10 w-10 items-center justify-center rounded-md border',
     {
       'pointer-events-none text-gray-300': isDisabled,
@@ -105,14 +109,14 @@ function PaginationArrow({
       'mr-2 md:mr-4': direction === 'left',
       'ml-2 md:ml-4': direction === 'right',
     }
-  );
+  ), [direction, isDisabled]);
 
-  const icon =
+  const icon = useMemo(() =>
     direction === 'left' ? (
       <ArrowLeftIcon className="w-4" />
     ) : (
       <ArrowRightIcon className="w-4" />
-    );
+    ), [direction]);
 
   return isDisabled ? (
     <div className={className}>{icon}</div>
@@ -121,8 +125,9 @@ function PaginationArrow({
       {icon}
     </Link>
   );
-}
+});
 
+// We can't memoize this function directly since it's used within useMemo in the component
 const generatePagination = (currentPage: number, totalPages: number) => {
   // If the total number of pages is 7 or less,
   // display all pages without any ellipsis.

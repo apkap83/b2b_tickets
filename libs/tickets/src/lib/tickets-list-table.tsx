@@ -55,19 +55,27 @@ export const TicketsListTable = ({
     null
   );
 
-  const isFilterEmpty = Object.values(filter).every((arr) => arr.length === 0);
-  const isTicketHandler = userHasRole(session, AppRoleTypes.B2B_TicketHandler);
+  const isFilterEmpty = useMemo(
+    () => Object.values(filter).every((arr) => arr.length === 0),
+    [filter]
+  );
+  const isTicketHandler = useMemo(
+    () => userHasRole(session, AppRoleTypes.B2B_TicketHandler),
+    [session]
+  );
+
+  const closeFilter = useCallback(() => {
+    setActiveFilterColumn(null);
+  }, []);
 
   // ESC Key Listener
-  useEscKeyListener(() => {
-    setActiveFilterColumn(null);
-  });
+  useEscKeyListener(closeFilter);
 
-  const toggleFilter = (column: string) => {
+  const toggleFilter = useCallback((column: string) => {
     setActiveFilterColumn((prev) => (prev === column ? null : column));
-  };
+  }, []);
 
-  const refreshTicketsList = async () => {
+  const refreshTicketsList = useCallback(async () => {
     if (!latestEventEmitted) return;
 
     try {
@@ -102,7 +110,14 @@ export const TicketsListTable = ({
     } catch (error) {
       console.error('Error refreshing tickets:', error);
     }
-  };
+  }, [
+    latestEventEmitted,
+    currentPage,
+    query,
+    filter,
+    ticketsList,
+    setTicketsList,
+  ]);
 
   const debouncedRefreshTickets = useMemo(
     () =>
@@ -142,7 +157,7 @@ export const TicketsListTable = ({
     };
   }, [latestEventEmitted]);
 
-  const generateTableHeadAndColumns = () => {
+  const generateTableHeadAndColumns = useMemo(() => {
     let columnsForTickets = [
       'Ticket Number',
       'Opened',
@@ -209,10 +224,7 @@ export const TicketsListTable = ({
                     ))}
                 </div>
                 {activeFilterColumn === item && (
-                  <ColumnFilter
-                    column={item}
-                    closeFilter={() => setActiveFilterColumn(null)}
-                  />
+                  <ColumnFilter column={item} closeFilter={closeFilter} />
                 )}
               </TableCell>
             );
@@ -220,22 +232,21 @@ export const TicketsListTable = ({
         </TableRow>
       </>
     );
-  };
+  }, [isTicketHandler, filter, activeFilterColumn, toggleFilter, closeFilter]);
 
-  const generateTableBody = (
-    items: TicketDetail[] | TicketDetailForTicketCreator[]
-  ) => {
+  const generateTableBody = useMemo(() => {
     return (
       <>
-        {items.map((item: any) => (
+        {ticketsList.map((item: any) => (
           <TicketRow key={item.ticket_id} session={session} item={item} />
         ))}
       </>
     );
-  };
+  }, [ticketsList, session]);
 
-  const totalPages = Math.ceil(
-    Number(totalRows) / config.TICKET_ITEMS_PER_PAGE
+  const totalPages = useMemo(
+    () => Math.ceil(Number(totalRows) / config.TICKET_ITEMS_PER_PAGE),
+    [totalRows]
   );
 
   if (ticketsList && ticketsList.length === 0 && isFilterEmpty)
@@ -252,8 +263,8 @@ export const TicketsListTable = ({
         aria-label="a dense table"
         className={`${styles.ticketsList}`}
       >
-        <TableHead>{generateTableHeadAndColumns()}</TableHead>
-        {<TableBody>{generateTableBody(ticketsList)}</TableBody>}
+        <TableHead>{generateTableHeadAndColumns}</TableHead>
+        <TableBody>{generateTableBody}</TableBody>
       </Table>
       {totalRows > 0 && (
         <div className="pt-5 flex justify-between items-center">

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useFormState } from 'react-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import { styled } from '@mui/material/styles';
 import Button from '@mui/material/Button';
@@ -53,7 +53,7 @@ import toast from 'react-hot-toast';
 import { useWebSocketContext } from '@b2b-tickets/contexts';
 import 'react-quill/dist/quill.snow.css';
 
-const FieldError = ({ formik, name, ...rest }: any) => {
+const FieldError = memo(({ formik, name, ...rest }: any) => {
   if (!formik?.touched[name] || !formik?.errors[name]) {
     return null;
   }
@@ -63,9 +63,9 @@ const FieldError = ({ formik, name, ...rest }: any) => {
       {formik?.errors[name]}
     </p>
   );
-};
+});
 
-export function NewTicketModal({ closeModal, userId }: any) {
+export const NewTicketModal = memo(({ closeModal, userId }: any) => {
   const autoComplete = 'off';
   const rightPanelMinWidthPx = '320px';
   const [value, setValue] = useState('');
@@ -278,6 +278,11 @@ export function NewTicketModal({ closeModal, userId }: any) {
       LLLL: 'dddd, D MMMM YYYY h:mm A',
     },
   });
+
+  // Memoize the close handler
+  const handleClose = useCallback(() => {
+    closeModal();
+  }, [closeModal]);
 
   return (
     <React.Fragment>
@@ -741,7 +746,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
                   className={`${styles.buttonsDiv} flex justify-evenly mt-[1.3rem]`}
                 >
                   <Button
-                    onClick={closeModal}
+                    onClick={handleClose}
                     variant="outlined"
                     style={{
                       color: `${colors.grey[500]}`,
@@ -764,7 +769,7 @@ export function NewTicketModal({ closeModal, userId }: any) {
       </div>
     </React.Fragment>
   );
-}
+});
 
 type SubmitButtonProps = {
   label: string;
@@ -772,47 +777,52 @@ type SubmitButtonProps = {
   isValid: boolean;
 };
 
-export const SubmitButton = ({
-  label,
-  loadingText,
-  isValid,
-}: SubmitButtonProps) => {
-  const { pending } = useFormStatus();
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
+export const SubmitButton = memo(
+  ({ label, loadingText, isValid }: SubmitButtonProps) => {
+    const { pending } = useFormStatus();
+    const theme = useTheme();
+    const colors = tokens(theme.palette.mode);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (pending) {
-      event.preventDefault();
-    }
-  };
+    const handleClick = useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        if (pending) {
+          event.preventDefault();
+        }
+      },
+      [pending]
+    );
 
-  let letterColor = '#ddd7d7';
-  let backgroundColor = '#1e197b';
+    const buttonStyles = useMemo(() => {
+      let letterColor = '#ddd7d7';
+      let backgroundColor = '#1e197b';
 
-  if (!isValid || pending) {
-    backgroundColor = '#5b5b5d';
+      if (!isValid || pending) {
+        backgroundColor = '#5b5b5d';
+      }
+
+      return {
+        color: letterColor,
+        backgroundColor: backgroundColor,
+      };
+    }, [isValid, pending]);
+
+    return (
+      <Button
+        variant="contained"
+        type="submit"
+        className="btn btn-primary"
+        disabled={!isValid || pending}
+        aria-disabled={pending}
+        onClick={handleClick}
+        style={buttonStyles}
+      >
+        {pending ? loadingText : label}
+      </Button>
+    );
   }
+);
 
-  return (
-    <Button
-      variant="contained"
-      type="submit"
-      className="btn btn-primary"
-      disabled={!isValid || pending}
-      aria-disabled={pending}
-      onClick={handleClick}
-      style={{
-        color: `${letterColor}`,
-        backgroundColor: `${backgroundColor}`,
-      }}
-    >
-      {pending ? loadingText : label}
-    </Button>
-  );
-};
-
-const ClarificationMessage = ({ msg }: { msg: string }) => {
+const ClarificationMessage = memo(({ msg }: { msg: string }) => {
   return (
     <div
       style={{
@@ -823,86 +833,99 @@ const ClarificationMessage = ({ msg }: { msg: string }) => {
       {msg}
     </div>
   );
-};
+});
 
-const CcFields = ({
-  showCcFields,
-  setShowCcFields,
-  formik,
-  rightPanelMinWidthPx,
-  autoComplete,
-}: any) => {
-  // Function to toggle the state
-  const toggleFields = () => {
-    setShowCcFields(!showCcFields);
-  };
-  return (
-    <div className="flex-col">
-      <div>
-        <div
-          style={{
-            fontSize: '12px',
-            border: '1px solid rgba(0,0,0,.4)',
-            color: 'rgba(0,0,0,.5)',
-            textAlign: 'center',
-            paddingTop: '3px',
-            paddingBottom: '3px',
-            cursor: 'pointer',
-          }}
-          onClick={toggleFields}
-        >
-          {showCcFields ? (
-            <div className="flex justify-center items-center">
-              <span>Hide Cc Fields</span>
-              <RiArrowUpSLine size="20" />
-            </div>
-          ) : (
-            <div className="flex justify-center items-center">
-              <span>Show Extra Cc Fields</span>
-              <RiArrowDownSLine size="20" />
-            </div>
-          )}
-        </div>
-      </div>
-      {showCcFields && (
+const CcFields = memo(
+  ({
+    showCcFields,
+    setShowCcFields,
+    formik,
+    rightPanelMinWidthPx,
+    autoComplete,
+  }: any) => {
+    // Function to toggle the state
+    const toggleFields = useCallback(() => {
+      setShowCcFields(!showCcFields);
+    }, [showCcFields, setShowCcFields]);
+
+    const headerStyle = useMemo(
+      () => ({
+        fontSize: '12px',
+        border: '1px solid rgba(0,0,0,.4)',
+        color: 'rgba(0,0,0,.5)',
+        textAlign: 'center',
+        paddingTop: '3px',
+        paddingBottom: '3px',
+        cursor: 'pointer',
+      }),
+      []
+    );
+
+    const formControlStyle = useMemo(
+      () => ({
+        width: '100%',
+        mb: '10px',
+      }),
+      []
+    );
+
+    return (
+      <div className="flex-col">
         <div>
-          {/* Cc E-mails Field */}
-          <FormControl sx={{ width: '100%', mb: '10px' }}>
-            <TextField
-              margin="dense"
-              id="ccEmails"
-              name="ccEmails"
-              label="Cc E-mails"
-              type="text"
-              variant="standard"
-              value={formik.values.ccEmails}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              autoComplete={autoComplete}
-            />
-            <ClarificationMessage msg="Comma separated list of E-mails" />
-          </FormControl>
-          <FieldError formik={formik} name="ccEmails" />
-
-          {/* Cc Phones Field */}
-          <FormControl sx={{ width: '100%', mb: '10px' }}>
-            <TextField
-              margin="dense"
-              id="ccPhones"
-              name="ccPhones"
-              label="Cc Phones"
-              type="text"
-              variant="standard"
-              value={formik.values.ccPhones}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              autoComplete={autoComplete}
-            />
-            <ClarificationMessage msg="Comma separated list of phones" />
-          </FormControl>
-          <FieldError formik={formik} name="ccPhones" />
+          <div style={headerStyle} onClick={toggleFields}>
+            {showCcFields ? (
+              <div className="flex justify-center items-center">
+                <span>Hide Cc Fields</span>
+                <RiArrowUpSLine size="20" />
+              </div>
+            ) : (
+              <div className="flex justify-center items-center">
+                <span>Show Extra Cc Fields</span>
+                <RiArrowDownSLine size="20" />
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
-  );
-};
+        {showCcFields && (
+          <div>
+            {/* Cc E-mails Field */}
+            <FormControl sx={formControlStyle}>
+              <TextField
+                margin="dense"
+                id="ccEmails"
+                name="ccEmails"
+                label="Cc E-mails"
+                type="text"
+                variant="standard"
+                value={formik.values.ccEmails}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                autoComplete={autoComplete}
+              />
+              <ClarificationMessage msg="Comma separated list of E-mails" />
+            </FormControl>
+            <FieldError formik={formik} name="ccEmails" />
+
+            {/* Cc Phones Field */}
+            <FormControl sx={formControlStyle}>
+              <TextField
+                margin="dense"
+                id="ccPhones"
+                name="ccPhones"
+                label="Cc Phones"
+                type="text"
+                variant="standard"
+                value={formik.values.ccPhones}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                autoComplete={autoComplete}
+              />
+              <ClarificationMessage msg="Comma separated list of phones" />
+            </FormControl>
+            <FieldError formik={formik} name="ccPhones" />
+          </div>
+        )}
+      </div>
+    );
+  }
+);

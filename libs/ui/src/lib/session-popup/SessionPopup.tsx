@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useSessionTimeLeft } from '@b2b-tickets/react-hooks'; // Assuming this is your hook
 import { formatTimeMMSS, userHasRole } from '@b2b-tickets/utils'; // Assuming this is your time formatting function
 import { Button } from '@mui/material';
@@ -12,7 +12,7 @@ import { AppRoleTypes } from '@b2b-tickets/shared-models';
 import toast from 'react-hot-toast';
 import './SessionTimer.css';
 
-export const SessionPopup = () => {
+export const SessionPopup = memo(() => {
   const [showPopup, setShowPopup] = useState(false);
   const [mySession, setMySession] = useState<Session | null>(null); // Track session manually
   const [isExtending, setIsExtending] = useState(false);
@@ -20,7 +20,10 @@ export const SessionPopup = () => {
     config.SessionMaxAge
   );
 
-  const isHandler = userHasRole(mySession, AppRoleTypes.B2B_TicketHandler);
+  const isHandler = useMemo(() => 
+    userHasRole(mySession, AppRoleTypes.B2B_TicketHandler),
+    [mySession]
+  );
 
   // Fetch Session Object from Backend
   useEffect(() => {
@@ -33,17 +36,17 @@ export const SessionPopup = () => {
   }, []);
 
   // Function to refresh the session
-  const refreshSession = async () => {
+  const refreshSession = useCallback(async () => {
     const updatedSession = await getSession();
     if (updatedSession) {
       setMySession(updatedSession);
     }
-  };
+  }, []);
 
-  const calculateTimeLeft = (expiresAt: number): number => {
+  const calculateTimeLeft = useCallback((expiresAt: number): number => {
     const currentTimeInSeconds = Math.floor(Date.now() / 1000);
     return expiresAt - currentTimeInSeconds;
-  };
+  }, []);
 
   // Calculate Time Left Every Second
   useEffect(() => {
@@ -73,12 +76,11 @@ export const SessionPopup = () => {
     }
   }, [timeLeftInSeconds]);
 
-  const extendSession = async () => {
+  const extendSession = useCallback(async () => {
     const result = await extendSessionAction();
 
     if (result.error) {
       setIsExtending(false);
-
       return toast.error(result.error);
     }
 
@@ -86,22 +88,41 @@ export const SessionPopup = () => {
     toast.success(
       `Session Extended for ${Math.floor(config.SessionMaxAge / 60)} minutes`
     );
-  };
+  }, [refreshSession]);
 
-  const performLogOut = () => {
+  const performLogOut = useCallback(() => {
     signOut();
-  };
+  }, []);
 
-  const safeTimeLeft = Math.max(0, timeLeftInSeconds ?? 0);
-  const percentage = safeTimeLeft && (safeTimeLeft / 3600) * 100;
+  const safeTimeLeft = useMemo(() => 
+    Math.max(0, timeLeftInSeconds ?? 0),
+    [timeLeftInSeconds]
+  );
+  
+  const percentage = useMemo(() => 
+    safeTimeLeft && (safeTimeLeft / 3600) * 100,
+    [safeTimeLeft]
+  );
 
-  const SessionTimer = ({ time = '30:05', title = 'Stopwatch' }) => {
+  const SessionTimer = memo(({ time = '30:05', title = 'Stopwatch' }) => {
+    const handleExtendSession = useCallback(() => {
+      extendSession();
+    }, []);
+    
+    const strokeDashoffset = useMemo(() => 
+      `${282 - (282 * (percentage || 1)) / 100}`,
+      [percentage]
+    );
+    
+    const formattedTime = useMemo(() => 
+      formatTimeMMSS(timeLeftInSeconds!),
+      [timeLeftInSeconds]
+    );
+    
     return (
       <div
         className="semi-circle-timer cursor-pointer"
-        onClick={() => {
-          extendSession();
-        }}
+        onClick={handleExtendSession}
       >
         <svg width="50" height="25" viewBox="0 0 200 100">
           <path
@@ -116,19 +137,34 @@ export const SessionPopup = () => {
             stroke="#007700"
             strokeWidth="20"
             strokeDasharray="282"
-            strokeDashoffset={`${282 - (282 * (percentage || 1)) / 100}`}
+            strokeDashoffset={strokeDashoffset}
           />
         </svg>
         <div className="remaining-time">
-          {formatTimeMMSS(timeLeftInSeconds!)}
+          {formattedTime}
         </div>
       </div>
     );
-  };
+  });
 
+  // Memoize the formatted time display
+  const formattedExpiryTime = useMemo(() => 
+    formatTimeMMSS(timeLeftInSeconds ?? 0), 
+    [timeLeftInSeconds]
+  );
+  
+  // Memoize session extend handler for the popup button
+  const handleExtendSessionWithState = useCallback(async () => {
+    setIsExtending(true);
+    await extendSession();
+    setTimeout(() => {
+      setIsExtending(false);
+    }, 5000);
+  }, [extendSession, setIsExtending]);
+  
   return (
     <>
-      {/* <SessionTimer time={formatTimeMMSS(timeLeftInSeconds!)} /> */}
+      {/* <SessionTimer time={formattedExpiryTime} /> */}
       {/* Show popup if time left is less than N minutes */}
       {showPopup && (
         <div className="fixed z-10 inset-0 flex items-center justify-center bg-black bg-opacity-50 pointer-events-none">
@@ -137,7 +173,7 @@ export const SessionPopup = () => {
               <h2 className="text-center mb-3">Session Expiring Soon</h2>
               <p>
                 Your session will expire in{' '}
-                {formatTimeMMSS(timeLeftInSeconds ?? 0)}. Do you want to extend
+                {formattedExpiryTime}. Do you want to extend
                 your session?
               </p>
               <div className="mt-5 flex justify-center items-center gap-6">
@@ -147,13 +183,7 @@ export const SessionPopup = () => {
                 <Button
                   disabled={isExtending}
                   variant="contained"
-                  onClick={async () => {
-                    setIsExtending(true);
-                    await extendSession();
-                    setTimeout(() => {
-                      setIsExtending(false);
-                    }, 5000);
-                  }}
+                  onClick={handleExtendSessionWithState}
                 >
                   {isExtending ? 'Extending...' : 'Extend Session'}
                 </Button>
@@ -164,4 +194,4 @@ export const SessionPopup = () => {
       )}
     </>
   );
-};
+});

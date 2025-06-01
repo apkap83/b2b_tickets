@@ -1,6 +1,14 @@
 'use client';
 
-import { useState, useEffect, useRef, useContext } from 'react';
+import {
+  useState,
+  useEffect,
+  useRef,
+  useContext,
+  useMemo,
+  useCallback,
+  memo,
+} from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -24,7 +32,7 @@ import config from '@b2b-tickets/config';
 import styles from './css/NavBar.module.scss';
 import { SessionPopup } from '../session-popup/SessionPopup';
 
-export const NavBar = () => {
+export const NavBar = memo(() => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const colorMode = useContext(ColorModeContext);
@@ -39,6 +47,42 @@ export const NavBar = () => {
   const customerName = session?.user?.customer_name;
   const isAdminPath = pathname === '/admin';
   const isTicketsPath = pathname === '/tickets';
+
+  // Memoize navigation handlers
+  const navigateToTickets = useCallback(() => {
+    const savedFilter = sessionStorage.getItem('ticketFilter');
+    if (savedFilter) {
+      router.replace(`/tickets?${savedFilter}`);
+    } else {
+      router.replace(`/tickets`);
+    }
+  }, [router]);
+
+  const navigateToAdmin = useCallback(() => {
+    router.push('/admin');
+  }, [router]);
+
+  // Memoize environment indicator
+  const environmentIndicator = useMemo(() => {
+    if (process.env['NEXT_PUBLIC_APP_ENV'] === 'staging') {
+      return (
+        <div className="absolute left-[40%] rounded-md hidden lg:flex items-center justify-center h-12">
+          <div className="rounded-md text-center text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-2 shadow-white shadow-sm">
+            Staging Environment
+          </div>
+        </div>
+      );
+    } else if (process.env['NODE_ENV'] === 'development') {
+      return (
+        <div className="absolute left-[40%] rounded-md hidden lg:flex items-center justify-center h-12">
+          <div className="rounded-md text-center text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-2 shadow-white shadow-sm">
+            Development Environment
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }, []);
 
   return (
     <>
@@ -55,14 +99,7 @@ export const NavBar = () => {
               borderTopLeftRadius: '5px',
               borderTopRightRadius: '5px',
             }}
-            onClick={() => {
-              const savedFilter = sessionStorage.getItem('ticketFilter');
-              if (savedFilter) {
-                router.replace(`/tickets?${savedFilter}`);
-              } else {
-                router.replace(`/tickets`);
-              }
-            }}
+            onClick={navigateToTickets}
           >
             <Stack
               sx={{
@@ -96,20 +133,7 @@ export const NavBar = () => {
           </Stack>
         </>
 
-        {process.env['NEXT_PUBLIC_APP_ENV'] === 'staging' && (
-          <div className="absolute left-[40%] rounded-md hidden lg:flex items-center justify-center h-12">
-            <div className="rounded-md text-center text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-2 shadow-white shadow-sm">
-              Staging Environment
-            </div>
-          </div>
-        )}
-        {process.env['NODE_ENV'] === 'development' && (
-          <div className="absolute left-[40%] rounded-md hidden lg:flex items-center justify-center h-12">
-            <div className="rounded-md text-center text-sm text-gray-400 border border-gray-400 mx-auto h-auto px-2 shadow-white shadow-sm">
-              Development Environment
-            </div>
-          </div>
-        )}
+        {environmentIndicator}
 
         <Box className={`${styles.menuAndLoggedIndication}`}>
           <div
@@ -122,9 +146,7 @@ export const NavBar = () => {
               <>
                 <IconButton
                   className="flex flex-col"
-                  onClick={() => {
-                    router.push('/admin');
-                  }}
+                  onClick={navigateToAdmin}
                   sx={{
                     color: isAdminPath
                       ? colors.blueAccent[500]
@@ -143,15 +165,7 @@ export const NavBar = () => {
 
             <IconButton
               className="flex flex-col justify-center items-center "
-              onClick={() => {
-                // Use the stored search params to navigate to the tickets page
-                const savedFilter = sessionStorage.getItem('ticketFilter');
-                if (savedFilter) {
-                  router.replace(`/tickets?${savedFilter}`);
-                } else {
-                  router.replace(`/tickets`);
-                }
-              }}
+              onClick={navigateToTickets}
               sx={{
                 color: isTicketsPath
                   ? colors.blueAccent[500]
@@ -175,4 +189,4 @@ export const NavBar = () => {
       </Box>
     </>
   );
-};
+});

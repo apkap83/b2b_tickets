@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { getUniqueItemsForColumn } from '@b2b-tickets/server-actions';
 import { allowedColumnsForFiltering } from '@b2b-tickets/utils';
@@ -33,7 +33,7 @@ export const ColumnFilter = ({
 
   const delimiter = '\x1F'; // ASCII Unit Separator (non-printable character)
 
-  const handleFilter = () => {
+  const handleFilter = useCallback(() => {
     const params = new URLSearchParams(searchParams); // Existing query parameters
     const delimiter = '\x1F'; // ASCII Unit Separator (non-printable character)
 
@@ -60,7 +60,7 @@ export const ColumnFilter = ({
     // Apply updated query parameters
     replace(`${pathname}?${params.toString()}`);
     closeFilter(); // Close the filter dropdown
-  };
+  }, [checkboxes, allItems, column, searchParams, pathname, replace, closeFilter]);
 
   // Fetch unique items and initialize state
   useEffect(() => {
@@ -93,15 +93,15 @@ export const ColumnFilter = ({
   }, [column]);
 
   // Handle individual checkbox toggle
-  const handleCheckboxChange = (id: number) => {
+  const handleCheckboxChange = useCallback((id: number) => {
     setCheckboxes((prevState) => ({
       ...prevState,
       [id]: !prevState[id],
     }));
-  };
+  }, []);
 
   // Handle "Select All" toggle
-  const handleSelectAllChange = () => {
+  const handleSelectAllChange = useCallback(() => {
     const newSelectAllState = !checkboxes.selectAll;
     const updatedCheckboxes: Record<string, boolean> = {
       selectAll: newSelectAllState,
@@ -112,11 +112,14 @@ export const ColumnFilter = ({
       }
     });
     setCheckboxes(updatedCheckboxes);
-  };
+  }, [checkboxes]);
 
   // Filter items based on the search term
-  const filteredItems = allItems.filter((item) =>
-    item.value.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredItems = useMemo(() => 
+    allItems.filter((item) =>
+      item.value.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [allItems, searchTerm]
   );
 
   return (
