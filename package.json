@@ -15,7 +15,10 @@
     "test:e2e:mock-only": "nx run b2b_tickets-e2e:e2e --configuration=mock-only",
     "test:unit": "nx run-many --target=test --projects=config,utils,auth-options --detectOpenHandles",
     "test:all": "./scripts/run-all-tests.sh",
-    "test:safe": "SKIP_BROWSER_TESTS=1 ./scripts/run-all-tests.sh"
+    "test:safe": "SKIP_BROWSER_TESTS=1 ./scripts/run-all-tests.sh",
+    "dev": "concurrently -k -n \"WEB,SOCKET\" -c \"cyan,green\" \"nx dev b2b_tickets\" \"./scripts/run-dev-socket-server.sh\"",
+    "dev:web": "nx dev b2b_tickets",
+    "dev:socket": "./scripts/run-dev-socket-server.sh"
   },
   "private": true,
   "dependencies": {
@@ -128,6 +131,7 @@
     "autoprefixer": "10.4.21",
     "babel-jest": "29.7.0",
     "babel-plugin-styled-components": "1.13.3",
+    "concurrently": "^9.1.2",
     "cypress": "14.3.3",
     "daisyui": "4.12.24",
     "esbuild": "0.19.12",
