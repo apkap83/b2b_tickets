@@ -14,8 +14,8 @@
     "test:e2e:debug": "nx run b2b_tickets-e2e:e2e --configuration=debug",
     "test:e2e:mock-only": "nx run b2b_tickets-e2e:e2e --configuration=mock-only",
     "test:unit": "nx run-many --target=test --projects=config,utils,auth-options --detectOpenHandles",
-    "test:all": "./run-all-tests.sh",
-    "test:safe": "SKIP_BROWSER_TESTS=1 ./run-all-tests.sh"
+    "test:all": "./scripts/run-all-tests.sh",
+    "test:safe": "SKIP_BROWSER_TESTS=1 ./scripts/run-all-tests.sh"
   },
   "private": true,
   "dependencies": {

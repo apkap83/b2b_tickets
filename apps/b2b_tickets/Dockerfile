@@ -11,7 +11,7 @@ COPY ../../ .
 RUN pnpm install --frozen-lockfile || cat /app/.npm/_logs/*
 
 # Run all tests before proceeding with the build
-RUN chmod +x ./run-all-tests.sh
+RUN chmod +x ./scripts/run-all-tests.sh
 # Run only safe tests that don't need browsers or external services
 RUN npm run test:safe
 
