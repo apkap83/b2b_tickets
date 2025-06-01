@@ -13,7 +13,7 @@
     "test:e2e:mock": "nx run b2b_tickets-e2e:e2e --configuration=mock",
     "test:e2e:debug": "nx run b2b_tickets-e2e:e2e --configuration=debug",
     "test:e2e:mock-only": "nx run b2b_tickets-e2e:e2e --configuration=mock-only",
-    "test:unit": "nx run-many --target=test --projects=config,utils,auth-options --detectOpenHandles",
+    "test:unit": "./scripts/run-all-unit-tests.sh",
     "test:all": "./scripts/run-all-tests.sh",
     "test:safe": "SKIP_BROWSER_TESTS=1 ./scripts/run-all-tests.sh",
     "dev": "concurrently -k -n \"WEB,SOCKET\" -c \"cyan,green\" \"nx dev b2b_tickets\" \"./scripts/run-dev-socket-server.sh\"",

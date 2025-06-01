@@ -1,6 +1,37 @@
 import { test, expect, Page } from '@playwright/test';
 import { setupTestEnvironment } from './mock-helper';
-import { ErrorCode } from '@b2b-tickets/shared-models';
+
+// Define ErrorCode enum locally for testing
+enum ErrorCode {
+  IncorrectUsernameOrPassword = 'incorrect-username-or-password',
+  NoCredentialsProvided = 'no-credentials-provided',
+  UserNotFound = 'user-not-found',
+  UserIsLocked = 'user-is-locked',
+  IncorrectPassword = 'incorrect-password',
+  UserMissingPassword = 'missing-password',
+  TwoFactorDisabled = 'two-factor-disabled',
+  TwoFactorAlreadyEnabled = 'two-factor-already-enabled',
+  TwoFactorSetupRequired = 'two-factor-setup-required',
+  SecondFactorRequired = 'second-factor-required',
+  IncorrectTwoFactorCode = 'incorrect-two-factor-code',
+  InternalServerError = 'internal-server-error',
+  NewPasswordMatchesOld = 'new-password-matches-old',
+  CaptchaJWTTokenRequired = 'captcha-jwt-token-required',
+  CaptchaJWTTokenInvalid = 'captcha-jwt-token-invalid',
+  EmailIsRequired = 'email-is-required',
+  IncorrectEmailProvided = 'incorrect-email-provided',
+  IfAccountExistsYouWillReceivePasswordResetLink = 'if-account-exists-you-will-receive-password-reset-link',
+  TotpJWTTokenRequired = 'totp-jwt-token-required',
+  TotpJWTTokenInvalid = 'totp-jwt-token-invalid',
+  TokenForEmailRequired = 'token-for-email-required',
+  IncorrectPassResetTokenProvided = 'incorrect-pass-reset-token-provided',
+  EmailJWTTokenRequired = 'email-jwt-token-required',
+  EmailJWTTokenInvalid = 'email-jwt-token-invalid',
+  NewPasswordRequired = 'new-password-required',
+  NoRoleAssignedToUser = 'no-role-assigned-to-user',
+  DecryptionFailed = 'decryption-failed',
+  MaxOtpAttemptsRequested = 'max-otp-attempts-requested'
+};
 
 // Mock user data
 const mockUser = {

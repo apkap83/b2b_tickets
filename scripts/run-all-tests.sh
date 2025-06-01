@@ -49,9 +49,9 @@ START_TIME=$(date +%s)
 
 echo -e "\n${GREEN}=== Step 1: Running Unit Tests ===${NC}"
 
-# Run unit tests for libraries that are known to work
-echo -e "\n${YELLOW}Running unit tests for config, utils, and auth-options...${NC}"
-if run_test "unit-core" "nx run-many --target=test --projects=config,utils,auth-options,totp-service --detectOpenHandles"; then
+# Run unit tests for all projects with test targets
+echo -e "\n${YELLOW}Running unit tests for all projects with test targets...${NC}"
+if run_test "unit-core" "./scripts/run-all-unit-tests.sh"; then
     UNIT_TESTS_PASSED=1
 fi
 
@@ -82,7 +82,7 @@ fi
 echo -e "\n${YELLOW}Checking if dev server is running...${NC}"
 if curl -s http://127.0.0.1:3000 > /dev/null; then
     echo -e "${GREEN}Server is running. Running E2E tests with server...${NC}"
-    if run_test "e2e" "npm run test:e2e"; then
+    if run_test "e2e" "pnpm run test:e2e"; then
         E2E_TESTS_PASSED=1
     fi
 else
@@ -90,11 +90,11 @@ else
     # Skip browser tests in CI/Docker environments if SKIP_BROWSER_TESTS is set
     if [ -n "$CI" ] || [ -n "$SKIP_BROWSER_TESTS" ]; then
         echo -e "${YELLOW}Detected CI/Docker environment, skipping browser tests...${NC}"
-        if run_test "e2e-skip" "npm run test:e2e:skip"; then
+        if run_test "e2e-skip" "pnpm run test:e2e:skip"; then
             E2E_TESTS_PASSED=1
         fi
     else
-        if run_test "e2e-mock" "npm run test:e2e:mock-only"; then
+        if run_test "e2e-mock" "pnpm run test:e2e:mock-only"; then
             E2E_TESTS_PASSED=1
         fi
     fi

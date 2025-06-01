@@ -37,6 +37,6 @@
       }
     }
   },
-  "implicitDependencies": ["b2b_tickets"],
+  "implicitDependencies": ["b2b_tickets", "shared-models"],
   "tags": []
 }

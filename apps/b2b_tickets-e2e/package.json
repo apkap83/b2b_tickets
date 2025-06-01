@@ -18,5 +18,8 @@
     "@nx/playwright": "21.0.0",
     "@playwright/test": "^1.47.2",
     "@types/node": "^22.7.4"
+  },
+  "dependencies": {
+    "@b2b-tickets/shared-models": "*"
   }
 }

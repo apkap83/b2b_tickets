@@ -1,6 +1,11 @@
 import { test, expect, Page } from '@playwright/test';
 import { setupTestEnvironment } from './mock-helper';
-import { AuthenticationTypes } from '@b2b-tickets/shared-models';
+
+// Define AuthenticationTypes enum locally for testing
+enum AuthenticationTypes {
+  LOCAL = 'LOCAL',
+  LDAP = 'LDAP',
+}
 
 // Mock user data for LDAP user
 const mockLdapUser = {
