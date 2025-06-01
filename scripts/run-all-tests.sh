@@ -47,11 +47,11 @@ run_test() {
 # Start timestamp
 START_TIME=$(date +%s)
 
-echo -e "\n${BLUE}=== Step 1: Running Unit Tests ===${NC}"
+echo -e "\n${GREEN}=== Step 1: Running Unit Tests ===${NC}"
 
 # Run unit tests for libraries that are known to work
 echo -e "\n${YELLOW}Running unit tests for config, utils, and auth-options...${NC}"
-if run_test "unit-core" "nx run-many --target=test --projects=config,utils,auth-options --detectOpenHandles"; then
+if run_test "unit-core" "nx run-many --target=test --projects=config,utils,auth-options,totp-service --detectOpenHandles"; then
     UNIT_TESTS_PASSED=1
 fi
 
