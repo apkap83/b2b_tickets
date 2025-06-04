@@ -161,7 +161,3 @@ sudo docker compose up -d --build --no-cache --remove-orphans staging_b2b_ticket
 # Clean up unused Docker resources
 sudo docker system prune -a -f --volumes
 ```
-<<<<<<< HEAD
-=======
-
->>>>>>> 55da3ac (Update README.md)
