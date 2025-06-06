@@ -599,15 +599,6 @@ export async function sendEmailForNewHandlerComment(
           | TemplateVariables[EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_PRODUCTION]
       );
 
-      console.log({
-        from: config.EmailFromAddress,
-        to: [ticket.ticket_creator_email],
-        cc: ccEmails ? [ccEmails] : [],
-        subject: subject as string,
-        text: stripHtmlTags(templateForUserCreation),
-        html: templateForUserCreation,
-      });
-
       // Send Email for Handler
       await transporter.sendMail({
         from: config.EmailFromAddress,
