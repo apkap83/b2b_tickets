@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      /* Add styles if needed */
+    </style>
+  </head>
+  <body>
+    <p>Dear User,</p>
+    <p>
+      We would like to inform you that a new comment has been added to the
+      currently opened ticket that is associated with your company. Please check
+      the commment and the ticket details:
+    </p>
+    <p>
+      <a
+        href="{{webSiteUrl}}/ticket/{{ticketNumber}}"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="color: #007bff; text-decoration: none"
+      >
+        Ticket Number: {{ticketNumber}}
+      </a>
+    </p>
+    <p>
+      The comment has been added by {{productCompanyName}} representative.
+      Please review the update at your earliest convenience.
+    </p>
+    <p>
+      If you have any further questions, feel free to reply to this email or
+      visit the Platinum Ticketing support site for more information.
+    </p>
+    <p>Thank you for using our services!</p>
+    <p>Kind Regards</p>
+    <a href="mailto:{{signatureEmail}}">{{productNameTeam}}</a>
+  </body>
+</html>
