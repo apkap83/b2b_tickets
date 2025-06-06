@@ -6,17 +6,19 @@ export const Footer: React.FC = () => {
     <footer
       className={`flex justify-center 
       items-center bg-black text-white
-      text-center text-sm py-2 z-10 fixed w-full bottom-0`}
+      text-center text-sm py-2 z-10 fixed bottom-0
+      w-dvw
+      `}
     >
       <div
         style={{
-          marginLeft: 'auto',
-          width: '450px',
+          width: '100%',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           gap: '10px',
           fontFamily: 'Manrope, sans-serif',
+          position: 'relative',
         }}
       >
         <div
@@ -50,9 +52,9 @@ export const Footer: React.FC = () => {
             objectFit: 'contain',
           }}
         />
-      </div>
-      <div className="ml-auto text-xs text-gray-500 mr-[16px]">
-        Ver. {process.env.version}
+        <div className="text-xs text-gray-500 absolute right-7 hidden md:block">
+          Ver. {process.env.version}
+        </div>
       </div>
     </footer>
   );

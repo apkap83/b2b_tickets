@@ -135,7 +135,7 @@ export const NavBar = memo(() => {
 
         {environmentIndicator}
 
-        <Box className={`${styles.menuAndLoggedIndication}`}>
+        <Box className={`${styles.menuAndLoggedIndication} mr-3`}>
           <div
             className="border-y border-solid border-[#5b5ea090] pr-1 sm:pr-5"
             style={{
