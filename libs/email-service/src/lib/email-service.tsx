@@ -532,13 +532,10 @@ export async function sendEmailForTOTPCode(
   }
 }
 
-export async function sendEmailForNewHandlerComment({
-  emailNotificationType,
-  ticketId,
-}: {
-  emailNotificationType: EmailNotificationType;
-  ticketId: string;
-}) {
+export async function sendEmailForNewHandlerComment(
+  emailNotificationType: EmailNotificationType,
+  ticketId: string
+) {
   if (!config.SendEmails) return;
 
   const logRequest = await getRequestLogger(TransportName.AUTH);
@@ -601,6 +598,15 @@ export async function sendEmailForNewHandlerComment({
           | TemplateVariables[EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_STAGING]
           | TemplateVariables[EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_PRODUCTION]
       );
+
+      console.log({
+        from: config.EmailFromAddress,
+        to: [ticket.ticket_creator_email],
+        cc: ccEmails ? [ccEmails] : [],
+        subject: subject as string,
+        text: stripHtmlTags(templateForUserCreation),
+        html: templateForUserCreation,
+      });
 
       // Send Email for Handler
       await transporter.sendMail({

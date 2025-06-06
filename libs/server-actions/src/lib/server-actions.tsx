@@ -46,7 +46,10 @@ import { getRequestLogger } from '@b2b-tickets/server-actions/server';
 import { CustomLogger } from '@b2b-tickets/logging';
 
 import { TransportName, EmailTemplate } from '@b2b-tickets/shared-models';
-import { sendEmailOnTicketUpdate } from '@b2b-tickets/email-service/server';
+import {
+  sendEmailOnTicketUpdate,
+  sendEmailForNewHandlerComment,
+} from '@b2b-tickets/email-service/server';
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -1230,7 +1233,7 @@ export const createNewComment = async (
       userHasRole(session, AppRoleTypes.B2B_TicketHandler)
     ) {
       // Send E-mail Notifications asynchronously
-      sendEmailOnTicketUpdate(
+      sendEmailForNewHandlerComment(
         EmailNotificationType.NEW_HANDLER_COMMENT,
         ticketId
       );
