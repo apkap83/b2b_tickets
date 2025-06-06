@@ -341,6 +341,7 @@ export enum EmailNotificationType {
   USER_CREATION = 'user-creation',
   RESET_TOKEN = 'reset-token',
   TOTP_BY_EMAIL = 'totp-by-email',
+  NEW_HANDLER_COMMENT = 'new-handler-comment',
 }
 
 export const EmailListOfHandlers = ['apostolos.kapetanios@nova.gr'];
@@ -361,6 +362,10 @@ export enum EmailTemplate {
 
   EMAIL_TOKEN_NOTIFICATION = 'EmailToken.html',
   TOTP_BY_EMAIL = 'TOTP_By_Email.html',
+
+  NEW_HANDLER_COMMENT_NOTIFICATION_DEVELOPMENT = 'NewHandlerCommentNotificationForCustomer_Development.html',
+  NEW_HANDLER_COMMENT_NOTIFICATION_STAGING = 'NewHandlerCommentNotificationForCustomer_Staging.html',
+  NEW_HANDLER_COMMENT_NOTIFICATION_PRODUCTION = 'NewHandlerCommentNotificationForCustomer.html',
 }
 
 export interface TemplateVariables {
@@ -430,6 +435,32 @@ export interface TemplateVariables {
   [EmailTemplate.TOTP_BY_EMAIL]: {
     totpCode: string;
   };
+
+  [EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_DEVELOPMENT]: {
+    appEnvironment: string;
+    webSiteUrl: string;
+    ticketNumber: string;
+    productCompanyName: string;
+    signatureEmail: string;
+    productNameTeam: string; //
+  };
+
+  [EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_STAGING]: {
+    appEnvironment: string;
+    webSiteUrl: string;
+    ticketNumber: string;
+    productCompanyName: string;
+    signatureEmail: string;
+    productNameTeam: string; //
+  };
+
+  [EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_PRODUCTION]: {
+    webSiteUrl: string;
+    ticketNumber: string;
+    productCompanyName: string;
+    signatureEmail: string;
+    productNameTeam: string; //
+  };
 }
 
 export interface TicketEscalation {
@@ -495,6 +526,10 @@ export enum EmailTemplateSubject {
   EMAIL_TOKEN_NOTIFICATION = 'Nova Platinum Ticketing - Reset Token',
 
   TOTP_BY_EMAIL_NOTIFICATION = 'Nova Platinum Ticketing - OTP Code',
+
+  NEW_HANDLER_COMMENT_DEVELOPMENT = 'Nova Platinum Ticketing - New Comment  - ({{appEnvironment}} Environment)',
+  NEW_HANDLER_COMMENT_STAGING = 'Nova Platinum Ticketing - New Comment  - ({{appEnvironment}} Environment)',
+  NEW_HANDLER_COMMENT_PRODUCTION = 'Nova Platinum Ticketing - New Comment',
 }
 
 export interface EmailVariableTypes {

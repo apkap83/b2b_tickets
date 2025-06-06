@@ -125,15 +125,8 @@ export const sendEmailOnTicketUpdate = async (
     let template = '';
     let populatedHtml = '';
 
-    await setSchemaAndTimezone(pgB2Bpool);
     // Find Ticket from ticketId
-    const ticketResp = await pgB2Bpool.query(
-      'SELECT * from tickets_v where ticket_id = $1',
-      [ticketId]
-    );
-
-    // Type assertion for the rows returned by the query
-    const ticket: TicketDetail = ticketResp.rows[0] as TicketDetail;
+    const ticket: TicketDetail = await getTicketDetailsFromTicketId(ticketId);
 
     // Find Cc Users
     const res = await getCcValuesForTicket({ ticketId });
@@ -539,6 +532,95 @@ export async function sendEmailForTOTPCode(
   }
 }
 
+export async function sendEmailForNewHandlerComment({
+  emailNotificationType,
+  ticketId,
+}: {
+  emailNotificationType: EmailNotificationType;
+  ticketId: string;
+}) {
+  if (!config.SendEmails) return;
+
+  const logRequest = await getRequestLogger(TransportName.AUTH);
+  try {
+    // Find Ticket from ticketId
+    const ticket: TicketDetail = await getTicketDetailsFromTicketId(ticketId);
+
+    // Find Cc Users
+    const res = await getCcValuesForTicket({ ticketId });
+
+    const ccEmails = res.data?.ccEmails as string;
+    const ccPhones = res.data?.ccPhones as string;
+
+    if (emailNotificationType === EmailNotificationType.NEW_HANDLER_COMMENT) {
+      const env =
+        process.env['APP_ENV'] === 'staging'
+          ? ApplicationEnvironment.Staging
+          : process.env['NODE_ENV'] === 'production'
+          ? ApplicationEnvironment.Production
+          : ApplicationEnvironment.Development;
+
+      let emailTemplate = null;
+      let subject = null;
+
+      if (env === ApplicationEnvironment.Staging) {
+        emailTemplate = EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_STAGING;
+        subject = populateSubject(
+          EmailTemplateSubject.NEW_HANDLER_COMMENT_STAGING,
+          { appEnvironment: env }
+        );
+      }
+
+      if (env === ApplicationEnvironment.Development) {
+        emailTemplate =
+          EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_DEVELOPMENT;
+        subject = populateSubject(
+          EmailTemplateSubject.NEW_HANDLER_COMMENT_DEVELOPMENT,
+          { appEnvironment: env }
+        );
+      }
+
+      if (env === ApplicationEnvironment.Production) {
+        emailTemplate =
+          EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_PRODUCTION;
+        subject = EmailTemplateSubject.NEW_HANDLER_COMMENT_PRODUCTION;
+      }
+
+      // Load and populate the template
+      const templateForUserCreation = populateTemplate(
+        loadTemplate(emailTemplate as EmailTemplate),
+        {
+          appEnvironment: env,
+          webSiteUrl: config.webSiteUrl,
+          ticketNumber: ticket.Ticket,
+          productCompanyName: process.env['PRODUCT_COMPANY_NAME'],
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
+        } as
+          | TemplateVariables[EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_DEVELOPMENT]
+          | TemplateVariables[EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_STAGING]
+          | TemplateVariables[EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_PRODUCTION]
+      );
+
+      // Send Email for Handler
+      await transporter.sendMail({
+        from: config.EmailFromAddress,
+        to: [ticket.ticket_creator_email],
+        cc: ccEmails ? [ccEmails] : [],
+        subject: subject as string,
+        text: stripHtmlTags(templateForUserCreation),
+        html: templateForUserCreation,
+      });
+
+      logRequest.info(
+        `Serv.A.F. - Sent E-mail for New Handler Comment To: ${ticket.ticket_creator_email} and Cc: ${ccEmails}`
+      );
+    }
+  } catch (error) {
+    logRequest.error(error);
+  }
+}
+
 const getCcValuesForTicket = async ({
   ticketId,
 }: {
@@ -627,4 +709,15 @@ const generateSecureLinkForPasswordCreation = async (
 
   const encryptedSecret = symmetricEncrypt(token);
   return `${config.webSiteUrl}/reset-pass/${encryptedSecret}`;
+};
+
+const getTicketDetailsFromTicketId = async (ticketId: string) => {
+  await setSchemaAndTimezone(pgB2Bpool);
+  // Find Ticket from ticketId
+  const ticketResp = await pgB2Bpool.query(
+    'SELECT * from tickets_v where ticket_id = $1',
+    [ticketId]
+  );
+
+  return ticketResp.rows[0] as TicketDetail;
 };
