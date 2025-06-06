@@ -10,10 +10,9 @@ COPY ../../ .
 # RUN pnpm ci || cat /app/.npm/_logs/*
 RUN pnpm install --frozen-lockfile || cat /app/.npm/_logs/*
 
-# Run all tests before proceeding with the build
-RUN chmod +x ./scripts/run-all-tests.sh
 # Run only safe tests that don't need browsers or external services
-RUN npm run test:safe
+RUN chmod +x ./scripts/run-all-tests.sh ./scripts/run-all-unit-tests.sh
+RUN pnpm run test:safe
 
 # Build the NMS_Portal project using nx
 RUN nx reset
