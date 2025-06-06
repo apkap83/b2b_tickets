@@ -848,7 +848,8 @@ const CcFields = memo(
       setShowCcFields(!showCcFields);
     }, [showCcFields, setShowCcFields]);
 
-    const headerStyle = useMemo(
+    // Option 1: Type assertion (Quick fix)
+    const headerStyle: React.CSSProperties = useMemo(
       () => ({
         fontSize: '12px',
         border: '1px solid rgba(0,0,0,.4)',
@@ -872,7 +873,7 @@ const CcFields = memo(
     return (
       <div className="flex-col">
         <div>
-          <div style={headerStyle} onClick={toggleFields}>
+          <div style={{ ...headerStyle }} onClick={toggleFields}>
             {showCcFields ? (
               <div className="flex justify-center items-center">
                 <span>Hide Cc Fields</span>

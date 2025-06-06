@@ -12,6 +12,12 @@ import { AppRoleTypes } from '@b2b-tickets/shared-models';
 import toast from 'react-hot-toast';
 import './SessionTimer.css';
 
+// Define props interface for SessionTimer
+interface SessionTimerProps {
+  time?: string;
+  title?: string;
+}
+
 export const SessionPopup = memo(() => {
   const [showPopup, setShowPopup] = useState(false);
   const [mySession, setMySession] = useState<Session | null>(null); // Track session manually
@@ -20,8 +26,8 @@ export const SessionPopup = memo(() => {
     config.SessionMaxAge
   );
 
-  const isHandler = useMemo(() => 
-    userHasRole(mySession, AppRoleTypes.B2B_TicketHandler),
+  const isHandler = useMemo(
+    () => userHasRole(mySession, AppRoleTypes.B2B_TicketHandler),
     [mySession]
   );
 
@@ -62,7 +68,7 @@ export const SessionPopup = memo(() => {
 
       return () => clearInterval(intervalId);
     }
-  }, [mySession]);
+  }, [mySession, calculateTimeLeft]);
 
   // Determine if Popup is shown
   useEffect(() => {
@@ -94,65 +100,66 @@ export const SessionPopup = memo(() => {
     signOut();
   }, []);
 
-  const safeTimeLeft = useMemo(() => 
-    Math.max(0, timeLeftInSeconds ?? 0),
+  const safeTimeLeft = useMemo(
+    () => Math.max(0, timeLeftInSeconds ?? 0),
     [timeLeftInSeconds]
   );
-  
-  const percentage = useMemo(() => 
-    safeTimeLeft && (safeTimeLeft / 3600) * 100,
+
+  const percentage = useMemo(
+    () => safeTimeLeft && (safeTimeLeft / 3600) * 100,
     [safeTimeLeft]
   );
 
-  const SessionTimer = memo(({ time = '30:05', title = 'Stopwatch' }) => {
-    const handleExtendSession = useCallback(() => {
-      extendSession();
-    }, []);
-    
-    const strokeDashoffset = useMemo(() => 
-      `${282 - (282 * (percentage || 1)) / 100}`,
-      [percentage]
-    );
-    
-    const formattedTime = useMemo(() => 
-      formatTimeMMSS(timeLeftInSeconds!),
-      [timeLeftInSeconds]
-    );
-    
-    return (
-      <div
-        className="semi-circle-timer cursor-pointer"
-        onClick={handleExtendSession}
-      >
-        <svg width="50" height="25" viewBox="0 0 200 100">
-          <path
-            d="M10,100 A90,90 0 0,1 190,100"
-            fill="none"
-            stroke="#777"
-            strokeWidth="20"
-          />
-          <path
-            d="M10,100 A90,90 0 0,1 190,100"
-            fill="none"
-            stroke="#007700"
-            strokeWidth="20"
-            strokeDasharray="282"
-            strokeDashoffset={strokeDashoffset}
-          />
-        </svg>
-        <div className="remaining-time">
-          {formattedTime}
+  const SessionTimer = memo<SessionTimerProps>(
+    ({ time = '30:05', title = 'Stopwatch' }) => {
+      const handleExtendSession = useCallback(() => {
+        extendSession();
+      }, []);
+
+      const strokeDashoffset = useMemo(
+        () => `${282 - (282 * (percentage || 1)) / 100}`,
+        [percentage]
+      );
+
+      const formattedTime = useMemo(
+        () => (timeLeftInSeconds ? formatTimeMMSS(timeLeftInSeconds) : time),
+        [timeLeftInSeconds, time]
+      );
+
+      return (
+        <div
+          className="semi-circle-timer cursor-pointer"
+          onClick={handleExtendSession}
+          title={title}
+        >
+          <svg width="50" height="25" viewBox="0 0 200 100">
+            <path
+              d="M10,100 A90,90 0 0,1 190,100"
+              fill="none"
+              stroke="#777"
+              strokeWidth="20"
+            />
+            <path
+              d="M10,100 A90,90 0 0,1 190,100"
+              fill="none"
+              stroke="#007700"
+              strokeWidth="20"
+              strokeDasharray="282"
+              strokeDashoffset={strokeDashoffset}
+            />
+          </svg>
+          <div className="remaining-time">{formattedTime}</div>
         </div>
-      </div>
-    );
-  });
+      );
+    }
+  );
 
   // Memoize the formatted time display
-  const formattedExpiryTime = useMemo(() => 
-    formatTimeMMSS(timeLeftInSeconds ?? 0), 
+  const formattedExpiryTime = useMemo(
+    () => formatTimeMMSS(timeLeftInSeconds ?? 0),
     [timeLeftInSeconds]
   );
-  
+
   // Memoize session extend handler for the popup button
   const handleExtendSessionWithState = useCallback(async () => {
     setIsExtending(true);
@@ -161,7 +168,7 @@ export const SessionPopup = memo(() => {
       setIsExtending(false);
     }, 5000);
   }, [extendSession, setIsExtending]);
-  
+
   return (
     <>
       {/* <SessionTimer time={formattedExpiryTime} /> */}
@@ -172,9 +179,8 @@ export const SessionPopup = memo(() => {
             <div className="bg-white px-8 py-3 rounded-lg">
               <h2 className="text-center mb-3">Session Expiring Soon</h2>
               <p>
-                Your session will expire in{' '}
-                {formattedExpiryTime}. Do you want to extend
-                your session?
+                Your session will expire in {formattedExpiryTime}. Do you want
+                to extend your session?
               </p>
               <div className="mt-5 flex justify-center items-center gap-6">
                 <Button variant="outlined" onClick={performLogOut}>
