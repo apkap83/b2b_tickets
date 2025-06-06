@@ -1217,10 +1217,24 @@ export const createNewComment = async (
         ]
       );
 
+      // Send E-mail Notifications asynchronously
+      sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CLOSURE, ticketId);
+
       revalidatePath(`/ticket/${ticketNumber}`);
       return toFormState('SUCCESS', 'Ticket was Cancelled');
     }
 
+    if (
+      modalAction !== TicketDetailsModalActions.CLOSE &&
+      modalAction !== TicketDetailsModalActions.CANCEL &&
+      userHasRole(session, AppRoleTypes.B2B_TicketHandler)
+    ) {
+      // Send E-mail Notifications asynchronously
+      sendEmailOnTicketUpdate(
+        EmailNotificationType.NEW_HANDLER_COMMENT,
+        ticketId
+      );
+    }
     logRequest.info(
       `Serv.A.F. ${session.user.userName} - Creating new comment for ticket with id ${ticketId}`
     );
