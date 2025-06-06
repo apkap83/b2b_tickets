@@ -185,6 +185,18 @@ export const NewCommentModal = memo(
                     </div>
                   </div>
                 </div>
+                {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
+                  <p
+                    className="text-xs text-gray-600"
+                    style={{
+                      transform: 'translate(5px, -14px)',
+                    }}
+                  >
+                    * Customer will be notified by e-mail notification for this
+                    comment
+                  </p>
+                )}
+
                 {/* </div> */}
                 <div
                   className={`${styles.buttonDiv} self-stretch justify-center items-center inline-flex`}
