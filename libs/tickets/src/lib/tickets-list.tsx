@@ -8,11 +8,14 @@ import {
   TicketDetail,
   TicketDetailForTicketCreator,
   FilterTicketsStatus,
+  AppRoleTypes,
 } from '@b2b-tickets/shared-models';
 import { TicketListHeader } from '@b2b-tickets/tickets';
 import { Pagination } from '@b2b-tickets/ui';
 import { config } from '@b2b-tickets/config';
 import { LiveUpdatesIndicator } from '@b2b-tickets/ui';
+import { userHasRole } from '@b2b-tickets/utils';
+import { useSession } from 'next-auth/react';
 
 export const TicketsList = memo(
   ({
@@ -22,6 +25,8 @@ export const TicketsList = memo(
     theTicketsList: TicketDetail[] | TicketDetailForTicketCreator[];
     totalRows: number;
   }) => {
+    const { data: session } = useSession();
+
     // State to manage the updated ticket list
     const [ticketsList, setTicketsList] = useState<
       TicketDetail[] | TicketDetailForTicketCreator[]
@@ -92,7 +97,9 @@ export const TicketsList = memo(
           filter={filters}
           currentPage={currentPageNumber}
         />
-        <LiveUpdatesIndicator />
+        {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
+          <LiveUpdatesIndicator />
+        )}
       </>
     );
   }
