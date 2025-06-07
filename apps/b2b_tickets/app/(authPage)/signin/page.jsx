@@ -7,9 +7,20 @@ import { background_nms_portal as imagePath } from '@b2b-tickets/assets';
 import { Footer } from '@b2b-tickets/ui';
 import { ReCaptchaProvider } from 'next-recaptcha-v3';
 
-export default async function SignIn() {
+export default async function SignIn({ searchParams }) {
   const providers = await getProviders();
   const csrfToken = await getCsrfToken();
+
+  // Check if user is already authenticated
+  const session = await getServerSession(authOptions);
+
+  // Get the callback URL from search parameters
+  const callbackUrl = searchParams?.callbackUrl || '/tickets';
+
+  // If authenticated, redirect to the callback URL or dashboard
+  if (session) {
+    redirect(callbackUrl);
+  }
 
   return (
     <>
