@@ -50,7 +50,7 @@ export const TicketsListTable = ({
   currentPage: number;
 }) => {
   const { data: session } = useSession();
-  const { latestEventEmitted } = useWebSocketContext(); // Access WebSocket instance
+  const { latestEventEmitted, connected } = useWebSocketContext(); // Access WebSocket instance
   const [activeFilterColumn, setActiveFilterColumn] = useState<string | null>(
     null
   );

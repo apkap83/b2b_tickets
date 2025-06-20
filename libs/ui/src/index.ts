@@ -9,3 +9,4 @@ export * from './lib/pagination/PaginationOld';
 export * from './lib/nav-bar/NavBar';
 export * from './lib/submit-button/SubmitButton';
 export * from './lib/footer/Footer';
+export * from './lib/live-updates-indicator/LiveUpdatesIndicator';
