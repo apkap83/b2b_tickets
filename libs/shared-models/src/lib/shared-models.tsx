@@ -430,6 +430,8 @@ export interface TemplateVariables {
 
   [EmailTemplate.EMAIL_TOKEN_NOTIFICATION]: {
     verificationCode: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
 
   [EmailTemplate.TOTP_BY_EMAIL]: {
@@ -459,7 +461,7 @@ export interface TemplateVariables {
     ticketNumber: string;
     productCompanyName: string;
     signatureEmail: string;
-    productNameTeam: string; //
+    productNameTeam: string;
   };
 }
 

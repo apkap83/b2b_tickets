@@ -463,6 +463,8 @@ export async function sendEmailForPasswordReset(
         loadTemplate(emailTemplate as EmailTemplate),
         {
           verificationCode,
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
         } as TemplateVariables[EmailTemplate.EMAIL_TOKEN_NOTIFICATION]
       );
 
