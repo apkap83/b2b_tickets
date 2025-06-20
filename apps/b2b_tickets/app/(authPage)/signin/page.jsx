@@ -14,13 +14,18 @@ export default async function SignIn({ searchParams }) {
   const csrfToken = await getCsrfToken();
 
   // Check if user is already authenticated
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(options);
 
   // Get the callback URL from search parameters
   const callbackUrl = searchParams?.callbackUrl || '/tickets';
 
   // If authenticated, redirect to the callback URL or tickets
   if (session) {
+    // Prevent redirect loop by avoiding auth-related path
+    if (callbackUrl === '/signin') {
+      redirect('/tickets');
+    }
+
     redirect(callbackUrl);
   }
 
