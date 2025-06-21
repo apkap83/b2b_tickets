@@ -76,3 +76,11 @@ Docker_Commands.txt
 
 /database
 **/.claude/settings.local.json
+
+# Ignore all files inside these folders
+attachment_files_prod/*
+attachment_files_test/*
+
+# But do not ignore the .gitkeep file
+!attachment_files_prod/.gitkeep
+!attachment_files_test/.gitkeep
