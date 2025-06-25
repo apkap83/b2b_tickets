@@ -11,19 +11,21 @@ import { TicketsUiComments } from '@b2b-tickets/tickets/ui/comments';
 import { NewCommentModal } from './new-comment-modal';
 import { EscalateModal } from './escalate-modal';
 
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useEscKeyListener } from '@b2b-tickets/react-hooks';
 
-import { userHasRole } from '@b2b-tickets/utils';
+import { userHasRole, isPreviewableFile } from '@b2b-tickets/utils';
 import {
   AppRoleTypes,
   TicketDetailsModalActions,
   TicketStatus,
+  TicketAttachmentDetails,
 } from '@b2b-tickets/shared-models';
 import {
   setTicketWorking,
   getNextEscalationLevel,
+  getTicketDetailsForTicketNumber,
+  getTicketAttachments,
 } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import styles from './css/ticket-details.module.scss';
@@ -43,7 +45,11 @@ import clsx from 'clsx';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { EscalationBars } from '@b2b-tickets/ui';
 import { useWebSocketContext } from '@b2b-tickets/contexts';
-import { getTicketDetailsForTicketNumber } from '@b2b-tickets/server-actions';
+import { IoCloudUploadOutline } from 'react-icons/io5';
+import { FileAttachmentModal } from '@b2b-tickets/file-attachment-modal';
+import { LiaCommentDotsSolid } from 'react-icons/lia';
+import { TicketAttachments } from './ticket-attachments';
+import { FilePreviewModal } from './file-preview-modal';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -58,7 +64,6 @@ export function TicketDetails({
   theTicketDetails: TicketDetail[] | TicketDetailForTicketCreator[];
   theTicketNumber: string;
 }) {
-  const router = useRouter();
   const { data: session, status } = useSession();
   //@ts-ignore
   const userId = session?.user.user_id;
@@ -68,6 +73,12 @@ export function TicketDetails({
   const [showRemedyIncDialog, setShowRemedyIncDialog] = useState(false);
   const [showSeverityDialog, setShowSeverityDialog] = useState(false);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showFileAttachmentDialog, setShowFileAttachmentDialog] =
+    useState(false);
+
+  const [showFilePreviewDialog, setShowFilePreviewDialog] = useState(false);
+  const [selectedFileForPreview, setSelectedFileForPreview] =
+    useState<TicketAttachmentDetails | null>(null);
 
   // const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
   const [modalAction, setModalAction] = useState<TicketDetailsModalActions>(
@@ -76,75 +87,126 @@ export function TicketDetails({
 
   const [nextEscalationLevel, setNextEscalationLevel] = useState<string>('');
 
+  const [ticketAttachments, setTicketAttachments] = useState<
+    TicketAttachmentDetails[] | undefined
+  >([]);
+
   const [ticketDetails, setTicketDetails] = useState<
     TicketDetail[] | TicketDetailForTicketCreator[]
   >(theTicketDetails);
 
-  // Get Ticket Details and Next Escalation Level
+  const getMyNextEscalationLevel = async () => {
+    try {
+      const resp = await getNextEscalationLevel({
+        ticketId: ticketDetails[0].ticket_id,
+        ticketNumber: theTicketNumber,
+      });
+
+      setNextEscalationLevel(resp.data);
+    } catch (error) {
+      console.error('Error fetching next escalation level:', error);
+    }
+  };
+
+  const getMyTicketAttachments = async () => {
+    try {
+      const resp = await getTicketAttachments({
+        ticketId: ticketDetails[0].ticket_id,
+      });
+
+      setTicketAttachments(resp.data);
+    } catch (error) {
+      console.error('Error fetching Ticket attachments file details:', error);
+    }
+  };
+
+  // Get next Escalation Level and Attachment Files
   useEffect(() => {
-    const getMyNextEscalationLevel = async () => {
-      try {
-        const resp = await getNextEscalationLevel({
-          ticketId: ticketDetails[0].ticket_id,
-          ticketNumber: theTicketNumber,
-        });
-
-        setNextEscalationLevel(resp.data);
-      } catch (error) {
-        console.error('Error fetching next escalation level:', error);
-      }
-    };
-
-    // getTicketDetails();
     getMyNextEscalationLevel();
+    getMyTicketAttachments();
   }, [theTicketNumber]);
+
   // Web Socket Connection
   const { emitEvent, latestEventEmitted, resetLatestEventEmitted } =
     useWebSocketContext();
 
+  // Define event types that trigger ticket details refresh
+  const TICKET_UPDATE_EVENTS = [
+    WebSocketMessage.TICKET_ALTERED_SEVERITY,
+    WebSocketMessage.TICKET_ALTERED_REMEDY_INC,
+    WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE,
+    WebSocketMessage.NEW_COMMENT_ADDED,
+    WebSocketMessage.TICKET_STARTED_WORK,
+    WebSocketMessage.TICKET_ESCALATED,
+    WebSocketMessage.TICKET_CANCELED,
+    WebSocketMessage.TICKET_CLOSED,
+  ] as const;
+
+  // Helper function to refresh ticket data
+  const refreshTicketData = async (
+    currentTicketId: string,
+    currentTicketNumber: string
+  ) => {
+    try {
+      // Get updated ticket details
+      const updatedTicketDetails: TicketDetail[] =
+        await getTicketDetailsForTicketNumber({
+          ticketNumber: currentTicketNumber,
+        });
+      setTicketDetails(updatedTicketDetails);
+
+      // Get updated escalation level
+      const escalationResponse = await getNextEscalationLevel({
+        ticketId: currentTicketId,
+        ticketNumber: currentTicketNumber,
+      });
+      setNextEscalationLevel(escalationResponse.data);
+
+      resetLatestEventEmitted();
+    } catch (error) {
+      console.error('Error refreshing ticket data:', error);
+    }
+  };
+
+  // Helper function to check if event should trigger ticket refresh
+  const shouldRefreshTicketDetails = (event: WebSocketMessage): boolean => {
+    return TICKET_UPDATE_EVENTS.includes(event as any);
+  };
+
+  // WebSocket event handler
   useEffect(() => {
-    const fetchFreshData = async () => {
+    const handleWebSocketEvent = async () => {
       if (!latestEventEmitted) return;
-      const { event, data: ticket_id } = latestEventEmitted;
-      const { ticket_id: eventTicketid } = ticket_id;
 
+      const { event, data } = latestEventEmitted;
+      const eventTicketId = data?.ticket_id;
+      const currentTicketId = ticketDetails[0]?.ticket_id;
+
+      // Early return if no current ticket
+      if (!currentTicketId) return;
+
+      // Handle ticket details refresh events
       if (
-        latestEventEmitted.event === WebSocketMessage.TICKET_ALTERED_SEVERITY ||
-        latestEventEmitted.event ===
-          WebSocketMessage.TICKET_ALTERED_REMEDY_INC ||
-        latestEventEmitted.event ===
-          WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE ||
-        latestEventEmitted.event === WebSocketMessage.NEW_COMMENT_ADDED ||
-        latestEventEmitted.event === WebSocketMessage.TICKET_STARTED_WORK ||
-        latestEventEmitted.event === WebSocketMessage.TICKET_ESCALATED ||
-        latestEventEmitted.event === WebSocketMessage.TICKET_CANCELED ||
-        latestEventEmitted.event === WebSocketMessage.TICKET_CLOSED
+        shouldRefreshTicketDetails(event) &&
+        eventTicketId === currentTicketId
       ) {
-        const currentTicketId = ticketDetails[0].ticket_id;
         const currentTicketNumber = ticketDetails[0].Ticket;
+        await refreshTicketData(currentTicketId, currentTicketNumber);
+        return;
+      }
 
-        // If user is in the correct ticket details page then force reload
-        if (eventTicketid === currentTicketId) {
-          // Get Ticket Details - Except Next Escalation Level
-          const ticketDetails: TicketDetail[] =
-            await getTicketDetailsForTicketNumber({
-              ticketNumber: currentTicketNumber,
-            });
-          setTicketDetails(ticketDetails); // Update the tickets state
-
-          // Get Next Escalation Level too
-          const resp = await getNextEscalationLevel({
-            ticketId: currentTicketId,
-            ticketNumber: currentTicketNumber,
-          });
-          setNextEscalationLevel(resp.data);
-          resetLatestEventEmitted();
-        }
+      // Handle file attachment events
+      if (
+        event === WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET &&
+        eventTicketId === currentTicketId
+      ) {
+        await getMyTicketAttachments();
+        return;
       }
     };
 
-    fetchFreshData();
-  }, [latestEventEmitted]);
+    handleWebSocketEvent();
+  }, [latestEventEmitted, ticketDetails]);
 
   // Custom Hook for ESC Key Press
   useEscKeyListener(() => {
@@ -153,6 +215,7 @@ export function TicketDetails({
     setShowRemedyIncDialog(false);
     setShowSeverityDialog(false);
     setShowCategoryDialog(false);
+    setShowFileAttachmentDialog(false);
   });
 
   if (!ticketDetails || ticketDetails.length === 0) return null;
@@ -192,115 +255,165 @@ export function TicketDetails({
     ticketDetails[0]['Is Final Status'] === 'y' ? true : false;
 
   const startWorkPressed = ticketStatus !== '1';
+  // Button style constants
+  const BUTTON_STYLES = {
+    primary: {
+      backgroundColor: '#474cae',
+      color: 'white',
+      paddingLeft: '1.2rem',
+      paddingRight: '1.2rem',
+      '&:hover': {
+        backgroundColor: '#585ed6',
+      },
+    },
+    primaryOutlined: {
+      backgroundColor: '#474cae',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: '#585ed6',
+      },
+    },
+    danger: {
+      backgroundColor: '#cd5353',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: '#cd4343',
+      },
+    },
+  } as const;
+
+  // Individual button handlers
+  const handleStartWork = async () => {
+    const response = await setTicketWorking({
+      ticketId,
+      ticketNumber,
+      statusId: TicketStatus.WORKING,
+      comment: `Started Working On Ticket: ${ticketNumber}`,
+    });
+
+    if (response.status === 'ERROR') {
+      return toast.error(response.message);
+    }
+
+    emitEvent(WebSocketMessage.TICKET_STARTED_WORK, { ticket_id: ticketId });
+    toast.success(response.message);
+  };
+
+  const handleCloseTicket = () => {
+    setModalAction(TicketDetailsModalActions.CLOSE);
+    setShowNewComment(true);
+  };
+
+  const handleCancelTicket = () => {
+    setModalAction(TicketDetailsModalActions.CANCEL);
+    setShowNewComment(true);
+  };
+
+  const handleAttachFile = () => {
+    setShowFileAttachmentDialog(true);
+  };
+
+  const handleNewComment = () => {
+    setModalAction(TicketDetailsModalActions.NO_ACTION);
+    setShowNewComment(true);
+  };
+
+  // Button components
+  const StartWorkButton = () => (
+    <Button onClick={handleStartWork} sx={BUTTON_STYLES.primary}>
+      Start Work
+    </Button>
+  );
+
+  const CloseTicketButton = () => (
+    <Button
+      onClick={handleCloseTicket}
+      variant="outlined"
+      sx={BUTTON_STYLES.primaryOutlined}
+    >
+      Close Ticket
+    </Button>
+  );
+
+  const CancelTicketButton = () => (
+    <Button
+      onClick={handleCancelTicket}
+      variant="outlined"
+      sx={BUTTON_STYLES.danger}
+    >
+      Cancel Ticket
+    </Button>
+  );
+
+  const AttachFileButton = () => (
+    <Button onClick={handleAttachFile} variant="outlined">
+      <IoCloudUploadOutline size="20" className="mr-2" />
+      Attach File
+    </Button>
+  );
+
+  const NewCommentButton = () => (
+    <Button onClick={handleNewComment} variant="outlined">
+      <LiaCommentDotsSolid size="20" className="mr-2" />
+      New Comment
+    </Button>
+  );
+
+  // Helper functions to determine user permissions and ticket state
+  const isTicketHandler = userHasRole(session, AppRoleTypes.B2B_TicketHandler);
+  const isTicketCreator = userHasRole(session, AppRoleTypes.B2B_TicketCreator);
+  const isNewTicket = ticketStatus === TicketStatus.NEW;
+  const isWorkingTicket = ticketStatus === TicketStatus.WORKING;
+  const canEscalate =
+    isTicketCreator && (isNewTicket || isWorkingTicket) && nextEscalationLevel;
+
+  // Render functions for different user roles and ticket states
+  const renderTicketHandlerButtons = () => {
+    if (isNewTicket) {
+      return <StartWorkButton />;
+    }
+
+    if (isWorkingTicket) {
+      return (
+        <div className="flex gap-2">
+          <CloseTicketButton />
+          <CancelTicketButton />
+          <AttachFileButton />
+          <NewCommentButton />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderTicketCreatorButtons = () => {
+    if (isNewTicket || isWorkingTicket) {
+      return (
+        <div className="flex gap-2">
+          {canEscalate && (
+            <EscalateButton nextEscalationLevel={nextEscalationLevel} />
+          )}
+          <AttachFileButton />
+          <NewCommentButton />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  // Main function - much cleaner now
   const customButtonBasedOnTicketStatus = () => {
-    if (userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
-      if (ticketStatus === TicketStatus.NEW) {
-        return (
-          <Button
-            onClick={async () => {
-              const statusId = TicketStatus.WORKING;
-
-              const response = await setTicketWorking({
-                ticketId,
-                ticketNumber,
-                statusId,
-                comment: `Started Working On Ticket: ${ticketNumber}`,
-              });
-              if (response.status === 'ERROR')
-                return toast.error(response.message);
-
-              emitEvent(WebSocketMessage.TICKET_STARTED_WORK, {
-                ticket_id: ticketId,
-              });
-              toast.success(response.message);
-            }}
-            sx={{
-              backgroundColor: '#474cae',
-              color: 'white',
-              paddingLeft: '1.2rem',
-              paddingRight: '1.2rem',
-              '&:hover': {
-                backgroundColor: '#585ed6',
-              },
-            }}
-          >
-            Start Work
-          </Button>
-        );
-      }
-
-      if (ticketStatus === TicketStatus.WORKING) {
-        return (
-          <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                setModalAction(TicketDetailsModalActions.CLOSE);
-                setShowNewComment(true);
-              }}
-              variant="outlined"
-              sx={{
-                backgroundColor: '#474cae',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: '#585ed6',
-                },
-              }}
-            >
-              Close Ticket
-            </Button>
-            <Button
-              onClick={() => {
-                setModalAction(TicketDetailsModalActions.CANCEL);
-                setShowNewComment(true);
-              }}
-              variant="outlined"
-              sx={{
-                backgroundColor: '#cd5353',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: '#cd4343',
-                },
-              }}
-            >
-              Cancel Ticket
-            </Button>
-            <Button
-              onClick={() => {
-                setModalAction(TicketDetailsModalActions.NO_ACTION);
-                setShowNewComment(true);
-              }}
-              variant="outlined"
-            >
-              Add New Comment
-            </Button>
-          </div>
-        );
-      }
+    if (isTicketHandler) {
+      return renderTicketHandlerButtons();
     }
 
-    if (userHasRole(session, AppRoleTypes.B2B_TicketCreator)) {
-      if (
-        ticketStatus === TicketStatus.NEW ||
-        ticketStatus === TicketStatus.WORKING
-      ) {
-        return (
-          <>
-            {nextEscalationLevel && (
-              <EscalateButton nextEscalationLevel={nextEscalationLevel} />
-            )}
-            <Button
-              onClick={() => {
-                setModalAction(TicketDetailsModalActions.NO_ACTION);
-                setShowNewComment(true);
-              }}
-              variant="outlined"
-            >
-              Add New Comment
-            </Button>
-          </>
-        );
-      }
+    if (isTicketCreator) {
+      return renderTicketCreatorButtons();
     }
+
+    return null;
   };
 
   const EscalateButton = ({
@@ -344,6 +457,82 @@ export function TicketDetails({
     );
   };
 
+  // Download handler function
+  const handleAttachmentDownload = async (
+    attachment: TicketAttachmentDetails
+  ) => {
+    try {
+      // Show loading toast
+
+      const loadingToast = toast.loading(
+        `Downloading ${attachment.Filename}...`
+      );
+
+      // Create download URL with parameters
+      const downloadUrl = new URL(
+        '/api/download-attachment',
+        window.location.origin
+      );
+      downloadUrl.searchParams.set('attachmentId', attachment.attachment_id);
+
+      // Fetch the file
+      const response = await fetch(downloadUrl.toString(), {
+        method: 'GET',
+        credentials: 'include', // Include cookies for authentication
+      });
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: 'Download failed' }));
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      // Get the file blob
+      const blob = await response.blob();
+
+      // Create download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.Filename;
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+
+      // Show success toast
+      // toast.success(`${attachment.Filename} downloaded successfully`);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to download file'
+      );
+    }
+  };
+
+  // Preview handler function
+  const handleAttachmentPreview = async (
+    attachment: TicketAttachmentDetails
+  ) => {
+    if (!isPreviewableFile(attachment.Filename)) {
+      toast.error('File type not supported for preview');
+      return;
+    }
+
+    setSelectedFileForPreview(attachment);
+    setShowFilePreviewDialog(true);
+  };
+
   return (
     <>
       <div className="w-full flex-col justify-start items-center gap-2 inline-flex mb-[75px]">
@@ -351,7 +540,7 @@ export function TicketDetails({
           className={`${styles.header} w-full h-[80px] px-6 border-b border-black justify-between items-center inline-flex`}
         >
           <div className="self-stretch flex-col justify-center items-center inline-flex mt-3 sm:mt-0">
-            <div className="text-black/90 text-5xl font-bold ">
+            <div className="text-black/90 text-5xl font-bold text-nowrap">
               Ticket Details
             </div>
           </div>
@@ -553,6 +742,14 @@ export function TicketDetails({
               </div>
             </div>
           </div>
+          {ticketAttachments && ticketAttachments.length > 0 && (
+            <TicketAttachments
+              attachments={ticketAttachments}
+              isPreviewable={isPreviewableFile}
+              onPreview={handleAttachmentPreview}
+              onDownload={handleAttachmentDownload}
+            />
+          )}
           <TicketsUiComments
             comments={commentsArray}
             ticketNumber={ticketNumber}
@@ -604,6 +801,24 @@ export function TicketDetails({
         place="bottom"
         content="Edit Category/Service Type"
       />
+
+      {showFileAttachmentDialog && (
+        <FileAttachmentModal
+          ticketDetails={ticketDetails}
+          setShowFileAttachmentDialog={setShowFileAttachmentDialog}
+        />
+      )}
+
+      {showFilePreviewDialog && selectedFileForPreview && (
+        <FilePreviewModal
+          attachment={selectedFileForPreview}
+          onClose={() => {
+            setShowFilePreviewDialog(false);
+            setSelectedFileForPreview(null);
+          }}
+          onDownload={() => handleAttachmentDownload(selectedFileForPreview)}
+        />
+      )}
     </>
   );
 }
