@@ -1,0 +1,9 @@
+{
+  "name": "file-attachment-modal",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/ui/src/lib/file-attachment-modal/src",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:b2b_tickets"],
+  "// targets": "to see all targets run: nx show project file-attachment-modal --web",
+  "targets": {}
+}

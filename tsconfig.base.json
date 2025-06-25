@@ -32,6 +32,9 @@
       "@b2b-tickets/db-access": ["libs/db-access/src/index.ts"],
       "@b2b-tickets/email-service": ["libs/email-service/src/index.ts"],
       "@b2b-tickets/email-service/server": ["libs/email-service/src/server.ts"],
+      "@b2b-tickets/file-attachment-modal": [
+        "libs/ui/src/lib/file-attachment-modal/src/index.ts"
+      ],
       "@b2b-tickets/logging": ["libs/logging/src/index.ts"],
       "@b2b-tickets/react-hooks": ["libs/react-hooks/src/index.ts"],
       "@b2b-tickets/redis-service": ["libs/redis-service/src/index.ts"],

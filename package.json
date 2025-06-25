@@ -115,7 +115,7 @@
     "@types/js-cookie": "3.0.6",
     "@types/jsonwebtoken": "9.0.9",
     "@types/lodash": "4.17.16",
-    "@types/node": "18.19.97",
+    "@types/node": "^20.0.0",
     "@types/nodemailer": "6.4.17",
     "@types/pg": "8.15.0",
     "@types/react": "18.3.21",
