@@ -1,5 +1,7 @@
 'use server';
 
+import { writeFile, mkdir, unlink, readFile } from 'fs/promises';
+import { dirname } from 'path';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { options } from '@b2b-tickets/auth-options';
@@ -32,6 +34,7 @@ import {
   TicketStatusIsFinal,
   TicketDetailForTicketCreator,
   AllowedColumnsForFilteringType,
+  TicketAttachmentDetails,
 } from '@b2b-tickets/shared-models';
 
 import {
@@ -1616,3 +1619,555 @@ export async function logCookieConsent(
     logRequest.error('Error logging cookie consent:', error);
   }
 }
+
+export async function uploadFilesToServer({
+  ticketId,
+  ticketNumber,
+  statusId,
+  comment,
+}: {
+  ticketId: string;
+  ticketNumber: string;
+  statusId: string;
+  comment: string;
+}) {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  try {
+    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketHandler);
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const userId = session.user.user_id;
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Altering Ticket To Working state ticket with id ${ticketId}`
+    );
+
+    await pgB2Bpool.query(
+      `
+        CALL tck_working
+        (
+          pnum_Ticket_ID   => $1,
+          pnum_User_ID     => $2,
+          pvch_API_User    => $3,
+          pvch_API_Process => $4,
+          pbln_Debug_Mode  => $5
+        )
+      `,
+      [
+        ticketId,
+        userId,
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    revalidatePath(`/ticket/${ticketNumber}`);
+
+    return {
+      status: `SUCCESS`,
+      message: `Ticket was updated successfuly`,
+    };
+  } catch (error: any) {
+    logRequest.error(
+      `Failed to set Ticket to Working status: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
+    return fromErrorToFormState(error);
+  }
+}
+
+interface BuildAttachmentFilenameParams {
+  ticketId: string;
+  attachmentFilename: string;
+  apiUser: string;
+  apiProcess: string;
+  debugMode?: boolean;
+}
+
+interface AttachmentInsertParams {
+  ticketId: string;
+  attachmentFullPath: string;
+  originalFilename: string;
+}
+
+/**
+ * Server action to build attachment filename using database function
+ */
+export async function buildAttachmentFilename(
+  params: BuildAttachmentFilenameParams
+): Promise<{
+  data: string;
+  error?: string;
+}> {
+  try {
+    const session = await getServerSession(options);
+    if (!session?.user) {
+      return {
+        data: '',
+        error: 'ERROR - Unauthorized access',
+      };
+    }
+
+    const { ticketId, attachmentFilename, apiUser, apiProcess } = params;
+
+    // Validate required parameters
+    if (!ticketId || !attachmentFilename || !apiUser || !apiProcess) {
+      return {
+        data: '',
+        error: 'ERROR: Missing required parameters',
+      };
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const buildAttachmentFileName = await pgB2Bpool.query(
+      `
+        SELECT build_attachment_filename($1,$2,$3,$4,$5) as filename
+      `,
+      [
+        ticketId,
+        attachmentFilename,
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    return {
+      data: buildAttachmentFileName.rows[0].filename,
+      error: '',
+    };
+  } catch (error) {
+    console.error('Error building attachment filename:', error);
+    return {
+      data: '',
+      error: 'ERROR - Internal server error while building attachment filename',
+    };
+  }
+}
+
+/**
+ * Server action to insert attachment record using database function
+ */
+async function insertAttachment(params: AttachmentInsertParams): Promise<{
+  data: string;
+  error?: string;
+}> {
+  try {
+    const session = await getServerSession(options);
+    if (!session?.user) {
+      return {
+        error: 'Unauthorized access',
+        data: '',
+      };
+    }
+
+    const { ticketId, attachmentFullPath, originalFilename } = params;
+
+    // Validate required parameters
+    if (!ticketId || !attachmentFullPath || !originalFilename) {
+      return {
+        data: '',
+        error: 'ERROR - Missing required parameters',
+      };
+    }
+
+    const apiUser =
+      session.user.userName ||
+      session.user.email ||
+      session.user.user_id?.toString();
+    const apiProcess = 'file_attachment';
+
+    const buildAttachmentFileName = await pgB2Bpool.query(
+      `
+      SELECT att_insert($1,$2,$3,$4,$5,$6,$7) as result
+    `,
+      [
+        ticketId,
+        attachmentFullPath,
+        originalFilename,
+        session.user.user_id,
+        apiUser,
+        apiProcess,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    return {
+      data: 'SUCCESS - Attachment record inserted successfully',
+      error: '',
+    };
+  } catch (error) {
+    console.error('Error inserting attachment:', error);
+    return {
+      data: '',
+      error: 'ERROR - Internal server error while inserting attachment',
+    };
+  }
+}
+
+/**
+ * Combined server action to handle the complete file attachment process
+ */
+export async function processFileAttachment(formData: FormData): Promise<{
+  data: string;
+  error?: string;
+}> {
+  try {
+    const session = await getServerSession(options);
+    if (!session?.user) {
+      return {
+        data: '',
+        error: 'Cannot Upload file - User is not logged in',
+      };
+    }
+
+    // Extract data from FormData
+    const file = formData.get('file') as File;
+    const ticketId = formData.get('ticketId') as string;
+    const originalFilename = formData.get('originalFilename') as string;
+
+    // Validate inputs
+    if (!file || !ticketId || !originalFilename) {
+      return {
+        data: '',
+        error:
+          'Missing required parameters: file, ticketId, or originalFilename',
+      };
+    }
+
+    // Convert File to Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    // Convert array back to Buffer
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Get API user from session (adjust based on your session structure)
+    //@ts-ignore
+    const apiUser =
+      session.user.userName ||
+      session.user.email ||
+      session.user.user_id?.toString();
+    const apiProcess = 'file_attachment';
+
+    // Step 1: Build the attachment filename
+    const filenameResult = await buildAttachmentFilename({
+      ticketId,
+      attachmentFilename: originalFilename,
+      apiUser,
+      apiProcess,
+      debugMode: config.postgres_b2b_database.debugMode,
+    });
+
+    if (filenameResult.error) {
+      return {
+        data: '',
+        error: filenameResult.error,
+      };
+    }
+
+    const attachmentFullPath = filenameResult.data.replace(
+      '...',
+      config.attachmentsPrefixPath
+    );
+
+    // Step 2: Save file to disk first (before database)
+    try {
+      // Ensure directory exists
+      const dir = dirname(attachmentFullPath);
+      await mkdir(dir, { recursive: true });
+
+      // Write file to disk
+      await writeFile(attachmentFullPath, buffer);
+
+      console.log(`File saved successfully: ${attachmentFullPath}`);
+    } catch (fileError) {
+      console.error('Error saving file:', fileError);
+      return {
+        data: '',
+        error: `ERROR: Failed to save file to disk: ${
+          fileError instanceof Error ? fileError.message : 'Unknown error'
+        }`,
+      };
+    }
+
+    // Step 3: Insert the attachment record (after successful file save)
+    const insertResult = await insertAttachment({
+      ticketId,
+      attachmentFullPath,
+      originalFilename,
+    });
+
+    if (insertResult.error) {
+      // If database insert fails, try to clean up the file
+      try {
+        await unlink(attachmentFullPath);
+        console.log(
+          `Cleaned up file after database error: ${attachmentFullPath}`
+        );
+      } catch (cleanupError) {
+        console.error(
+          'Error cleaning up file after database error:',
+          cleanupError
+        );
+      }
+
+      return {
+        data: '',
+        error: insertResult.error,
+      };
+    }
+
+    return {
+      data: originalFilename,
+      error: '',
+    };
+  } catch (error) {
+    console.error('Error processing file attachment:', error);
+    return {
+      data: '',
+      error: 'ERROR: Internal server error while processing file attachment',
+    };
+  }
+}
+
+/**
+ * Server action to get attachments for a ticket
+ */
+export async function getTicketAttachments({
+  ticketId,
+}: {
+  ticketId: string;
+}): Promise<{
+  data?: TicketAttachmentDetails[];
+  error?: string;
+}> {
+  try {
+    await verifySecurityRole([
+      AppRoleTypes.B2B_TicketCreator,
+      AppRoleTypes.B2B_TicketHandler,
+    ]);
+
+    if (!ticketId) {
+      return {
+        error: 'ERROR: Ticket ID is required',
+      };
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const sqlQueryForAttachments = `SELECT
+                                      ATTACHMENT_ID,
+                                      TICKET_ID,
+                                      "Ticket Number",
+                                      ATTACHMENT_FULL_PATH,
+                                      "Filename",
+                                      "Attachment Date",
+                                      ATTACHMENT_USER_ID,
+                                      "Username",
+                                      "First Name",
+                                      "Last Name",
+                                      USER_CUSTOMER_ID,
+                                      "User Customer Name"
+                                    FROM TICKET_ATTACHMENTS_V
+                                    WHERE TICKET_ID = $1`;
+
+    const res_attachments = await pgB2Bpool.query(sqlQueryForAttachments, [
+      ticketId,
+    ]);
+
+    const ticketAttachDetails: TicketAttachmentDetails[] = res_attachments.rows;
+
+    return {
+      data: ticketAttachDetails,
+      error: '',
+    };
+  } catch (error) {
+    console.error('Error getting ticket attachments:', error);
+    return {
+      error: 'ERROR: Internal server error while retrieving attachments',
+    };
+  }
+}
+
+export interface ServerActionResponse<T = any> {
+  status: 'SUCCESS' | 'ERROR';
+  message: string;
+  data?: T;
+}
+
+/**
+ * Server action to download and attachment file
+ */
+export async function downloadAttachment(params: {
+  attachmentId: string;
+}): Promise<
+  ServerActionResponse<{
+    fileBuffer: Buffer;
+    mimeType: string;
+    filename: string;
+  }>
+> {
+  try {
+    const session = await verifySecurityRole([
+      AppRoleTypes.B2B_TicketCreator,
+      AppRoleTypes.B2B_TicketHandler,
+    ]);
+
+    const { attachmentId } = params;
+
+    // Validate parameters
+    if (!attachmentId) {
+      return {
+        status: 'ERROR',
+        message: 'Missing required parameters for file download',
+      };
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    // Get Details for attachmentId
+    const sqlQueryForAttachments = `SELECT
+                                      ATTACHMENT_ID,
+                                      TICKET_ID,
+                                      "Ticket Number",
+                                      ATTACHMENT_FULL_PATH,
+                                      "Filename",
+                                      "Attachment Date",
+                                      ATTACHMENT_USER_ID,
+                                      "Username",
+                                      "First Name",
+                                      "Last Name",
+                                      USER_CUSTOMER_ID,
+                                      "User Customer Name"
+                                    FROM TICKET_ATTACHMENTS_V
+                                    WHERE attachment_id = $1`;
+
+    const resp = await pgB2Bpool.query(sqlQueryForAttachments, [attachmentId]);
+
+    const attachmentDetails = resp.rows[0] as TicketAttachmentDetails;
+
+    const fullPath = attachmentDetails.attachment_full_path;
+
+    // Check if file exists and read it
+    let fileBuffer: Buffer;
+    try {
+      fileBuffer = await readFile(fullPath);
+    } catch (fileError) {
+      console.error('File read error:', fileError);
+      return {
+        status: 'ERROR',
+        message: 'File not found or cannot be accessed',
+      };
+    }
+
+    // Determine MIME type based on file extension
+    const getMimeType = (filename: string): string => {
+      const extension = filename.split('.').pop()?.toLowerCase();
+
+      const mimeTypes: { [key: string]: string } = {
+        // Images
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        png: 'image/png',
+        gif: 'image/gif',
+        webp: 'image/webp',
+        svg: 'image/svg+xml',
+
+        // Documents
+        pdf: 'application/pdf',
+        doc: 'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        xls: 'application/vnd.ms-excel',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ppt: 'application/vnd.ms-powerpoint',
+        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        txt: 'text/plain',
+        csv: 'text/csv',
+
+        // Archives
+        zip: 'application/zip',
+        rar: 'application/x-rar-compressed',
+        '7z': 'application/x-7z-compressed',
+        tar: 'application/x-tar',
+        gz: 'application/gzip',
+
+        // Audio/Video
+        mp3: 'audio/mpeg',
+        wav: 'audio/wav',
+        mp4: 'video/mp4',
+        avi: 'video/x-msvideo',
+        mov: 'video/quicktime',
+
+        // Default
+        default: 'application/octet-stream',
+      };
+
+      return mimeTypes[extension || ''] || mimeTypes.default;
+    };
+
+    const mimeType = getMimeType(attachmentDetails.Filename);
+
+    // Log the download activity (optional)
+    console.log(
+      `File download requested: ${attachmentDetails.Filename} (${attachmentId}) for ticket ${attachmentDetails.ticket_id}`
+    );
+
+    return {
+      status: 'SUCCESS',
+      message: 'File retrieved successfully',
+      data: {
+        fileBuffer,
+        mimeType,
+        filename: attachmentDetails.Filename,
+      },
+    };
+  } catch (error) {
+    console.error('Download attachment error:', error);
+    return {
+      status: 'ERROR',
+      message: 'An error occurred while downloading the file',
+    };
+  }
+}
+
+// Alternative approach using a downloadable URL (if files are served via HTTP)
+// export async function getDownloadUrl(
+//   params: DownloadAttachmentParams
+// ): Promise<ServerActionResponse<{ downloadUrl: string }>> {
+//   try {
+//     const { attachmentId, ticketId, filename } = params;
+
+//     // Validate parameters
+//     if (!attachmentId || !ticketId || !filename) {
+//       return {
+//         status: 'ERROR',
+//         message: 'Missing required parameters for download URL generation',
+//       };
+//     }
+
+//     // Generate a secure download URL (example implementation)
+//     // This could be a signed URL, temporary token, or direct file path
+//     const downloadUrl = `/api/download-attachment?attachmentId=${attachmentId}&ticketId=${ticketId}&filename=${encodeURIComponent(filename)}`;
+
+//     return {
+//       status: 'SUCCESS',
+//       message: 'Download URL generated successfully',
+//       data: {
+//         downloadUrl
+//       }
+//     };
+
+//   } catch (error) {
+//     console.error('Get download URL error:', error);
+//     return {
+//       status: 'ERROR',
+//       message: 'An error occurred while generating download URL',
+//     };
+//   }
+// }
