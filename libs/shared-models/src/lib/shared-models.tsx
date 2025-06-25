@@ -593,6 +593,7 @@ export enum WebSocketMessage {
   TICKET_ALTERED_CATEGORY_SERVICE_TYPE = 'TicketAlteredCategoryServiceType',
   TICKET_CLOSED = 'TicketClosed',
   TICKET_CANCELED = 'TicketCancelled',
+  NEW_FILE_ATTACHMENT_FOR_TICKET = 'NewFileAttachmentForTicket',
 }
 
 export interface WebSocketData {
@@ -632,6 +633,10 @@ export interface WebSocketData {
   [WebSocketMessage.TICKET_CANCELED]: {
     ticket_id: string;
   };
+
+  [WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET]: {
+    ticket_id: string;
+  };
 }
 
 export enum AllowedColumnsForFilteringType {
@@ -640,4 +645,19 @@ export enum AllowedColumnsForFilteringType {
   TICKET_NUMBER = 'Ticket Number',
   TITLE = 'Title',
   OPENED_BY = 'Opened By',
+}
+
+export interface TicketAttachmentDetails {
+  attachment_id: string;
+  ticket_id: string;
+  'Ticket Number': string;
+  attachment_full_path: string;
+  Filename: string;
+  'Attachment Date': Date;
+  attachment_user_id: string;
+  Username: string;
+  'First Name': string;
+  'Last Name': string;
+  user_customer_id: string;
+  'User Customer Name': string;
 }
