@@ -271,6 +271,19 @@ io.on('connection', (socket: Socket) => {
     }
   );
 
+  socket.on(
+    WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET,
+    (data: WebSocketData[WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET]) => {
+      if (DEBUG)
+        logger.info(
+          WebSocketMessage.TICKET_STARTED_WORK,
+          'triggered with data:',
+          data
+        );
+      io.emit(WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET, data); // Emit event to all clients
+    }
+  );
+
   // Other event handlers...
 
   socket.on('disconnect', () => {
