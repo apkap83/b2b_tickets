@@ -115,6 +115,12 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
         ticket_id: ticketId,
       });
 
+      emitEvent(WebSocketMessage.NEW_COMMENT_ADDED, {
+        ticket_id: ticketId,
+        date: new Date(),
+        isTicketCreator: true,
+      });
+
       return uploadResponse.data; // Return the server file path
     } catch (error) {
       console.error(`Error uploading ${file.name}:`, error);
