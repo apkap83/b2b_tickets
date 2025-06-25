@@ -10,6 +10,12 @@ export const developmentConfig = {
 
   emailListOfHandlers: [process.env['EMAIL_LIST_OF_HANDLERS'] as string],
 
+  attachmentsPrefixPath: isMacDevelopment
+    ? '/Users/apostoloskapetanios/LocalProgramming/b2b_tickets/attachment_files_test'
+    : '/home/centos/applications/b2b_tickets/attachment_files_test',
+
+  attachmentsMaxFileSize: 20 * 1024 * 1024, // 20MB
+
   SMSGateway: 'smpp://test-sms-gw1:5000',
   SMS_SystemId: 'B2BTicketing',
   SMS_Password: process.env['SMS_PASSWORD'] as string,

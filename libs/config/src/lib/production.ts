@@ -9,6 +9,11 @@ export const productionConfig = {
 
   emailListOfHandlers: [process.env['EMAIL_LIST_OF_HANDLERS'] as string],
 
+  attachmentsPrefixPath:
+    '/home/centos/applications/b2b_tickets/attachment_files_prod',
+
+  attachmentsMaxFileSize: 20 * 1024 * 1024, // 20MB
+
   SMSGateway: 'smpp://sms-gw1:5030',
   SMS_SystemId: 'B2BTicketing',
   SMS_Password: process.env['SMS_PASSWORD'] as string,
