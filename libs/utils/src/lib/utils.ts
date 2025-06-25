@@ -527,3 +527,193 @@ export const isPreviewableFile = (filename: string): boolean => {
   ];
   return previewableExtensions.includes(ext || '');
 };
+
+export const safePreviewTypes = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/bmp',
+  'image/webp',
+  'image/svg+xml',
+  'application/pdf',
+  'text/plain',
+  'text/csv',
+  'application/json',
+  'text/xml',
+  'text/html',
+  'text/css',
+  'application/javascript',
+  'text/markdown',
+];
+
+export const safeExtensions = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'bmp',
+  'webp',
+  'svg',
+  'pdf',
+  'txt',
+  'log',
+  'csv',
+  'json',
+  'xml',
+  'html',
+  'htm',
+  'css',
+  'js',
+  'ts',
+  'jsx',
+  'tsx',
+  'md',
+  'markdown',
+];
+
+// Helper function to check if file type is safe for preview
+export const isPreviewSafe = (filename: string, mimeType: string): boolean => {
+  const ext = filename.toLowerCase().split('.').pop() || '';
+
+  return safePreviewTypes.includes(mimeType) || safeExtensions.includes(ext);
+};
+
+// Helper function to safely encode filename for Content-Disposition header
+export const encodeFilenameForHeader = (filename: string): string => {
+  // Remove or replace problematic characters
+  const sanitized = filename
+    .replace(/[\x00-\x1f\x7f-\xff]/g, '') // Remove control characters and extended ASCII
+    .replace(/["\\\r\n]/g, '') // Remove quotes, backslashes, and line breaks
+    .trim();
+
+  // If the filename contains non-ASCII characters, use RFC 5987 encoding
+  if (/[^\x00-\x7F]/.test(filename)) {
+    const encoded = encodeURIComponent(filename);
+    return `filename*=UTF-8''${encoded}`;
+  }
+
+  // For ASCII-only filenames, use simple quoting
+  return `filename="${sanitized}"`;
+};
+
+export const mimeTypes: { [key: string]: string } = {
+  // Images
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+
+  // Documents
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  txt: 'text/plain',
+  csv: 'text/csv',
+
+  // Archives
+  zip: 'application/zip',
+  rar: 'application/x-rar-compressed',
+  '7z': 'application/x-7z-compressed',
+  tar: 'application/x-tar',
+  gz: 'application/gzip',
+
+  // Audio/Video
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  mp4: 'video/mp4',
+  avi: 'video/x-msvideo',
+  mov: 'video/quicktime',
+
+  // Default
+  default: 'application/octet-stream',
+};
+
+export const SAFE_PREVIEW_TYPES = new Set([
+  // Images
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/svg+xml',
+  'image/bmp',
+
+  // Documents
+  'application/pdf',
+
+  // Text files
+  'text/plain',
+  'text/csv',
+  'application/json',
+  'text/xml',
+  'text/html',
+  'text/css',
+  'text/markdown',
+  'text/javascript', // For .js files
+  'application/javascript',
+
+  // Code files (detected as text/plain usually)
+  // These might be detected as text/plain by file-type
+]);
+
+// Fallback MIME type detection for when fileTypeFromBuffer fails
+export const getFallbackMimeType = (filename: string): string => {
+  const ext = filename.toLowerCase().split('.').pop() || '';
+  const mimeMap: Record<string, string> = {
+    // Images
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    svg: 'image/svg+xml',
+    bmp: 'image/bmp',
+
+    // Documents
+    pdf: 'application/pdf',
+
+    // Text files
+    txt: 'text/plain',
+    log: 'text/plain',
+    csv: 'text/csv',
+    json: 'application/json',
+    xml: 'text/xml',
+    html: 'text/html',
+    htm: 'text/html',
+    css: 'text/css',
+    js: 'application/javascript',
+    ts: 'text/plain',
+    jsx: 'text/plain',
+    tsx: 'text/plain',
+    md: 'text/markdown',
+    markdown: 'text/markdown',
+  };
+  return mimeMap[ext] || 'application/octet-stream';
+};
+
+// Helper to check if content looks like text
+export const isTextContent = (buffer: Buffer): boolean => {
+  // Check first 1024 bytes for text-like content
+  const sample = buffer.slice(0, Math.min(1024, buffer.length));
+  let textChars = 0;
+
+  for (let i = 0; i < sample.length; i++) {
+    const byte = sample[i];
+    // Count printable ASCII and common whitespace
+    if (
+      (byte >= 32 && byte <= 126) ||
+      byte === 9 ||
+      byte === 10 ||
+      byte === 13
+    ) {
+      textChars++;
+    }
+  }
+
+  return sample.length > 0 && textChars / sample.length > 0.7; // 70% text characters
+};
