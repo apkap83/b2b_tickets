@@ -487,3 +487,43 @@ export const validateReCaptchaV3 = async (token: string) => {
     throw error;
   }
 };
+
+export const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Helper function to determine if file can be previewed
+export const isPreviewableFile = (filename: string): boolean => {
+  const ext = filename.toLowerCase().split('.').pop();
+  const previewableExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'bmp',
+    'webp',
+    'svg', // Images
+    'pdf', // PDFs
+    'txt',
+    'log',
+    'csv',
+    'json',
+    'xml', // Text files
+    'html',
+    'htm',
+    'css',
+    'js',
+    'ts',
+    'jsx',
+    'tsx', // Code files
+    'md',
+    'markdown', // Markdown
+    'doc',
+    'docx', // Word documents (limited preview)
+  ];
+  return previewableExtensions.includes(ext || '');
+};
