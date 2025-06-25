@@ -50,3 +50,9 @@
     max-width: 100%;
   }
 }
+
+@media only screen and (max-width: 28.31em) {
+  .header div:nth-of-type(2) > div {
+    flex-direction: column;
+  }
+}

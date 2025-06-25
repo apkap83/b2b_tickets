@@ -191,13 +191,27 @@ const UserComment = ({
 
 const SystemComment = ({ item }: { key: string; item: TicketComment }) => {
   return (
-    <div className="rounded-md py-3 shadow-sm border flex justify-between border-gray-300 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50 items-start gap-2.5">
-      <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-        <span>{item.Comment}</span>
+    <div className="rounded-md py-3 shadow-sm border border-gray-300 self-stretch grow shrink basis-0 p-2.5 bg-[#bebee0]/50">
+      {/* Desktop layout - side by side */}
+      <div className="hidden sm:flex justify-between items-start gap-4">
+        <div className="flex-1 min-w-0 text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+          <span className="break-all text-wrap">{item.Comment}</span>
+        </div>
+        <div className="flex-shrink-0 break-all text-black text-xs font-light font-['Roboto'] leading-[17.16px] tracking-tight whitespace-nowrap">
+          {item.Username}&nbsp;-&nbsp;
+          {formatDate(item['Comment Date'])}
+        </div>
       </div>
-      <div className="text-black text-xs text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-        {item.Username}&nbsp;-&nbsp;
-        {formatDate(item['Comment Date'])}
+
+      {/* Mobile layout - stacked */}
+      <div className="sm:hidden">
+        <div className="text-black text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight mb-2">
+          <span className="break-all overflow-hidden">{item.Comment}</span>
+        </div>
+        <div className="text-black break-all text-xs font-light font-['Roboto'] leading-[17.16px] tracking-tight">
+          {item.Username}&nbsp;-&nbsp;
+          {formatDate(item['Comment Date'])}
+        </div>
       </div>
     </div>
   );
