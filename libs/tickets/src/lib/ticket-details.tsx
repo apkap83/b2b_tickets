@@ -26,6 +26,7 @@ import {
   getNextEscalationLevel,
   getTicketDetailsForTicketNumber,
   getTicketAttachments,
+  deleteAttachment,
 } from '@b2b-tickets/server-actions';
 import toast from 'react-hot-toast';
 import styles from './css/ticket-details.module.scss';
@@ -95,6 +96,10 @@ export function TicketDetails({
     TicketDetail[] | TicketDetailForTicketCreator[]
   >(theTicketDetails);
 
+  // Web Socket Connection
+  const { emitEvent, latestEventEmitted, resetLatestEventEmitted } =
+    useWebSocketContext();
+
   const getMyNextEscalationLevel = async () => {
     try {
       const resp = await getNextEscalationLevel({
@@ -125,10 +130,6 @@ export function TicketDetails({
     getMyNextEscalationLevel();
     getMyTicketAttachments();
   }, [theTicketNumber]);
-
-  // Web Socket Connection
-  const { emitEvent, latestEventEmitted, resetLatestEventEmitted } =
-    useWebSocketContext();
 
   // Define event types that trigger ticket details refresh
   const TICKET_UPDATE_EVENTS = [
@@ -197,7 +198,8 @@ export function TicketDetails({
 
       // Handle file attachment events
       if (
-        event === WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET &&
+        (event === WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET ||
+          event === WebSocketMessage.DELETE_FILE_ATTACHMENT_FOR_TICKET) &&
         eventTicketId === currentTicketId
       ) {
         await getMyTicketAttachments();
@@ -403,7 +405,7 @@ export function TicketDetails({
     return null;
   };
 
-  // Main function - much cleaner now
+  // Main function
   const customButtonBasedOnTicketStatus = () => {
     if (isTicketHandler) {
       return renderTicketHandlerButtons();
@@ -484,10 +486,17 @@ export function TicketDetails({
       // Dismiss loading toast
       toast.dismiss(loadingToast);
 
+      // Show success toast
+      // toast.success(`${attachment.Filename} downloaded successfully`);
+
       if (!response.ok) {
         const errorData = await response
           .json()
           .catch(() => ({ error: 'Download failed' }));
+
+        // Error Toast
+        toast.error(`HTTP Error - status: ${response.status}`);
+
         throw new Error(
           errorData.error || `HTTP error! status: ${response.status}`
         );
@@ -509,9 +518,6 @@ export function TicketDetails({
 
       // Clean up the URL object
       window.URL.revokeObjectURL(url);
-
-      // Show success toast
-      // toast.success(`${attachment.Filename} downloaded successfully`);
     } catch (error) {
       console.error('Download error:', error);
       toast.error(
@@ -531,6 +537,54 @@ export function TicketDetails({
 
     setSelectedFileForPreview(attachment);
     setShowFilePreviewDialog(true);
+  };
+
+  // Add the delete handler function (add this inside your TicketDetails component)
+  const handleAttachmentDelete = async (
+    attachment: TicketAttachmentDetails
+  ) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${attachment.Filename}"? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading(`Deleting ${attachment.Filename}...`);
+
+      // Call the delete server action
+      const response = await deleteAttachment({
+        attachmentId: attachment.attachment_id,
+      });
+
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      if (response.status === 'ERROR') {
+        toast.error(response.message);
+        return;
+      }
+
+      // Show success toast
+      toast.success(response.message);
+
+      // Refresh attachments list
+      await getMyTicketAttachments();
+
+      // Emit WebSocket event for real-time updates
+      emitEvent(WebSocketMessage.DELETE_FILE_ATTACHMENT_FOR_TICKET, {
+        ticket_id: ticketId,
+        attachment_id: attachment.attachment_id,
+        filename: attachment.Filename,
+      });
+    } catch (error) {
+      console.error('Delete attachment error:', error);
+      toast.error('Failed to delete attachment');
+    }
   };
 
   return (
@@ -748,6 +802,8 @@ export function TicketDetails({
               isPreviewable={isPreviewableFile}
               onPreview={handleAttachmentPreview}
               onDownload={handleAttachmentDownload}
+              onDelete={handleAttachmentDelete}
+              canDelete={isTicketHandler || isTicketCreator}
             />
           )}
           <TicketsUiComments

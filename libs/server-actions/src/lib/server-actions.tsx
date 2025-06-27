@@ -54,6 +54,8 @@ import {
   sendEmailForNewHandlerComment,
 } from '@b2b-tickets/email-service/server';
 
+const path = require('path');
+
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
 ) => {
@@ -1812,6 +1814,23 @@ async function insertAttachment(params: AttachmentInsertParams): Promise<{
   }
 }
 
+const getAttachmentFullPath = ({ pathFromDB }: { pathFromDB: string }) => {
+  const isProdEnv = process.env['NODE_ENV'] === 'production';
+  const isStagingEnv = process.env['NEXT_PUBLIC_APP_ENV'] === 'staging';
+  const isDevelopmentEnv = process.env['NODE_ENV'] === 'development';
+
+  // In staging get Path from DB (dev or prod schema)
+  if (isProdEnv || isStagingEnv) {
+    return pathFromDB;
+  }
+
+  // If development then development config will get the right path using config.attachmentsPrefixPath
+  if (isDevelopmentEnv) {
+    const fileNameOnly = path.basename(pathFromDB);
+    return path.join(config.attachmentsPrefixPath, fileNameOnly);
+  }
+};
+
 /**
  * Combined server action to handle the complete file attachment process
  */
@@ -1819,6 +1838,9 @@ export async function processFileAttachment(formData: FormData): Promise<{
   data: string;
   error?: string;
 }> {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     const session = await getServerSession(options);
     if (!session?.user) {
@@ -1871,10 +1893,9 @@ export async function processFileAttachment(formData: FormData): Promise<{
       };
     }
 
-    const attachmentFullPath = filenameResult.data.replace(
-      '...',
-      config.attachmentsPrefixPath
-    );
+    const attachmentFullPath = getAttachmentFullPath({
+      pathFromDB: filenameResult.data,
+    });
 
     // Step 2: Save file to disk first (before database)
     try {
@@ -1885,7 +1906,7 @@ export async function processFileAttachment(formData: FormData): Promise<{
       // Write file to disk
       await writeFile(attachmentFullPath, buffer);
 
-      console.log(`File saved successfully: ${attachmentFullPath}`);
+      logRequest.info(`File saved successfully: ${attachmentFullPath}`);
     } catch (fileError) {
       console.error('Error saving file:', fileError);
       return {
@@ -1907,7 +1928,7 @@ export async function processFileAttachment(formData: FormData): Promise<{
       // If database insert fails, try to clean up the file
       try {
         await unlink(attachmentFullPath);
-        console.log(
+        logRequest.info(
           `Cleaned up file after database error: ${attachmentFullPath}`
         );
       } catch (cleanupError) {
@@ -2013,6 +2034,10 @@ export async function downloadAttachment(params: {
     filename: string;
   }>
 > {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
   try {
     const session = await verifySecurityRole([
       AppRoleTypes.B2B_TicketCreator,
@@ -2052,7 +2077,44 @@ export async function downloadAttachment(params: {
 
     const attachmentDetails = resp.rows[0] as TicketAttachmentDetails;
 
-    const fullPath = attachmentDetails.attachment_full_path;
+    // Replace the empty catch block with proper error handling:
+
+    try {
+      await setSchemaAndTimezone(pgB2Bpool);
+
+      await pgB2Bpool.query(
+        `
+      CALL att_check_user_has_access(
+        pnum_Attachment_ID => $1,
+        pnum_User_ID => $2,
+        pvch_Action => 'Download Attachment',
+        pvch_API_User => $3,
+        pvch_API_Process => $4,
+        pbln_Debug_Mode => $5
+      );
+    `,
+        [
+          attachmentDetails.attachment_id,
+          session.user.user_id,
+          config.api.user,
+          config.api.process,
+          config.postgres_b2b_database.debugMode,
+        ]
+      );
+    } catch (error) {
+      console.error('Permission check failed:', error);
+
+      // Return permission denied error
+      return {
+        status: 'ERROR',
+        message:
+          'Access denied: You do not have permission to download this attachment',
+      };
+    }
+
+    const fullPath = getAttachmentFullPath({
+      pathFromDB: attachmentDetails.attachment_full_path,
+    });
 
     // Check if file exists and read it
     let fileBuffer: Buffer;
@@ -2114,7 +2176,7 @@ export async function downloadAttachment(params: {
     const mimeType = getMimeType(attachmentDetails.Filename);
 
     // Log the download activity (optional)
-    console.log(
+    logRequest.info(
       `File download requested: ${attachmentDetails.Filename} (${attachmentId}) for ticket ${attachmentDetails.ticket_id}`
     );
 
@@ -2136,38 +2198,145 @@ export async function downloadAttachment(params: {
   }
 }
 
-// Alternative approach using a downloadable URL (if files are served via HTTP)
-// export async function getDownloadUrl(
-//   params: DownloadAttachmentParams
-// ): Promise<ServerActionResponse<{ downloadUrl: string }>> {
-//   try {
-//     const { attachmentId, ticketId, filename } = params;
+/**
+ * Server action to delete an attachment
+ */
+export async function deleteAttachment(params: {
+  attachmentId: string;
+}): Promise<ServerActionResponse> {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  try {
+    const session = await verifySecurityRole([
+      AppRoleTypes.B2B_TicketCreator,
+      AppRoleTypes.B2B_TicketHandler,
+    ]);
 
-//     // Validate parameters
-//     if (!attachmentId || !ticketId || !filename) {
-//       return {
-//         status: 'ERROR',
-//         message: 'Missing required parameters for download URL generation',
-//       };
-//     }
+    const { attachmentId } = params;
 
-//     // Generate a secure download URL (example implementation)
-//     // This could be a signed URL, temporary token, or direct file path
-//     const downloadUrl = `/api/download-attachment?attachmentId=${attachmentId}&ticketId=${ticketId}&filename=${encodeURIComponent(filename)}`;
+    // Validate parameters
+    if (!attachmentId) {
+      return {
+        status: 'ERROR',
+        message: 'Missing required parameter: attachmentId',
+      };
+    }
 
-//     return {
-//       status: 'SUCCESS',
-//       message: 'Download URL generated successfully',
-//       data: {
-//         downloadUrl
-//       }
-//     };
+    await setSchemaAndTimezone(pgB2Bpool);
 
-//   } catch (error) {
-//     console.error('Get download URL error:', error);
-//     return {
-//       status: 'ERROR',
-//       message: 'An error occurred while generating download URL',
-//     };
-//   }
-// }
+    // First, get attachment details to know the file path for cleanup
+    const sqlQueryForAttachments = `SELECT
+                                      ATTACHMENT_ID,
+                                      TICKET_ID,
+                                      "Ticket Number",
+                                      ATTACHMENT_FULL_PATH,
+                                      "Filename",
+                                      "Attachment Date",
+                                      ATTACHMENT_USER_ID,
+                                      "Username",
+                                      "First Name",
+                                      "Last Name",
+                                      USER_CUSTOMER_ID,
+                                      "User Customer Name"
+                                    FROM TICKET_ATTACHMENTS_V
+                                    WHERE ATTACHMENT_ID = $1`;
+
+    const resp = await pgB2Bpool.query(sqlQueryForAttachments, [attachmentId]);
+
+    if (resp.rows.length === 0) {
+      return {
+        status: 'ERROR',
+        message: 'Attachment not found',
+      };
+    }
+
+    const attachmentDetails = resp.rows[0] as TicketAttachmentDetails;
+
+    // Call the stored procedure to delete the attachment
+    try {
+      await pgB2Bpool.query(
+        `
+        CALL att_delete(
+          pnum_Attachment_ID => $1,
+          pnum_User_ID => $2,
+          pvch_API_User => $3,
+          pvch_API_Process => $4,
+          pbln_Debug_Mode => $5
+        );
+      `,
+        [
+          parseInt(attachmentId),
+          session.user.user_id,
+          config.api.user,
+          config.api.process,
+          config.postgres_b2b_database.debugMode,
+        ]
+      );
+
+      logRequest.info(
+        `Attachment deleted from database: ${attachmentId} - ${attachmentDetails.Filename}`
+      );
+    } catch (dbError) {
+      logRequest.error(`Database deletion failed: ${dbError}`);
+
+      // Check if it's a permission error or other database error
+      const errorMessage =
+        dbError instanceof Error ? dbError.message : 'Unknown database error';
+
+      if (
+        errorMessage.includes('permission') ||
+        errorMessage.includes('access')
+      ) {
+        return {
+          status: 'ERROR',
+          message:
+            'Access denied: You do not have permission to delete this attachment',
+        };
+      }
+
+      return {
+        status: 'ERROR',
+        message: 'Failed to delete attachment from database',
+      };
+    }
+
+    // After successful database deletion, try to delete the physical file
+    const fullPath = getAttachmentFullPath({
+      pathFromDB: attachmentDetails.attachment_full_path,
+    });
+
+    try {
+      const normalizedPath = path.normalize(fullPath);
+
+      // Security Check that path contains b2b_tickets
+      if (!normalizedPath.includes('b2b_tickets')) {
+        throw new Error(
+          `Refusing to delete file outside b2b_tickets directory: ${fullPath}`
+        );
+      }
+
+      await unlink(normalizedPath);
+
+      logRequest.info(`Physical file deleted successfully: ${normalizedPath}`);
+    } catch (fileError) {
+      logRequest.error(`Error deleting physical file: ${fileError}`);
+
+      // Log the warning but don't fail the operation since database deletion succeeded
+      logRequest.warn(
+        `Database record deleted but physical file cleanup failed for: ${fullPath}. Manual cleanup may be required.`
+      );
+    }
+
+    return {
+      status: 'SUCCESS',
+      message: `Attachment "${attachmentDetails.Filename}" deleted successfully`,
+    };
+  } catch (error) {
+    logRequest.error(`Delete attachment error: ${error}`);
+    return {
+      status: 'ERROR',
+      message: 'An error occurred while deleting the attachment',
+    };
+  }
+}

@@ -1,6 +1,5 @@
-// app/api/download-attachment/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { fileTypeFromBuffer } from 'file-type'; // npm install file-type
+import { fileTypeFromBuffer } from 'file-type';
 import { options } from '@b2b-tickets/auth-options';
 import { downloadAttachment } from '@b2b-tickets/server-actions';
 import { getServerSession } from 'next-auth';
@@ -53,6 +52,7 @@ export async function GET(request: NextRequest) {
     try {
       // Primary: Detect from file content
       const fileType = await fileTypeFromBuffer(fileBuffer);
+
       if (fileType) {
         detectedMimeType = fileType.mime;
         console.log(`Detected MIME type from content: ${detectedMimeType}`);

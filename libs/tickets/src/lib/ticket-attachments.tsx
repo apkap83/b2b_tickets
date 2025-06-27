@@ -7,17 +7,23 @@ import {
   IoArchiveOutline,
   IoDownloadOutline,
   IoEyeOutline,
+  IoCloseOutline,
 } from 'react-icons/io5';
 import { formatDate } from '@b2b-tickets/utils';
 import { TicketAttachmentDetails } from '@b2b-tickets/shared-models';
 import Button from '@mui/material/Button';
 import { getFileIcon } from './get-file-icon';
 
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+
 interface TicketAttachmentsProps {
   attachments: TicketAttachmentDetails[];
   onDownload?: (attachment: TicketAttachmentDetails) => void;
   onPreview: (attachment: TicketAttachmentDetails) => void;
   isPreviewable: (filename: string) => boolean;
+  onDelete: (attachment: TicketAttachmentDetails) => void;
+  canDelete?: boolean;
 }
 
 export function TicketAttachments({
@@ -25,6 +31,8 @@ export function TicketAttachments({
   onDownload,
   onPreview,
   isPreviewable,
+  onDelete,
+  canDelete = false,
 }: TicketAttachmentsProps) {
   return (
     <div className="w-full">
@@ -44,7 +52,7 @@ export function TicketAttachments({
             {attachments.map((attachment) => (
               <div
                 key={attachment.attachment_id}
-                className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+                className="group bg-gray-50 border border-gray-200 rounded-lg p-3 hover:bg-gray-100 transition-colors"
               >
                 {/* File Header with Icon and Name */}
                 <div className="flex items-start gap-3 mb-3">
@@ -59,6 +67,25 @@ export function TicketAttachments({
                       {attachment.Filename}
                     </p>
                   </div>
+                  {/* Delete Button - Top Right Corner */}
+                  {canDelete && (
+                    <div>
+                      <Tooltip title="Delete file">
+                        <IconButton
+                          size="small"
+                          onClick={() => onDelete(attachment)}
+                          className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            },
+                          }}
+                        >
+                          <IoCloseOutline size={18} />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  )}
                 </div>
 
                 {/* File Details */}

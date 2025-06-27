@@ -9,6 +9,7 @@ export enum WebSocketMessage {
   TICKET_CLOSED = 'TicketClosed',
   TICKET_CANCELED = 'TicketCancelled',
   NEW_FILE_ATTACHMENT_FOR_TICKET = 'NewFileAttachmentForTicket',
+  DELETE_FILE_ATTACHMENT_FOR_TICKET = 'DeleteFileAttachmentForTicket',
 }
 
 export interface WebSocketData {
@@ -52,5 +53,11 @@ export interface WebSocketData {
 
   [WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET]: {
     ticket_id: string;
+  };
+
+  [WebSocketMessage.DELETE_FILE_ATTACHMENT_FOR_TICKET]: {
+    ticket_id: string;
+    attachment_id: string;
+    filename: string;
   };
 }

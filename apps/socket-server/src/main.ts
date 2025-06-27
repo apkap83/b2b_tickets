@@ -276,11 +276,26 @@ io.on('connection', (socket: Socket) => {
     (data: WebSocketData[WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET]) => {
       if (DEBUG)
         logger.info(
-          WebSocketMessage.TICKET_STARTED_WORK,
+          WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET,
           'triggered with data:',
           data
         );
       io.emit(WebSocketMessage.NEW_FILE_ATTACHMENT_FOR_TICKET, data); // Emit event to all clients
+    }
+  );
+
+  socket.on(
+    WebSocketMessage.DELETE_FILE_ATTACHMENT_FOR_TICKET,
+    (
+      data: WebSocketData[WebSocketMessage.DELETE_FILE_ATTACHMENT_FOR_TICKET]
+    ) => {
+      if (DEBUG)
+        logger.info(
+          WebSocketMessage.DELETE_FILE_ATTACHMENT_FOR_TICKET,
+          'triggered with data:',
+          data
+        );
+      io.emit(WebSocketMessage.DELETE_FILE_ATTACHMENT_FOR_TICKET, data); // Emit event to all clients
     }
   );
 
