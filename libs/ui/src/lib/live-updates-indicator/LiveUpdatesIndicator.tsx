@@ -78,15 +78,15 @@ export const LiveUpdatesIndicator = () => {
   }
 
   return (
-    <div className="fixed bottom-[2.85rem] right-1 z-50 hidden md:block">
+    <div className="fixed bottom-[2.87rem] right-1 z-50 hidden md:block">
       {/* Main indicator container */}
       <div
         className={`
           relative flex items-center rounded-2xl shadow-2xl
           backdrop-blur-lg border transition-all duration-700 ease-out
           transform hover:scale-105 cursor-default
-          bg-gradient-to-r from-green-50/90 to-emerald-50/90 border-green-200/50 text-green-700
-          ${isExpanded ? 'gap-3 px-4 py-3' : 'gap-0 px-2 py-2'}
+          bg-gradient-to-r from-green-50/90 to-emerald-50/90 border-green-400/30 text-green-700
+          ${isExpanded ? 'gap-3 px-4 py-3' : 'gap-0 px-3 py-1'}
         `}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -132,7 +132,7 @@ export const LiveUpdatesIndicator = () => {
           </div>
         ) : (
           // Shrunk state - show "Live" text
-          <div className="relative flex items-center justify-center flex-shrink-0">
+          <div className=" relative flex items-center justify-center flex-shrink-0">
             <span
               className={`
                 text-xs font-bold tracking-wide transition-all duration-300
