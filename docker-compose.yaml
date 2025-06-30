@@ -33,6 +33,7 @@ services:
       - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
       - /home/centos/Staging_Environment_Variables/.env.staging:/app/env-files/.env.staging
       - /home/centos/Staging_Configuration/staging.ts:/app/env-files/staging.ts
+      - /home/centos/applications/b2b_tickets/attachment_files_test:/home/centos/applications/b2b_tickets/attachment_files_test
     restart: unless-stopped
 
   staging_b2b_tickets_pre_entry_2:
@@ -65,6 +66,7 @@ services:
       - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
       - /home/centos/Staging_Environment_Variables/.env.staging:/app/env-files/.env.staging
       - /home/centos/Staging_Configuration/staging.ts:/app/env-files/staging.ts
+      - /home/centos/applications/b2b_tickets/attachment_files_test:/home/centos/applications/b2b_tickets/attachment_files_test
     restart: unless-stopped
 
   prod_b2b_tickets_1:
@@ -91,6 +93,7 @@ services:
     command: ['nx', 'start', 'b2b_tickets', '--verbose']
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
+      - /home/centos/applications/b2b_tickets/attachment_files_prod:/home/centos/applications/b2b_tickets/attachment_files_prod
     restart: unless-stopped
 
   prod_b2b_tickets_2:
@@ -117,6 +120,7 @@ services:
     command: ['nx', 'start', 'b2b_tickets', '--verbose']
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
+      - /home/centos/applications/b2b_tickets/attachment_files_prod:/home/centos/applications/b2b_tickets/attachment_files_prod
     restart: unless-stopped
 
   staging_socket_server_pre_entry_1:
