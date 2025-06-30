@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
       className={`flex justify-center 
       items-center bg-black text-white
       text-center text-sm py-2 z-10 fixed bottom-0
-      w-dvw
+      w-full
       `}
     >
       <div
