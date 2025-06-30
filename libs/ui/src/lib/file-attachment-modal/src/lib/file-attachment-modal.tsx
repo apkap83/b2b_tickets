@@ -39,6 +39,7 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const ticketNumber = ticketDetails[0].Ticket;
@@ -51,13 +52,13 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
   //@ts-ignore
   const userId = session?.user?.user_id;
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    // Filter files by allowed types and size (e.g., max 10MB)
+  const validateAndAddFiles = (files: File[]) => {
     const allowedTypes = [
       'application/pdf',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/plain',
       'image/jpeg',
       'image/png',
@@ -85,6 +86,43 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
     });
 
     setSelectedFiles((prev) => [...prev, ...validFiles]);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    validateAndAddFiles(files);
+  };
+
+  // Drag and Drop Event Handlers
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragOver to false if we're leaving the drop zone entirely
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      validateAndAddFiles(files);
+    }
   };
 
   const handleRemoveFile = (index: number) => {
@@ -205,33 +243,51 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
             multiple
             style={{ display: 'none' }}
             onChange={handleFileSelect}
-            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar"
+            accept=".pdf,.doc,.docx,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar"
           />
 
-          <Button
-            variant="outlined"
+          <Box
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             sx={{
               width: '100%',
               height: '100px',
-              border: '2px dashed #ccc',
+              border: isDragOver ? '2px dashed #474cae' : '2px dashed #ccc',
+              backgroundColor: isDragOver ? '#f0f0ff' : 'transparent',
+              borderRadius: 1,
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease-in-out',
               '&:hover': {
                 border: '2px dashed #474cae',
+                backgroundColor: '#f9f9ff',
               },
+              pointerEvents: uploading ? 'none' : 'auto',
             }}
-            disabled={uploading}
           >
-            <Box display="flex" flexDirection="column" alignItems="center">
-              <IoCloudUploadOutline size={32} />
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Click to select files or drag and drop
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Max {formatFileSize(config.attachmentsMaxFileSize)} per file.
-                Supported: PDF, DOC, DOCX, TXT, JPG, PNG, GIF, ZIP, RAR
-              </Typography>
-            </Box>
-          </Button>
+            <IoCloudUploadOutline
+              size={32}
+              color={isDragOver ? '#474cae' : '#666'}
+            />
+            <Typography
+              variant="body2"
+              sx={{ mt: 1, color: isDragOver ? '#474cae' : 'inherit' }}
+            >
+              {isDragOver
+                ? 'Drop files here'
+                : 'Click to select files or drag and drop'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Max {formatFileSize(config.attachmentsMaxFileSize)} per file.
+              Supported: TXT, DOCX, XLSX, PDF, JPG, PNG, GIF, ZIP, RAR
+            </Typography>
+          </Box>
         </Box>
 
         {selectedFiles.length > 0 && (
