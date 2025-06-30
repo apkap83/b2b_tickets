@@ -1,6 +1,7 @@
 // app/auth/signin/page.jsx
 import { getProviders, getCsrfToken } from 'next-auth/react';
 import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
 import { options } from '@b2b-tickets/auth-options';
 import SignInForm from './components/SigninForm';
 import Image from 'next/image';
