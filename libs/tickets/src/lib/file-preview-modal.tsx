@@ -5,15 +5,34 @@ import {
   DialogContent,
   DialogActions,
   DialogTitle,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Tabs,
+  Tab,
+  Box,
 } from '@mui/material';
 import Button from '@mui/material/Button';
 import { IoClose, IoDownloadOutline, IoEyeOutline } from 'react-icons/io5';
 import toast from 'react-hot-toast';
+// You'll need to install these packages:
+// npm install mammoth xlsx
+import * as mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
 
 interface FilePreviewModalProps {
   attachment: TicketAttachmentDetails;
   onClose: () => void;
   onDownload: () => void;
+}
+
+interface ExcelSheet {
+  name: string;
+  data: any[][];
 }
 
 export function FilePreviewModal({
@@ -22,6 +41,8 @@ export function FilePreviewModal({
   onDownload,
 }: FilePreviewModalProps) {
   const [fileContent, setFileContent] = useState<string | null>(null);
+  const [excelSheets, setExcelSheets] = useState<ExcelSheet[]>([]);
+  const [activeSheetIndex, setActiveSheetIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,7 +88,49 @@ export function FilePreviewModal({
     if (['doc', 'docx'].includes(ext)) {
       return 'document';
     }
+    if (['xls', 'xlsx', 'csv'].includes(ext)) {
+      return 'spreadsheet';
+    }
     return 'unsupported';
+  };
+
+  const parseDocxFile = async (arrayBuffer: ArrayBuffer): Promise<string> => {
+    try {
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      if (result.messages.length > 0) {
+        console.warn('DOCX parsing warnings:', result.messages);
+      }
+      return result.value;
+    } catch (error) {
+      throw new Error('Failed to parse DOCX file');
+    }
+  };
+
+  const parseExcelFile = async (
+    arrayBuffer: ArrayBuffer
+  ): Promise<ExcelSheet[]> => {
+    try {
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheets: ExcelSheet[] = [];
+
+      workbook.SheetNames.forEach((sheetName) => {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,
+          defval: '',
+          raw: false,
+        });
+
+        sheets.push({
+          name: sheetName,
+          data: jsonData as any[][],
+        });
+      });
+
+      return sheets;
+    } catch (error) {
+      throw new Error('Failed to parse Excel file');
+    }
   };
 
   const fetchFileContent = async () => {
@@ -75,13 +138,13 @@ export function FilePreviewModal({
       setLoading(true);
       setError(null);
 
-      // Create preview URL with parameters - reuse the existing download API
+      // Create preview URL with parameters
       const previewUrl = new URL(
         '/api/download-attachment',
         window.location.origin
       );
       previewUrl.searchParams.set('attachmentId', attachment.attachment_id);
-      previewUrl.searchParams.set('mode', 'preview'); // Add preview mode
+      previewUrl.searchParams.set('mode', 'preview');
 
       const response = await fetch(previewUrl.toString(), {
         method: 'GET',
@@ -103,6 +166,17 @@ export function FilePreviewModal({
         // For text files, get the text content
         const text = await response.text();
         setFileContent(text);
+      } else if (fileType === 'document') {
+        // For DOCX files
+        const arrayBuffer = await response.arrayBuffer();
+        const htmlContent = await parseDocxFile(arrayBuffer);
+        setFileContent(htmlContent);
+      } else if (fileType === 'spreadsheet') {
+        // For Excel files
+        const arrayBuffer = await response.arrayBuffer();
+        const sheets = await parseExcelFile(arrayBuffer);
+        setExcelSheets(sheets);
+        setActiveSheetIndex(0);
       } else {
         throw new Error('Unsupported file type for preview');
       }
@@ -121,6 +195,8 @@ export function FilePreviewModal({
     setImageScale(1);
     setImagePosition({ x: 0, y: 0 });
     setIsDragging(false);
+    setExcelSheets([]);
+    setActiveSheetIndex(0);
 
     fetchFileContent();
 
@@ -175,6 +251,75 @@ export function FilePreviewModal({
   const resetZoom = () => {
     setImageScale(1);
     setImagePosition({ x: 0, y: 0 });
+  };
+
+  const renderExcelSheet = (sheet: ExcelSheet) => {
+    if (!sheet.data || sheet.data.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-32 text-gray-500">
+          <p>No data in this sheet</p>
+        </div>
+      );
+    }
+
+    // Limit the number of rows and columns for performance
+    const maxRows = 1000;
+    const maxCols = 50;
+    const displayData = sheet.data
+      .slice(0, maxRows)
+      .map((row) => (Array.isArray(row) ? row.slice(0, maxCols) : []));
+
+    const maxColumns = Math.max(...displayData.map((row) => row.length));
+
+    return (
+      <div className="h-[60vh] overflow-auto">
+        <TableContainer component={Paper} className="shadow-none">
+          <Table stickyHeader size="small">
+            <TableHead>
+              <TableRow>
+                {Array.from({ length: maxColumns }, (_, index) => (
+                  <TableCell
+                    key={index}
+                    className="bg-gray-50 font-semibold border-r"
+                    style={{ minWidth: '120px' }}
+                  >
+                    {String.fromCharCode(65 + (index % 26))}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {displayData.map((row, rowIndex) => (
+                <TableRow key={rowIndex} hover>
+                  {Array.from({ length: maxColumns }, (_, colIndex) => (
+                    <TableCell
+                      key={colIndex}
+                      className="border-r text-sm"
+                      style={{
+                        maxWidth: '200px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={String(row[colIndex] || '')}
+                    >
+                      {row[colIndex] || ''}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {sheet.data.length > maxRows && (
+          <div className="p-2 text-center text-sm text-gray-500 bg-yellow-50">
+            Showing first {maxRows} rows of {sheet.data.length} total rows.
+            Download the file to view all data.
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderPreview = () => {
@@ -315,21 +460,63 @@ export function FilePreviewModal({
 
       case 'document':
         return (
-          <div className="flex flex-col items-center justify-center h-96 text-gray-500">
-            <IoEyeOutline size={48} className="mb-4 opacity-50" />
-            <p className="text-lg font-medium">Document Preview</p>
-            <p className="text-sm text-gray-500 mt-2 text-center">
-              Word document preview is limited. Download the file for full
-              functionality.
-            </p>
-            <Button
-              onClick={onDownload}
-              variant="outlined"
-              className="mt-4"
-              startIcon={<IoDownloadOutline />}
-            >
-              Download Document
-            </Button>
+          <div className="h-[70vh] overflow-auto">
+            <div className="max-w-4xl mx-auto bg-white p-8 shadow-sm">
+              <div
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: fileContent || '' }}
+                style={{
+                  fontFamily: 'system-ui, -apple-system, sans-serif',
+                  lineHeight: '1.6',
+                  color: '#333',
+                }}
+              />
+            </div>
+            <div className="p-2 text-center text-sm text-gray-500 bg-blue-50">
+              DOCX preview may not show all formatting. Download for full
+              fidelity.
+            </div>
+          </div>
+        );
+
+      case 'spreadsheet':
+        if (excelSheets.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center h-96 text-gray-500">
+              <IoEyeOutline size={48} className="mb-4 opacity-50" />
+              <p className="text-lg font-medium">No sheets found</p>
+            </div>
+          );
+        }
+
+        return (
+          <div className="h-[70vh]">
+            {excelSheets.length > 1 && (
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs
+                  value={activeSheetIndex}
+                  onChange={(_, newValue) => setActiveSheetIndex(newValue)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                >
+                  {excelSheets.map((sheet, index) => (
+                    <Tab
+                      key={index}
+                      label={sheet.name || `Sheet ${index + 1}`}
+                      className="min-w-0"
+                    />
+                  ))}
+                </Tabs>
+              </Box>
+            )}
+
+            {excelSheets[activeSheetIndex] &&
+              renderExcelSheet(excelSheets[activeSheetIndex])}
+
+            <div className="p-2 text-center text-sm text-gray-500 bg-green-50">
+              Excel preview may not show all formatting and formulas. Download
+              for full functionality.
+            </div>
           </div>
         );
 

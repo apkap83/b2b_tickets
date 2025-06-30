@@ -505,37 +505,39 @@ export const isPreviewableFile = (filename: string): boolean => {
     'png',
     'gif',
     'bmp',
-    'webp',
-    'svg', // Images
-    'pdf', // PDFs
+    'svg',
+    'pdf',
     'txt',
     'log',
     'csv',
-    'json',
-    'xml', // Text files
-    'html',
-    'htm',
-    'css',
-    'js',
-    'ts',
-    'jsx',
-    'tsx', // Code files
     'md',
     'markdown', // Markdown
-    'doc',
-    'docx', // Word documents (limited preview)
+    // 'doc',
+    // 'docx', // Word documents (limited preview)
+    'xlsx',
   ];
   return previewableExtensions.includes(ext || '');
 };
 
 export const safePreviewTypes = [
+  // Image formats
   'image/jpeg',
   'image/png',
   'image/gif',
   'image/bmp',
   'image/webp',
   'image/svg+xml',
+
+  // Document formats
   'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/msword', // .doc (legacy)
+
+  // Spreadsheet formats
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls (legacy)
+
+  // Text formats
   'text/plain',
   'text/csv',
   'application/json',
@@ -569,6 +571,8 @@ export const safeExtensions = [
   'tsx',
   'md',
   'markdown',
+  'docx',
+  'xlsx',
 ];
 
 // Helper function to check if file type is safe for preview
@@ -635,30 +639,33 @@ export const mimeTypes: { [key: string]: string } = {
 };
 
 export const SAFE_PREVIEW_TYPES = new Set([
-  // Images
+  // Image formats
   'image/jpeg',
   'image/png',
   'image/gif',
+  'image/bmp',
   'image/webp',
   'image/svg+xml',
-  'image/bmp',
 
-  // Documents
+  // Document formats
   'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/msword', // .doc (legacy)
 
-  // Text files
+  // Spreadsheet formats
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls (legacy)
+
+  // Text formats
   'text/plain',
   'text/csv',
   'application/json',
   'text/xml',
   'text/html',
   'text/css',
-  'text/markdown',
-  'text/javascript', // For .js files
   'application/javascript',
-
-  // Code files (detected as text/plain usually)
-  // These might be detected as text/plain by file-type
+  'text/markdown',
+  // 'application/x-cfb',
 ]);
 
 // Fallback MIME type detection for when fileTypeFromBuffer fails
@@ -715,5 +722,5 @@ export const isTextContent = (buffer: Buffer): boolean => {
     }
   }
 
-  return sample.length > 0 && textChars / sample.length > 0.7; // 70% text characters
+  return sample.length > 0 && textChars / sample.length > 0.25; // 25% text characters
 };
