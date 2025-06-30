@@ -9,8 +9,7 @@ export const productionConfig = {
 
   emailListOfHandlers: [process.env['EMAIL_LIST_OF_HANDLERS'] as string],
 
-  attachmentsPrefixPath:
-    '/home/centos/applications/b2b_tickets/attachment_files_prod',
+  attachmentsPrefixPath: 'N/A For Production/Staging',
 
   attachmentsMaxFileSize: 20 * 1024 * 1024, // 20MB
 
