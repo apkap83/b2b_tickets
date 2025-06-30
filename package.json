@@ -47,6 +47,7 @@
     "ldapts": "7.4.0",
     "lodash": "4.17.21",
     "mailersend": "2.5.0",
+    "mammoth": "^1.9.1",
     "mmmagic": "^0.5.3",
     "mui-one-time-password-input": "2.0.3",
     "next": "14.2.28",
