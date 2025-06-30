@@ -581,6 +581,12 @@ export function TicketDetails({
         attachment_id: attachment.attachment_id,
         filename: attachment.Filename,
       });
+
+      emitEvent(WebSocketMessage.NEW_COMMENT_ADDED, {
+        ticket_id: ticketId,
+        date: new Date(),
+        isTicketCreator: true,
+      });
     } catch (error) {
       console.error('Delete attachment error:', error);
       toast.error('Failed to delete attachment');
