@@ -9,6 +9,10 @@ import {
   isTextContent,
 } from '@b2b-tickets/utils';
 
+// Tell Next.js this route should always run at request time
+// No pre-render due to Additional security headers on responses
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(options);
