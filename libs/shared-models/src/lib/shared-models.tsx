@@ -655,16 +655,16 @@ export enum AllowedColumnsForFilteringType {
 }
 
 export interface TicketAttachmentDetails {
-  attachment_id: string;
-  ticket_id: string;
-  'Ticket Number': string;
-  attachment_full_path: string;
-  Filename: string;
   'Attachment Date': Date;
-  attachment_user_id: string;
-  Username: string;
+  Filename: string;
   'First Name': string;
   'Last Name': string;
-  user_customer_id: string;
+  'Ticket Number': string;
   'User Customer Name': string;
+  Username: string;
+  attachment_id: string;
+  attachment_user_id: string;
+  ticket_id: string;
+  user_customer_id: string;
+  attachment_full_path?: string;
 }
