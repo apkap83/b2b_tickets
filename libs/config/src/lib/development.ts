@@ -30,8 +30,8 @@ export const developmentConfig = {
   redisPort: 6379,
 
   postgres_b2b_database: {
-    host: isMacDevelopment ? '127.0.0.1' : 'b2b_database',
-    port: isMacDevelopment ? 5432 : 9002,
+    host: isMacDevelopment ? '172.27.52.177' : 'b2b_database',
+    port: 9002,
     db: 'postgres',
     username: 'postgres',
     schemaName: 'b2btickets_dev',
