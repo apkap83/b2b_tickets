@@ -136,7 +136,7 @@ export const NewCommentModal = memo(
       <React.Fragment>
         <div
           className="fixed inset-0 flex items-center justify-center
-       bg-black bg-opacity-50"
+       bg-black bg-opacity-50 z-10"
         >
           <div
             className={`${styles.mainDiv} px-8 pt-[20.80px] pb-[48.46px] bg-white rounded-lg justify-start items-center inline-flex`}

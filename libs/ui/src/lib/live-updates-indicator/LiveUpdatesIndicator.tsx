@@ -78,7 +78,7 @@ export const LiveUpdatesIndicator = () => {
   }
 
   return (
-    <div className="fixed bottom-[2.87rem] right-1 z-50 hidden md:block">
+    <div className="fixed bottom-[2.87rem] right-1 z-5 hidden md:block">
       {/* Main indicator container */}
       <div
         className={`
