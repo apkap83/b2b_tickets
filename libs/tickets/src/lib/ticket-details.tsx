@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getGreekDateFormat, getStatusColor } from '@b2b-tickets/utils';
 import {
   TicketComment,
@@ -118,7 +118,6 @@ export function TicketDetails({
       const resp = await getTicketAttachments({
         ticketId: ticketDetails[0].ticket_id,
       });
-
       setTicketAttachments(resp.data);
     } catch (error) {
       console.error('Error fetching Ticket attachments file details:', error);
@@ -361,21 +360,39 @@ export function TicketDetails({
     </Button>
   );
 
-  // Helper functions to determine user permissions and ticket state
-  const isTicketHandler = userHasRole(session, AppRoleTypes.B2B_TicketHandler);
-  const isTicketCreator = userHasRole(session, AppRoleTypes.B2B_TicketCreator);
-  const isNewTicket = ticketStatus === TicketStatus.NEW;
-  const isWorkingTicket = ticketStatus === TicketStatus.WORKING;
-  const canEscalate =
-    isTicketCreator && (isNewTicket || isWorkingTicket) && nextEscalationLevel;
+  // Helper function to determine user permissions and ticket state
+  const ticketPermissions = useMemo(() => {
+    const isTicketHandler = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketHandler
+    );
+    const isTicketCreator = userHasRole(
+      session,
+      AppRoleTypes.B2B_TicketCreator
+    );
+    const isNewTicket = ticketStatus === TicketStatus.NEW;
+    const isWorkingTicket = ticketStatus === TicketStatus.WORKING;
+    const canEscalate =
+      isTicketCreator &&
+      (isNewTicket || isWorkingTicket) &&
+      nextEscalationLevel;
+
+    return {
+      isTicketHandler,
+      isTicketCreator,
+      isNewTicket,
+      isWorkingTicket,
+      canEscalate,
+    };
+  }, [session, ticketStatus, nextEscalationLevel]);
 
   // Render functions for different user roles and ticket states
   const renderTicketHandlerButtons = () => {
-    if (isNewTicket) {
+    if (ticketPermissions.isNewTicket) {
       return <StartWorkButton />;
     }
 
-    if (isWorkingTicket) {
+    if (ticketPermissions.isWorkingTicket) {
       return (
         <div className="flex gap-2">
           <CloseTicketButton />
@@ -390,10 +407,10 @@ export function TicketDetails({
   };
 
   const renderTicketCreatorButtons = () => {
-    if (isNewTicket || isWorkingTicket) {
+    if (ticketPermissions.isNewTicket || ticketPermissions.isWorkingTicket) {
       return (
         <div className="flex gap-2">
-          {canEscalate && (
+          {ticketPermissions.canEscalate && (
             <EscalateButton nextEscalationLevel={nextEscalationLevel} />
           )}
           <AttachFileButton />
@@ -407,11 +424,11 @@ export function TicketDetails({
 
   // Main function
   const customButtonBasedOnTicketStatus = () => {
-    if (isTicketHandler) {
+    if (ticketPermissions.isTicketHandler) {
       return renderTicketHandlerButtons();
     }
 
-    if (isTicketCreator) {
+    if (ticketPermissions.isTicketCreator) {
       return renderTicketCreatorButtons();
     }
 
@@ -809,7 +826,10 @@ export function TicketDetails({
               onPreview={handleAttachmentPreview}
               onDownload={handleAttachmentDownload}
               onDelete={handleAttachmentDelete}
-              canDelete={isTicketHandler || isTicketCreator}
+              canDelete={
+                ticketPermissions.isTicketHandler ||
+                ticketPermissions.isTicketCreator
+              }
             />
           )}
           <TicketsUiComments
