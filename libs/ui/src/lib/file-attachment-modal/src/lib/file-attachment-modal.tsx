@@ -60,6 +60,7 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/plain',
+      'text/csv',
       'image/jpeg',
       'image/png',
       'image/gif',
@@ -243,7 +244,7 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
             multiple
             style={{ display: 'none' }}
             onChange={handleFileSelect}
-            accept=".pdf,.doc,.docx,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar"
+            accept=".pdf,.doc,.docx,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar"
           />
 
           <Box
@@ -285,7 +286,7 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Max {formatFileSize(config.attachmentsMaxFileSize)} per file.
-              Supported: TXT, DOCX, XLSX, PDF, JPG, PNG, GIF, ZIP, RAR
+              Supported: TXT, CSV, JPG, PNG, XLSX, DOCX, PDF, GIF, ZIP, RAR
             </Typography>
           </Box>
         </Box>
