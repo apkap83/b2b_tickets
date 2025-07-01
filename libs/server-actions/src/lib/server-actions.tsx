@@ -131,7 +131,6 @@ export const getCcValuesForTicket = async ({
 
     const sqlQueryForCcPhones = `SELECT cc_phones FROM ticket_cc_phone_numbers_v where "ticket_id" = $1`;
     const res_phones = await pgB2Bpool.query(sqlQueryForCcPhones, [ticketId]);
-
     return {
       data: {
         ccEmails:
@@ -1986,7 +1985,6 @@ export async function getTicketAttachments({
                                       ATTACHMENT_ID,
                                       TICKET_ID,
                                       "Ticket Number",
-                                      ATTACHMENT_FULL_PATH,
                                       "Filename",
                                       "Attachment Date",
                                       ATTACHMENT_USER_ID,
@@ -2113,7 +2111,7 @@ export async function downloadAttachment(params: {
     }
 
     const fullPath = getAttachmentFullPath({
-      pathFromDB: attachmentDetails.attachment_full_path,
+      pathFromDB: attachmentDetails.attachment_full_path!,
     });
 
     // Check if file exists and read it
@@ -2303,7 +2301,7 @@ export async function deleteAttachment(params: {
 
     // After successful database deletion, try to delete the physical file
     const fullPath = getAttachmentFullPath({
-      pathFromDB: attachmentDetails.attachment_full_path,
+      pathFromDB: attachmentDetails.attachment_full_path!,
     });
 
     try {
@@ -2337,6 +2335,101 @@ export async function deleteAttachment(params: {
     return {
       status: 'ERROR',
       message: 'An error occurred while deleting the attachment',
+    };
+  }
+}
+
+/**
+ * Server action to get Company Cc Users in comma separated list
+ */
+export async function buildTicketCcUsers({
+  userId,
+}: {
+  userId: string;
+}): Promise<{
+  data?: {
+    build_ticket_cc_users: string;
+  };
+  error?: string;
+}> {
+  try {
+    await verifySecurityRole([
+      AppRoleTypes.B2B_TicketCreator,
+      AppRoleTypes.B2B_TicketHandler,
+    ]);
+
+    if (!userId) {
+      return {
+        error: 'ERROR: User ID is required',
+      };
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const ccEmailsText = await pgB2Bpool.query(
+      `SELECT build_ticket_cc_users($1, $2, $3, $4)`,
+      [
+        userId,
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+
+    return {
+      data: ccEmailsText.rows[0],
+      error: '',
+    };
+  } catch (error) {
+    console.error('Error getting ticket cc users:', error);
+    return {
+      error: 'ERROR: Internal server error while retrieving cc users',
+    };
+  }
+}
+
+/**
+ * Server action to set Cc Users Set on DB
+ */
+export async function updateCcUsers({
+  ticketId,
+  ccEmails,
+}: {
+  ticketId: string;
+  ccEmails: string;
+}): Promise<ServerActionResponse> {
+  try {
+    await verifySecurityRole([
+      AppRoleTypes.B2B_TicketCreator,
+      AppRoleTypes.B2B_TicketHandler,
+    ]);
+
+    if (!ticketId) {
+      return {
+        status: 'ERROR',
+        message: 'ERROR: Ticket ID is required for updating Cc Users',
+      };
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    await pgB2Bpool.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
+      ticketId,
+      ccEmails,
+      //@ts-ignore
+      config.api.user,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
+    ]);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Ticket Cc Users Updated',
+    };
+  } catch (error) {
+    return {
+      status: 'ERROR',
+      message: error as string,
     };
   }
 }

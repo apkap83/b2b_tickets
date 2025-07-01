@@ -27,6 +27,7 @@ import {
   createNewTicket,
   getTicketSeverities,
   getServicesForCategorySelected,
+  buildTicketCcUsers,
 } from '@b2b-tickets/server-actions';
 import { EMPTY_FORM_STATE, getSeverityStatusColor } from '@b2b-tickets/utils';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
@@ -74,6 +75,7 @@ export const NewTicketModal = memo(({ closeModal, userId }: any) => {
   const colors = tokens(theme.palette.mode);
 
   const { data: session, status } = useSession();
+
   const [formState, action] = useFormState<any, any>(
     createNewTicket,
     EMPTY_FORM_STATE
@@ -843,6 +845,9 @@ const CcFields = memo(
     rightPanelMinWidthPx,
     autoComplete,
   }: any) => {
+    const { data: session, status } = useSession();
+    const userId = String(session?.user.user_id!);
+
     // Function to toggle the state
     const toggleFields = useCallback(() => {
       setShowCcFields(!showCcFields);
@@ -887,22 +892,65 @@ const CcFields = memo(
             )}
           </div>
         </div>
-        {showCcFields && (
-          <div>
+        <div
+          className={`overflow-hidden transition-all duration-200 ease-in-out ${
+            showCcFields ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="max-w-[320px] pt-1">
             {/* Cc E-mails Field */}
             <FormControl sx={formControlStyle}>
-              <TextField
-                margin="dense"
-                id="ccEmails"
-                name="ccEmails"
-                label="Cc E-mails"
-                type="text"
-                variant="standard"
-                value={formik.values.ccEmails}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                autoComplete={autoComplete}
-              />
+              <div className="flex justify-center items-center">
+                <TextField
+                  sx={{
+                    flexGrow: '1',
+                  }}
+                  margin="dense"
+                  id="ccEmails"
+                  name="ccEmails"
+                  label="Cc E-mails"
+                  type="text"
+                  variant="standard"
+                  value={formik.values.ccEmails}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  autoComplete={autoComplete}
+                />
+                <button
+                  type="button"
+                  style={{
+                    fontSize: '12px',
+                  }}
+                  onClick={async () => {
+                    const { data } = await buildTicketCcUsers({ userId });
+
+                    if (data) {
+                      console.log('ccEmails', data);
+                      formik.setFieldValue(
+                        'ccEmails',
+                        data.build_ticket_cc_users
+                      );
+                    }
+                  }}
+                  className="
+                    ml-3
+                    bg-[#23599a] hover:bg-[#307bd7] active:bg-[#1e4f87]
+                    rounded shadow-md active:shadow-sm
+                    transition-all duration-150 
+                    cursor-pointer 
+                    text-white
+                    
+                    flex items-center justify-center 
+                    text-center leading-tight
+                    h-11
+                    whitespace-pre-wrap
+                    w-[60px]
+                    active:translate-y-[1px] active:scale-[0.98]
+                "
+                >
+                  CC Company
+                </button>
+              </div>
               <ClarificationMessage msg="Comma separated list of E-mails" />
             </FormControl>
             <FieldError formik={formik} name="ccEmails" />
@@ -925,7 +973,7 @@ const CcFields = memo(
             </FormControl>
             <FieldError formik={formik} name="ccPhones" />
           </div>
-        )}
+        </div>
       </div>
     );
   }
