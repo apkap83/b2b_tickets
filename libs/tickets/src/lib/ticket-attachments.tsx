@@ -77,7 +77,13 @@ export function TicketAttachments({
           </div>
         </div>
 
-        {isExpanded && (
+        <div
+          className={`transition-all duration-200 ease-in-out ${
+            isExpanded
+              ? 'opacity-100 max-h-96 overflow-auto'
+              : 'opacity-0 max-h-0 overflow-hidden'
+          }`}
+        >
           <div className="p-2">
             <div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
@@ -192,7 +198,7 @@ export function TicketAttachments({
               ))}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
