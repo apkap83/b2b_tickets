@@ -329,6 +329,7 @@ export const mapToTicketCreator = (ticket: TicketDetail) => {
     Escalated: ticket.Escalated,
     escalation_levels: ticket.escalation_levels,
     comments: ticket.comments,
+    'Is Final Status': ticket['Is Final Status'],
   };
 };
 

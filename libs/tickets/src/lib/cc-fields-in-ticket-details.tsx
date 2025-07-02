@@ -12,10 +12,14 @@ import {
   updateCcUsers,
 } from '@b2b-tickets/server-actions';
 import { useSession } from 'next-auth/react';
+import toast from 'react-hot-toast';
+import { isValidEmail } from '@b2b-tickets/utils';
+import Tooltip from '@mui/material/Tooltip';
 
 // Type definitions
 interface CcFieldsProps {
   ticketId: string;
+  isFinalStatus: boolean;
 }
 
 interface CcValuesResponse {
@@ -42,23 +46,10 @@ const detailsRowClass: string =
 const detailsRowHeaderClass: string =
   "grow shrink basis-0 text-black/90 text-base font-medium font-['Roboto'] ";
 
-// Email validation function
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email.trim());
-};
-
-// TODO: Add your server action for updating CC emails
-const updateCcEmails = async ({
+export const CcFields: React.FC<CcFieldsProps> = ({
   ticketId,
-  ccEmails,
-}: UpdateCcEmailsParams): Promise<UpdateCcEmailsResponse> => {
-  await updateCcUsers({ ticketId, ccEmails });
-  // Replace this with your actual server action
-  return { success: true };
-};
-
-export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
+  isFinalStatus,
+}) => {
   const [showCcFields, setShowCcFields] = useState<boolean>(false);
   const [showEmailPopup, setShowEmailPopup] = useState<boolean>(false);
 
@@ -86,6 +77,25 @@ export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
 
     getCcValues();
   }, [ticketId]);
+
+  const saveEmails = async (): Promise<void> => {
+    const emailString: string = editableEmails.join(', ');
+
+    // Call your server action to update the emails
+    try {
+      const resp = await updateCcUsers({ ticketId, ccEmails });
+
+      if (resp.status === 'SUCCESS') {
+        setCcEmails(emailString);
+        toast.success(resp.message);
+        closeEmailPopup();
+      } else {
+        toast.error(resp.message);
+      }
+    } catch (error) {
+      toast.error('Failed to update emails');
+    }
+  };
 
   const toggleFields = (): void => {
     setShowCcFields(!showCcFields);
@@ -146,31 +156,20 @@ export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
     }
   };
 
-  const saveEmails = async (): Promise<void> => {
-    const emailString: string = editableEmails.join(', ');
-    setCcEmails(emailString);
-
-    // Call your server action to update the emails
-    try {
-      await updateCcEmails({ ticketId, ccEmails: emailString });
-      closeEmailPopup();
-    } catch (error) {
-      console.error('Failed to update emails:', error);
-    }
-  };
-
   const renderEmailDisplay = (): JSX.Element => {
     return (
       <div className="flex items-center gap-4 ">
         {ccEmails && ccEmails.length > 0 && (
           <span>{ccEmails.substring(0, 20)}...</span>
         )}
-        <button
-          onClick={openEmailPopup}
-          className="bg-[#4461ac] tracking-wide text-white text-sm rounded-md px-2 py-1 hover:bg-[#577ddb] font-medium cursor-pointer border-1 border-blue-500 shadow-md"
-        >
-          Edit
-        </button>
+        <Tooltip title={'Edit CC users list'}>
+          <button
+            onClick={openEmailPopup}
+            className="bg-[#4461ac] tracking-wide text-white text-sm rounded-md px-1 py-1 hover:bg-[#577ddb] font-medium cursor-pointer border-1 border-blue-500 shadow-md"
+          >
+            ...
+          </button>
+        </Tooltip>
       </div>
     );
   };
@@ -271,13 +270,15 @@ export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
                     <RiAddLine size="16" />
                   </button>
 
-                  <button
-                    onClick={addAllCompanyEmails}
-                    className={`px-3 py-2 rounded-md flex items-center transition-colors 
+                  <Tooltip title={'Add all Company E-mails'}>
+                    <button
+                      onClick={addAllCompanyEmails}
+                      className={`px-3 py-2 rounded-md flex items-center transition-colors 
                       ${'bg-[#4461ac] text-white hover:bg-[#5d85ea] cursor-pointer'}`}
-                  >
-                    CC Company
-                  </button>
+                    >
+                      CC Company
+                    </button>
+                  </Tooltip>
                 </div>
                 {newEmail && !isValidEmail(newEmail) && (
                   <p className="text-red-600 text-xs mt-1">
@@ -326,7 +327,8 @@ export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
               </button>
               <button
                 onClick={saveEmails}
-                className="px-4 py-2 bg-[#4461ac] text-white rounded-md hover:bg-[#5d85ea]"
+                disabled={isFinalStatus}
+                className="px-4 py-2 bg-[#4461ac] text-white rounded-md hover:bg-[#5d85ea] disabled:bg-gray-300"
               >
                 Save Changes
               </button>

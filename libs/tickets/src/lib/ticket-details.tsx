@@ -222,7 +222,6 @@ export function TicketDetails({
   if (!ticketDetails || ticketDetails.length === 0) return null;
 
   const ticketStatus = ticketDetails[0].status_id;
-  // const escalatedStatusDate = ticketDetails[0].escalation_date;
 
   if (ticketDetails.length === 0) return;
 
@@ -797,7 +796,7 @@ export function TicketDetails({
                   </div>
                 </div>
               )}
-              <CcFields ticketId={ticketId} />
+              <CcFields ticketId={ticketId} isFinalStatus={isFinalStatus} />
             </div>
             <div className="shadow-lg grow shrink basis-0 rounded-md self-stretch bg-[#6870fa]/0 flex-col justify-start items-center gap-4 inline-flex">
               <div className="self-stretch p-2.5 border rounded-t-md border-black/20 justify-center items-center gap-2.5 inline-flex">

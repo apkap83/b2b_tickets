@@ -2423,6 +2423,19 @@ export async function updateCcUsers({
 
     await setSchemaAndTimezone(pgB2Bpool);
 
+    // Check if Ticket is finalized
+    const finalStatusQuery =
+      'SELECT "Is Final Status" FROM tickets_v where ticket_id = $1';
+    const status = await pgB2Bpool.query(finalStatusQuery, [ticketId]);
+    const isFinalStatus = status.rows[0]['Is Final Status'] as 'y' | 'n';
+
+    if (isFinalStatus === 'y') {
+      return {
+        status: 'ERROR',
+        message: 'You cannot alter CC mail list on a finalized ticket',
+      };
+    }
+
     await pgB2Bpool.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
       ticketId,
       normalizedCcEmails,
