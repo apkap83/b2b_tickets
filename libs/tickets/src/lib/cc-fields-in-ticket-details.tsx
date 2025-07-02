@@ -57,9 +57,12 @@ export const CcFields: React.FC<CcFieldsProps> = ({
   const [ccPhones, setCcPhones] = useState<string>('');
   const [editableEmails, setEditableEmails] = useState<string[]>([]);
   const [newEmail, setNewEmail] = useState<string>('');
-
+  const [saveButtonMessage, setSaveButtonMessage] =
+    useState<string>('Save Changes');
   const { data: session, status } = useSession();
 
+  const [ccCompanyButtonText, setCcCompanyButtonText] =
+    useState<string>('CC Company');
   useEffect(() => {
     const getCcValues = async (): Promise<void> => {
       try {
@@ -79,6 +82,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({
   }, [ticketId]);
 
   const saveEmails = async (): Promise<void> => {
+    setSaveButtonMessage('Saving...');
     const emailString: string = editableEmails.join(', ');
 
     // Call your server action to update the emails
@@ -89,6 +93,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({
         setCcEmails(emailString);
         toast.success(resp.message);
         closeEmailPopup();
+        setSaveButtonMessage('Save Changes');
       } else {
         toast.error(resp.message);
       }
@@ -131,6 +136,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({
   };
 
   const addAllCompanyEmails = async () => {
+    setCcCompanyButtonText('Getting Info...');
     const user_id = String(session?.user.user_id!);
 
     const resp = await buildTicketCcUsers({ userId: user_id });
@@ -141,6 +147,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({
 
       const uniqueEmails = [...new Set([...editableEmails, ...emailListArray])];
       setEditableEmails(uniqueEmails);
+      setCcCompanyButtonText('CC Company');
     }
   };
 
@@ -177,6 +184,9 @@ export const CcFields: React.FC<CcFieldsProps> = ({
   // Check if the current input is a valid email and not already in the list
   const canAddEmail: boolean =
     isValidEmail(newEmail) && !editableEmails.includes(newEmail.trim());
+
+  const newEmailAlreadyExists = (mail: string) =>
+    editableEmails.includes(mail.trim());
 
   return (
     <div className="mt-1 flex-col w-full">
@@ -253,7 +263,8 @@ export const CcFields: React.FC<CcFieldsProps> = ({
                     onKeyPress={handleKeyPress}
                     placeholder="Enter email address"
                     className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      newEmail && !isValidEmail(newEmail)
+                      (newEmail && !isValidEmail(newEmail)) ||
+                      newEmailAlreadyExists(newEmail)
                         ? 'border-red-300 bg-red-50'
                         : 'border-gray-300'
                     }`}
@@ -276,13 +287,19 @@ export const CcFields: React.FC<CcFieldsProps> = ({
                       className={`px-3 py-2 rounded-md flex items-center transition-colors 
                       ${'bg-[#4461ac] text-white hover:bg-[#5d85ea] cursor-pointer'}`}
                     >
-                      CC Company
+                      {ccCompanyButtonText}
                     </button>
                   </Tooltip>
                 </div>
                 {newEmail && !isValidEmail(newEmail) && (
                   <p className="text-red-600 text-xs mt-1">
                     Please enter a valid email address
+                  </p>
+                )}
+
+                {newEmail && newEmailAlreadyExists(newEmail) && (
+                  <p className="text-red-600 text-xs mt-1">
+                    This email already exists
                   </p>
                 )}
               </div>
@@ -330,7 +347,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({
                 disabled={isFinalStatus}
                 className="px-4 py-2 bg-[#4461ac] text-white rounded-md hover:bg-[#5d85ea] disabled:bg-gray-300"
               >
-                Save Changes
+                {saveButtonMessage}
               </button>
             </div>
           </div>
