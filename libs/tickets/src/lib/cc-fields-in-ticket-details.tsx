@@ -165,14 +165,18 @@ export const CcFields: React.FC<CcFieldsProps> = ({
 
   const renderEmailDisplay = (): JSX.Element => {
     return (
-      <div className="flex items-center gap-4 ">
+      <div className="flex items-center gap-2 ">
         {ccEmails && ccEmails.length > 0 && (
-          <span>{ccEmails.substring(0, 20)}...</span>
+          <span>
+            {ccEmails.length > 20 ? '[ ' : ''}
+            {ccEmails.substring(0, 20)}
+            {ccEmails.length > 20 ? '... ]' : ''}
+          </span>
         )}
         <Tooltip title={'Edit CC users list'}>
           <button
             onClick={openEmailPopup}
-            className="bg-[#4461ac] tracking-wide text-white text-sm rounded-md px-1 py-1 hover:bg-[#577ddb] font-medium cursor-pointer border-1 border-blue-500 shadow-md"
+            className="bg-[#4461ac] tracking-wide text-white text-sm rounded-md px-1 py-[2px] hover:bg-[#577ddb] font-medium cursor-pointer border-1 border-blue-500 shadow-md"
           >
             ...
           </button>
