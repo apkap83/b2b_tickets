@@ -128,7 +128,9 @@ export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
     if (resp.data) {
       const emailList = resp.data.build_ticket_cc_users;
       const emailListArray = emailList.split(', ');
-      setEditableEmails([...editableEmails, ...emailListArray]);
+
+      const uniqueEmails = [...new Set([...editableEmails, ...emailListArray])];
+      setEditableEmails(uniqueEmails);
     }
   };
 
