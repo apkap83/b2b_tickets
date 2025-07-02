@@ -288,7 +288,8 @@ export const CcFields: React.FC<CcFieldsProps> = ({
                   <Tooltip title={'Add all Company E-mails'}>
                     <button
                       onClick={addAllCompanyEmails}
-                      className={`px-3 py-2 rounded-md flex items-center transition-colors 
+                      disabled={isFinalStatus}
+                      className={`px-3 py-2 rounded-md flex items-center transition-colors  disabled:bg-gray-300 disabled:text-gray-500 
                       ${'bg-[#4461ac] text-white hover:bg-[#5d85ea] cursor-pointer'}`}
                     >
                       {ccCompanyButtonText}
@@ -349,7 +350,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({
               <button
                 onClick={saveEmails}
                 disabled={isFinalStatus}
-                className="px-4 py-2 bg-[#4461ac] text-white rounded-md hover:bg-[#5d85ea] disabled:bg-gray-300"
+                className="px-4 py-2 bg-[#4461ac] text-white rounded-md hover:bg-[#5d85ea] disabled:bg-gray-300 disabled:text-gray-500 "
               >
                 {saveButtonMessage}
               </button>
