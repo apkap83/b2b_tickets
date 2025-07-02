@@ -267,19 +267,19 @@ export const NewTicketModal = memo(({ closeModal, userId }: any) => {
   dayjs.extend(updateLocale);
 
   // Update the locale to use Greek characters for AM/PM
-  dayjs.updateLocale('en', {
-    meridiem: (hour: any) => {
-      return hour < 12 ? 'πμ' : 'μμ';
-    },
-    formats: {
-      LT: 'h:mm A',
-      LTS: 'h:mm:ss A',
-      L: 'DD/MM/YYYY',
-      LL: 'D MMMM YYYY',
-      LLL: 'D MMMM YYYY h:mm A',
-      LLLL: 'dddd, D MMMM YYYY h:mm A',
-    },
-  });
+  // dayjs.updateLocale('en', {
+  //   meridiem: (hour: any) => {
+  //     return hour < 12 ? 'πμ' : 'μμ';
+  //   },
+  //   formats: {
+  //     LT: 'h:mm A',
+  //     LTS: 'h:mm:ss A',
+  //     L: 'DD/MM/YYYY',
+  //     LL: 'D MMMM YYYY',
+  //     LLL: 'D MMMM YYYY h:mm A',
+  //     LLLL: 'dddd, D MMMM YYYY h:mm A',
+  //   },
+  // });
 
   // Memoize the close handler
   const handleClose = useCallback(() => {
@@ -853,7 +853,7 @@ const CcFields = memo(
       setShowCcFields(!showCcFields);
     }, [showCcFields, setShowCcFields]);
 
-    // Option 1: Type assertion (Quick fix)
+    // Option 1: Type assertion
     const headerStyle: React.CSSProperties = useMemo(
       () => ({
         fontSize: '12px',
