@@ -1948,7 +1948,7 @@ export async function processFileAttachment(formData: FormData): Promise<{
       error: '',
     };
   } catch (error) {
-    console.error('Error processing file attachment:', error);
+    logRequest.error(`Error processing file attachment: ${error}`);
     return {
       data: '',
       error: 'ERROR: Internal server error while processing file attachment',
@@ -2271,7 +2271,7 @@ export async function deleteAttachment(params: {
       );
 
       logRequest.info(
-        `Attachment deleted from database: ${attachmentId} - ${attachmentDetails.Filename}`
+        `Attachment deleted from database: AttachmentID: ${attachmentId} - File Name: ${attachmentDetails.Filename}`
       );
     } catch (dbError) {
       logRequest.error(`Database deletion failed: ${dbError}`);
@@ -2416,11 +2416,16 @@ export async function updateCcUsers({
       };
     }
 
+    // Normalize empty ccEmails
+    const normalizedCcEmails = ccEmails?.trim() || null;
+
+    console.log('ccEmails', ccEmails);
+
     await setSchemaAndTimezone(pgB2Bpool);
 
     await pgB2Bpool.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
       ticketId,
-      ccEmails,
+      normalizedCcEmails,
       //@ts-ignore
       config.api.user,
       config.api.process,
@@ -2433,9 +2438,7 @@ export async function updateCcUsers({
       message: 'Ticket Cc Users Updated',
     };
   } catch (error) {
-    logRequest.error(
-      `Error - Ticket Cc Users Not Updated for ticketId ${ticketId}`
-    );
+    logRequest.error(`Ticket Cc Users Not Updated for ticketId ${ticketId}`);
     return {
       status: 'ERROR',
       message: error as string,
