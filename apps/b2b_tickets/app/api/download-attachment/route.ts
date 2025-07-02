@@ -9,6 +9,8 @@ import {
   isTextContent,
 } from '@b2b-tickets/utils';
 
+// TODO Create Logging Mechanism for this route
+
 // Tell Next.js this route should always run at request time
 // No pre-render due to Additional security headers on responses
 export const dynamic = 'force-dynamic';
@@ -59,19 +61,20 @@ export async function GET(request: NextRequest) {
 
       if (fileType) {
         detectedMimeType = fileType.mime;
-        console.log(`Detected MIME type from content: ${detectedMimeType}`);
+
+        // console.log(`Detected MIME type from content: ${detectedMimeType}`);
       } else {
         // Fallback: Use extension-based detection
         detectedMimeType = getFallbackMimeType(filename);
-        console.log(
-          `Using fallback MIME type: ${detectedMimeType} for ${filename}`
-        );
+        // console.log(
+        //   `Using fallback MIME type: ${detectedMimeType} for ${filename}`
+        // );
 
         // Additional validation for text files
         if (detectedMimeType === 'text/plain' && !isTextContent(fileBuffer)) {
           // If it's supposed to be text but doesn't look like text, be cautious
           detectedMimeType = 'application/octet-stream';
-          console.log(`Content doesn't look like text, using octet-stream`);
+          // console.log(`Content doesn't look like text, using octet-stream`);
         }
       }
     } catch (error) {
@@ -84,14 +87,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`Final MIME type: ${detectedMimeType} for file: ${filename}`);
+    // console.log(`Final MIME type: ${detectedMimeType} for file: ${filename}`);
 
     // Security check for preview mode
     if (isPreview && !SAFE_PREVIEW_TYPES.has(detectedMimeType)) {
-      console.log(
-        `MIME type ${detectedMimeType} not in safe preview types:`,
-        Array.from(SAFE_PREVIEW_TYPES)
-      );
+      // console.log(
+      //   `MIME type ${detectedMimeType} not in safe preview types:`,
+      //   Array.from(SAFE_PREVIEW_TYPES)
+      // );
       return NextResponse.json(
         {
           error: `File type ${detectedMimeType} not allowed for preview`,
