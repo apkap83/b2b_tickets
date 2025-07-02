@@ -87,7 +87,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({
 
     // Call your server action to update the emails
     try {
-      const resp = await updateCcUsers({ ticketId, ccEmails });
+      const resp = await updateCcUsers({ ticketId, ccEmails: emailString });
 
       if (resp.status === 'SUCCESS') {
         setCcEmails(emailString);
