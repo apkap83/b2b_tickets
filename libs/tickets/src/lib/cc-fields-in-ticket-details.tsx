@@ -115,7 +115,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
       isValidEmail(newEmail) &&
       !editableEmails.includes(newEmail.trim())
     ) {
-      setEditableEmails([...editableEmails, newEmail.trim()]);
+      setEditableEmails([newEmail.trim(), ...editableEmails]);
       setNewEmail('');
     }
   };
