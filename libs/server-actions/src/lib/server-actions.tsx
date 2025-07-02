@@ -2075,8 +2075,6 @@ export async function downloadAttachment(params: {
 
     const attachmentDetails = resp.rows[0] as TicketAttachmentDetails;
 
-    // Replace the empty catch block with proper error handling:
-
     try {
       await setSchemaAndTimezone(pgB2Bpool);
 
@@ -2309,6 +2307,9 @@ export async function deleteAttachment(params: {
 
       // Security Check that path contains b2b_tickets
       if (!normalizedPath.includes('b2b_tickets')) {
+        logRequest.error(
+          `Refusing to delete file outside b2b_tickets directory: ${fullPath}`
+        );
         throw new Error(
           `Refusing to delete file outside b2b_tickets directory: ${fullPath}`
         );
@@ -2398,6 +2399,10 @@ export async function updateCcUsers({
   ticketId: string;
   ccEmails: string;
 }): Promise<ServerActionResponse> {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
   try {
     await verifySecurityRole([
       AppRoleTypes.B2B_TicketCreator,
@@ -2422,11 +2427,15 @@ export async function updateCcUsers({
       config.postgres_b2b_database.debugMode,
     ]);
 
+    logRequest.info(`Ticket Cc Users Updated for ticketId ${ticketId}`);
     return {
       status: 'SUCCESS',
       message: 'Ticket Cc Users Updated',
     };
   } catch (error) {
+    logRequest.error(
+      `Error - Ticket Cc Users Not Updated for ticketId ${ticketId}`
+    );
     return {
       status: 'ERROR',
       message: error as string,

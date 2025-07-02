@@ -165,7 +165,7 @@ export const CcFields: React.FC<CcFieldsProps> = ({ ticketId }) => {
         )}
         <button
           onClick={openEmailPopup}
-          className="bg-[#4461ac] tracking-wide text-white text-sm rounded-sm px-2 py-1 hover:bg-[#577ddb] font-medium cursor-pointer border-1 border-blue-500 shadow-md"
+          className="bg-[#4461ac] tracking-wide text-white text-sm rounded-md px-2 py-1 hover:bg-[#577ddb] font-medium cursor-pointer border-1 border-blue-500 shadow-md"
         >
           Edit
         </button>
