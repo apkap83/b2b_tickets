@@ -52,7 +52,7 @@ export const productionConfig = {
   TICKET_ITEMS_PER_PAGE: 20,
   CaptchaIsActive: true,
   CaptchaIsActiveForPasswordReset: true,
-  CaptchaV3Threshold: 0.18,
+  CaptchaV3Threshold: 0.09,
   TwoFactorEnabled: true,
   TwoFactorEnabledForPasswordReset: true,
   TwoFactorDigitsLength: 5,
