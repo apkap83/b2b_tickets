@@ -97,8 +97,9 @@ export const CcFields: React.FC<CcFieldsProps> = ({
       } else {
         toast.error(resp.message);
       }
-    } catch (error) {
-      toast.error('Failed to update emails');
+    } catch (error: any) {
+      setSaveButtonMessage('Save Changes');
+      toast.error(error.message);
     }
   };
 

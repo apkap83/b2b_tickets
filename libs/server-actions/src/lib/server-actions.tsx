@@ -2353,6 +2353,10 @@ export async function buildTicketCcUsers({
   };
   error?: string;
 }> {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
   try {
     await verifySecurityRole([
       AppRoleTypes.B2B_TicketCreator,
@@ -2381,8 +2385,8 @@ export async function buildTicketCcUsers({
       data: ccEmailsText.rows[0],
       error: '',
     };
-  } catch (error) {
-    console.error('Error getting ticket cc users:', error);
+  } catch (error: any) {
+    logRequest.error('Error getting ticket cc users:', error);
     return {
       error: 'ERROR: Internal server error while retrieving cc users',
     };
@@ -2417,7 +2421,7 @@ export async function updateCcUsers({
     }
 
     // Normalize empty ccEmails
-    const normalizedCcEmails = ccEmails?.trim() || null;
+    const normalizedCcEmails = ccEmails?.trim() || '';
 
     console.log('ccEmails', ccEmails);
 
@@ -2454,7 +2458,7 @@ export async function updateCcUsers({
     logRequest.error(`Ticket Cc Users Not Updated for ticketId ${ticketId}`);
     return {
       status: 'ERROR',
-      message: error as string,
+      message: String(error),
     };
   }
 }
