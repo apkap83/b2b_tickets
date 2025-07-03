@@ -266,8 +266,10 @@ export const options: NextAuthOptions = {
               throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
             }
             if (!data.success || data.score < config.CaptchaV3Threshold) {
-              logRequest.info('Captcha v3 Data:', data);
+              logRequest.error('Failed: Captcha v3 Data:', data);
               throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
+            } else {
+              logRequest.info('Successful: Captcha v3 Data:', data);
             }
           }
 
