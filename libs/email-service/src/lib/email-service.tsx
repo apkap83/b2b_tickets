@@ -158,7 +158,6 @@ export const sendEmailOnTicketUpdate = async (
         loadTemplate(EmailTemplate.NEW_TICKET_CUSTOMER),
         {
           webSiteUrl: config.webSiteUrl,
-          userName: ticketCreatorUserName,
           ticketNumber: ticketNumber,
           ticketSubject: ticketSubject,
         } as TemplateVariables[EmailTemplate.NEW_TICKET_CUSTOMER]
@@ -238,7 +237,6 @@ export const sendEmailOnTicketUpdate = async (
           ticketNumber: ticketNumber,
           escalationLevel: currentEscalationLevel,
           ticketSubject: ticketSubject,
-          userName: ticketCreatorUserName,
         } as TemplateVariables[EmailTemplate.TICKET_ESCALATION_CUSTOMER]
       );
 
@@ -303,7 +301,6 @@ export const sendEmailOnTicketUpdate = async (
         loadTemplate(EmailTemplate.TICKET_CLOSURE_CUSTOMER),
         {
           webSiteUrl: config.webSiteUrl,
-          userName: ticketCreatorUserName,
           ticketNumber: ticketNumber,
           ticketSubject: ticketSubject,
         } as TemplateVariables[EmailTemplate.TICKET_CLOSURE_CUSTOMER]

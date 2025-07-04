@@ -377,7 +377,6 @@ export interface TemplateVariables {
   };
   [EmailTemplate.NEW_TICKET_CUSTOMER]: {
     webSiteUrl: string;
-    userName: string;
     ticketNumber: string;
     ticketSubject: EmailTemplateSubject;
   };
@@ -392,7 +391,6 @@ export interface TemplateVariables {
   [EmailTemplate.TICKET_ESCALATION_CUSTOMER]: {
     webSiteUrl: string;
     ticketNumber: string;
-    userName: string;
     escalationLevel: string;
     ticketSubject: string;
   };
@@ -404,7 +402,6 @@ export interface TemplateVariables {
   };
   [EmailTemplate.TICKET_CLOSURE_CUSTOMER]: {
     webSiteUrl: string;
-    userName: string;
     ticketNumber: string;
     ticketSubject: string;
   };
