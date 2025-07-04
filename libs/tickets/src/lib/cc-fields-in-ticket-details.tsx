@@ -329,7 +329,8 @@ export const CcFields: React.FC<CcFieldsProps> = ({
                         </span>
                         <button
                           onClick={() => removeEmail(email)}
-                          className="text-red-600 hover:text-red-800 flex-shrink-0"
+                          className="text-red-600 hover:text-red-800 flex-shrink-0 disabled:bg-gray-300 disabled:text-gray-500"
+                          disabled={isFinalStatus}
                         >
                           <RiDeleteBinLine size="16" />
                         </button>
