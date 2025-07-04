@@ -586,6 +586,7 @@ export async function sendEmailForNewHandlerComment(
       const templateForUserCreation = populateTemplate(
         loadTemplate(emailTemplate as EmailTemplate),
         {
+          ticketTitle: ticket.Title,
           appEnvironment: env,
           webSiteUrl: config.webSiteUrl,
           ticketNumber: ticket.Ticket,

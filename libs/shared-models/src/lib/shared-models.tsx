@@ -436,6 +436,7 @@ export interface TemplateVariables {
   };
 
   [EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_DEVELOPMENT]: {
+    ticketTitle: string;
     appEnvironment: string;
     webSiteUrl: string;
     ticketNumber: string;
@@ -445,6 +446,7 @@ export interface TemplateVariables {
   };
 
   [EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_STAGING]: {
+    ticketTitle: string;
     appEnvironment: string;
     webSiteUrl: string;
     ticketNumber: string;
@@ -454,6 +456,7 @@ export interface TemplateVariables {
   };
 
   [EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_PRODUCTION]: {
+    ticketTitle: string;
     webSiteUrl: string;
     ticketNumber: string;
     productCompanyName: string;

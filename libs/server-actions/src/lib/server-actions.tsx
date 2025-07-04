@@ -1233,7 +1233,6 @@ export const createNewComment = async (
 
     if (
       modalAction !== TicketDetailsModalActions.CLOSE &&
-      modalAction !== TicketDetailsModalActions.CANCEL &&
       userHasRole(session, AppRoleTypes.B2B_TicketHandler)
     ) {
       // Send E-mail Notifications asynchronously
