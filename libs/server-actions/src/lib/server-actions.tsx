@@ -1705,6 +1705,10 @@ export async function buildAttachmentFilename(
   data: string;
   error?: string;
 }> {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
   try {
     const session = await getServerSession(options);
     if (!session?.user) {
@@ -1744,7 +1748,7 @@ export async function buildAttachmentFilename(
       error: '',
     };
   } catch (error) {
-    console.error('Error building attachment filename:', error);
+    logRequest.error(`Error building attachment filename: ${error}`);
     return {
       data: '',
       error: 'ERROR - Internal server error while building attachment filename',
@@ -1759,6 +1763,10 @@ async function insertAttachment(params: AttachmentInsertParams): Promise<{
   data: string;
   error?: string;
 }> {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
   try {
     const session = await getServerSession(options);
     if (!session?.user) {
@@ -1804,7 +1812,7 @@ async function insertAttachment(params: AttachmentInsertParams): Promise<{
       error: '',
     };
   } catch (error) {
-    console.error('Error inserting attachment:', error);
+    logRequest.error(`Error inserting attachment: ${error}`);
     return {
       data: '',
       error: 'ERROR - Internal server error while inserting attachment',
@@ -1906,7 +1914,7 @@ export async function processFileAttachment(formData: FormData): Promise<{
 
       logRequest.info(`File saved successfully: ${attachmentFullPath}`);
     } catch (fileError) {
-      console.error('Error saving file:', fileError);
+      logRequest.error(`Error saving file: ${fileError}`);
       return {
         data: '',
         error: `ERROR: Failed to save file to disk: ${
@@ -1930,9 +1938,8 @@ export async function processFileAttachment(formData: FormData): Promise<{
           `Cleaned up file after database error: ${attachmentFullPath}`
         );
       } catch (cleanupError) {
-        console.error(
-          'Error cleaning up file after database error:',
-          cleanupError
+        logRequest.error(
+          `Error cleaning up file after database error: ${cleanupError}`
         );
       }
 
@@ -1966,6 +1973,10 @@ export async function getTicketAttachments({
   data?: TicketAttachmentDetails[];
   error?: string;
 }> {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
   try {
     await verifySecurityRole([
       AppRoleTypes.B2B_TicketCreator,
@@ -2006,7 +2017,7 @@ export async function getTicketAttachments({
       error: '',
     };
   } catch (error) {
-    console.error('Error getting ticket attachments:', error);
+    logRequest.error(`Error getting ticket attachments: ${error}`);
     return {
       error: 'ERROR: Internal server error while retrieving attachments',
     };
@@ -2097,7 +2108,7 @@ export async function downloadAttachment(params: {
         ]
       );
     } catch (error) {
-      console.error('Permission check failed:', error);
+      logRequest.error(`Permission check failed: ${error}`);
 
       // Return permission denied error
       return {
@@ -2116,7 +2127,7 @@ export async function downloadAttachment(params: {
     try {
       fileBuffer = await readFile(fullPath);
     } catch (fileError) {
-      console.error('File read error:', fileError);
+      logRequest.error(`File read error: ${fileError}`);
       return {
         status: 'ERROR',
         message: 'File not found or cannot be accessed',
@@ -2185,7 +2196,7 @@ export async function downloadAttachment(params: {
       },
     };
   } catch (error) {
-    console.error('Download attachment error:', error);
+    logRequest.error(`Download attachment error: ${error}`);
     return {
       status: 'ERROR',
       message: 'An error occurred while downloading the file',
@@ -2421,8 +2432,6 @@ export async function updateCcUsers({
 
     // Normalize empty ccEmails
     const normalizedCcEmails = ccEmails?.trim() || '';
-
-    console.log('ccEmails', ccEmails);
 
     await setSchemaAndTimezone(pgB2Bpool);
 
