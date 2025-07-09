@@ -97,7 +97,7 @@ export function TicketDetails({
   >(theTicketDetails);
 
   // Web Socket Connection
-  const { emitEvent, latestEventEmitted, resetLatestEventEmitted } =
+  const { emitEvent, latestEventEmitted, resetLatestEventEmitted, connected } =
     useWebSocketContext();
 
   const getMyNextEscalationLevel = async () => {
@@ -173,8 +173,19 @@ export function TicketDetails({
     return TICKET_UPDATE_EVENTS.includes(event as any);
   };
 
+  // Get Updates received from new parent props for actions performed from the same User - but not connected to the WebSocket
+  useEffect(() => {
+    if (!connected) {
+      setTicketDetails(theTicketDetails);
+      getMyNextEscalationLevel();
+      getMyTicketAttachments();
+    }
+  }, [theTicketDetails]);
+
   // WebSocket event handler
   useEffect(() => {
+    if (!connected) return; // Skip WebSocket handling
+
     const handleWebSocketEvent = async () => {
       if (!latestEventEmitted) return;
 

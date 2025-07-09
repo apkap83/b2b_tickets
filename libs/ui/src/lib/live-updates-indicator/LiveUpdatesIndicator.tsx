@@ -75,6 +75,21 @@ export const LiveUpdatesIndicator = () => {
   // Don't render the component at all if not connected
   if (!connected) {
     return null;
+    return (
+      <div className="fixed bottom-[2.87rem] right-1 z-5 hidden md:block">
+        <div
+          className={`
+          relative flex items-center rounded-2xl shadow-2xl
+          backdrop-blur-lg border transition-all duration-700 ease-out
+          transform hover:scale-105 cursor-default
+          bg-gradient-to-r from-red-300-50/90 to-red-600-50/90 border-red-400/30 text-red-500
+          ${isExpanded ? 'gap-3 px-4 py-3' : 'gap-0 px-3 py-1'}
+        `}
+        >
+          <p>No Live Updates</p>
+        </div>
+      </div>
+    );
   }
 
   return (
