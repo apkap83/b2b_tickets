@@ -6,6 +6,7 @@ import React, {
   useContext,
   useMemo,
   useCallback,
+  useRef,
 } from 'react';
 import { WebSocketMessage, WebSocketData } from '@b2b-tickets/shared-models';
 import { io, Socket } from 'socket.io-client';
@@ -37,6 +38,10 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     data: WebSocketData[WebSocketMessage];
   } | null>(null);
 
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRetryingRef = useRef(false);
+  const socketRef = useRef<Socket | null>(null);
+
   const socketURL = useMemo(
     () =>
       process.env.NODE_ENV === 'production'
@@ -44,41 +49,106 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
         : 'http://127.0.0.1:3455',
     []
   );
-  useEffect(() => {
-    // Abort Socket Connection if User is not authenticated
-    if (status === 'authenticated' && socket === null) {
-      const socketInstance = io(socketURL, {
-        path: '/socket.io',
-        transports: ['websocket'],
-        withCredentials: true,
-      });
 
-      socketInstance.on('connect', () => {
-        setConnected(true);
-      });
-
-      socketInstance.on('disconnect', (reason) => {
-        setConnected(false);
-      });
-
-      socketInstance.on('connect_error', (error) => {
-        console.error('Socket Connection error:', error);
-      });
-
-      Object.values(WebSocketMessage).forEach((message) => {
-        socketInstance.on(message, (data) =>
-          setLatestEventEmitted({ event: message as WebSocketMessage, data })
-        );
-      });
-
-      setSocket(socketInstance);
-
-      return () => {
-        socketInstance.disconnect();
-        setSocket(null);
-      };
+  const createSocketConnection = useCallback(() => {
+    // Clean up any existing socket first
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+      setSocket(null);
     }
-  }, [socketURL, status]);
+
+    const socketInstance = io(socketURL, {
+      path: '/socket.io',
+      transports: ['websocket'],
+      withCredentials: true,
+    });
+
+    socketRef.current = socketInstance;
+
+    socketInstance.on('connect', () => {
+      setConnected(true);
+      isRetryingRef.current = false;
+      // Clear any pending retry timeout on successful connection
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    });
+
+    socketInstance.on('disconnect', (reason) => {
+      setConnected(false);
+    });
+
+    socketInstance.on('connect_error', (error) => {
+      console.error('Socket Connection error:', error);
+      setConnected(false);
+
+      // Only retry if we're not already retrying
+      if (!isRetryingRef.current) {
+        isRetryingRef.current = true;
+
+        // Clean up current socket
+        socketInstance.disconnect();
+        socketRef.current = null;
+        setSocket(null);
+
+        // Schedule retry after 30 seconds
+        retryTimeoutRef.current = setTimeout(() => {
+          console.log('Retrying socket connection...');
+          createSocketConnection();
+        }, 30000);
+      }
+    });
+
+    Object.values(WebSocketMessage).forEach((message) => {
+      socketInstance.on(message, (data) =>
+        setLatestEventEmitted({ event: message as WebSocketMessage, data })
+      );
+    });
+
+    setSocket(socketInstance);
+  }, [socketURL]);
+
+  useEffect(() => {
+    // Only create socket connection if user is authenticated and no socket exists
+    if (status === 'authenticated' && !socket && !socketRef.current) {
+      createSocketConnection();
+    }
+
+    // Clean up on status change or unmount
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      isRetryingRef.current = false;
+
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [status, createSocketConnection]);
+
+  // Separate effect to handle authentication changes
+  useEffect(() => {
+    if (status === 'unauthenticated' && (socket || socketRef.current)) {
+      // Clean up socket when user logs out
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      isRetryingRef.current = false;
+
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      setSocket(null);
+      setConnected(false);
+    }
+  }, [status, socket]);
 
   const emitEvent = useCallback(
     <T extends WebSocketMessage>(event: T, data: WebSocketData[T]) => {
@@ -91,9 +161,9 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     [socket, connected]
   );
 
-  const resetLatestEventEmitted = () => {
+  const resetLatestEventEmitted = useCallback(() => {
     setLatestEventEmitted(null);
-  };
+  }, []);
 
   return (
     <WebSocketContext.Provider
