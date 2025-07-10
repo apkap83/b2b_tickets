@@ -719,11 +719,15 @@ const ticketSchema_zod = z
     path: ['occurrenceDate'], // This points to the field where the error will be shown
   });
 
+// Updated server action with proper date handling
 export const createNewTicket = async (
-  formState: TicketFormState,
+  formState: TicketFormState | null,
   formData: FormData
 ): Promise<any> => {
-  const client = await pgB2Bpool.connect(); // Acquire a client connection
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  const client = await pgB2Bpool.connect();
   try {
     const session = await verifySecurityPermission(
       AppPermissionTypes.Create_New_Ticket
@@ -734,7 +738,32 @@ export const createNewTicket = async (
     );
     await setSchemaAndTimezone(pgB2Bpool);
 
-    let {
+    let validatedData;
+    try {
+      validatedData = ticketSchema_zod.parse({
+        title: formData.get('title'),
+        description: formData.get('description'),
+        severity: formData.get('severity'),
+        category: formData.get('category'),
+        service: formData.get('service'),
+        equipmentId: formData.get('equipmentId'),
+        sid: formData.get('sid'),
+        cid: formData.get('cid'),
+        userName: formData.get('userName'),
+        cliValue: formData.get('cliValue'),
+        contactPerson: formData.get('contactPerson'),
+        contactPhoneNum: formData.get('contactPhoneNum'),
+        ccEmails: formData.get('ccEmails'),
+        ccPhones: formData.get('ccPhones'),
+        occurrenceDate: formData.get('occurrenceDate'),
+      });
+      logRequest.debug('✅ Zod validation passed');
+    } catch (zodError: any) {
+      logRequest.debug('❌ Zod validation failed:', zodError);
+      throw new Error(`Validation failed: ${zodError.message}`);
+    }
+
+    const {
       title,
       description,
       severity,
@@ -750,61 +779,66 @@ export const createNewTicket = async (
       ccEmails,
       ccPhones,
       occurrenceDate,
-    } = ticketSchema_zod.parse({
-      title: formData.get('title'),
-      description: formData.get('description'),
-      severity: formData.get('severity'),
-      category: formData.get('category'),
-      service: formData.get('service'),
-      equipmentId: formData.get('equipmentId'),
-      sid: formData.get('sid'),
-      cid: formData.get('cid'),
-      userName: formData.get('userName'),
-      cliValue: formData.get('cliValue'),
-      contactPerson: formData.get('contactPerson'),
-      contactPhoneNum: formData.get('contactPhoneNum'),
-      ccEmails: formData.get('ccEmails'),
-      ccPhones: formData.get('ccPhones'),
-      occurrenceDate: formData.get('occurrenceDate'),
-    });
+    } = validatedData;
 
-    const standardizedDate = convertTo24HourFormat(occurrenceDate);
+    // Fix the date formatting issue
+    let standardizedDate;
+    try {
+      if (occurrenceDate) {
+        // Try different approaches to format the date
+        if (typeof convertTo24HourFormat === 'function') {
+          standardizedDate = convertTo24HourFormat(occurrenceDate);
+        } else {
+          // Fallback: use the ISO string directly or format it
+          const dateObj = new Date(occurrenceDate);
+          standardizedDate = dateObj
+            .toISOString()
+            .replace('T', ' ')
+            .replace('Z', '');
+        }
+      }
+
+      if (!standardizedDate) {
+        throw new Error('Failed to format occurrence date');
+      }
+    } catch (dateError: any) {
+      logRequest.error(`❌ Date formatting error: ${dateError}`);
+      throw new Error(`Date formatting failed: ${dateError.message}`);
+    }
 
     const res = await pgB2Bpool.query(
       'SELECT category_service_type_id from ticket_category_service_types_v where category_id = $1 and service_type_id = $2',
       [category, service]
     );
 
-    const categoryServiceTypeId = res.rows[0].category_service_type_id;
+    const categoryServiceTypeId = res.rows[0]?.category_service_type_id;
 
     if (!categoryServiceTypeId) {
       throw new Error('Category Service Type ID was not found!');
     }
-    // Convert string to number where applicable and handle empty strings as null
+
     const argsForTicketNew = [
-      title, // pvch_title: string
-      description, // pvch_description: string
-      severity ? Number(severity) : null, // severity_id: number | null
-      // category ? Number(category) : null, // pnum_category_id: number | null
-      // service ? Number(service) : null, // pnum_service_id: number | null
+      title,
+      description,
+      severity ? Number(severity) : null,
       categoryServiceTypeId,
-      equipmentId ? Number(equipmentId) : null, // pnum_equipment_id: number | null
-      sid || null, // pvch_sid: string | null
-      cid || null, // pvch_cid: string | null
-      userName || null, // pvch_username: string | null
-      cliValue || null, // pvch_cli: string | null
-      contactPerson, // pvch_contact_person: string
-      contactPhoneNum, // pvch_contact_phone_number: string
-      standardizedDate, // ptmsp_occurrence_date: timestamp
-      session?.user.user_id, // pnum_user_id: number
-      session.user.userName, // pvch_api_user: string
-      config.api.process, // pvch_api_process: string
-      config.postgres_b2b_database.debugMode, // pbln_debug_mode: boolean
+      equipmentId ? Number(equipmentId) : null,
+      sid || null,
+      cid || null,
+      userName || null,
+      cliValue || null,
+      contactPerson,
+      contactPhoneNum,
+      standardizedDate,
+      session?.user.user_id,
+      session.user.userName,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
     ];
 
     await client.query('BEGIN');
 
-    // TODO: Define proper user Id and api User from session
+    logRequest.debug('🔄 Creating new ticket...');
     const result = await client.query(
       `SELECT tck_new
         (
@@ -829,16 +863,17 @@ export const createNewTicket = async (
       argsForTicketNew
     );
 
-    const newTicketId = result.rows[0].tck_new;
+    const newTicketId = result.rows[0]?.tck_new;
     if (!newTicketId) {
       throw new Error('New Ticket Id cannot be retrieved during insertion');
     }
+
+    logRequest.info('✅ New ticket created with ID:', newTicketId);
 
     if (ccEmails && ccEmails.length > 0) {
       await client.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
         newTicketId,
         ccEmails,
-        //@ts-ignore
         config.api.user,
         config.api.process,
         config.postgres_b2b_database.debugMode,
@@ -846,28 +881,34 @@ export const createNewTicket = async (
     }
 
     if (ccPhones && ccPhones.length > 0) {
+      logRequest.debug('🔄 Setting CC phones...');
       await client.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
         newTicketId,
         ccPhones,
-        //@ts-ignore
         config.api.user,
         config.api.process,
         config.postgres_b2b_database.debugMode,
       ]);
     }
 
-    // Commit the transaction
     await client.query('COMMIT');
 
-    // Send E-mail Notifications asynchronously
+    logRequest.info('🔄 Sending email notification for ticket creation...');
     sendEmailOnTicketUpdate(EmailNotificationType.TICKET_CREATION, newTicketId);
 
     revalidatePath('/tickets');
-    return toFormState('SUCCESS', 'Ticket Created!', newTicketId);
+
+    const successResponse = toFormState(
+      'SUCCESS',
+      'Ticket Created!',
+      newTicketId
+    );
+
+    return successResponse;
   } catch (error) {
-    // Rollback the transaction in case of an error
     await client.query('ROLLBACK');
-    return fromErrorToFormState(error);
+    const errorResponse = fromErrorToFormState(error);
+    return errorResponse;
   } finally {
     client.release();
   }
