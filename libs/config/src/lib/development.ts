@@ -22,7 +22,7 @@ export const developmentConfig = {
   SMS_System_Type: 'B2BGW',
 
   logDirPerEnvironment: 'development',
-  SendEmails: true,
+  SendEmails: false,
 
   TimeZone: 'Europe/Athens',
 
