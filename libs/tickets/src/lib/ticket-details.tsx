@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getGreekDateFormat, getStatusColor } from '@b2b-tickets/utils';
 import {
   TicketComment,
@@ -96,6 +96,9 @@ export function TicketDetails({
     TicketDetail[] | TicketDetailForTicketCreator[]
   >(theTicketDetails);
 
+  // Use ref to track the last processed ticket details to prevent endless loops
+  const lastProcessedTicketDetails = useRef<string>('');
+
   // Web Socket Connection
   const { emitEvent, latestEventEmitted, resetLatestEventEmitted, connected } =
     useWebSocketContext();
@@ -176,11 +179,18 @@ export function TicketDetails({
   // Get Updates received from new parent props for actions performed from the same User - but not connected to the WebSocket
   useEffect(() => {
     if (!connected) {
-      setTicketDetails(theTicketDetails);
-      getMyNextEscalationLevel();
-      getMyTicketAttachments();
+      // Create a stable string representation of theTicketDetails for comparison
+      const currentTicketDetailsHash = JSON.stringify(theTicketDetails);
+      
+      // Only update if the content actually changed
+      if (currentTicketDetailsHash !== lastProcessedTicketDetails.current) {
+        lastProcessedTicketDetails.current = currentTicketDetailsHash;
+        setTicketDetails(theTicketDetails);
+        getMyNextEscalationLevel();
+        getMyTicketAttachments();
+      }
     }
-  }, [theTicketDetails]);
+  }, [theTicketDetails, connected]);
 
   // WebSocket event handler
   useEffect(() => {
