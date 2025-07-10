@@ -114,39 +114,60 @@ export const getGreekDateFormat = (dateObj: Date) => {
   return `${formattedDate} ${formattedTime}`;
 };
 
+// export const convertTo24HourFormat = (dateStr: string): string | null => {
+//   // Replace Greek AM/PM with standard AM/PM
+//   let standardizedDateStr = dateStr.replace('πμ', 'AM').replace('μμ', 'PM');
+
+//   // Parse the date string using a regex
+//   const dateRegex = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}) (AM|PM)/;
+//   const match = standardizedDateStr.match(dateRegex);
+
+//   if (!match) return null;
+
+//   let [, day, month, year, hour, minute, period] = match;
+
+//   // Convert hour to 24-hour format, ensure valid AM/PM logic
+//   let hourNumber = parseInt(hour);
+
+//   // Validate time range
+//   if (hourNumber < 1 || hourNumber > 12) return null;
+
+//   if (period === 'PM' && hourNumber < 12) {
+//     hourNumber += 12;
+//   } else if (period === 'AM' && hourNumber === 12) {
+//     hourNumber = 0;
+//   }
+
+//   // Format the date string to YYYY-MM-DD HH:mm:ss
+//   const formattedDate = `${year}-${month}-${day} ${String(hourNumber).padStart(
+//     2,
+//     '0'
+//   )}:${minute}:00`;
+
+//   return formattedDate;
+// };
+
 export const convertTo24HourFormat = (dateStr: string): string | null => {
-  // Replace Greek AM/PM with standard AM/PM
-  let standardizedDateStr = dateStr.replace('πμ', 'AM').replace('μμ', 'PM');
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
 
-  // Parse the date string using a regex
-  const dateRegex = /(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}) (AM|PM)/;
-  const match = standardizedDateStr.match(dateRegex);
+    // Format as PostgreSQL expects: YYYY-MM-DD HH:MM:SS
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
 
-  if (!match) return null;
-
-  let [, day, month, year, hour, minute, period] = match;
-
-  // Convert hour to 24-hour format, ensure valid AM/PM logic
-  let hourNumber = parseInt(hour);
-
-  // Validate time range
-  if (hourNumber < 1 || hourNumber > 12) return null;
-
-  if (period === 'PM' && hourNumber < 12) {
-    hourNumber += 12;
-  } else if (period === 'AM' && hourNumber === 12) {
-    hourNumber = 0;
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  } catch (error) {
+    console.error('Date conversion error:', error);
+    return null;
   }
-
-  // Format the date string to YYYY-MM-DD HH:mm:ss
-  const formattedDate = `${year}-${month}-${day} ${String(hourNumber).padStart(
-    2,
-    '0'
-  )}:${minute}:00`;
-
-  return formattedDate;
 };
-
 /**
  *
  * @param text Value to be encrypted
