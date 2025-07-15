@@ -14,6 +14,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { Typography, useTheme } from '@mui/material';
+import TextareaAutosize from '@mui/material/TextareaAutosize';
 import { tokens } from '@b2b-tickets/ui-theme';
 import {
   getTicketCategories,
@@ -503,15 +504,15 @@ export const NewTicketModal = memo<NewTicketModalProps>(
 
     return (
       <div
-        className={`${styles.mainContainer} fixed inset-0 flex items-center justify-center bg-black bg-opacity-65 z-10 pointer-events-none`}
+        className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-65 z-10 pointer-events-none`}
       >
         <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-auto">
           <div
-            className={`${styles.mainContainer} pt-[1.3rem] pb-[1.3rem] px-[2rem] rounded-lg max-h-[95vh] overflow-hidden bg-gray-50 pointer-events-auto`}
+            className={`pt-[1.3rem] pb-[1.3rem] px-[2rem] rounded-lg max-h-[95vh] overflow-hidden bg-gray-50 pointer-events-auto overflow-y-auto`}
           >
             <form autoComplete="off" className={styles.formContainer}>
               <Typography
-                variant="h4"
+                variant="h3"
                 textAlign="left"
                 mb="1.3rem"
                 className="bg-gradient-to-r from-[#0f0b58] to-[rgba(55,55,66,0)] font-thin tracking-widest rounded-md py-2 text-gray-300 pl-3"
@@ -522,7 +523,7 @@ export const NewTicketModal = memo<NewTicketModalProps>(
               <div className={styles.fieldsMainContainer}>
                 {/* Left Panel - Main Fields */}
                 <div
-                  className="flex-grow overflow-y-auto pr-[1rem] overflow-x-hidden bg-white rounded-md pl-2 border border-gray-200 shadow-lg"
+                  className="flex-grow px-[1rem] pb-[1.5rem] overflow-x-hidden bg-white rounded-md border border-gray-200 shadow-lg"
                   style={{
                     border: `1px solid ${colors.blueAccent[900]}`,
                     backgroundColor: colors.grey[900],
@@ -556,10 +557,10 @@ export const NewTicketModal = memo<NewTicketModalProps>(
                         '& > textarea': { outline: 'none' },
                       }}
                     >
-                      <textarea
+                      {/* <TextArea */}
+                      <TextareaAutosize
                         id="description"
                         name="description"
-                        rows={10}
                         placeholder="Description..."
                         required
                         value={formik.values.description}
@@ -578,15 +579,15 @@ export const NewTicketModal = memo<NewTicketModalProps>(
                     <Box
                       mt=".5rem"
                       mb=".5rem"
-                      border={`1px dashed ${colors.grey[800]}`}
+                      border={`1px dashed ${colors.blueAccent[800]}`}
                       p=".5rem"
                     >
                       <Typography
                         fontWeight="400"
-                        fontSize="11.7143px"
+                        fontSize="12.7143px"
                         color="rgba(0,0,0,.6)"
                       >
-                        Please provide at least 1 of 4 below fields:
+                        Please provide information for at least one field below
                       </Typography>
                       <Box>
                         <FormControl
