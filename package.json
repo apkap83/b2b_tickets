@@ -1,6 +1,6 @@
 {
   "name": "@b2b-tickets/source",
-  "version": "1.3.22",
+  "version": "1.3.23",
   "license": "MIT",
   "scripts": {
     "version:major": "node tools/scripts/version.js major",
