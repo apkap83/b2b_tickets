@@ -1459,9 +1459,14 @@ export const getTicketCategories = async (): Promise<{
     ]);
 
     await setSchemaAndTimezone(pgB2Bpool);
+    console.log('session.user.customer_id,', session.user.customer_id);
+    // Get Category Per Customer
+    const query2ForSeverities = `SELECT CATEGORY_ID, CATEGORY_NAME "Category" FROM CUSTOMER_TICKET_CATEGORIES_V CTC where CTC.CUSTOMER_ID = $1 and is_available_for_tickets = 'y'`;
 
-    const queryForSeverities = `SELECT category_id, "Category" FROM ticket_categories_v`;
-    const queryRes = await pgB2Bpool.query(queryForSeverities);
+    const queryRes = await pgB2Bpool.query(query2ForSeverities, [
+      session.user.customer_id,
+    ]);
+    console.log('queryRes', queryRes.rows);
     return { data: queryRes.rows };
   } catch (error: unknown) {
     return {
