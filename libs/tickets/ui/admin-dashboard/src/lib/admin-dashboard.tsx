@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { UsersTab } from './Tabs/UsersTab/UsersTab';
 import { RolesTab } from './Tabs/RolesTab/RolesTab';
 import { PermissionsTab } from './Tabs/PermissionsTab/PermissionsTab';
+import { CompanyTab } from './Tabs/CompanyTab/CompanyTab';
 
 export const AdminDashboard = ({
   usersList,
@@ -40,6 +41,13 @@ export const AdminDashboard = ({
               </a>
               <a
                 role="tab"
+                className={`tab ${activeTab === 'Company' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('Company')}
+              >
+                Company
+              </a>
+              <a
+                role="tab"
                 className={`tab ${activeTab === 'Roles' ? 'tab-active' : ''}`}
                 onClick={() => setActiveTab('Roles')}
               >
@@ -60,6 +68,12 @@ export const AdminDashboard = ({
           {activeTab === 'Users' && (
             <div className="mb-[2rem] ">
               <UsersTab usersList={usersList} rolesList={rolesList} />
+            </div>
+          )}
+
+          {activeTab === 'Company' && (
+            <div className="mb-[2rem] ">
+              <CompanyTab usersList={usersList} rolesList={rolesList} />
             </div>
           )}
 

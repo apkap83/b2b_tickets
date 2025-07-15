@@ -84,6 +84,9 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
 };
 
 export const getCustomersList = async () => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     await verifySecurityPermission([
@@ -99,11 +102,14 @@ export const getCustomersList = async () => {
 
     return customersList.rows;
   } catch (error) {
-    console.log('ERROR:', error);
+    logRequest.error(error);
   }
 };
 
 export const getAdminDashboardData = async () => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
   try {
     // Verify Security Permission
     const session = (await verifySecurityPermission([
@@ -157,7 +163,200 @@ export const getAdminDashboardData = async () => {
       permissionsList: plainPermissionsList,
     };
   } catch (error) {
-    console.log('ERROR:', error);
+    logRequest.error(error);
+    redirect('/signin?callbackUrl=/admin');
+  }
+};
+
+export const getAllCompanyData = async () => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
+  try {
+    // Verify Security Permission
+    (await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Create_New_App_User,
+    ])) as Session;
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const queryForCompanyDta = `
+        SELECT
+          CUSTOMER_ID,
+          CUSTOMER_NAME "Customer",
+          CUSTOMER_CODE "Customer Code",
+          CUSTOMER_TYPE_ID,
+          CUSTOMER_TYPE "Customer Type",
+          FISCAL_NUMBER "Fiscal Number"
+        FROM CUSTOMERS_V
+        WHERE CUSTOMER_ID != -1
+        AND   CUSTOMER_TYPE_ID != -1
+        ORDER BY 
+          CUSTOMER_NAME;
+      `;
+
+    const resp = await pgB2Bpool.query(queryForCompanyDta);
+
+    return {
+      companyData: resp.rows,
+    };
+  } catch (error) {
+    logRequest.error(error);
+    redirect('/signin?callbackUrl=/admin');
+  }
+};
+
+// Server action to add a ticket category to a customer
+export const addCustomerTicketCategory = async ({
+  customerId,
+  categoryId,
+}: {
+  customerId: number;
+  categoryId: number;
+}) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
+  try {
+    // Verify Security Permission
+    const session = (await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Create_New_App_User,
+    ])) as Session;
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const queryForAddCategory = `
+        SELECT custtckcat_insert(
+          pnum_Customer_ID => $1,
+          pnum_Category_ID => $2,
+          pnum_User_ID => $3,
+          pvch_API_User => $4,
+          pvch_API_Process => $5,
+          pbln_Debug_Mode => $6
+        ) as result;
+      `;
+
+    const resp = await pgB2Bpool.query(queryForAddCategory, [
+      customerId,
+      categoryId,
+      session.user?.user_id,
+      config.api.user,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
+    ]);
+
+    logRequest.info(`Added category ${categoryId} to customer ${customerId}`);
+
+    return {
+      success: true,
+      result: resp.rows[0]?.result,
+      message: 'Category added successfully',
+    };
+  } catch (error: any) {
+    logRequest.error(error);
+    return {
+      success: false,
+      error: error.message,
+      message: 'Failed to add category',
+    };
+  }
+};
+
+// Server action to deactivate a customer ticket category
+export const deactivateCustomerTicketCategory = async ({
+  customerTicketCategoryId,
+}: {
+  customerTicketCategoryId: number;
+}) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  try {
+    // Verify Security Permission
+    const session = (await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Create_New_App_User,
+    ])) as Session;
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const queryForDeactivateCategory = `
+        CALL custtckcat_deact(
+          pnum_Customer_Ticket_Category_ID => $1,
+          pnum_User_ID => $2,
+          pvch_API_User => $3,
+          pvch_API_Process => $4,
+          pbln_Debug_Mode => $5
+        );
+      `;
+
+    await pgB2Bpool.query(queryForDeactivateCategory, [
+      customerTicketCategoryId,
+      session.user?.user_id,
+      config.api.user,
+      config.api.process,
+      config.postgres_b2b_database.debugMode,
+    ]);
+
+    logRequest.info(
+      `Deactivated customer ticket category ${customerTicketCategoryId}`
+    );
+
+    return {
+      success: true,
+      message: 'Category deactivated successfully',
+    };
+  } catch (error: any) {
+    logRequest.error(error);
+    return {
+      success: false,
+      error: error.message,
+      message: 'Failed to deactivate category',
+    };
+  }
+};
+
+export const getCompanyCategories = async ({
+  customerId,
+}: {
+  customerId: string;
+}) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
+  try {
+    // Verify Security Permission
+    (await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Create_New_App_User,
+    ])) as Session;
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    const queryForCompanyDta = `
+        SELECT
+          customer_ticket_category_id,
+          CUSTOMER_ID,
+          CATEGORY_ID,
+          CATEGORY_NAME "Category",
+          IS_ADDED "Assigned",
+          is_available_for_tickets 
+        FROM CUSTOMER_TICKET_CATEGORIES_V CTC
+        WHERE CTC.CUSTOMER_ID = $1;
+      `;
+
+    const resp = await pgB2Bpool.query(queryForCompanyDta, [customerId]);
+
+    return {
+      companyData: resp.rows,
+    };
+  } catch (error) {
+    logRequest.error(error);
     redirect('/signin?callbackUrl=/admin');
   }
 };
