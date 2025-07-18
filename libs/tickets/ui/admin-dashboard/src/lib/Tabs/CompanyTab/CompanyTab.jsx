@@ -176,7 +176,7 @@ export function CompanyTab({ usersList, rolesList }) {
               : s
           ),
         }));
-        toast.error(result.message || 'Failed to update service');
+        toast.error(result.error || 'Failed to update service');
       }
     } catch (error) {
       // Revert the optimistic update on error
