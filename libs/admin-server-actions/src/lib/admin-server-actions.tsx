@@ -396,7 +396,7 @@ export async function createUser(formState: any, formData: any) {
     const lastName = formData.get('last_name');
     // const userName = formData.get('username');
     // const password = formData.get('password');
-    const email = formData.get('email');
+    const email = formData.get('email').toLowerCase();
     const mobilePhone = formData.get('mobile_phone');
     const inform_user_for_new_account_by_email = formData.get(
       'inform_user_for_new_account_by_email'

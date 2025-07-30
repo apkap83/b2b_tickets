@@ -425,13 +425,13 @@ export function getWhereObj(
     email?: string;
     authentication_type: AuthenticationTypes;
   } = {
-    username: credentials.userName,
+    username: credentials.userName.toLowerCase(),
     authentication_type: AuthenticationTypes.LOCAL,
   };
 
   if (emailProvided) {
     whereObj = {
-      email: credentials.userName,
+      email: credentials.userName.toLowerCase(),
       authentication_type: AuthenticationTypes.LOCAL,
     };
   }

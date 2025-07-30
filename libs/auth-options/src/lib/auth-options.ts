@@ -451,7 +451,7 @@ export const options: NextAuthOptions = {
 
           const foundUser = await B2BUser.findOne({
             where: {
-              email,
+              email: email.toLowerCase(),
             },
             include: {
               model: AppRole,
