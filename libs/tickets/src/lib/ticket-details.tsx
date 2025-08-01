@@ -181,7 +181,7 @@ export function TicketDetails({
     if (!connected) {
       // Create a stable string representation of theTicketDetails for comparison
       const currentTicketDetailsHash = JSON.stringify(theTicketDetails);
-      
+
       // Only update if the content actually changed
       if (currentTicketDetailsHash !== lastProcessedTicketDetails.current) {
         lastProcessedTicketDetails.current = currentTicketDetailsHash;
@@ -352,7 +352,7 @@ export function TicketDetails({
       variant="outlined"
       sx={BUTTON_STYLES.primaryOutlined}
     >
-      Close Ticket
+      Close Ticket...
     </Button>
   );
 
@@ -362,7 +362,7 @@ export function TicketDetails({
       variant="outlined"
       sx={BUTTON_STYLES.danger}
     >
-      Cancel Ticket
+      Cancel Ticket...
     </Button>
   );
 
