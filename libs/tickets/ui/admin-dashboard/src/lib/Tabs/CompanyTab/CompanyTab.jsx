@@ -359,25 +359,6 @@ export function CompanyTab({ usersList, rolesList }) {
         </div>
       </div>
 
-      <div className="px-5 pt-5 flex justify-between items-center">
-        <div className="py-5 flex gap-1 ">
-          <button
-            className="btn btn-sm bg-black text-white"
-            onClick={() => {
-              setShowCreateUserModal(true);
-            }}
-          >
-            Create New User
-          </button>
-        </div>
-        <PaginationOld
-          totalItems={filteredCompanyData?.length || 0}
-          pageSize={itemsPerPage}
-          activePage={activePage}
-          onPageChange={(page) => setActivePage(page)}
-        />
-      </div>
-
       {/* Services Modal */}
       {showServicesModal.visible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
