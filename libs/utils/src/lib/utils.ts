@@ -537,6 +537,7 @@ export const isPreviewableFile = (filename: string): boolean => {
     // 'doc',
     // 'docx', // Word documents (limited preview)
     'xlsx',
+    'jfif',
   ];
   return previewableExtensions.includes(ext || '');
 };

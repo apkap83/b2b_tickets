@@ -2187,6 +2187,7 @@ export async function downloadAttachment(params: {
       const mimeTypes: { [key: string]: string } = {
         // Images
         jpg: 'image/jpeg',
+        jfif: 'image/jpeg',
         jpeg: 'image/jpeg',
         png: 'image/png',
         gif: 'image/gif',

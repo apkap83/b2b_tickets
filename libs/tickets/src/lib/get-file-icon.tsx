@@ -16,6 +16,7 @@ export const getFileIcon = (filename: string) => {
     case 'gif':
     case 'webp':
     case 'svg':
+    case 'jfif':
       return <IoImageOutline className="text-blue-500" size={24} />;
     case 'mp4':
     case 'avi':

@@ -244,7 +244,7 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
             multiple
             style={{ display: 'none' }}
             onChange={handleFileSelect}
-            accept=".pdf,.doc,.docx,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.gif,.zip,.rar"
+            accept=".pdf,.doc,.docx,.xlsx,.csv,.txt,.jpg,.jpeg,.jfif,.png,.gif,.zip,.rar"
           />
 
           <Box
@@ -286,7 +286,8 @@ export const FileAttachmentModal: React.FC<FileAttachmentModalProps> = ({
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Max {formatFileSize(config.attachmentsMaxFileSize)} per file.
-              Supported: TXT, CSV, JPG, PNG, XLSX, DOCX, PDF, GIF, ZIP, RAR
+              Supported: TXT, CSV, JPG, JFIF, PNG, XLSX, DOCX, PDF, GIF, ZIP,
+              RAR
             </Typography>
           </Box>
         </Box>

@@ -59,7 +59,9 @@ export function FilePreviewModal({
   const getFileType = (filename: string): string => {
     const ext = getFileExtension(filename);
 
-    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext)) {
+    if (
+      ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'jfif'].includes(ext)
+    ) {
       return 'image';
     }
     if (ext === 'pdf') {
