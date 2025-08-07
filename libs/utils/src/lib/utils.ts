@@ -542,69 +542,6 @@ export const isPreviewableFile = (filename: string): boolean => {
   return previewableExtensions.includes(ext || '');
 };
 
-export const safePreviewTypes = [
-  // Image formats
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/bmp',
-  'image/webp',
-  'image/svg+xml',
-
-  // Document formats
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  'application/msword', // .doc (legacy)
-
-  // Spreadsheet formats
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-  'application/vnd.ms-excel', // .xls (legacy)
-
-  // Text formats
-  'text/plain',
-  'text/csv',
-  'application/json',
-  'text/xml',
-  'text/html',
-  'text/css',
-  'application/javascript',
-  'text/markdown',
-];
-
-export const safeExtensions = [
-  'jpg',
-  'jpeg',
-  'png',
-  'gif',
-  'bmp',
-  'webp',
-  'svg',
-  'pdf',
-  'txt',
-  'log',
-  'csv',
-  'json',
-  'xml',
-  'html',
-  'htm',
-  'css',
-  'js',
-  'ts',
-  'jsx',
-  'tsx',
-  'md',
-  'markdown',
-  'docx',
-  'xlsx',
-];
-
-// Helper function to check if file type is safe for preview
-export const isPreviewSafe = (filename: string, mimeType: string): boolean => {
-  const ext = filename.toLowerCase().split('.').pop() || '';
-
-  return safePreviewTypes.includes(mimeType) || safeExtensions.includes(ext);
-};
-
 // Helper function to safely encode filename for Content-Disposition header
 export const encodeFilenameForHeader = (filename: string): string => {
   // Remove or replace problematic characters
