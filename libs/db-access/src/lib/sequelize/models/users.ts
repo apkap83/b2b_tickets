@@ -249,7 +249,7 @@ export class B2BUser extends Model<
     const hasUpperCase = /[A-Z]/;
     const hasLowerCase = /[a-z]/;
     const hasNumber = /\d/;
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
+    const hasSpecialChar = /[!@#$%^&*()_+=\-\[\]{};':"\\|,.<>/?~`]/;
 
     return (
       minLength.test(password) &&
