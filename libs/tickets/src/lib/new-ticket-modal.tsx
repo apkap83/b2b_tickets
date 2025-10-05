@@ -37,6 +37,7 @@ import {
 } from '@b2b-tickets/shared-models';
 import toast from 'react-hot-toast';
 import { useWebSocketContext } from '@b2b-tickets/contexts';
+import { Tooltip as ReactTooltip } from 'react-tooltip';
 import 'react-quill/dist/quill.snow.css';
 
 // Constants
@@ -365,10 +366,13 @@ const CcFields = memo<CcFieldsProps>(
                 <button
                   type="button"
                   onClick={handleCcCompanyClick}
+                  data-tooltip-id="cc-company-tooltip"
+                  data-tooltip-content="Add Your company colleagues"
                   className="ml-3 bg-[#23599a] hover:bg-[#307bd7] active:bg-[#1e4f87] rounded shadow-md active:shadow-sm transition-all duration-150 cursor-pointer text-white flex items-center justify-center text-center leading-tight h-11 whitespace-pre-wrap w-[60px] active:translate-y-[1px] active:scale-[0.98] text-[12px]"
                 >
                   CC Company
                 </button>
+                <ReactTooltip id="cc-company-tooltip" />
               </div>
               <ClarificationMessage msg="Comma separated list of E-mails" />
             </FormControl>

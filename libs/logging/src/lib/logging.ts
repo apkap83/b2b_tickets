@@ -71,13 +71,13 @@ if (process.env['NODE_ENV'] !== 'test') {
   );
 }
 
-if (process.env['NODE_ENV'] !== 'production') {
-  transports.push(
-    new winston.transports.Console({
-      format: combine(json()),
-    })
-  );
-}
+// if (process.env['NODE_ENV'] !== 'production') {
+//   transports.push(
+//     new winston.transports.Console({
+//       format: combine(json()),
+//     })
+//   );
+// }
 
 const logger = winston.createLogger({
   // level: process.env.LOG_LEVEL || 'info',
