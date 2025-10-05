@@ -367,12 +367,18 @@ const CcFields = memo<CcFieldsProps>(
                   type="button"
                   onClick={handleCcCompanyClick}
                   data-tooltip-id="cc-company-tooltip"
-                  data-tooltip-content="Add Your company colleagues"
+                  data-tooltip-content="CC all team members"
                   className="ml-3 bg-[#23599a] hover:bg-[#307bd7] active:bg-[#1e4f87] rounded shadow-md active:shadow-sm transition-all duration-150 cursor-pointer text-white flex items-center justify-center text-center leading-tight h-11 whitespace-pre-wrap w-[60px] active:translate-y-[1px] active:scale-[0.98] text-[12px]"
                 >
                   CC Company
                 </button>
-                <ReactTooltip place="bottom" id="cc-company-tooltip" />
+                <ReactTooltip
+                  id="cc-company-tooltip"
+                  place="bottom-end"
+                  // opacity={0.75}
+                  // variant="info"
+                  offset={5}
+                />
               </div>
               <ClarificationMessage msg="Comma separated list of E-mails" />
             </FormControl>
