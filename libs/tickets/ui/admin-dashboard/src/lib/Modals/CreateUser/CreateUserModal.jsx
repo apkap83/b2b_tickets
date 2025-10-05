@@ -163,7 +163,6 @@ function CreateUserModal({ rolesList, closeModal }) {
       isDisabled: false,
     })),
   ];
-  // console.log('formik', formik);
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">

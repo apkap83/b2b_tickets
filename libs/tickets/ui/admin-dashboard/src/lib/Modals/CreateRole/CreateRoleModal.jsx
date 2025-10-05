@@ -30,9 +30,6 @@ const CreateRoleModal = ({ closeModal }) => {
     if (formState.status === 'SUCCESS') closeModal();
   }, [formState.status, formState.timestamp]);
 
-  console.log('formik.isDirty', formik.isDirty);
-  console.log('formik.isValid', formik.isValid);
-
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white px-8 py-5 rounded-lg">

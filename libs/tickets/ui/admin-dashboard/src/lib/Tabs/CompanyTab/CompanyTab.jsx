@@ -121,7 +121,6 @@ export function CompanyTab({ usersList, rolesList }) {
   };
 
   const handleServiceToggle = async (service) => {
-    console.log('service', service);
     const isCurrentlyChecked = service.Assigned === 'y';
 
     try {
