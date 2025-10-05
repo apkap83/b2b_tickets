@@ -51,6 +51,7 @@ export default async function RootLayout({
           </AppRouterCacheProvider>
           {/* </StyledComponentsRegistry> */}
         </AuthProvider>
+        <Script src="https://scripts.simpleanalyticscdn.com/latest.js" />
       </body>
     </html>
   );
