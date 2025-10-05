@@ -372,7 +372,7 @@ const CcFields = memo<CcFieldsProps>(
                 >
                   CC Company
                 </button>
-                <ReactTooltip id="cc-company-tooltip" />
+                <ReactTooltip place="bottom" id="cc-company-tooltip" />
               </div>
               <ClarificationMessage msg="Comma separated list of E-mails" />
             </FormControl>
