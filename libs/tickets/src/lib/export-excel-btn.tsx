@@ -28,7 +28,8 @@ export const ExportToExcelButton = ({
     const ticketsList = await getFilteredTicketsForCustomer(
       currentPage,
       query,
-      filter
+      filter,
+      true
     );
 
     setTimeout(() => {
