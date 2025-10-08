@@ -60,6 +60,7 @@ import {
 } from '@b2b-tickets/shared-models';
 import { useWebSocketContext } from '@b2b-tickets/contexts';
 import styles from './css/new-comment-modal.module.scss';
+import { FaArrowUpRightDots } from 'react-icons/fa6';
 
 export function EscalateModal({
   modalAction = TicketDetailsModalActions.ESCALATE,
@@ -120,9 +121,11 @@ export function EscalateModal({
     if (modalAction === TicketDetailsModalActions.ESCALATE) {
       return (
         <div
-          className={`${styles.title} self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
+          className={`${styles.title} flex gap-2 text-20 justify-start items-center self-stretch text-gray-300 text-xl font-normal font-['Roboto'] leading-7 tracking-[2.40px]`}
         >
-          {`B2B - Escalate Ticket ${ticketNumber}`}
+          <FaArrowUpRightDots />
+
+          <span className="pt-1"> {`Escalate Ticket ${ticketNumber}`}</span>
         </div>
       );
     }

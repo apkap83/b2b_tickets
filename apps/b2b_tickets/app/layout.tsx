@@ -23,7 +23,7 @@ export const metadata = {
   description:
     'Platinum Support by Nova - Premium B2B technical support and solutions for your business.',
   keywords: 'Nova, Platinum Support, B2B Technical Support',
-  author: 'Nova Telecommunications',
+  authors: 'Nova Telecommunications',
 };
 
 export default async function RootLayout({
