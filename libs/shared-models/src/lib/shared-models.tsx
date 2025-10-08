@@ -262,7 +262,7 @@ export enum TicketStatusColors {
   // CANCELLED = '#dc5743',
   // CLOSED = '#3d8d52',
   NEW = '#6870fa',
-  WORKING = '#10b981',
+  WORKING = '#722665',
   CANCELLED = '#dc5743',
   CLOSED = '#3d8d52',
 }
