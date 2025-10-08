@@ -125,7 +125,10 @@ export function EscalateModal({
         >
           <FaArrowUpRightDots />
 
-          <span className="pt-1"> {`Escalate Ticket ${ticketNumber}`}</span>
+          <span className="text-xl pt-1">
+            {' '}
+            {`Escalate Ticket ${ticketNumber}`}
+          </span>
         </div>
       );
     }
