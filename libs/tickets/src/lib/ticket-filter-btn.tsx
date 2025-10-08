@@ -36,20 +36,38 @@ export const TicketFilter = () => {
   //   }
   // }, []);
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setTicketFilterDropdownOpen(false);
+      }
+    };
+
+    if (isTicketFilterDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isTicketFilterDropdownOpen]);
+
   const handleFilter = (term: FilterTicketsStatus) => {
     const params = new URLSearchParams(searchParams);
     if (term) {
       if (term === FilterTicketsStatus.All) {
         params.delete('query');
         params.set('page', '1');
-        // sessionStorage.removeItem('ticketFilter');
+        sessionStorage.removeItem('ticketFilter');
       } else {
         params.set('query', term);
         params.set('page', '1');
-        sessionStorage.setItem(
-          'ticketFilter',
-          window.location.search.replace('?', '')
-        );
+        sessionStorage.setItem('ticketFilter', params.toString()); // Use params directly
       }
     } else {
       params.delete('query');
@@ -59,6 +77,7 @@ export const TicketFilter = () => {
 
   return (
     <div
+      ref={dropdownRef}
       style={{
         position: 'relative',
       }}
@@ -77,7 +96,7 @@ export const TicketFilter = () => {
       >
         <div className="text-xs flex flex-col justify-center items-center gap-0">
           {searchParams.get('query')?.toString() === FilterTicketsStatus.All ||
-          searchParams.get('query')?.toString() == undefined ? (
+          searchParams.get('query')?.toString() === undefined ? (
             <VscFilterFilled color="#514f4f" />
           ) : (
             <>
