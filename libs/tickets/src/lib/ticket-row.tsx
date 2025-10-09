@@ -100,7 +100,7 @@ export const TicketRow = memo(
                 backgroundColor: getStatusColor(item.status_id),
                 borderColor: getStatusColor(item.status_id),
               }}
-              className="text-white px-1 py-1 rounded-md font-medium text-center"
+              className="text-white px-2 py-1 rounded-md font-medium text-center"
             >
               {item.Status}
             </div>
