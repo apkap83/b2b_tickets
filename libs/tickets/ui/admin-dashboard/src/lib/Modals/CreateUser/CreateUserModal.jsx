@@ -165,7 +165,7 @@ function CreateUserModal({ rolesList, closeModal }) {
   ];
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">
+      <div className="max-w-[695px] bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">
         {loading ? (
           <Box className="flex flex-col gap-3 justify-center items-center">
             <CircularProgress />
