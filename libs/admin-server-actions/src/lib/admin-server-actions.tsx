@@ -70,7 +70,7 @@ const verifySecurityRole = async (roleName: AppRoleTypes | AppRoleTypes[]) => {
       throw new Error('Unauthenticated user');
     }
 
-    if (userHasRole(session, roleName)) {
+    if (!userHasRole(session, roleName)) {
       throw new Error(
         'Unauthorized access: User is not authorized for this action'
       );
@@ -361,6 +361,50 @@ export const getCompanyCategories = async ({
   }
 };
 
+// Helper function to verify privileged role creation permissions
+async function verifyPrivilegedRoleCreation(roleId: string) {
+  // Fetch the role to check its type
+  const targetRole = await AppRole.findByPk(roleId);
+
+  if (!targetRole) {
+    throw new Error(`Role with id ${roleId} was not found!`);
+  }
+
+  // Define privileged roles that require special permission
+  const privilegedRoles = [AppRoleTypes.Admin, AppRoleTypes.Security_Admin];
+
+  // Check if the target role is privileged
+  const isPrivilegedRole = privilegedRoles.includes(targetRole.roleName);
+
+  if (isPrivilegedRole) {
+    // Try to verify if user has API_Security_Management permission OR Admin role
+    let hasRequiredAccess = false;
+
+    try {
+      // Check for API_Security_Management permission
+      await verifySecurityPermission(
+        AppPermissionTypes.API_Security_Management
+      );
+      hasRequiredAccess = true;
+    } catch (permissionError) {
+      // If permission check fails, try role check
+      try {
+        await verifySecurityRole(AppRoleTypes.Admin);
+        hasRequiredAccess = true;
+      } catch (roleError) {
+        // Both checks failed
+        hasRequiredAccess = false;
+      }
+    }
+
+    if (!hasRequiredAccess) {
+      throw new Error(
+        'Insufficient permissions: Only users with API Security Management permission or Admin role can create users with Admin or Security Admin privileges.'
+      );
+    }
+  }
+}
+
 const userSchema = yup.object().shape({
   company: yup.string().required('Company is required'),
   role: yup.string().required('Role is required'),
@@ -424,6 +468,9 @@ export async function createUser(formState: any, formData: any) {
     // Validate input data with yup
     await userSchema.validate(userData, { abortEarly: false });
 
+    // Check if user is trying to create privileged role and verify permissions
+    await verifyPrivilegedRoleCreation(userData.role);
+
     // Check if the user already exists (optional step)
     const existingEmail = await B2BUser.findOne({ where: { email } });
     const existingUserName = await B2BUser.findOne({
@@ -483,9 +530,9 @@ export async function createUser(formState: any, formData: any) {
 
     // Empty All Roles of User
     //@ts-ignore
-    await newUser.setAppRoles([]);
+    await newUser.setAppRoles([], { transaction: t });
 
-    const foundRoleInDB = await AppRole.findByPk(roleId);
+    const foundRoleInDB = await AppRole.findByPk(roleId, { transaction: t });
 
     if (!foundRoleInDB)
       throw new Error(`Role with id ${roleId} was not found!`);
@@ -521,6 +568,7 @@ export async function createUser(formState: any, formData: any) {
 
     return toFormState('SUCCESS', 'User Created!');
   } catch (error) {
+    await t.rollback();
     logRequest.error(error);
     return fromErrorToFormState(error);
   } finally {
