@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Clean white background -->
+  <defs>
+    <!-- Subtle gradient for depth -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f8f9fa;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Subtle pattern -->
+    <pattern id="dots" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#e9ecef" opacity="0.3"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+  
+  <!-- Subtle decorative elements in grey tones -->
+  <circle cx="120" cy="100" r="80" fill="#000000" opacity="0.02"/>
+  <circle cx="1080" cy="530" r="100" fill="#000000" opacity="0.02"/>
+  <rect x="950" y="80" width="60" height="60" rx="4" fill="#000000" opacity="0.015" transform="rotate(20 980 110)"/>
+  
+  <!-- Main content container with subtle shadow - extended height -->
+  <rect x="150" y="180" width="900" height="310" rx="12" fill="#ffffff" opacity="0.8"/>
+  <rect x="150" y="180" width="900" height="310" rx="12" fill="none" stroke="#dee2e6" stroke-width="1"/>
+  
+  <!-- NOVA Logo - Official SVG from nova.gr -->
+  <g transform="translate(600, 280) scale(2.8)">
+    <g transform="translate(-104, -17)">
+      <path d="M817.3,474.794c-13.389,0-24.282,7.736-24.282,17.244s10.893,17.244,24.282,17.244,24.282-7.736,24.282-17.244S830.692,474.794,817.3,474.794Zm12.736,17.244c0,4.81-5.713,8.724-12.736,8.724s-12.736-3.914-12.736-8.724,5.714-8.724,12.736-8.724S830.038,487.227,830.038,492.038Z" transform="translate(-733.018 -474.794)" fill="#000"/>
+      <path d="M1008.845,482.758l-9.482,15.359a2.572,2.572,0,0,1-4.392-.025l-9.36-15.555A6.55,6.55,0,0,0,980,479.363H969.386l18.5,27.93q2.536,3.934,9.432,3.933,6.8,0,9.338-3.933l18.508-27.93H1014.93A7.151,7.151,0,0,0,1008.845,482.758Zm43.718.095q-2.535-3.933-9.436-3.932-6.8,0-9.334,3.932l-18.514,27.933h10.733a6.27,6.27,0,0,0,5.335-2.976l9.826-15.913a2.476,2.476,0,0,1,4.228.024l9.435,15.68a6.574,6.574,0,0,0,5.633,3.184h10.6Z" transform="translate(-862.743 -477.829)" fill="#000"/>
+      <path d="M619.929,479.231l-.491,27.93c.006,2.622-2.254,4.211-6.79,4.211a11.158,11.158,0,0,1-1.983-.2,9.967,9.967,0,0,1-2.186-.466l-.226-.049-.012-.033a15.9,15.9,0,0,1-4.619-2.6l-19.55-15.681c-1.98-1.588-4.287-1.6-4.243-.024l.44,15.913c.051,1.85-1.242,2.976-3.416,2.976H566.121l.495-27.933q-.007-3.933,6.8-3.932a18.966,18.966,0,0,1,11.972,3.932l20,15.858a1.073,1.073,0,0,0,.838-1.143l-.426-15.359c-.058-2.11,1.416-3.395,3.9-3.395Z" transform="translate(-566.121 -478.058)" fill="#000"/>
+      <path d="M1243.912,556.267l-17.965-.024c-.169,0-.337-.007-.506-.011l4.1-6.488a3.207,3.207,0,0,1,2.665-1.493l11.7.021Z" transform="translate(-484.963 -54.031)" fill="#000"/>
+    </g>
+  </g>
+  
+  <!-- Platinum Support Text - bigger and bolder with original font -->
+  <text x="600" y="385" font-family="Georgia, serif" font-size="48" font-weight="700" fill="#4a4a4a" text-anchor="middle" letter-spacing="3">Platinum Support</text>
+  
+  <!-- Separator line - centered between Platinum Support and subtitle -->
+  <line x1="400" y1="407" x2="800" y2="407" stroke="#dee2e6" stroke-width="2"/>
+  
+  <!-- Subtitle in dark grey - lowered 10% -->
+  <text x="600" y="447" font-family="Arial, sans-serif" font-size="24" fill="#495057" text-anchor="middle">Premium B2B Technical Support &amp; Solutions</text>
+  
+  <!-- Footer domain in medium grey -->
+  <text x="600" y="560" font-family="Arial, sans-serif" font-size="20" font-weight="500" fill="#6c757d" text-anchor="middle">platinumsupport.nova.gr</text>
+</svg>

@@ -23,7 +23,33 @@ export const metadata = {
   description:
     'Platinum Support by Nova - Premium B2B technical support and solutions for your business.',
   keywords: 'Nova, Platinum Support, B2B Technical Support',
-  authors: 'Nova Telecommunications',
+  authors: [{ name: 'Nova Telecommunications' }],
+
+  // Add these for better SEO and social sharing:
+  metadataBase: new URL('https://platinumsupport.nova.gr'),
+
+  openGraph: {
+    title: 'Nova Platinum Support',
+    description:
+      'Platinum Support by Nova - Premium B2B technical support and solutions for your business.',
+    url: 'https://platinumsupport.nova.gr',
+    siteName: 'Nova Platinum Support',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/img/opengraph.png', // or '/og-image.png'
+        width: 1200,
+        height: 630,
+        alt: 'Nova Platinum Support - Premium B2B Technical Support',
+      },
+    ],
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function RootLayout({
