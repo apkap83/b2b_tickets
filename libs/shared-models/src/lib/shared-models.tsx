@@ -138,16 +138,17 @@ export interface TicketDetail {
   Cli: string | null;
   'Contact person': string;
   'Contact phone number': string;
-  'Occurence date': Date; // Changed to Date type
-  Opened: Date; // Changed to Date type
+  'Occurence date': Date;
+  Opened: Date;
   'Opened By': string;
   ticket_creator_email: string;
   status_id: string;
   Status: string;
-  'Status Date': Date; // Changed to Date type
+  'Status Date': Date;
   'Status User': string;
-  Closed: Date | null; // Changed to Date type
+  Closed: Date | null;
   'Closed By': string | null;
+  'Actual Resolution Timestamp': Date | null;
   escalation_info: string | null;
   last_comment_info: string;
   'Hours Passed': number | null;
@@ -155,13 +156,13 @@ export interface TicketDetail {
   escalation_levels: string | null;
   Escalated: string;
   'First Escalation User': string | null;
-  'First Escalation Date': Date | null; // Changed to Date type
+  'First Escalation Date': Date | null;
   'Last Escalation User': string | null;
-  'Last Escalation Date': Date | null; // Changed to Date type
+  'Last Escalation Date': Date | null;
   'Current Escalation Level': number | null;
   last_comment_customer_type_id: number;
-  'Last Comment Date': Date; // Changed to Date type
-  'Last Cust. Comment Date': Date | null; // Changed to Date type
+  'Last Comment Date': Date;
+  'Last Cust. Comment Date': Date | null;
   'Hours Since Last Cust. Comment': number;
   'Delayed Response': string | null;
   comments: TicketComment[];
@@ -186,15 +187,15 @@ export interface TicketDetailForTicketCreator extends TicketDetail {
   Cli: string | null;
   'Contact person': string;
   'Contact phone number': string;
-  'Occurence date': Date; // Changed to Date type
-  Opened: Date; // Changed to Date type
+  'Occurence date': Date;
+  Opened: Date;
   'Opened By': string;
   ticket_creator_email: string;
   status_id: string;
   Status: string;
-  'Status Date': Date; // Changed to Date type
+  'Status Date': Date;
   'Status User': string;
-  Closed: Date | null; // Changed to Date type
+  Closed: Date | null;
   'Closed By': string | null;
   'Remedy Ticket': string | null;
   Escalated: string;

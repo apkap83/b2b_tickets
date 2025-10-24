@@ -17,6 +17,7 @@ import {
   userHasPermission,
   columnAllowedForFilter,
   sanitizeInput,
+  parseCustomDate,
 } from '@b2b-tickets/utils';
 import {
   TicketCategory,
@@ -914,13 +915,6 @@ export const createNewTicket = async (
   }
 };
 
-const commentSchema_zod = z.object({
-  ticketId: z.string(),
-  comment: z.string().min(1),
-  ticketNumber: z.string(),
-  modalAction: z.string(),
-});
-
 export const setRemedyIncidentIDForTicket = async ({
   ticketId,
   remedyIncId,
@@ -1181,6 +1175,14 @@ export const alterTicketSeverity = async ({
   }
 };
 
+const commentSchema_zod = z.object({
+  ticketId: z.string(),
+  comment: z.string().min(1),
+  ticketNumber: z.string(),
+  modalAction: z.string(),
+  actualResolutionDate: z.string(),
+});
+
 export const createNewComment = async (
   formState: TicketFormState,
   formData: FormData
@@ -1198,18 +1200,44 @@ export const createNewComment = async (
     const userId = session.user.user_id;
     await setSchemaAndTimezone(pgB2Bpool);
 
-    const { comment, ticketId, ticketNumber, modalAction } =
-      commentSchema_zod.parse({
-        ticketId: formData.get('ticketId'),
-        comment: formData.get('comment'),
-        ticketNumber: formData.get('ticketNumber'),
-        modalAction: formData.get('modalAction'),
-      });
+    const {
+      comment,
+      ticketId,
+      ticketNumber,
+      modalAction,
+      actualResolutionDate,
+    } = commentSchema_zod.parse({
+      ticketId: formData.get('ticketId'),
+      comment: formData.get('comment'),
+      ticketNumber: formData.get('ticketNumber'),
+      modalAction: formData.get('modalAction'),
+      actualResolutionDate: formData.get('actualResolutionDate'),
+    });
+
+    console.log('Parsed Data:', {
+      comment,
+      ticketId,
+      ticketNumber,
+      modalAction,
+      actualResolutionDate,
+    });
+
+    let standardizedDate = parseCustomDate(actualResolutionDate);
+
+    console.log('Parsed Data:', {
+      comment,
+      ticketId,
+      ticketNumber,
+      modalAction,
+      actualResolutionDate,
+      standardizedDate,
+    });
 
     if (modalAction === TicketDetailsModalActions.CLOSE) {
       logRequest.info(
         `Serv.A.F. ${session.user.userName} - Creating new closing comment for ticket with id ${ticketId}`
       );
+
       await pgB2Bpool.query(
         `
           CALL tck_close
@@ -1218,9 +1246,10 @@ export const createNewComment = async (
             pnum_User_ID     => $2,
             pvch_Comment     => $3,
             pvch_Root_Cause  => $4,
-            pvch_API_User    => $5,
-            pvch_API_Process => $6,
-            pbln_Debug_Mode  => $7
+            pts_Actual_Resolution_Timestamp => $5,
+            pvch_API_User    => $6,
+            pvch_API_Process => $7,
+            pbln_Debug_Mode  => $8
           )
         `,
         [
@@ -1228,6 +1257,7 @@ export const createNewComment = async (
           userId,
           comment,
           comment,
+          standardizedDate,
           config.api.user,
           config.api.process,
           config.postgres_b2b_database.debugMode,

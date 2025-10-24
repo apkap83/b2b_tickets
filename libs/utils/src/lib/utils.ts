@@ -168,6 +168,56 @@ export const convertTo24HourFormat = (dateStr: string): string | null => {
     return null;
   }
 };
+
+/**
+ * Converts a date string in format 'DD/MM/YYYY HH:MM' to a Date object
+ * @param dateStr - Date string in format '24/10/2025 19:30'
+ * @returns Date object
+ */
+export const parseCustomDate = (dateStr: string): Date => {
+  // Split the string into date and time parts
+  const parts = dateStr.trim().split(' ');
+
+  if (parts.length !== 2) {
+    throw new Error(
+      `Invalid date format: ${dateStr}. Expected format: 'DD/MM/YYYY HH:MM'`
+    );
+  }
+
+  const [datePart, timePart] = parts;
+
+  // Parse date components
+  const dateComponents = datePart.split('/').map(Number);
+  if (dateComponents.length !== 3) {
+    throw new Error(
+      `Invalid date part: ${datePart}. Expected format: 'DD/MM/YYYY'`
+    );
+  }
+  const [day, month, year] = dateComponents;
+
+  // Parse time components
+  const timeComponents = timePart.split(':').map(Number);
+  if (timeComponents.length !== 2) {
+    throw new Error(`Invalid time part: ${timePart}. Expected format: 'HH:MM'`);
+  }
+  const [hours, minutes] = timeComponents;
+
+  // Validate components
+  if (
+    isNaN(day) ||
+    isNaN(month) ||
+    isNaN(year) ||
+    isNaN(hours) ||
+    isNaN(minutes)
+  ) {
+    throw new Error(`Invalid date/time values in: ${dateStr}`);
+  }
+
+  // Create and return the Date object
+  // Note: month is 0-indexed in JavaScript Date
+  return new Date(year, month - 1, day, hours, minutes);
+};
+
 /**
  *
  * @param text Value to be encrypted
@@ -345,6 +395,7 @@ export const mapToTicketCreator = (ticket: TicketDetail) => {
     'Status User': ticket['Status User'],
     Closed: ticket.Closed,
     'Closed By': ticket['Closed By'],
+    'Actual Resolution Timestamp': ticket['Actual Resolution Timestamp'],
     'Remedy Ticket': ticket['Remedy Ticket'],
     'Current Escalation Level': ticket['Current Escalation Level'],
     Escalated: ticket.Escalated,

@@ -19,6 +19,13 @@ import {
   WebSocketMessage,
   AppRoleTypes,
 } from '@b2b-tickets/shared-models';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import { FormControl } from '@mui/material';
+
 import styles from './css/new-comment-modal.module.scss';
 
 export const NewCommentModal = memo(
@@ -256,31 +263,78 @@ export const NewCommentModal = memo(
                   </div>
                 </div>
                 {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
-                  <p
-                    className="text-xs text-gray-600"
-                    style={{
-                      transform: 'translate(5px, -14px)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    <span
+                  <>
+                    <p
+                      className="text-xs text-gray-600"
                       style={{
-                        width: '4px',
-                        height: '4px',
-                        backgroundColor: '#3b82f6',
-                        borderRadius: '50%',
-                        display: 'inline-block',
+                        transform: 'translate(5px, -14px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
                       }}
-                    ></span>
-                    Customer will be notified by e-mail notification for this
-                    comment
-                  </p>
+                    >
+                      <span
+                        style={{
+                          width: '4px',
+                          height: '4px',
+                          backgroundColor: '#3b82f6',
+                          borderRadius: '50%',
+                          display: 'inline-block',
+                        }}
+                      ></span>
+                      Customer will be notified by e-mail notification for this
+                      comment
+                    </p>
+                    {/* Date Picker Only for Close Ticket */}
+                    {modalAction === TicketDetailsModalActions.CLOSE && (
+                      <div className="w-full bg-gray-50 flex justify-center items-center rounded-md">
+                        <div className="w-[250px] bg-gray-100 pl-2 pr-2 rounded-md pb-4 flex justify-center items-center">
+                          <FormControl sx={{ mt: '.5rem' }}>
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                              <span
+                                style={{
+                                  color: 'rgba(0,0,0,.6)',
+                                  fontSize: '11.7143px',
+                                  fontWeight: '400',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                Actual Resolution Date
+                              </span>
+                              <DateTimePicker
+                                name="actualResolutionDate"
+                                value={dayjs()}
+                                format="DD/MM/YYYY HH:mm"
+                                ampm={false}
+                                onChange={(value: any) => {
+                                  if (value && dayjs(value).isValid()) {
+                                    return value.toISOString();
+                                  }
+                                }}
+                                slotProps={{
+                                  textField: {
+                                    sx: {
+                                      '& .MuiInputBase-input': {
+                                        padding: '8px 0px 8px 14px', // Adjust as needed
+                                        width: '112px',
+                                      },
+                                      '& .MuiInputAdornment-root': {
+                                        marginLeft: '0px',
+                                      },
+                                    },
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </FormControl>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 <div
-                  className={`${styles.buttonDiv} self-stretch justify-center items-center inline-flex`}
+                  className={`${styles.buttonDiv} self-stretch justify-center items-center inline-flex mt-7`}
                   style={{
                     gap: '12px',
                   }}
