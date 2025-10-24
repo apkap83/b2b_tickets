@@ -5,6 +5,7 @@ export enum WebSocketMessage {
   TICKET_ESCALATED = 'TicketEscalated',
   TICKET_ALTERED_SEVERITY = 'TicketAlteredSeverity',
   TICKET_ALTERED_REMEDY_INC = 'TicketAlteredRemedyInc',
+  TICKET_ALTERED_ACTUAL_RESOLUTION_DATE = 'TicketAlteredActualResolutionDate',
   TICKET_ALTERED_CATEGORY_SERVICE_TYPE = 'TicketAlteredCategoryServiceType',
   TICKET_CLOSED = 'TicketClosed',
   TICKET_CANCELED = 'TicketCancelled',
@@ -36,6 +37,10 @@ export interface WebSocketData {
   };
 
   [WebSocketMessage.TICKET_ALTERED_REMEDY_INC]: {
+    ticket_id: string;
+  };
+
+  [WebSocketMessage.TICKET_ALTERED_ACTUAL_RESOLUTION_DATE]: {
     ticket_id: string;
   };
 

@@ -38,6 +38,7 @@ import Button from '@mui/material/Button';
 import { formatDate } from '@b2b-tickets/utils';
 import { ChangeCategoryPopup } from './change-category-popup';
 import { RemedyIncidentRow } from './remedy-incident-row';
+import { ActualResolutionRow } from './actual-resolution-row';
 import { RemedyIncPopup } from './remedy-incident-popup';
 import { SeverityPopup } from './severity-popup';
 import { SeverityRow } from './severity-row';
@@ -51,6 +52,7 @@ import { FileAttachmentModal } from '@b2b-tickets/file-attachment-modal';
 import { LiaCommentDotsSolid } from 'react-icons/lia';
 import { TicketAttachments } from './ticket-attachments';
 import { FilePreviewModal } from './file-preview-modal';
+import { ResolutionDatePopup } from './alter-resolution-date-popup';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -80,6 +82,9 @@ export function TicketDetails({
   const [showFilePreviewDialog, setShowFilePreviewDialog] = useState(false);
   const [selectedFileForPreview, setSelectedFileForPreview] =
     useState<TicketAttachmentDetails | null>(null);
+
+  const [showActualResolutionDateDialog, setShowActualResolutionDateDialog] =
+    useState(false);
 
   // const [ticketStatus, setTicketStatus] = useState(ticketDetails[0].status_id);
   const [modalAction, setModalAction] = useState<TicketDetailsModalActions>(
@@ -137,6 +142,7 @@ export function TicketDetails({
   const TICKET_UPDATE_EVENTS = [
     WebSocketMessage.TICKET_ALTERED_SEVERITY,
     WebSocketMessage.TICKET_ALTERED_REMEDY_INC,
+    WebSocketMessage.TICKET_ALTERED_ACTUAL_RESOLUTION_DATE,
     WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE,
     WebSocketMessage.NEW_COMMENT_ADDED,
     WebSocketMessage.TICKET_STARTED_WORK,
@@ -817,6 +823,14 @@ export function TicketDetails({
                   </div>
                 </div>
               )}
+
+              <ActualResolutionRow
+                session={session}
+                ticketDetails={ticketDetails}
+                setShowActualResolutionDateDialog={
+                  setShowActualResolutionDateDialog
+                }
+              />
               <CcFields ticketId={ticketId} isFinalStatus={isFinalStatus} />
             </div>
             <div className="shadow-lg grow shrink basis-0 rounded-md self-stretch bg-[#6870fa]/0 flex-col justify-start items-center gap-4 inline-flex">
@@ -897,6 +911,15 @@ export function TicketDetails({
               setShowCategoryDialog={setShowCategoryDialog}
             />
           )}
+
+        {showActualResolutionDateDialog && (
+          <ResolutionDatePopup
+            ticketDetails={ticketDetails}
+            setShowActualResolutionDateDialog={
+              setShowActualResolutionDateDialog
+            }
+          />
+        )}
       </>
       <ReactTooltip
         id="editCategoryAndService"

@@ -607,6 +607,8 @@ export const getTicketDetailsForTicketNumber = async ({
       AppRoleTypes.B2B_TicketCreator
     );
 
+    const isAdmin = userHasRole(session, AppRoleTypes.Admin);
+
     // Define queries
     const queryForTicketsCategoriesAndTypes = isTicketHandler
       ? `SELECT * FROM tickets_v WHERE "Ticket" = $1`
@@ -629,7 +631,7 @@ export const getTicketDetailsForTicketNumber = async ({
       notFound();
     }
 
-    // Additional validation for Ticket Creator - Avoid Ticket Handlers from Openning Other customer tickets (!)
+    // Additional validation for Ticket Creator - Avoid Ticket Creators from Openning Other customers' tickets (!)
     if (
       isTicketCreator &&
       session?.user.customer_id !== Number(queryRes1.rows[0].customer_id)
@@ -643,7 +645,7 @@ export const getTicketDetailsForTicketNumber = async ({
     queryRes1.rows[0]['comments'] = queryRes2.rows;
 
     // Filter results for Ticket Creator role
-    if (isTicketCreator) {
+    if (isTicketCreator && !isAdmin) {
       return queryRes1.rows.map((ticket) => mapToTicketCreator(ticket));
     }
 
@@ -994,6 +996,85 @@ export const setRemedyIncidentIDForTicket = async ({
   }
 };
 
+export const setActualResolutionDateForTicket = async ({
+  ticketId,
+  actualResolutionTimestamp,
+  ticketNumber,
+}: {
+  ticketId: string;
+  actualResolutionTimestamp: string;
+  ticketNumber: string;
+}) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  try {
+    const session = await verifySecurityPermission(
+      AppPermissionTypes.Set_Actual_Resolution_Date
+    );
+
+    logRequest.info(
+      `Serv.A.F. ${session.user.userName} - Setting Actual Resolution Timestamp ${actualResolutionTimestamp} for Ticket Number ${ticketNumber}`
+    );
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    if (!userHasRole(session, AppRoleTypes.B2B_TicketHandler)) {
+      return {
+        status: 'ERROR',
+        message: 'You do not have permission for this action',
+      };
+    }
+
+    // Ensure session.user.user_id is a number
+    const userId =
+      typeof session.user.user_id === 'string'
+        ? parseInt(session.user.user_id)
+        : session.user.user_id;
+
+    if (isNaN(userId)) {
+      return {
+        status: 'ERROR',
+        message: 'Invalid user ID',
+      };
+    }
+
+    await pgB2Bpool.query(
+      `call tck_Set_Actual_Resolution_Timestamp
+      (
+        pnum_Ticket_ID                  => $1,
+        pnum_User_ID                    => $2,
+        pts_Actual_Resolution_Timestamp => $3,
+        pvch_API_User                   => $4,
+        pvch_API_Process                => $5,
+        pbln_debug_mode                 => $6
+      )`,
+      [
+        parseInt(ticketId),
+        userId,
+        actualResolutionTimestamp,
+        //@ts-ignore
+        config.api.user,
+        config.api.process,
+        config.postgres_b2b_database.debugMode,
+      ]
+    );
+    revalidatePath(`/ticket/${ticketNumber}`);
+
+    return {
+      status: 'SUCCESS',
+      message: 'Actual Resolution Date was set successfully',
+    };
+  } catch (error) {
+    logRequest.error(
+      `Failed to set Actual Resolution Timestamp for ticket: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
+      { error }
+    );
+    return fromErrorToFormState(error);
+  }
+};
+
 export const deleteExistingComment = async ({
   commentId,
   ticketNumber,
@@ -1180,7 +1261,7 @@ const commentSchema_zod = z.object({
   comment: z.string().min(1),
   ticketNumber: z.string(),
   modalAction: z.string(),
-  actualResolutionDate: z.string(),
+  actualResolutionDate: z.string().nullable().optional(),
 });
 
 export const createNewComment = async (
@@ -1211,29 +1292,20 @@ export const createNewComment = async (
       comment: formData.get('comment'),
       ticketNumber: formData.get('ticketNumber'),
       modalAction: formData.get('modalAction'),
-      actualResolutionDate: formData.get('actualResolutionDate'),
-    });
-
-    console.log('Parsed Data:', {
-      comment,
-      ticketId,
-      ticketNumber,
-      modalAction,
-      actualResolutionDate,
-    });
-
-    let standardizedDate = parseCustomDate(actualResolutionDate);
-
-    console.log('Parsed Data:', {
-      comment,
-      ticketId,
-      ticketNumber,
-      modalAction,
-      actualResolutionDate,
-      standardizedDate,
+      actualResolutionDate: formData.get('actualResolutionDate') || null,
     });
 
     if (modalAction === TicketDetailsModalActions.CLOSE) {
+      // Validate that actualResolutionDate is provided for closing
+      if (!actualResolutionDate) {
+        return toFormState(
+          'ERROR',
+          'Actual Resolution Date is required when closing a ticket'
+        );
+      }
+
+      let standardizedDate = parseCustomDate(actualResolutionDate);
+
       logRequest.info(
         `Serv.A.F. ${session.user.userName} - Creating new closing comment for ticket with id ${ticketId}`
       );

@@ -244,6 +244,21 @@ io.on('connection', (socket: Socket) => {
   );
 
   socket.on(
+    WebSocketMessage.TICKET_ALTERED_ACTUAL_RESOLUTION_DATE,
+    (
+      data: WebSocketData[WebSocketMessage.TICKET_ALTERED_ACTUAL_RESOLUTION_DATE]
+    ) => {
+      if (DEBUG)
+        logger.info(
+          WebSocketMessage.TICKET_ALTERED_ACTUAL_RESOLUTION_DATE,
+          'triggered with data:',
+          data
+        );
+      io.emit(WebSocketMessage.TICKET_ALTERED_ACTUAL_RESOLUTION_DATE, data); // Emit event to all clients
+    }
+  );
+
+  socket.on(
     WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE,
     (
       data: WebSocketData[WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE]

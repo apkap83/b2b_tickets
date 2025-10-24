@@ -5,3 +5,5 @@ export * from './lib/new-ticket-modal';
 export * from './lib/new-comment-modal';
 export * from './lib/ticket-details';
 export * from './lib/ticket-list-header';
+export * from './lib/actual-resolution-row';
+export * from './lib/alter-resolution-date-popup';
