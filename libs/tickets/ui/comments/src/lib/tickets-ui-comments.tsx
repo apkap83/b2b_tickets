@@ -115,9 +115,9 @@ const EscalationComment = ({
               {getRightCommentCreatorName(item)}
             </span>
             <span className="text-black/75 text-base font-light font-['Roboto'] leading-[17.16px] tracking-tight">
-              &nbsp; <span className="text-red-900">escalated</span> to
-              Level&nbsp;
-              {escalationLevel}&nbsp; at&nbsp;
+              &nbsp; <span className="text-red-900">escalated</span>
+              to&nbsp;Level&nbsp;
+              {escalationLevel}&nbsp;at&nbsp;
               {formatDate(item['Comment Date'])}
             </span>
           </div>
