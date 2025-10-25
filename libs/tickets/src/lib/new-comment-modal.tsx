@@ -282,13 +282,13 @@ export const NewCommentModal = memo(
                           display: 'inline-block',
                         }}
                       ></span>
-                      Customer will be notified by e-mail notification for this
+                      Customer will receive an e-mail notification for this
                       comment
                     </p>
                     {/* Date Picker Only for Close Ticket */}
                     {modalAction === TicketDetailsModalActions.CLOSE && (
-                      <div className="w-full bg-gray-50 flex justify-center items-center rounded-md">
-                        <div className="w-[250px] bg-gray-100 pl-2 pr-2 rounded-md pb-4 flex justify-center items-center">
+                      <div className="w-full bg-gray-50 flex justify-center items-center rounded-lg">
+                        <div className="w-[350px] bg-gray-100 pl-2 pr-2 rounded-lg pb-4 flex justify-center items-center">
                           <FormControl sx={{ mt: '.5rem' }}>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                               <span
