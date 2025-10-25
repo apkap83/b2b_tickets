@@ -24,6 +24,11 @@
 }
 
 .inputDescription {
-  color: rgba(0, 0, 0, 0.5);
-  font-size: 0.75rem;
+  // color: rgba(0, 0, 0, 0.5);
+  // font-size: 0.75rem;
+
+  font-size: 0.875rem /* 14px */;
+  line-height: 1.25rem /* 20px */;
+  --tw-text-opacity: 1;
+  color: rgb(55 65 81 / var(--tw-text-opacity, 1));
 }

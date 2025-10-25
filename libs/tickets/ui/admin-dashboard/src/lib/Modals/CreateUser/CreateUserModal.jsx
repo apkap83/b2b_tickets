@@ -164,88 +164,152 @@ function CreateUserModal({ rolesList, closeModal }) {
     })),
   ];
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
       <div className="max-w-[695px] bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">
         {loading ? (
           <Box className="flex flex-col gap-3 justify-center items-center">
             <CircularProgress />
-            <p>Loading...</p>
+            <p className="text-gray-500">Loading...</p>
           </Box>
         ) : (
           <>
-            <h3 className="font-bold text-lg text-center">Create User Form</h3>
+            <h3 className="font-bold text-2xl text-center mb-2">
+              Create User Form
+            </h3>
             <form
-              className="flex flex-col gap-1 pt-3 md:min-w-[600px]"
+              className="flex flex-col gap-2 pt-3 md:min-w-[500px]"
               action={action}
             >
-              <div>
-                <span className={styles.inputDescription}>Company Name</span>
-
-                <Select
-                  name="company"
-                  value={customersSelectOptions.find(
-                    (option) => option === formik.values.company
-                  )}
-                  onChange={(option) => {
-                    formik.setFieldValue('company', option);
-                  }}
-                  onBlur={formik.handleBlur}
-                  // onChange={formik.handleChange}
-                  options={customersSelectOptions}
-                  placeholder={
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'flex-start',
-                        alignItems: 'center',
-                        gap: '.4rem',
-                        fontSize: '.95rem',
-                      }}
-                    >
-                      <BusinessIcon />
-                      <span>Select Company</span>
-                    </div>
-                  }
-                />
+              <div className="space-y-1.5">
+                <label htmlFor="company" className={styles.inputDescription}>
+                  Company Name
+                </label>
+                <div className="relative">
+                  {/* Select with padding to make room for icon */}
+                  <Select
+                    id="company"
+                    name="company"
+                    value={customersSelectOptions.find(
+                      (option) => option === formik.values.company
+                    )}
+                    onChange={(option) => {
+                      formik.setFieldValue('company', option);
+                    }}
+                    onBlur={formik.handleBlur}
+                    options={customersSelectOptions}
+                    placeholder="Select Company"
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        paddingLeft: '1.6rem',
+                        borderColor: state.isFocused ? '#57575f' : '#d1d5db',
+                        boxShadow: state.isFocused
+                          ? '0 0 0 1px #57575f'
+                          : 'none',
+                        '&:hover': {
+                          borderColor: '#9b9ba5',
+                        },
+                      }),
+                      placeholder: (base) => ({
+                        ...base,
+                        color: '#9ca3af',
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        backgroundColor: state.isSelected
+                          ? '#57575f'
+                          : state.isFocused
+                          ? '#e5e5e7'
+                          : 'white',
+                        color: state.isSelected ? 'white' : '#374151',
+                        cursor: 'pointer',
+                        '&:active': {
+                          backgroundColor: '#57575f',
+                        },
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        borderRadius: '0.5rem',
+                        marginTop: '4px',
+                        boxShadow:
+                          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      }),
+                    }}
+                  />
+                  {/* Icon positioned absolutely */}
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none pr-1">
+                    <BusinessIcon fontSize="medium" className="text-gray-500" />
+                  </div>
+                </div>
               </div>
               <FieldError formik={formik} name="company" />
 
-              <div>
-                <span className={styles.inputDescription}>App Role</span>
-                <Select
-                  name="role"
-                  ref={userRoleRef}
-                  value={rolesSelectOptions.find(
-                    (option) => option === formik.values.role
-                  )}
-                  onChange={(option) => formik.setFieldValue('role', option)}
-                  onBlur={formik.handleBlur}
-                  options={rolesSelectOptions}
-                  placeholder={
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'flex-start',
-                        alignItems: 'center',
-                        // gap: '.1rem',
-                        fontSize: '.95rem',
-                      }}
-                    >
-                      <GiRank3
-                        size={26}
-                        style={{
-                          transform: 'translateX(-4px)',
-                        }}
-                      />
-                      <span>Select Role</span>
-                    </div>
-                  }
-                />
+              <div className="space-y-1.5">
+                <label htmlFor="role" className={styles.inputDescription}>
+                  App Role
+                </label>
+                <div className="relative">
+                  {/* Select with padding to make room for icon */}
+                  <Select
+                    id="role"
+                    name="role"
+                    ref={userRoleRef}
+                    value={rolesSelectOptions.find(
+                      (option) => option === formik.values.role
+                    )}
+                    onChange={(option) => formik.setFieldValue('role', option)}
+                    onBlur={formik.handleBlur}
+                    options={rolesSelectOptions}
+                    placeholder="Select Role"
+                    styles={{
+                      control: (base, state) => ({
+                        ...base,
+                        paddingLeft: '1.6rem', // Make room for icon
+                        borderColor: state.isFocused ? '#57575f' : '#d1d5db',
+                        boxShadow: state.isFocused
+                          ? '0 0 0 1px #57575f'
+                          : 'none',
+                        '&:hover': {
+                          borderColor: '#9b9ba5',
+                        },
+                      }),
+                      placeholder: (base) => ({
+                        ...base,
+                        color: '#9ca3af',
+                      }),
+                      option: (base, state) => ({
+                        ...base,
+                        backgroundColor: state.isSelected
+                          ? '#57575f'
+                          : state.isFocused
+                          ? '#e5e5e7'
+                          : 'white',
+                        color: state.isSelected ? 'white' : '#374151',
+                        cursor: 'pointer',
+                        '&:active': {
+                          backgroundColor: '#57575f',
+                        },
+                      }),
+                      menu: (base) => ({
+                        ...base,
+                        borderRadius: '0.5rem',
+                        marginTop: '4px',
+                        boxShadow:
+                          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      }),
+                    }}
+                  />
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <GiRank3 size={22} className="text-gray-500" />
+                  </div>
+                </div>
               </div>
               <FieldError formik={formik} name="role" />
 
-              <div>
-                <span className={styles.inputDescription}>First Name</span>
+              <div className="space-y-1.5">
+                <label className={styles.inputDescription} htmlFor="first_name">
+                  First Name
+                </label>
                 <div
                   className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
                 >
@@ -258,8 +322,9 @@ function CreateUserModal({ rolesList, closeModal }) {
                     <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
                   </svg>
                   <input
-                    type="text"
+                    id="first_name"
                     name="first_name"
+                    type="text"
                     value={formik.values.first_name}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -269,8 +334,10 @@ function CreateUserModal({ rolesList, closeModal }) {
               </div>
               <FieldError formik={formik} name="first_name" />
 
-              <div>
-                <span className={styles.inputDescription}>Last Name</span>
+              <div className="space-y-1.5">
+                <label htmlFor="last_name" className={styles.inputDescription}>
+                  Last Name
+                </label>
                 <div
                   className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
                 >
@@ -283,8 +350,9 @@ function CreateUserModal({ rolesList, closeModal }) {
                     <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
                   </svg>
                   <input
-                    type="text"
+                    id="last_name"
                     name="last_name"
+                    type="text"
                     value={formik.values.last_name}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -294,8 +362,8 @@ function CreateUserModal({ rolesList, closeModal }) {
               </div>
               <FieldError formik={formik} name="last_name" />
 
-              <div>
-                <span className={styles.inputDescription}>E-mail</span>
+              <div className="space-y-1.5">
+                <label className={styles.inputDescription}>E-mail</label>
                 <div
                   className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
                 >
@@ -320,10 +388,10 @@ function CreateUserModal({ rolesList, closeModal }) {
               </div>
               <FieldError formik={formik} name="email" />
 
-              <div>
-                <span className={styles.inputDescription}>
+              <div className="space-y-1.5">
+                <label className={styles.inputDescription}>
                   Mobile Phone (optional)
-                </span>
+                </label>
                 <div
                   className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
                 >
@@ -341,7 +409,7 @@ function CreateUserModal({ rolesList, closeModal }) {
               </div>
               <FieldError formik={formik} name="mobile_phone" />
 
-              <div className="flex mt-3 ">
+              <div className="flex items-center mt-3 gap-2 ml-1">
                 <input
                   id="inform_user_for_new_account_by_email"
                   type="checkbox"
@@ -349,15 +417,14 @@ function CreateUserModal({ rolesList, closeModal }) {
                   value={formik.values.inform_user_for_new_account_by_email}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
+                  className="h-5 w-5 rounded border-gray-300 accent-black cursor-pointer"
                 />
+
                 <label
-                  style={{
-                    fontSize: '0.75rem',
-                  }}
+                  className="text-sm"
                   htmlFor="inform_user_for_new_account_by_email"
                 >
-                  {' '}
-                  &nbsp; Inform User by Email
+                  Inform User by Email
                 </label>
               </div>
               <FieldError formik={formik} name="mobile_phone" />
