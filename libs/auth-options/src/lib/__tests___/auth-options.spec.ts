@@ -70,6 +70,8 @@ describe('Testing tryLocalAuthentication function', () => {
       username: 'validUser',
       password: '$2b$10$validhashedpassword',
       is_locked: 'n',
+      last_login_failed_attempts: 0,
+      last_login_status: 'i',
       is_active: 'y',
       first_name: 'John',
       last_name: 'Doe',
@@ -78,6 +80,7 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
+      save: jest.fn().mockResolvedValue(true), // Add this line
       AppRoles: [
         {
           roleName: 'admin',
@@ -140,6 +143,7 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
+      save: jest.fn().mockResolvedValue(true), // Add this line
     };
 
     (B2BUser.scope as jest.Mock).mockReturnValue({
@@ -172,6 +176,7 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
+      save: jest.fn().mockResolvedValue(true), // Add this line
     };
 
     (B2BUser.scope as jest.Mock).mockReturnValue({
@@ -207,6 +212,7 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
+      save: jest.fn().mockResolvedValue(true), // Add this line
     };
 
     (B2BUser.scope as jest.Mock).mockReturnValue({

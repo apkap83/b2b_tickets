@@ -630,6 +630,10 @@ export interface WebSocketData {
     ticket_id: string;
   };
 
+  [WebSocketMessage.TICKET_ALTERED_ACTUAL_RESOLUTION_DATE]: {
+    ticket_id: string;
+  };
+
   [WebSocketMessage.TICKET_ALTERED_CATEGORY_SERVICE_TYPE]: {
     ticket_id: string;
   };

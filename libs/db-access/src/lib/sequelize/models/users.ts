@@ -204,6 +204,8 @@ export class B2BUser extends Model<
               'mobile_phone',
               'is_active',
               'is_locked',
+              'last_login_failed_attempts',
+              'last_login_status',
               'authentication_type',
               'change_password',
               'two_factor_secret',

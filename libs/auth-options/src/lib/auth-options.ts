@@ -74,27 +74,36 @@ export const tryLocalAuthentication = async (
 
     const emailProvided = isValidEmail(credentials?.userName!);
 
-    const foundUser = await B2BUser.scope('withPassword').findOne({
+    const foundUser = (await B2BUser.scope('withPassword').findOne({
       where: getWhereObj(credentials, emailProvided),
       include: {
         model: AppRole,
         include: [AppPermission],
       },
-    });
+    })) as typeof B2BUser & {
+      AppRoles: (typeof AppRole & {
+        AppPermissions: (typeof AppPermission)[];
+      })[];
+    };
 
     if (!foundUser) {
       logRequest.error(`Incorrect user name provided`);
-
       // Introduce a 1500ms delay before returning error response
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
+    foundUser.last_login_attempt = new Date();
+
     if (foundUser.is_locked === 'y') {
       logRequest.error(
         `User with user name '${foundUser.username}' is currently locked`
       );
+      foundUser.last_login_status = 'f';
+      foundUser.last_login_failed_attempts =
+        Number(foundUser.last_login_failed_attempts || 0) + 1;
+      foundUser.save();
       throw new Error(ErrorCode.UserIsLocked);
     }
 
@@ -102,7 +111,10 @@ export const tryLocalAuthentication = async (
       logRequest.error(
         `User with user name '${foundUser.username}' is not currently active`
       );
-
+      foundUser.last_login_status = 'f';
+      foundUser.last_login_failed_attempts =
+        Number(foundUser.last_login_failed_attempts || 0) + 1;
+      foundUser.save();
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
@@ -113,8 +125,17 @@ export const tryLocalAuthentication = async (
 
     if (!match) {
       logRequest.error(`Incorrect password provided`);
+      foundUser.last_login_status = 'f';
+      foundUser.last_login_failed_attempts =
+        Number(foundUser.last_login_failed_attempts || 0) + 1;
+
+      foundUser.save();
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
+
+    foundUser.last_login_status = 's';
+    foundUser.last_login_failed_attempts = 0;
+    await foundUser.save();
 
     logRequest.debug(`Given password and DB passwords match`);
 
@@ -220,6 +241,9 @@ export const performPasswordReset = async (
 
     // Set New Password
     foundUser.password = credentials?.newPassword;
+
+    // Set New Password Change Date
+    foundUser.password_change_date = new Date();
 
     // Reset Flag
     foundUser.change_password = 'n';
@@ -510,6 +534,7 @@ export const options: NextAuthOptions = {
             throw new Error(ErrorCode.NewPasswordRequired);
           }
 
+          // Set New Password
           foundUser.password = newPassword;
           await foundUser.save();
 
@@ -572,6 +597,12 @@ export const options: NextAuthOptions = {
           logRequest.info(
             `Local User '${foundUser.username}' has been successfully authenticated (through password reset procedure)`
           );
+
+          // Update last login status and attempts
+          foundUser.last_login_status = 's';
+          foundUser.last_login_attempt = new Date();
+          foundUser.last_login_failed_attempts = 0;
+          await foundUser.save();
 
           return userDetails;
         } catch (error: unknown) {
