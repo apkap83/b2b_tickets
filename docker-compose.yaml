@@ -139,7 +139,7 @@ services:
       - 'b2b_database:${B2B_DATABASE_IP}'
       - 'redis_host:${REDIS_HOST_IP}'
     environment:
-      - NODE_ENV=staging
+      - NODE_ENV=production
       - DEBUG=1
       - PORT=3456
       - SOCKET_CORS_ORIGIN=${SOCKET_CORS_ORIGIN_STAGING}
