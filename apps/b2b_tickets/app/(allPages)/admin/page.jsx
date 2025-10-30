@@ -7,7 +7,6 @@ import { getAdminDashboardData } from '@b2b-tickets/admin-server-actions';
 const AdminPage = async () => {
   const { usersList, rolesList, permissionsList } =
     await getAdminDashboardData();
-
   return (
     <AdminDashboard
       usersList={usersList}

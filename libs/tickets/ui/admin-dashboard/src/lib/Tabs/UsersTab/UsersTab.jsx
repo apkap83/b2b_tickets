@@ -20,6 +20,7 @@ import { updateMFAMethodForUser } from '@b2b-tickets/admin-server-actions';
 import styles from './css/UsersTab.module.scss';
 import config from '@b2b-tickets/config';
 import toast from 'react-hot-toast';
+import { convertTo24HourFormat } from '@b2b-tickets/utils';
 
 const userDetailsInitalState = {
   firstName: null,
@@ -77,15 +78,29 @@ export function UsersTab({ usersList, rolesList }) {
                 <th></th>
                 <th>First Name</th>
                 <th>Last Name</th>
-                <th>User Name</th>
-                <th>E-mail</th>
-                <th>Mobile Phone</th>
-                <th>Customer</th>
+                <th className="text-center">User Name</th>
+                <th className="text-center">E-mail</th>
+                <th className="text-center">Mobile Phone</th>
+                <th className="text-center">Customer</th>
                 {/* <th className="text-center">Online</th> */}
                 <th className="text-center">Roles</th>
-                <th>MFA Method</th>
-                <th>Locked</th>
-                <th>Active</th>
+                <th className="text-center">MFA Method</th>
+                <th className="text-center">
+                  Last
+                  <br />
+                  Login
+                  <br />
+                  Attempt
+                </th>
+                <th className="text-center">
+                  Failed
+                  <br />
+                  Login
+                  <br />
+                  Attempts
+                </th>
+                <th className="text-center">Locked</th>
+                <th className="text-center">Active</th>
                 <th className="w-[150px] text-center">Actions</th>
               </tr>
             </thead>
@@ -109,10 +124,10 @@ export function UsersTab({ usersList, rolesList }) {
                       )}
                     </div>
                   </td>
-                  <td>{user.email}</td>
-                  <td>{user.mobile_phone}</td>
-                  <td>
-                    <span className="whitespace-nowrap">
+                  <td className="text-center">{user.email}</td>
+                  <td className="text-center">{user.mobile_phone}</td>
+                  <td className="text-center">
+                    <span className=" whitespace-nowrap">
                       {user.customer_name}
                     </span>
                   </td>
@@ -183,6 +198,12 @@ export function UsersTab({ usersList, rolesList }) {
                       <option value={'e'}>Email</option>
                       {/* <option value={'LDAP'}>LDAP</option> */}
                     </select>
+                  </td>
+                  <td className="text-center">
+                    {convertTo24HourFormat(user.last_login_attempt)}
+                  </td>
+                  <td className="text-center">
+                    {user.last_login_failed_attempts}
                   </td>
                   <td>
                     {user.is_locked === 'y' ? (
