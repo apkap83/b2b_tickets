@@ -1,10 +1,11 @@
 import { Server, Socket } from 'socket.io';
 import * as http from 'http';
-import { WebSocketMessage, WebSocketData } from './shared-models';
 import cookie from 'cookie';
 import dotenv from 'dotenv';
 import logger from './logger';
 import axios from 'axios';
+import { WebSocketMessage, WebSocketData } from '@b2b-tickets/shared-models';
+import { PresenceService } from '@b2b-tickets/redis-service';
 
 // Load environment variables
 dotenv.config({
@@ -16,15 +17,15 @@ const CORS_ORIGIN = process.env.SOCKET_CORS_ORIGIN || '*';
 const SESSION_API_URL = process.env.NEXT_AUTH_SESSION_URL;
 const DEBUG = process.env.DEBUG || '0';
 
-console.log('DEBUG', DEBUG);
-console.log('NODE_ENV', process.env.NODE_ENV || 'development');
-console.log('PORT', PORT);
-console.log('CORS_ORIGIN', CORS_ORIGIN);
-console.log('SESSION_API_URL', SESSION_API_URL);
-console.log(
-  'NODE_TLS_REJECT_UNAUTHORIZED',
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED
-);
+// console.log('DEBUG', DEBUG);
+// console.log('NODE_ENV', process.env.NODE_ENV || 'development');
+// console.log('PORT', PORT);
+// console.log('CORS_ORIGIN', CORS_ORIGIN);
+// console.log('SESSION_API_URL', SESSION_API_URL);
+// console.log(
+//   'NODE_TLS_REJECT_UNAUTHORIZED',
+//   process.env.NODE_TLS_REJECT_UNAUTHORIZED
+// );
 
 const tokenNames = [
   '__Secure-next-auth.session-token',
@@ -41,7 +42,6 @@ const server = http.createServer((req, res) => {
 const io = new Server(server, {
   path: '/socket.io',
   cors: {
-    // TODO Change Origin
     origin: CORS_ORIGIN,
     credentials: true,
   },
@@ -53,15 +53,16 @@ const validateSession = async (sessionToken: string) => {
   }
 
   // Determine the cookie name dynamically
+  const nodeEnv = process.env.NODE_ENV as string;
   const cookieName =
-    process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging'
+    nodeEnv === 'production' || nodeEnv === 'staging'
       ? '__Secure-next-auth.session-token'
       : 'next-auth.session-token';
 
   try {
     const response = await axios.get(SESSION_API_URL, {
       headers: {
-        'Content-Type': 'application/json', // Add if required by the API
+        'Content-Type': 'application/json',
         Cookie: `${cookieName}=${sessionToken}`, // Dynamically use the correct cookie name
       },
       proxy: false, // Disable proxy usage
@@ -74,7 +75,12 @@ const validateSession = async (sessionToken: string) => {
     }
 
     const session = (await response.data) as {
-      user: { user_id: string; userName: string };
+      user: {
+        user_id: string;
+        userName: string;
+        customer_id: string;
+        roles: string[];
+      };
     };
 
     if (!session || !session.user) {
@@ -127,11 +133,25 @@ io.use(async (socket, next) => {
     // Attach user to socket
     //@ts-ignore
     socket.user = session.user;
-    logger.info(
-      `Authenticated user: id: ${session.user.user_id}, userName: ${session.user.userName}`
-    );
+    // logger.info(
+    //   `Authenticated user: id: ${session.user.user_id}, userName: ${session.user.userName}`
+    // );
 
-    next();
+    if (session?.user) {
+      // Add to Redis presence store
+      await PresenceService.addOnlineUser(session.user.user_id, {
+        userId: session.user.user_id,
+        userName: session.user.userName,
+        customer_id: session.user.customer_id,
+        roles: session.user.roles,
+        connectedAt: Date.now(),
+        lastSeen: Date.now(),
+        socketId: socket.id,
+      });
+      next();
+    } else {
+      next(new Error('Authentication failed'));
+    }
   } catch (error) {
     logger.error('Error during cookie parsing or session validation:', error);
     next(new Error('Authentication error'));
@@ -144,11 +164,20 @@ let connectedUsers = 0;
 // Listen for connections
 io.on('connection', (socket: Socket) => {
   connectedUsers++;
-  logger.info(
+  // logger.info(
+  //   //@ts-ignore
+  //   `User connected: id: ${socket.user.user_id}, userName: ${socket.user.userName}`
+  // );
+  // logger.info(`Total connected users: ${connectedUsers}`);
+
+  // Heartbeat to keep user presence alive in Redis
+  const heartbeatInterval = setInterval(async () => {
     //@ts-ignore
-    `User connected: id: ${socket.user.user_id}, userName: ${socket.user.userName}`
-  );
-  logger.info(`Total connected users: ${connectedUsers}`);
+    if (socket.user) {
+      //@ts-ignore
+      await PresenceService.updateLastSeen(socket.user.user_id);
+    }
+  }, 25000); // Every 25 seconds
 
   // Listen for events using the enum values and the WebSocketData type
   socket.on(
@@ -316,11 +345,21 @@ io.on('connection', (socket: Socket) => {
 
   // Other event handlers...
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     connectedUsers--;
     //@ts-ignore
-    logger.info(`User disconnected: id: ${socket.user.user_id}`);
-    logger.info(`Total connected users: ${connectedUsers}`);
+    // logger.info(`User disconnected: id: ${socket.user.user_id}`);
+    // logger.info(`Total connected users: ${connectedUsers}`);
+
+    // Clean up heartbeat interval
+    clearInterval(heartbeatInterval);
+
+    // Remove user from Redis presence store
+    //@ts-ignore
+    if (socket.user) {
+      //@ts-ignore
+      await PresenceService.removeOnlineUser(socket.user.user_id, socket.user);
+    }
   });
 });
 

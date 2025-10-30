@@ -38,6 +38,7 @@ import { CustomLogger } from '@b2b-tickets/logging';
 import { TransportName } from '@b2b-tickets/shared-models';
 import { sendEmailsForUserCreation } from '@b2b-tickets/email-service/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
+import { PresenceService } from '@b2b-tickets/redis-service';
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -153,6 +154,37 @@ export const getAdminDashboardData = async () => {
           //@ts-ignore
           user['customer_name'] = item['customer_name'];
         }
+      }
+    }
+
+    // Add online status for each user
+    try {
+      const onlineUsers = await PresenceService.getOnlineUsers();
+      const onlineUserIds = new Set(
+        onlineUsers.map((u) => u.userId.toString())
+      );
+
+      for (const user of plainUsersListWithRoles) {
+        const userId = user.user_id.toString();
+        //@ts-ignore
+        user['isOnline'] = onlineUserIds.has(userId);
+
+        // Add last seen info if available
+        const onlineUser = onlineUsers.find(
+          (u) => u.userId.toString() === user.user_id.toString()
+        );
+        if (onlineUser) {
+          //@ts-ignore
+          user['lastSeen'] = onlineUser.lastSeen;
+          //@ts-ignore
+          user['connectedAt'] = onlineUser.connectedAt;
+        }
+      }
+    } catch (error) {
+      // Set all users as offline if Redis fails
+      for (const user of plainUsersListWithRoles) {
+        //@ts-ignore
+        user['isOnline'] = false;
       }
     }
 
