@@ -13,7 +13,7 @@
         "platform": "node",
         "outputPath": "dist/apps/socket-server",
         "format": ["cjs"],
-        "bundle": false,
+        "bundle": true,
         "main": "apps/socket-server/src/main.ts",
         "tsConfig": "apps/socket-server/tsconfig.app.json",
         "assets": ["apps/socket-server/src/assets"],
@@ -22,7 +22,10 @@
           "sourcemap": true,
           "outExtension": {
             ".js": ".js"
-          }
+          },
+          "jsx": "automatic",
+          "jsxImportSource": "react",
+          "external": ["react", "react-dom"]
         }
       },
       "configurations": {
@@ -32,7 +35,10 @@
             "sourcemap": false,
             "outExtension": {
               ".js": ".js"
-            }
+            },
+            "jsx": "automatic",
+            "jsxImportSource": "react",
+            "external": ["react", "react-dom"]
           }
         },
         "production": {
@@ -40,7 +46,10 @@
             "sourcemap": false,
             "outExtension": {
               ".js": ".js"
-            }
+            },
+            "jsx": "automatic",
+            "jsxImportSource": "react",
+            "external": ["react", "react-dom"]
           }
         }
       }
