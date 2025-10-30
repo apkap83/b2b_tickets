@@ -137,6 +137,7 @@ services:
       - 'sms-gw2:${SMS_GW2_IP}'
       - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
       - 'b2b_database:${B2B_DATABASE_IP}'
+      - 'redis_host:${REDIS_HOST_IP}'
     environment:
       - NODE_ENV=staging
       - DEBUG=1
@@ -163,6 +164,7 @@ services:
       - 'sms-gw2:${SMS_GW2_IP}'
       - 'test-sms-gw1:${TEST_SMS_GW1_IP}'
       - 'b2b_database:${B2B_DATABASE_IP}'
+      - 'redis_host:${REDIS_HOST_IP}'
     environment:
       - NODE_ENV=production
       - DEBUG=1
