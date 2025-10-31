@@ -157,35 +157,14 @@ export const getAdminDashboardData = async () => {
       }
     }
 
-    // Add online status for each user
-    try {
-      const onlineUsers = await PresenceService.getOnlineUsers();
-      const onlineUserIds = new Set(
-        onlineUsers.map((u) => u.userId.toString())
-      );
-
-      for (const user of plainUsersListWithRoles) {
-        const userId = user.user_id.toString();
-        //@ts-ignore
-        user['isOnline'] = onlineUserIds.has(userId);
-
-        // Add last seen info if available
-        const onlineUser = onlineUsers.find(
-          (u) => u.userId.toString() === user.user_id.toString()
-        );
-        if (onlineUser) {
-          //@ts-ignore
-          user['lastSeen'] = onlineUser.lastSeen;
-          //@ts-ignore
-          user['connectedAt'] = onlineUser.connectedAt;
-        }
-      }
-    } catch (error) {
-      // Set all users as offline if Redis fails
-      for (const user of plainUsersListWithRoles) {
-        //@ts-ignore
-        user['isOnline'] = false;
-      }
+    // Initialize all users as offline - online status will be updated client-side
+    for (const user of plainUsersListWithRoles) {
+      //@ts-ignore
+      user['isOnline'] = false;
+      //@ts-ignore
+      user['lastSeen'] = null;
+      //@ts-ignore
+      user['connectedAt'] = null;
     }
 
     return {
@@ -197,6 +176,36 @@ export const getAdminDashboardData = async () => {
   } catch (error) {
     logRequest.error(error);
     redirect('/signin?callbackUrl=/admin');
+  }
+};
+
+export const refreshOnlineUsersStatus = async () => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+  try {
+    // Verify Security Permission
+    await verifySecurityPermission([
+      AppPermissionTypes.API_Security_Management,
+      AppPermissionTypes.Users_List_Page,
+    ]);
+
+    // Get online users from Redis
+    const onlineUsers = await PresenceService.getOnlineUsers();
+    const onlineUserStatus: Record<string, { isOnline: boolean; lastSeen: number; connectedAt: number }> = {};
+    
+    onlineUsers.forEach((u) => {
+      onlineUserStatus[u.userId.toString()] = {
+        isOnline: true,
+        lastSeen: u.lastSeen,
+        connectedAt: u.connectedAt,
+      };
+    });
+
+    return onlineUserStatus;
+  } catch (error) {
+    logRequest.error('Error refreshing online users status:', error);
+    return {};
   }
 };
 
