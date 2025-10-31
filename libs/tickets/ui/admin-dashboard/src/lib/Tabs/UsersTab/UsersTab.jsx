@@ -61,10 +61,7 @@ export function UsersTab({ usersList, rolesList }) {
 
   return (
     <>
-      <div
-        className="mb-[2rem] border-b  rounded-lg"
-        style={{ marginTop: '-50px' }}
-      >
+      <div style={{ marginTop: '-50px' }}>
         <div className="w-[8%] float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]">
           <button
             className="btn btn-sm  bg-black text-white hover:bg-gray-700"
@@ -75,13 +72,13 @@ export function UsersTab({ usersList, rolesList }) {
             Create New User
           </button>
         </div>
-        <div className="px-3">
-          <table className={`${styles.myTable} table`}>
+        <div>
+          <table className={`${styles.myTable} table text-xs`}>
             <thead className="sticky top-10">
               <tr>
                 <th></th>
-                <th>First Name</th>
-                <th>Last Name</th>
+                <th className="text-center">First Name</th>
+                <th className="text-center">Last Name</th>
                 <th className="text-center">User Name</th>
                 <th className="text-center">E-mail</th>
                 <th className="text-center">Mobile Phone</th>
@@ -109,17 +106,22 @@ export function UsersTab({ usersList, rolesList }) {
             </thead>
             <tbody>
               {paginatedUsersList.map((user, index) => (
-                <tr key={user.username + index} className="hover:bg-slate-100">
-                  <th>{index + 1 + itemsPerPage * (activePage - 1)}</th>
+                <tr
+                  key={user.username + index}
+                  className="text-center hover:bg-slate-100"
+                >
+                  <th>
+                    <span className="p-1">
+                      {index + 1 + itemsPerPage * (activePage - 1)}
+                    </span>
+                  </th>
                   <td>{user.first_name}</td>
                   <td>{user.last_name}</td>
-                  <td className="text-center">{user.username}</td>
-                  <td className="text-center">{user.email}</td>
-                  <td className="text-center">{user.mobile_phone}</td>
-                  <td className="text-center">
-                    <span className=" whitespace-nowrap">
-                      {user.customer_name}
-                    </span>
+                  <td className="text-wrap">{user.username}</td>
+                  <td className="text-wrap">{user.email}</td>
+                  <td>{user.mobile_phone}</td>
+                  <td className="text-center whitespace-wrap">
+                    {user.customer_name}
                   </td>
                   <td>
                     {user.AppRoles.map((role) => {
@@ -178,7 +180,7 @@ export function UsersTab({ usersList, rolesList }) {
                   <td className="text-center">
                     {user.last_login_failed_attempts}
                   </td>
-                  <td>
+                  <td style={{ padding: '5px' }}>
                     {user.is_locked === 'y' ? (
                       <span className="bg-red-400 p-2 rounded-full text-white">
                         Locked
@@ -189,7 +191,7 @@ export function UsersTab({ usersList, rolesList }) {
                       </span>
                     )}
                   </td>
-                  <td>
+                  <td className="">
                     {user.is_active === 'y' ? (
                       <span className="bg-green-400 p-2 rounded-lg text-white">
                         Active
@@ -200,8 +202,8 @@ export function UsersTab({ usersList, rolesList }) {
                       </span>
                     )}
                   </td>
-                  <td>
-                    <div className="flex bg-purple-50 shadow-xl py-2 px-2 gap-3 w-fit">
+                  <td style={{ padding: '5px' }}>
+                    <div className="flex  shadow-sm py-2 px-2 gap-3 w-fit">
                       {LockOrUnlock({ user })}
                       {DisableUser({ user })}
                       {EditButton({ user, setShowEditUserModal })}
@@ -221,7 +223,7 @@ export function UsersTab({ usersList, rolesList }) {
           </table>
         </div>
       </div>
-      <div className="px-5 pt-5 flex justify-between items-center">
+      <div className="px-5 pt-2 flex justify-between items-center">
         <div className="py-5 flex gap-1 ">
           <button
             className="btn btn-sm bg-black text-white"
