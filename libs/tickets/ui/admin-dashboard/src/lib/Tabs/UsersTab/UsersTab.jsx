@@ -191,7 +191,7 @@ export function UsersTab({ usersList, rolesList }) {
                       </span>
                     )}
                   </td>
-                  <td className="">
+                  <td style={{ padding: '5px' }}>
                     {user.is_active === 'y' ? (
                       <span className="bg-green-400 p-2 rounded-lg text-white">
                         Active
