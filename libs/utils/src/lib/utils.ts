@@ -169,6 +169,38 @@ export const convertTo24HourFormat = (dateStr: string): string | null => {
   }
 };
 
+export const convertToAthensTime = (dateStr: string): string | null => {
+  try {
+    // Explicitly treat the input as UTC by appending 'Z' or using UTC parsing
+    const utcDate = new Date(dateStr + ' UTC');
+
+    if (isNaN(utcDate.getTime())) {
+      return null;
+    }
+
+    // Convert to Europe/Athens timezone
+    const athensTime = utcDate.toLocaleString('en-GB', {
+      timeZone: 'Europe/Athens',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+
+    // Format: DD/MM/YYYY, HH:MM:SS -> YYYY-MM-DD HH:MM:SS
+    const [datePart, timePart] = athensTime.split(', ');
+    const [day, month, year] = datePart.split('/');
+
+    return `${year}-${month}-${day} ${timePart}`;
+  } catch (error) {
+    console.error('Date conversion error:', error);
+    return null;
+  }
+};
+
 /**
  * Converts a date string in format 'DD/MM/YYYY HH:MM' to a Date object
  * @param dateStr - Date string in format '24/10/2025 19:30'
