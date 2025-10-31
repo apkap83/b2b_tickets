@@ -1,3 +1,3 @@
 export * from './lib/redis-service';
 export * from './lib/presence-service';
-export * from './lib/types';
+// UserPresenceData is now exported from @b2b-tickets/shared-models

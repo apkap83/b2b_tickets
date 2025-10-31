@@ -1,5 +1,5 @@
 import { redisClient } from './redis-service';
-import { UserPresenceData } from './types';
+import type { UserPresenceData } from '@b2b-tickets/shared-models';
 
 export class PresenceService {
   static async addOnlineUser(userId: string, userData: UserPresenceData) {
@@ -78,18 +78,24 @@ export class PresenceService {
       const parsed = JSON.parse(userData);
       parsed.lastSeen = Date.now();
       const ttl = 300; // 5 minutes
-      
+
       // Update the user data with new TTL
       await redisClient.setex(key, ttl, JSON.stringify(parsed));
-      
+
       // Refresh the indexes with the same TTL to prevent them from expiring
       await redisClient.sadd('online_users_index', `user_${userId}`);
       await redisClient.expire('online_users_index', ttl);
-      
-      await redisClient.sadd(`online_by_role:${parsed.roles}`, `user_${userId}`);
+
+      await redisClient.sadd(
+        `online_by_role:${parsed.roles}`,
+        `user_${userId}`
+      );
       await redisClient.expire(`online_by_role:${parsed.roles}`, ttl);
-      
-      await redisClient.sadd(`online_by_customer:${parsed.customer_id}`, `user_${userId}`);
+
+      await redisClient.sadd(
+        `online_by_customer:${parsed.customer_id}`,
+        `user_${userId}`
+      );
       await redisClient.expire(`online_by_customer:${parsed.customer_id}`, ttl);
     }
   }
