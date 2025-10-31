@@ -151,6 +151,8 @@ export const sendEmailOnTicketUpdate = async (
           ticketNumber: ticketNumber,
           customerName: customer,
           ticketSubject: ticketSubject,
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
         } as TemplateVariables[EmailTemplate.NEW_TICKET_HANDLER]
       );
 
@@ -160,6 +162,8 @@ export const sendEmailOnTicketUpdate = async (
           webSiteUrl: config.webSiteUrl,
           ticketNumber: ticketNumber,
           ticketSubject: ticketSubject,
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
         } as TemplateVariables[EmailTemplate.NEW_TICKET_CUSTOMER]
       );
 
@@ -237,6 +241,8 @@ export const sendEmailOnTicketUpdate = async (
           ticketNumber: ticketNumber,
           escalationLevel: currentEscalationLevel,
           ticketSubject: ticketSubject,
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
         } as TemplateVariables[EmailTemplate.TICKET_ESCALATION_CUSTOMER]
       );
 
@@ -303,6 +309,8 @@ export const sendEmailOnTicketUpdate = async (
           webSiteUrl: config.webSiteUrl,
           ticketNumber: ticketNumber,
           ticketSubject: ticketSubject,
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
         } as TemplateVariables[EmailTemplate.TICKET_CLOSURE_CUSTOMER]
       );
 
@@ -410,6 +418,8 @@ export async function sendEmailsForUserCreation({
           email,
           appEnvironment: env,
           appURL: config.webSiteUrl,
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
         } as
           | TemplateVariables[EmailTemplate.NEW_USER_CREATION_NOTIFICATION_STAGING]
           | TemplateVariables[EmailTemplate.NEW_USER_CREATION_NOTIFICATION_DEVELOPMENT]
@@ -509,6 +519,8 @@ export async function sendEmailForTOTPCode(
         loadTemplate(emailTemplate as EmailTemplate),
         {
           totpCode,
+          signatureEmail: process.env['SIGNATURE_EMAIL'],
+          productNameTeam: process.env['PRODUCT_NAME_TEAM'],
         } as TemplateVariables[EmailTemplate.TOTP_BY_EMAIL]
       );
 

@@ -350,8 +350,8 @@ export enum EmailNotificationType {
   NEW_HANDLER_COMMENT = 'new-handler-comment',
 }
 
-export const EmailListOfHandlers = ['apostolos.kapetanios@nova.gr'];
-export const NMS_Team_Email_Address = ['nms_system_support@nova.gr'];
+export const EmailListOfHandlers = ['nms_admin@company.com'];
+export const NMS_Team_Email_Address = ['nms_test@company.com'];
 
 export enum EmailTemplate {
   NEW_TICKET_HANDLER = 'NewTicketHandler.html',
@@ -380,11 +380,15 @@ export interface TemplateVariables {
     ticketNumber: string;
     customerName: string;
     ticketSubject: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
   [EmailTemplate.NEW_TICKET_CUSTOMER]: {
     webSiteUrl: string;
     ticketNumber: string;
     ticketSubject: EmailTemplateSubject;
+    signatureEmail: string;
+    productNameTeam: string;
   };
   [EmailTemplate.TICKET_ESCALATION_HANDLER]: {
     webSiteUrl: string;
@@ -399,6 +403,8 @@ export interface TemplateVariables {
     ticketNumber: string;
     escalationLevel: string;
     ticketSubject: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
   [EmailTemplate.TICKET_CLOSURE_HANDLER]: {
     webSiteUrl: string;
@@ -410,12 +416,16 @@ export interface TemplateVariables {
     webSiteUrl: string;
     ticketNumber: string;
     ticketSubject: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
   [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_STAGING]: {
     secureLink: string;
     email: string;
     appEnvironment: string;
     appURL: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
 
   [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_DEVELOPMENT]: {
@@ -423,12 +433,16 @@ export interface TemplateVariables {
     email: string;
     appEnvironment: string;
     appURL: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
 
   [EmailTemplate.NEW_USER_CREATION_NOTIFICATION_PRODUCTION]: {
     secureLink: string;
     email: string;
     appURL: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
 
   [EmailTemplate.EMAIL_TOKEN_NOTIFICATION]: {
@@ -439,6 +453,8 @@ export interface TemplateVariables {
 
   [EmailTemplate.TOTP_BY_EMAIL]: {
     totpCode: string;
+    signatureEmail: string;
+    productNameTeam: string;
   };
 
   [EmailTemplate.NEW_HANDLER_COMMENT_NOTIFICATION_DEVELOPMENT]: {
