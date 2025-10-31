@@ -86,7 +86,6 @@ export function UsersTab({ usersList, rolesList }) {
                 <th className="text-center">E-mail</th>
                 <th className="text-center">Mobile Phone</th>
                 <th className="text-center">Customer</th>
-                {/* <th className="text-center">Online</th> */}
                 <th className="text-center">Roles</th>
                 <th className="text-center">MFA Method</th>
                 <th className="text-center">
@@ -114,20 +113,7 @@ export function UsersTab({ usersList, rolesList }) {
                   <th>{index + 1 + itemsPerPage * (activePage - 1)}</th>
                   <td>{user.first_name}</td>
                   <td>{user.last_name}</td>
-                  <td>
-                    <div className="flex gap-1 justify-center items-center">
-                      <div>{user.username}</div>
-                      {user.isOnline ? (
-                        <div
-                          className={`bg-green-100 flex flex-col items-center px-2 py-1 text-xs font-semibold rounded-lg`}
-                        >
-                          <span>🟢&nbsp;(Online)</span>
-                        </div>
-                      ) : (
-                        ''
-                      )}
-                    </div>
-                  </td>
+                  <td className="text-center">{user.username}</td>
                   <td className="text-center">{user.email}</td>
                   <td className="text-center">{user.mobile_phone}</td>
                   <td className="text-center">
@@ -135,23 +121,6 @@ export function UsersTab({ usersList, rolesList }) {
                       {user.customer_name}
                     </span>
                   </td>
-                  {/* <td className="text-center">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.isOnline
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {user.isOnline ? '🟢 Online' : ''}
-                    </span>
-                    {user.isOnline && user.lastSeen && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        Last seen:{' '}
-                        {new Date(user.lastSeen).toLocaleTimeString()}
-                      </div>
-                    )}
-                  </td> */}
                   <td>
                     {user.AppRoles.map((role) => {
                       return (

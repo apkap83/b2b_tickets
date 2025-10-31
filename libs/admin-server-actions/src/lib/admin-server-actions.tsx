@@ -38,7 +38,6 @@ import { CustomLogger } from '@b2b-tickets/logging';
 import { TransportName } from '@b2b-tickets/shared-models';
 import { sendEmailsForUserCreation } from '@b2b-tickets/email-service/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
-import { PresenceService } from '@b2b-tickets/redis-service';
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -157,15 +156,6 @@ export const getAdminDashboardData = async () => {
       }
     }
 
-    // Initialize all users as offline - online status will be updated client-side
-    for (const user of plainUsersListWithRoles) {
-      //@ts-ignore
-      user['isOnline'] = false;
-      //@ts-ignore
-      user['lastSeen'] = null;
-      //@ts-ignore
-      user['connectedAt'] = null;
-    }
 
     return {
       usersList: plainUsersListWithRoles,
@@ -179,38 +169,6 @@ export const getAdminDashboardData = async () => {
   }
 };
 
-export const refreshOnlineUsersStatus = async () => {
-  const logRequest: CustomLogger = await getRequestLogger(
-    TransportName.ACTIONS
-  );
-  try {
-    // Verify Security Permission
-    await verifySecurityPermission([
-      AppPermissionTypes.API_Security_Management,
-      AppPermissionTypes.Users_List_Page,
-    ]);
-
-    // Get online users from Redis
-    const onlineUsers = await PresenceService.getOnlineUsers();
-    const onlineUserStatus: Record<
-      string,
-      { isOnline: boolean; lastSeen: number; connectedAt: number }
-    > = {};
-
-    onlineUsers.forEach((u) => {
-      onlineUserStatus[u.userId.toString()] = {
-        isOnline: true,
-        lastSeen: u.lastSeen,
-        connectedAt: u.connectedAt,
-      };
-    });
-
-    return onlineUserStatus;
-  } catch (error: any) {
-    logRequest.error('Error refreshing online users status:', error);
-    return {};
-  }
-};
 
 export const getAllCompanyData = async () => {
   const logRequest: CustomLogger = await getRequestLogger(

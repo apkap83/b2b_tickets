@@ -1,9 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { useWebSocketContext } from '@b2b-tickets/contexts';
-import { refreshOnlineUsersStatus } from '@b2b-tickets/admin-server-actions';
 
 import { UsersTab } from './Tabs/UsersTab/UsersTab';
 import { RolesTab } from './Tabs/RolesTab/RolesTab';
@@ -11,46 +9,11 @@ import { PermissionsTab } from './Tabs/PermissionsTab/PermissionsTab';
 import { CompanyTab } from './Tabs/CompanyTab/CompanyTab';
 
 export const AdminDashboard = ({
-  usersList: initialUsersList,
+  usersList,
   rolesList,
   permissionsList,
 }: any) => {
   const [activeTab, setActiveTab] = useState('Users');
-  const [usersList, setUsersList] = useState(initialUsersList);
-  const { connected } = useWebSocketContext();
-  const [hasRefreshed, setHasRefreshed] = useState(false);
-
-  // Refresh online status when socket connects (with delay to ensure presence is updated)
-  useEffect(() => {
-    if (connected && !hasRefreshed) {
-      const refreshOnlineStatus = async () => {
-        try {
-          // Small delay to ensure presence is properly set in Redis
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          const onlineStatusMap = await refreshOnlineUsersStatus();
-          setUsersList((prevUsers: any[]) =>
-            prevUsers.map((user: any) => {
-              const userId = user.user_id.toString();
-              const onlineStatus = onlineStatusMap[userId];
-              return {
-                ...user,
-                isOnline: onlineStatus?.isOnline || false,
-                lastSeen: onlineStatus?.lastSeen || user.lastSeen,
-                connectedAt: onlineStatus?.connectedAt || user.connectedAt,
-              };
-            })
-          );
-
-          setHasRefreshed(true);
-        } catch (error) {
-          console.error('Failed to refresh online status:', error);
-        }
-      };
-
-      refreshOnlineStatus();
-    }
-  }, [connected, hasRefreshed]);
 
   return (
     <>
