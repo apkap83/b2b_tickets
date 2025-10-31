@@ -29,7 +29,6 @@ export const AdminDashboard = ({
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
           const onlineStatusMap = await refreshOnlineUsersStatus();
-          console.log('onlineStatusMap', onlineStatusMap);
           setUsersList((prevUsers: any[]) =>
             prevUsers.map((user: any) => {
               const userId = user.user_id.toString();

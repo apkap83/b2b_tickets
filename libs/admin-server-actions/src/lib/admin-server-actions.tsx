@@ -192,8 +192,11 @@ export const refreshOnlineUsersStatus = async () => {
 
     // Get online users from Redis
     const onlineUsers = await PresenceService.getOnlineUsers();
-    const onlineUserStatus: Record<string, { isOnline: boolean; lastSeen: number; connectedAt: number }> = {};
-    
+    const onlineUserStatus: Record<
+      string,
+      { isOnline: boolean; lastSeen: number; connectedAt: number }
+    > = {};
+
     onlineUsers.forEach((u) => {
       onlineUserStatus[u.userId.toString()] = {
         isOnline: true,
@@ -203,7 +206,7 @@ export const refreshOnlineUsersStatus = async () => {
     });
 
     return onlineUserStatus;
-  } catch (error) {
+  } catch (error: any) {
     logRequest.error('Error refreshing online users status:', error);
     return {};
   }
