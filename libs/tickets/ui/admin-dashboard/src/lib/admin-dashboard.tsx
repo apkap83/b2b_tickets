@@ -30,7 +30,7 @@ export const AdminDashboard = ({
           <div className="border-b">
             <div
               role="tablist"
-              className="w-80 tabs tabs-lifted tabs-lg w-50 mb-[-1px]"
+              className="w-[433px] tabs tabs-lifted tabs-lg w-50 mb-[-1px]"
             >
               <a
                 role="tab"

@@ -62,7 +62,7 @@ export function UsersTab({ usersList, rolesList }) {
   return (
     <>
       <div style={{ marginTop: '-50px' }}>
-        <div className="w-[8%] float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]">
+        <div className="float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]">
           <button
             className="btn btn-sm  bg-black text-white hover:bg-gray-700"
             onClick={() => {
@@ -99,6 +99,7 @@ export function UsersTab({ usersList, rolesList }) {
                   <br />
                   Attempts
                 </th>
+                <th className="text-center">Status</th>
                 <th className="text-center">Locked</th>
                 <th className="text-center">Active</th>
                 <th className="w-[150px] text-center">Actions</th>
@@ -117,9 +118,19 @@ export function UsersTab({ usersList, rolesList }) {
                   </th>
                   <td>{user.first_name}</td>
                   <td>{user.last_name}</td>
-                  <td className="text-wrap">{user.username}</td>
-                  <td className="text-wrap">{user.email}</td>
-                  <td>{user.mobile_phone}</td>
+                  <td className="text-wrap" style={{ maxWidth: '150px' }}>
+                    <span style={{ wordBreak: 'break-all' }}>
+                      {user.username}
+                    </span>{' '}
+                  </td>
+                  <td className="text-wrap" style={{ maxWidth: '150px' }}>
+                    <span style={{ wordBreak: 'break-all' }}>{user.email}</span>
+                  </td>
+                  <td className="text-wrap" style={{ maxWidth: '150px' }}>
+                    <span style={{ wordBreak: 'break-all' }}>
+                      {user.mobile_phone}
+                    </span>
+                  </td>
                   <td className="text-center whitespace-wrap">
                     {user.customer_name}
                   </td>
@@ -128,13 +139,13 @@ export function UsersTab({ usersList, rolesList }) {
                       return (
                         <span
                           className={clsx(
-                            'bg-gray-200 whitespace-nowrap rounded-full text-xs px-2 inline-block m-1 font-bold text-i ',
+                            'bg-black/10 whitespace-nowrap rounded-full text-xs px-2 inline-block m-1 font-bold text-i ',
                             {
                               'text-red-500': role.roleName === 'Admin',
                               'text-blue-500':
                                 role.roleName === 'B2B Ticket Creator',
                               'text-purple-500': role.roleName === 'Other',
-                              'text-green-500':
+                              'text-green-600':
                                 role.roleName === 'B2B Ticket Handler',
                               'text-cyan-500': role.roleName === 'Smartcare',
                               'text-yellow-500': role.roleName === 'Zabbix',
@@ -179,6 +190,17 @@ export function UsersTab({ usersList, rolesList }) {
                   </td>
                   <td className="text-center">
                     {user.last_login_failed_attempts}
+                  </td>
+                  <td>
+                    {user.isOnline ? (
+                      <div
+                        className={`bg-green-100 flex flex-col items-center px-2 py-1 text-xs font-semibold rounded-lg`}
+                      >
+                        <span>🟢&nbsp;Online</span>
+                      </div>
+                    ) : (
+                      <span>⚫&nbsp;Offline</span>
+                    )}
                   </td>
                   <td style={{ padding: '5px' }}>
                     {user.is_locked === 'y' ? (
