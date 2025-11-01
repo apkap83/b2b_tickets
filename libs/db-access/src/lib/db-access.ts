@@ -17,12 +17,16 @@ export const pgB2Bpool = new Pool({
   keepAlive: true,
 });
 
-// Set timezone for each connection
-pgB2Bpool.on('connect', (client) => {
-  client.query("SET TIME ZONE 'Europe/Athens';").catch((err) => {
-    console.error('Error setting timezone:', err);
+// Set timezone for each connection (ensure this is only registered once)
+let poolListenersRegistered = false;
+if (!poolListenersRegistered) {
+  pgB2Bpool.on('connect', (client) => {
+    client.query("SET TIME ZONE 'Europe/Athens';").catch((err) => {
+      console.error('Error setting timezone:', err);
+    });
   });
-});
+  poolListenersRegistered = true;
+}
 
 // Function to set the search path to the desired schema
 // const setSchema = async (pool: Pool, schema: string) => {

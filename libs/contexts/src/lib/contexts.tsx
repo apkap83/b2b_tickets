@@ -101,6 +101,11 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
+    // Clean up any existing listeners before adding new ones
+    Object.values(WebSocketMessage).forEach((message) => {
+      socketInstance.removeAllListeners(message);
+    });
+
     Object.values(WebSocketMessage).forEach((message) => {
       socketInstance.on(message, (data) =>
         setLatestEventEmitted({ event: message as WebSocketMessage, data })

@@ -1,5 +1,5 @@
 import { redisClient } from './redis-service';
-import type { UserPresenceData } from '@b2b-tickets/shared-models';
+import type { UserPresenceData, Session } from '@b2b-tickets/shared-models';
 
 export class PresenceService {
   static async addOnlineUser(userId: string, userData: UserPresenceData) {
@@ -18,8 +18,14 @@ export class PresenceService {
 
     // Add to indexes for fast queries
     await redisClient.sadd('online_users_index', `user_${userId}`);
+    
+    // Handle roles array - join with comma for Redis key
+    const rolesKey = Array.isArray(userData.roles) 
+      ? userData.roles.join(',') 
+      : userData.roles;
+    
     await redisClient.sadd(
-      `online_by_role:${userData.roles}`,
+      `online_by_role:${rolesKey}`,
       `user_${userId}`
     );
     await redisClient.sadd(
@@ -29,11 +35,11 @@ export class PresenceService {
 
     // Set TTL on indexes too
     await redisClient.expire('online_users_index', ttl);
-    await redisClient.expire(`online_by_role:${userData.roles}`, ttl);
+    await redisClient.expire(`online_by_role:${rolesKey}`, ttl);
     await redisClient.expire(`online_by_customer:${userData.customer_id}`, ttl);
   }
 
-  static async removeOnlineUser(userId: string, userData?: UserPresenceData) {
+  static async removeOnlineUser(userId: string, userData?: Session['user']) {
     const key = `user_online:${userId}`;
 
     // Remove presence data
@@ -42,8 +48,13 @@ export class PresenceService {
     // Remove from indexes
     await redisClient.srem('online_users_index', `user_${userId}`);
     if (userData) {
+      // Handle roles array - join with comma for Redis key
+      const rolesKey = Array.isArray(userData.roles) 
+        ? userData.roles.join(',') 
+        : userData.roles;
+      
       await redisClient.srem(
-        `online_by_role:${userData.roles}`,
+        `online_by_role:${rolesKey}`,
         `user_${userId}`
       );
       await redisClient.srem(

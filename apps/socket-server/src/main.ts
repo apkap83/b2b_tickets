@@ -4,8 +4,13 @@ import cookie from 'cookie';
 import dotenv from 'dotenv';
 import logger from './logger';
 import axios from 'axios';
-import { WebSocketMessage, WebSocketData } from '@b2b-tickets/shared-models';
+import { WebSocketMessage, WebSocketData, Session } from '@b2b-tickets/shared-models';
 import { PresenceService } from '@b2b-tickets/redis-service';
+
+// Extend Socket interface to include user property
+interface AuthenticatedSocket extends Socket {
+  user?: Session['user'];
+}
 
 // Load environment variables
 dotenv.config({
@@ -74,14 +79,7 @@ const validateSession = async (sessionToken: string) => {
       );
     }
 
-    const session = (await response.data) as {
-      user: {
-        user_id: string;
-        userName: string;
-        customer_id: string;
-        roles: string[];
-      };
-    };
+    const session = (await response.data) as Session;
 
     if (!session || !session.user) {
       throw new Error('Invalid session data');
@@ -106,7 +104,7 @@ function getSessionToken(cookieString: string) {
 }
 
 // Middleware
-io.use(async (socket, next) => {
+io.use(async (socket: AuthenticatedSocket, next) => {
   try {
     const rawCookies = socket.handshake.headers.cookie;
 
@@ -131,7 +129,6 @@ io.use(async (socket, next) => {
     }
 
     // Attach user to socket
-    //@ts-ignore
     socket.user = session.user;
     // logger.info(
     //   `Authenticated user: id: ${session.user.user_id}, userName: ${session.user.userName}`
@@ -139,10 +136,10 @@ io.use(async (socket, next) => {
 
     if (session?.user) {
       // Add to Redis presence store
-      await PresenceService.addOnlineUser(session.user.user_id, {
-        userId: session.user.user_id,
+      await PresenceService.addOnlineUser(session.user.user_id.toString(), {
+        userId: session.user.user_id.toString(),
         userName: session.user.userName,
-        customer_id: session.user.customer_id,
+        customer_id: session.user.customer_id.toString(),
         roles: session.user.roles,
         connectedAt: Date.now(),
         lastSeen: Date.now(),
@@ -161,21 +158,32 @@ io.use(async (socket, next) => {
 // Variable to keep track of the number of connected users
 let connectedUsers = 0;
 
+// Track user cleanup timeouts to cancel them on quick reconnection
+const userCleanupTimeouts = new Map<string, NodeJS.Timeout>();
+
 // Listen for connections
-io.on('connection', (socket: Socket) => {
+io.on('connection', (socket: AuthenticatedSocket) => {
   connectedUsers++;
   // logger.info(
-  //   //@ts-ignore
-  //   `User connected: id: ${socket.user.user_id}, userName: ${socket.user.userName}`
+  //   `User connected: id: ${socket.user?.user_id}, userName: ${socket.user?.userName}`
   // );
   // logger.info(`Total connected users: ${connectedUsers}`);
 
+  const userId = socket.user?.user_id?.toString();
+
+  // If this user has a pending cleanup timeout, cancel it (quick reconnection)
+  if (userId && userCleanupTimeouts.has(userId)) {
+    const existingTimeout = userCleanupTimeouts.get(userId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      userCleanupTimeouts.delete(userId);
+    }
+  }
+
   // Heartbeat to keep user presence alive in Redis
   const heartbeatInterval = setInterval(async () => {
-    //@ts-ignore
     if (socket.user) {
-      //@ts-ignore
-      await PresenceService.updateLastSeen(socket.user.user_id);
+      await PresenceService.updateLastSeen(socket.user.user_id.toString());
     }
   }, 25000); // Every 25 seconds
 
@@ -346,19 +354,41 @@ io.on('connection', (socket: Socket) => {
   // Other event handlers...
 
   socket.on('disconnect', async () => {
-    connectedUsers--;
-    //@ts-ignore
-    // logger.info(`User disconnected: id: ${socket.user.user_id}`);
-    // logger.info(`Total connected users: ${connectedUsers}`);
+    const userId = socket.user?.user_id?.toString();
 
-    // Clean up heartbeat interval
-    clearInterval(heartbeatInterval);
+    const timeoutId = setTimeout(async () => {
+      // Double-check if this timeout is still valid (not cancelled by reconnection)
+      if (userId && !userCleanupTimeouts.has(userId)) {
+        console.log('Cleanup already cancelled for user', userId);
+        return;
+      }
 
-    // Remove user from Redis presence store
-    //@ts-ignore
-    if (socket.user) {
-      //@ts-ignore
-      await PresenceService.removeOnlineUser(socket.user.user_id, socket.user);
+      connectedUsers--;
+      // logger.info(`User disconnected: id: ${socket.user?.user_id}`);
+      // logger.info(`Total connected users: ${connectedUsers}`);
+
+      // Clean up heartbeat interval
+      clearInterval(heartbeatInterval);
+
+      // Remove user from Redis presence store
+      if (socket.user) {
+        console.log('Removing online user from presence service');
+        await PresenceService.removeOnlineUser(
+          socket.user.user_id.toString(),
+          socket.user
+        );
+      }
+
+      // Remove the timeout from tracking map
+      if (userId) {
+        userCleanupTimeouts.delete(userId);
+      }
+    }, 5000);
+
+    // Track this cleanup timeout so it can be cancelled on reconnection
+    if (userId) {
+      userCleanupTimeouts.set(userId, timeoutId);
+      console.log(`Set cleanup timeout for user ${userId}`);
     }
   });
 });
