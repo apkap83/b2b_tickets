@@ -190,6 +190,11 @@ export const getAdminDashboardData = async () => {
 
     // console.log('plainUsersListWithRoles:', plainUsersListWithRoles);
     return {
+      userStats: {
+        totalUsers: plainUsersListWithRoles.length,
+        totalOnlineUsers: plainUsersListWithRoles.filter((u: any) => u.isOnline)
+          .length,
+      },
       usersList: plainUsersListWithRoles,
       fullUsersListWithCustomers: usersWithCustomers.rows,
       rolesList: plainRolesListWithPermissions,

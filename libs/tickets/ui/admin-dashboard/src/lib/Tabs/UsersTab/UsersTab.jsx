@@ -20,11 +20,7 @@ import { updateMFAMethodForUser } from '@b2b-tickets/admin-server-actions';
 import styles from './css/UsersTab.module.scss';
 import config from '@b2b-tickets/config';
 import toast from 'react-hot-toast';
-import {
-  convertTo24HourFormat,
-  convertToLocalTime,
-  convertToAthensTime,
-} from '@b2b-tickets/utils';
+import { convertTo24HourFormat, convertToLocalTime } from '@b2b-tickets/utils';
 
 const userDetailsInitalState = {
   firstName: null,
@@ -186,7 +182,7 @@ export function UsersTab({ usersList, rolesList }) {
                     </select>
                   </td>
                   <td className="text-center">
-                    {convertToAthensTime(user.last_login_attempt)}
+                    {convertTo24HourFormat(user.last_login_attempt)}
                   </td>
                   <td className="text-center">
                     {user.last_login_failed_attempts}
