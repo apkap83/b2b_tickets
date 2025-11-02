@@ -76,7 +76,6 @@ export function UsersTab({ usersList, rolesList }) {
                 <th className="text-center">First Name</th>
                 <th className="text-center">Last Name</th>
                 <th className="text-center">User Name</th>
-                <th className="text-center">E-mail</th>
                 <th className="text-center">Mobile Phone</th>
                 <th className="text-center">Customer</th>
                 <th className="text-center">Roles</th>
@@ -119,9 +118,7 @@ export function UsersTab({ usersList, rolesList }) {
                       {user.username}
                     </span>{' '}
                   </td>
-                  <td className="text-wrap" style={{ maxWidth: '150px' }}>
-                    <span style={{ wordBreak: 'break-all' }}>{user.email}</span>
-                  </td>
+
                   <td className="text-wrap" style={{ maxWidth: '150px' }}>
                     <span style={{ wordBreak: 'break-all' }}>
                       {user.mobile_phone}
