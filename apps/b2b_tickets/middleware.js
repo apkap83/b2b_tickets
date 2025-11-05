@@ -17,17 +17,37 @@ function getClientIp(req) {
 function logIpMiddleware(req) {
   const requestHeaders = new Headers(req.headers);
   const clientIp = getClientIp(req);
-  const sessionId = uuidv4();
+  // const sessionId = uuidv4();
+
+  // Check if session ID already exists in cookies
+  let sessionId = req.cookies.get('session-id')?.value;
+
+  // If not, create a new one
+  if (!sessionId) {
+    sessionId = uuidv4();
+  }
 
   requestHeaders.set('request-ip', clientIp);
   requestHeaders.set('session-id', sessionId);
   requestHeaders.set('request-url', req.url);
 
-  return NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
+
+  // Set the cookie if it's new (expires in 24 hours)
+  if (!req.cookies.get('session-id')) {
+    response.cookies.set('session-id', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+  }
+
+  return response;
 }
 
 // Middleware for authorization
