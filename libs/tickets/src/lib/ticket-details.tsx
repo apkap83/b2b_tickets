@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { getGreekDateFormat, getStatusColor } from '@b2b-tickets/utils';
 import {
   TicketComment,
@@ -53,6 +54,7 @@ import { LiaCommentDotsSolid } from 'react-icons/lia';
 import { TicketAttachments } from './ticket-attachments';
 import { FilePreviewModal } from './file-preview-modal';
 import { ResolutionDatePopup } from './alter-resolution-date-popup';
+import { escalateIcon } from '@b2b-tickets/assets';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -412,6 +414,37 @@ export function TicketDetails({
     };
   }, [session, ticketStatus, nextEscalationLevel]);
 
+  const EscalationBadge = ({ level }: { level: string }) => {
+    const colors = [
+      '#4CAF50', // Level 1: Green (Safe)
+      '#FFC107', // Level 2: Yellow (Caution)
+      '#FF5722', // Level 3: Orange (Warning)
+      '#FF0000', // Level 4: Full Red (Critical)
+    ]; // Gradient of colors
+
+    const backgroundColor = colors[Number(level) - 1] ?? '#ddd';
+
+    return (
+      <div
+        style={{ backgroundColor }}
+        className="text-white max-w-[140px] text-center leading-[1] text-[12px] flex justify-center items-center rounded-full px-3 py-1"
+      >
+        <Image
+          src={escalateIcon}
+          alt="escalate icon"
+          width={24}
+          height={24}
+          className="mr-2"
+        />
+        <span>
+          Can Escalate
+          <br />
+          at Level&nbsp;{level}
+        </span>
+      </div>
+    );
+  };
+
   // Render functions for different user roles and ticket states
   const renderTicketHandlerButtons = () => {
     if (ticketPermissions.isNewTicket) {
@@ -421,6 +454,9 @@ export function TicketDetails({
     if (ticketPermissions.isWorkingTicket) {
       return (
         <div className="flex gap-2">
+          {ticketPermissions.canEscalate && (
+            <EscalationBadge level={nextEscalationLevel} />
+          )}
           <CloseTicketButton />
           <CancelTicketButton />
           <AttachFileButton />
