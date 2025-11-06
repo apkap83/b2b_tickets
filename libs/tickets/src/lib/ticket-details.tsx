@@ -424,7 +424,7 @@ export function TicketDetails({
     return (
       <div
         style={{ backgroundColor }}
-        className="text-white max-w-[170px] text-center leading-[1] text-[12px] flex justify-center items-center rounded-full px-4 py-1"
+        className="text-white max-w-[170px] text-center leading-[1] text-[12px] flex justify-center items-center rounded-full px-4 py-1 pointer-events-none"
       >
         <Image
           src={escalateIcon}
