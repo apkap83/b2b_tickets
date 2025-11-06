@@ -55,6 +55,7 @@ import { TicketAttachments } from './ticket-attachments';
 import { FilePreviewModal } from './file-preview-modal';
 import { ResolutionDatePopup } from './alter-resolution-date-popup';
 import { escalateIcon } from '@b2b-tickets/assets';
+import { GoPencil } from 'react-icons/go';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -360,7 +361,29 @@ export function TicketDetails({
       variant="outlined"
       sx={BUTTON_STYLES.primaryOutlined}
     >
-      Close Ticket...
+      <div className="flex justify-center items-center gap-1">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M7.5 10L9.16667 11.6667L12.5 8.33333"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span>Close Ticket...</span>
+      </div>
     </Button>
   );
 
@@ -370,21 +393,46 @@ export function TicketDetails({
       variant="outlined"
       sx={BUTTON_STYLES.danger}
     >
-      Cancel Ticket...
+      <div className="flex justify-center items-center gap-1">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M7.5 7.5L12.5 12.5M12.5 7.5L7.5 12.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span>Cancel Ticket...</span>
+      </div>
     </Button>
   );
 
   const AttachFileButton = () => (
     <Button onClick={handleAttachFile} variant="outlined">
-      <IoCloudUploadOutline size="20" className="mr-2" />
-      Attach File
+      <div className="flex justify-center items-center gap-1">
+        <IoCloudUploadOutline size="17" />
+        <span>Attach File</span>
+      </div>
     </Button>
   );
 
   const NewCommentButton = () => (
     <Button onClick={handleNewComment} variant="outlined">
-      <LiaCommentDotsSolid size="20" className="mr-2" />
-      New Comment
+      <div className="flex justify-center items-center gap-1">
+        <LiaCommentDotsSolid size="17" />
+        <span>New Comment</span>
+      </div>
     </Button>
   );
 
