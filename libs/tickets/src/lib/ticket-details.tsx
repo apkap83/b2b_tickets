@@ -561,7 +561,7 @@ export function TicketDetails({
         }}
       >
         <div className="flex justify-center items-center gap-1">
-          <BsTriangleFill />
+          <BsTriangleFill size="12px" className="mb-[1.2px]" />
           Escalate Level {nextEscalationLevel}
         </div>
       </Button>
