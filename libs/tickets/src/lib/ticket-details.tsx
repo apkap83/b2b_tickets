@@ -400,10 +400,7 @@ export function TicketDetails({
     );
     const isNewTicket = ticketStatus === TicketStatus.NEW;
     const isWorkingTicket = ticketStatus === TicketStatus.WORKING;
-    const canEscalate =
-      isTicketCreator &&
-      (isNewTicket || isWorkingTicket) &&
-      nextEscalationLevel;
+    const canEscalate = (isNewTicket || isWorkingTicket) && nextEscalationLevel;
 
     return {
       isTicketHandler,
@@ -427,7 +424,7 @@ export function TicketDetails({
     return (
       <div
         style={{ backgroundColor }}
-        className="text-white max-w-[140px] text-center leading-[1] text-[12px] flex justify-center items-center rounded-full px-3 py-1"
+        className="text-white max-w-[140px] text-center leading-[1] text-[12px] flex justify-center items-center rounded-full px-4 py-1"
       >
         <Image
           src={escalateIcon}
@@ -439,7 +436,7 @@ export function TicketDetails({
         <span>
           Can Escalate
           <br />
-          at Level&nbsp;{level}
+          at&nbsp;Level&nbsp;{level}
         </span>
       </div>
     );

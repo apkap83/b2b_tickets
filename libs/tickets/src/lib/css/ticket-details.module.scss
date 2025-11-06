@@ -33,7 +33,7 @@
   // width: 40%;
 }
 
-@media only screen and (max-width: 57.9em) {
+@media only screen and (max-width: 67.12em) {
   .header {
     height: auto;
     flex-direction: column;
@@ -51,8 +51,9 @@
   }
 }
 
-@media only screen and (max-width: 28.31em) {
+@media only screen and (max-width: 32.62em) {
   .header div:nth-of-type(2) > div {
     flex-direction: column;
+    flex-wrap: wrap;
   }
 }

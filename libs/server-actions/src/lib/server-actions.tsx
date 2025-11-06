@@ -1612,7 +1612,10 @@ export async function getNextEscalationLevel({
   ticketNumber: string;
 }): Promise<{ data: string; error?: string }> {
   try {
-    const session = await verifySecurityRole(AppRoleTypes.B2B_TicketCreator);
+    const session = await verifySecurityRole([
+      AppRoleTypes.B2B_TicketHandler,
+      AppRoleTypes.B2B_TicketCreator,
+    ]);
 
     await setSchemaAndTimezone(pgB2Bpool);
 
