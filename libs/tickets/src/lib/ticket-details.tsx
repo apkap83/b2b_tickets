@@ -55,7 +55,7 @@ import { TicketAttachments } from './ticket-attachments';
 import { FilePreviewModal } from './file-preview-modal';
 import { ResolutionDatePopup } from './alter-resolution-date-popup';
 import { escalateIcon } from '@b2b-tickets/assets';
-import { GoPencil } from 'react-icons/go';
+import { BsTriangleFill } from 'react-icons/bs';
 
 const detailsRowClass =
   'w-full justify-center items-center gap-2.5 inline-flex text-md';
@@ -472,15 +472,10 @@ export function TicketDetails({
     return (
       <div
         style={{ backgroundColor }}
-        className="text-white max-w-[170px] text-center leading-[1] text-[12px] flex justify-center items-center rounded-full px-4 py-1 pointer-events-none"
+        className="relative text-white max-w-[170px] text-center font-medium leading-[1] text-[12px] flex gap-2 justify-center items-center rounded-full px-4 py-1 pointer-events-none"
       >
-        <Image
-          src={escalateIcon}
-          alt="escalate icon"
-          width={24}
-          height={24}
-          className="mr-2"
-        />
+        <div className="bg-white text-blue-300 w-[0.30rem] h-[0.30rem] absolute left-[0.65rem] top-[0.30rem] rounded-full"></div>
+        <Image src={escalateIcon} alt="escalate icon" width={24} height={24} />
         <span>
           Escalation Option
           <br />
@@ -565,7 +560,10 @@ export function TicketDetails({
           },
         }}
       >
-        Escalate Level {nextEscalationLevel}
+        <div className="flex justify-center items-center gap-1">
+          <BsTriangleFill />
+          Escalate Level {nextEscalationLevel}
+        </div>
       </Button>
     );
   };
