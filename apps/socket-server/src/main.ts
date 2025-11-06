@@ -4,7 +4,11 @@ import cookie from 'cookie';
 import dotenv from 'dotenv';
 import logger from './logger';
 import axios from 'axios';
-import { WebSocketMessage, WebSocketData, Session } from '@b2b-tickets/shared-models';
+import {
+  WebSocketMessage,
+  WebSocketData,
+  Session,
+} from '@b2b-tickets/shared-models';
 import { PresenceService } from '@b2b-tickets/redis-service';
 
 // Extend Socket interface to include user property
@@ -359,7 +363,7 @@ io.on('connection', (socket: AuthenticatedSocket) => {
     const timeoutId = setTimeout(async () => {
       // Double-check if this timeout is still valid (not cancelled by reconnection)
       if (userId && !userCleanupTimeouts.has(userId)) {
-        console.log('Cleanup already cancelled for user', userId);
+        // console.log('Cleanup already cancelled for user', userId);
         return;
       }
 
@@ -372,7 +376,6 @@ io.on('connection', (socket: AuthenticatedSocket) => {
 
       // Remove user from Redis presence store
       if (socket.user) {
-        console.log('Removing online user from presence service');
         await PresenceService.removeOnlineUser(
           socket.user.user_id.toString(),
           socket.user
@@ -388,7 +391,6 @@ io.on('connection', (socket: AuthenticatedSocket) => {
     // Track this cleanup timeout so it can be cancelled on reconnection
     if (userId) {
       userCleanupTimeouts.set(userId, timeoutId);
-      console.log(`Set cleanup timeout for user ${userId}`);
     }
   });
 });
