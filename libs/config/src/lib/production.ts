@@ -59,7 +59,7 @@ export const productionConfig = {
   TwoFactorValiditySeconds: 270,
   ShowCookieConsentBanner: true,
   SessionMaxAge: 60 * 60, // Session max age to 60 minutes (in seconds)
-  SessionUpdateAge: 30, // Session is refreshed every 30 seconds
+  SessionUpdateAge: 60, // Session is refreshed every 60 seconds
 
   SessionExpirationPopupShownInSeconds: 60 * 5, // 5 min
 
