@@ -90,6 +90,11 @@ export const SessionPopup = memo(() => {
       return toast.error(result.error);
     }
 
+    // Update session state immediately to prevent race condition with timer
+    if (result.data) {
+      setMySession(result.data);
+    }
+
     await refreshSession();
     toast.success(
       `Session Extended for ${Math.floor(config.SessionMaxAge / 60)} minutes`
