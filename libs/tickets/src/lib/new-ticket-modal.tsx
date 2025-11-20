@@ -130,7 +130,6 @@ const createTicketSchema = () =>
 // Types
 interface NewTicketModalProps {
   closeModal: () => void;
-  userId: string;
 }
 
 interface FieldErrorProps {
@@ -408,533 +407,531 @@ const CcFields = memo<CcFieldsProps>(
 );
 
 // Main Component
-export const NewTicketModal = memo<NewTicketModalProps>(
-  ({ closeModal, userId }) => {
-    const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
-    const { data: session } = useSession();
-    const { emitEvent } = useWebSocketContext();
+export const NewTicketModal = memo<NewTicketModalProps>(({ closeModal }) => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const { data: session } = useSession();
+  const { emitEvent } = useWebSocketContext();
 
-    const [showCcFields, setShowCcFields] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const { ticketCategories, severities, loading } = useTicketData();
-    const serviceTypes = useServiceTypes(selectedCategory);
+  const [showCcFields, setShowCcFields] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const { ticketCategories, severities, loading } = useTicketData();
+  const serviceTypes = useServiceTypes(selectedCategory);
 
-    const ticketSchema = useMemo(() => createTicketSchema(), []);
+  const ticketSchema = useMemo(() => createTicketSchema(), []);
 
-    const getInitialValues = useCallback(
-      () => ({
-        title: '',
-        description: '',
-        severity: '',
-        category: '',
-        service: '',
-        equipmentId: '',
-        sid: '',
-        cid: '',
-        userName: '',
-        cliValue: '',
-        contactPerson: `${session?.user.firstName} ${session?.user.lastName}`,
-        contactPhoneNum: session?.user.mobilePhone || '',
-        ccEmails: '',
-        ccPhones: '',
-        occurrenceDate: dayjs().toISOString(),
-      }),
-      [session]
-    );
+  const getInitialValues = useCallback(
+    () => ({
+      title: '',
+      description: '',
+      severity: '',
+      category: '',
+      service: '',
+      equipmentId: '',
+      sid: '',
+      cid: '',
+      userName: '',
+      cliValue: '',
+      contactPerson: `${session?.user.firstName} ${session?.user.lastName}`,
+      contactPhoneNum: session?.user.mobilePhone || '',
+      ccEmails: '',
+      ccPhones: '',
+      occurrenceDate: dayjs().toISOString(),
+    }),
+    [session]
+  );
 
-    const formik = useFormik({
-      initialValues: getInitialValues(),
-      validateOnMount: true,
-      validationSchema: ticketSchema,
-      onSubmit: async (values, { setSubmitting, setFieldError }) => {
-        try {
-          setSubmitting(true);
+  const formik = useFormik({
+    initialValues: getInitialValues(),
+    validateOnMount: true,
+    validationSchema: ticketSchema,
+    onSubmit: async (values, { setSubmitting, setFieldError }) => {
+      try {
+        setSubmitting(true);
 
-          const formData = new FormData();
-          Object.entries(values).forEach(([key, value]) => {
-            formData.append(key, String(value || ''));
-          });
+        const formData = new FormData();
+        Object.entries(values).forEach(([key, value]) => {
+          formData.append(key, String(value || ''));
+        });
 
-          const result = await createNewTicket(null, formData);
+        const result = await createNewTicket(null, formData);
 
-          if (result.status === 'SUCCESS') {
-            const ticket_id = result.extraData;
-            emitEvent(WebSocketMessage.NEW_TICKET_CREATED, { ticket_id });
-            toast.success('Ticket created successfully!');
-            closeModal();
-          } else if (result.status === 'ERROR') {
-            if (result.fieldErrors) {
-              Object.entries(result.fieldErrors).forEach(([field, error]) => {
-                setFieldError(field, error as string);
-              });
-            } else {
-              toast.error(result.message || 'Failed to create ticket');
-            }
+        if (result.status === 'SUCCESS') {
+          const ticket_id = result.extraData;
+          emitEvent(WebSocketMessage.NEW_TICKET_CREATED, { ticket_id });
+          toast.success('Ticket created successfully!');
+          closeModal();
+        } else if (result.status === 'ERROR') {
+          if (result.fieldErrors) {
+            Object.entries(result.fieldErrors).forEach(([field, error]) => {
+              setFieldError(field, error as string);
+            });
+          } else {
+            toast.error(result.message || 'Failed to create ticket');
           }
-        } catch (error) {
-          console.error('Error submitting form:', error);
-          toast.error('An unexpected error occurred');
-        } finally {
-          setSubmitting(false);
         }
-      },
-    });
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        toast.error('An unexpected error occurred');
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
 
-    const handleClose = useCallback(() => {
-      closeModal();
-    }, [closeModal]);
+  const handleClose = useCallback(() => {
+    closeModal();
+  }, [closeModal]);
 
-    const handleCategoryChange = useCallback(
-      (event: any) => {
-        const categoryValue = event.target.value;
-        setSelectedCategory(categoryValue);
-        formik.handleChange(event);
-        formik.setFieldValue('service', '');
-      },
-      [formik]
-    );
+  const handleCategoryChange = useCallback(
+    (event: any) => {
+      const categoryValue = event.target.value;
+      setSelectedCategory(categoryValue);
+      formik.handleChange(event);
+      formik.setFieldValue('service', '');
+    },
+    [formik]
+  );
 
-    const handleDateChange = useCallback(
-      (value: any) => {
-        if (value && dayjs(value).isValid()) {
-          formik.setFieldValue('occurrenceDate', value.toISOString());
-        }
-      },
-      [formik]
-    );
+  const handleDateChange = useCallback(
+    (value: any) => {
+      if (value && dayjs(value).isValid()) {
+        formik.setFieldValue('occurrenceDate', value.toISOString());
+      }
+    },
+    [formik]
+  );
 
-    if (loading) {
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-65 z-10">
-          <div className="text-white">Loading...</div>
-        </div>
-      );
-    }
-
+  if (loading) {
     return (
-      <div
-        className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-65 z-10 pointer-events-none`}
-      >
-        <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-auto">
-          <div
-            className={`pt-[1.3rem] pb-[1.3rem] px-[2rem] rounded-lg max-h-[95vh] overflow-hidden bg-gray-50 pointer-events-auto overflow-y-auto`}
-          >
-            <form autoComplete="off" className={styles.formContainer}>
-              <Typography
-                variant="h3"
-                textAlign="left"
-                mb="1.3rem"
-                className="bg-gradient-to-r from-[#0f0b58] to-[rgba(55,55,66,0)] font-thin tracking-widest rounded-md py-2 text-gray-300 pl-3"
-              >
-                Create New Ticket
-              </Typography>
-
-              <div className={styles.fieldsMainContainer}>
-                {/* Left Panel - Main Fields */}
-                <div
-                  className="flex-grow px-[1rem] pb-[1.5rem] overflow-x-hidden bg-white rounded-md border border-gray-200 shadow-lg"
-                  style={{
-                    border: `1px solid ${colors.blueAccent[900]}`,
-                    backgroundColor: colors.grey[900],
-                  }}
-                >
-                  <div className="p-1 flex flex-col gap-3 pt-3">
-                    <FormControl>
-                      <TextField
-                        required
-                        margin="dense"
-                        id="title"
-                        name="title"
-                        label="Title"
-                        type="text"
-                        fullWidth
-                        variant="standard"
-                        value={formik.values.title}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        autoComplete={AUTO_COMPLETE}
-                      />
-                    </FormControl>
-                    <FieldError formik={formik} name="title" />
-
-                    <FormControl
-                      sx={{
-                        mt: '.5rem',
-                        border: `1px solid ${colors.grey[700]}`,
-                        padding: '10px',
-                        outline: 'none',
-                        '& > textarea': { outline: 'none' },
-                      }}
-                    >
-                      {/* <TextArea */}
-                      <TextareaAutosize
-                        id="description"
-                        name="description"
-                        placeholder="Description..."
-                        required
-                        value={formik.values.description}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        style={{
-                          backgroundColor: colors.grey[900],
-                          color: colors.grey[100],
-                          minHeight: '275px',
-                        }}
-                      />
-                    </FormControl>
-                    <FieldError formik={formik} name="description" />
-
-                    {/* Four Fields Section */}
-                    <Box
-                      mt=".5rem"
-                      mb=".5rem"
-                      border={`1px dashed ${colors.blueAccent[800]}`}
-                      p=".5rem"
-                    >
-                      <Typography
-                        fontWeight="400"
-                        fontSize="12.7143px"
-                        color="rgba(0,0,0,.6)"
-                      >
-                        Please provide information for at least one field below
-                      </Typography>
-                      <Box>
-                        <FormControl
-                          className={styles.fourFieldsContainer}
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            gap: '5.3rem',
-                          }}
-                        >
-                          <TextField
-                            margin="dense"
-                            id="sid"
-                            name="sid"
-                            label="SID"
-                            type="text"
-                            variant="standard"
-                            value={formik.values.sid}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            autoComplete={AUTO_COMPLETE}
-                          />
-                          <TextField
-                            margin="dense"
-                            id="cid"
-                            name="cid"
-                            label="CID"
-                            type="text"
-                            variant="standard"
-                            value={formik.values.cid}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            autoComplete={AUTO_COMPLETE}
-                          />
-                        </FormControl>
-                        <FormControl
-                          className={styles.fourFieldsContainer}
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            gap: '5.3rem',
-                          }}
-                        >
-                          <TextField
-                            margin="dense"
-                            id="userName"
-                            name="userName"
-                            label="User Name"
-                            type="text"
-                            variant="standard"
-                            value={formik.values.userName}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            autoComplete={AUTO_COMPLETE}
-                          />
-                          <TextField
-                            margin="dense"
-                            id="cliValue"
-                            name="cliValue"
-                            label="CLI Value"
-                            type="text"
-                            variant="standard"
-                            value={formik.values.cliValue}
-                            onChange={formik.handleChange}
-                            onBlur={formik.handleBlur}
-                            autoComplete={AUTO_COMPLETE}
-                          />
-                        </FormControl>
-                        <FieldError
-                          formik={formik}
-                          name="cliValue"
-                          style={{ marginTop: '0px' }}
-                        />
-                      </Box>
-                    </Box>
-                  </div>
-                </div>
-
-                {/* Right Panel - Dropdown Fields */}
-                <div
-                  className="flex flex-col gap-1 bg-black rounded-md px-2 pt-3 pb-2 shadow-lg"
-                  style={{
-                    border: `1px solid ${colors.blueAccent[900]}`,
-                    backgroundColor: colors.grey[900],
-                  }}
-                >
-                  {/* Severity Select */}
-                  <FormControl
-                    sx={{
-                      marginTop: '8px',
-                      marginBottom: '8px',
-                      minWidth: RIGHT_PANEL_MIN_WIDTH,
-                    }}
-                  >
-                    <InputLabel id="severity" sx={{ top: '-7px' }}>
-                      Severity
-                    </InputLabel>
-                    <Select
-                      labelId="severity"
-                      id="severity"
-                      name="severity"
-                      value={formik.values.severity}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      autoWidth
-                      label="Severities *"
-                      required
-                      sx={{
-                        '& .MuiSelect-select': {
-                          paddingTop: '8px',
-                          paddingBottom: '8px',
-                        },
-                      }}
-                    >
-                      {severities.map((item: Severity) => (
-                        <MenuItem
-                          key={item.severity_id}
-                          value={item.severity_id}
-                          sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}
-                        >
-                          <span
-                            style={{
-                              color: getSeverityStatusColor(item.severity_id),
-                            }}
-                          >
-                            {item.severity}
-                          </span>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FieldError
-                    formik={formik}
-                    name="severity"
-                    style={{ marginTop: '-12px' }}
-                  />
-
-                  {/* Category Select */}
-                  <FormControl
-                    sx={{
-                      marginTop: '10px',
-                      marginBottom: '3px',
-                      minWidth: RIGHT_PANEL_MIN_WIDTH,
-                    }}
-                  >
-                    <InputLabel id="category" sx={{ top: '-7px' }}>
-                      Category
-                    </InputLabel>
-                    <Select
-                      labelId="category"
-                      id="category"
-                      name="category"
-                      value={formik.values.category}
-                      onChange={handleCategoryChange}
-                      onBlur={formik.handleBlur}
-                      autoWidth
-                      label="Categories *"
-                      required
-                      sx={{
-                        '& .MuiSelect-select': {
-                          paddingTop: '8px',
-                          paddingBottom: '8px',
-                        },
-                      }}
-                    >
-                      {ticketCategories.map((item) => (
-                        <MenuItem
-                          key={item.category_id}
-                          value={item.category_id}
-                          sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}
-                        >
-                          {item.Category}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FieldError formik={formik} name="category" />
-
-                  {/* Service Type Select */}
-                  {selectedCategory && (
-                    <>
-                      <FormControl
-                        sx={{
-                          marginTop: '10px',
-                          marginBottom: '3px',
-                          minWidth: RIGHT_PANEL_MIN_WIDTH,
-                        }}
-                      >
-                        <InputLabel id="service" sx={{ top: '-7px' }}>
-                          Service Type
-                        </InputLabel>
-                        <Select
-                          labelId="service"
-                          id="service"
-                          name="service"
-                          value={formik.values.service}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          autoWidth
-                          label="Service Type"
-                          sx={{
-                            '& .MuiSelect-select': {
-                              paddingTop: '8px',
-                              paddingBottom: '8px',
-                            },
-                          }}
-                        >
-                          {serviceTypes.map((item: ServiceType) => (
-                            <MenuItem
-                              key={item.service_type_id}
-                              value={item.service_type_id}
-                              sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}
-                            >
-                              {item.service_type_name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <FieldError formik={formik} name="service" />
-                    </>
-                  )}
-
-                  {/* Equipment ID */}
-                  <FormControl
-                    sx={{ marginTop: '-12px', minWidth: RIGHT_PANEL_MIN_WIDTH }}
-                  >
-                    <TextField
-                      margin="dense"
-                      id="equipmentId"
-                      name="equipmentId"
-                      label="Equipment ID (optional)"
-                      fullWidth
-                      variant="standard"
-                      type="number"
-                      value={formik.values.equipmentId}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      autoComplete={AUTO_COMPLETE}
-                    />
-                  </FormControl>
-                  <FieldError formik={formik} name="equipmentId" />
-
-                  {/* Contact Person */}
-                  <FormControl sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}>
-                    <TextField
-                      required
-                      margin="dense"
-                      id="contactPerson"
-                      name="contactPerson"
-                      label="Contact Person"
-                      type="text"
-                      variant="standard"
-                      value={formik.values.contactPerson}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      autoComplete={AUTO_COMPLETE}
-                    />
-                  </FormControl>
-                  <FieldError formik={formik} name="contactPerson" />
-
-                  {/* Contact Phone */}
-                  <FormControl sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}>
-                    <TextField
-                      required
-                      margin="dense"
-                      id="contactPhoneNum"
-                      name="contactPhoneNum"
-                      label="Contact Phone"
-                      type="text"
-                      variant="standard"
-                      value={formik.values.contactPhoneNum}
-                      onChange={formik.handleChange}
-                      onBlur={formik.handleBlur}
-                      autoComplete={AUTO_COMPLETE}
-                    />
-                  </FormControl>
-                  <FieldError formik={formik} name="contactPhoneNum" />
-
-                  {/* CC Fields */}
-                  <CcFields
-                    showCcFields={showCcFields}
-                    setShowCcFields={setShowCcFields}
-                    formik={formik}
-                    rightPanelMinWidthPx={RIGHT_PANEL_MIN_WIDTH}
-                    autoComplete={AUTO_COMPLETE}
-                  />
-
-                  {/* Date Picker */}
-                  <FormControl sx={{ mt: '.5rem' }}>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <span
-                        style={{
-                          color: 'rgba(0,0,0,.6)',
-                          fontSize: '11.7143px',
-                          fontWeight: '400',
-                        }}
-                      >
-                        Occurrence Date *
-                      </span>
-                      <DateTimePicker
-                        name="occurrenceDate"
-                        value={dayjs(formik.values.occurrenceDate)}
-                        onChange={handleDateChange}
-                        format="DD/MM/YYYY hh:mm A"
-                      />
-                    </LocalizationProvider>
-                  </FormControl>
-                  <FieldError formik={formik} name="occurrenceDate" />
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div
-                className={`${styles.buttonsDiv} flex justify-evenly mt-[1.3rem]`}
-              >
-                <Button
-                  onClick={handleClose}
-                  variant="outlined"
-                  style={{
-                    color: colors.grey[500],
-                    border: `1px solid ${colors.grey[500]}`,
-                  }}
-                >
-                  Cancel
-                </Button>
-                <SubmitButton
-                  label="Submit Ticket"
-                  loadingText="Creating..."
-                  isValid={formik.dirty && formik.isValid}
-                  isSubmitting={formik.isSubmitting}
-                  onClick={formik.handleSubmit}
-                />
-              </div>
-            </form>
-          </div>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-65 z-10">
+        <div className="text-white">Loading...</div>
       </div>
     );
   }
-);
+
+  return (
+    <div
+      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-65 z-10 pointer-events-none`}
+    >
+      <div className="fixed inset-0 flex items-center justify-center z-20 pointer-events-auto">
+        <div
+          className={`pt-[1.3rem] pb-[1.3rem] px-[2rem] rounded-lg max-h-[95vh] overflow-hidden bg-gray-50 pointer-events-auto overflow-y-auto`}
+        >
+          <form autoComplete="off" className={styles.formContainer}>
+            <Typography
+              variant="h3"
+              textAlign="left"
+              mb="1.3rem"
+              className="bg-gradient-to-r from-[#0f0b58] to-[rgba(55,55,66,0)] font-thin tracking-widest rounded-md py-2 text-gray-300 pl-3"
+            >
+              Create New Ticket
+            </Typography>
+
+            <div className={styles.fieldsMainContainer}>
+              {/* Left Panel - Main Fields */}
+              <div
+                className="flex-grow px-[1rem] pb-[1.5rem] overflow-x-hidden bg-white rounded-md border border-gray-200 shadow-lg"
+                style={{
+                  border: `1px solid ${colors.blueAccent[900]}`,
+                  backgroundColor: colors.grey[900],
+                }}
+              >
+                <div className="p-1 flex flex-col gap-3 pt-3">
+                  <FormControl>
+                    <TextField
+                      required
+                      margin="dense"
+                      id="title"
+                      name="title"
+                      label="Title"
+                      type="text"
+                      fullWidth
+                      variant="standard"
+                      value={formik.values.title}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      autoComplete={AUTO_COMPLETE}
+                    />
+                  </FormControl>
+                  <FieldError formik={formik} name="title" />
+
+                  <FormControl
+                    sx={{
+                      mt: '.5rem',
+                      border: `1px solid ${colors.grey[700]}`,
+                      padding: '10px',
+                      outline: 'none',
+                      '& > textarea': { outline: 'none' },
+                    }}
+                  >
+                    {/* <TextArea */}
+                    <TextareaAutosize
+                      id="description"
+                      name="description"
+                      placeholder="Description..."
+                      required
+                      value={formik.values.description}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      style={{
+                        backgroundColor: colors.grey[900],
+                        color: colors.grey[100],
+                        minHeight: '275px',
+                      }}
+                    />
+                  </FormControl>
+                  <FieldError formik={formik} name="description" />
+
+                  {/* Four Fields Section */}
+                  <Box
+                    mt=".5rem"
+                    mb=".5rem"
+                    border={`1px dashed ${colors.blueAccent[800]}`}
+                    p=".5rem"
+                  >
+                    <Typography
+                      fontWeight="400"
+                      fontSize="12.7143px"
+                      color="rgba(0,0,0,.6)"
+                    >
+                      Please provide information for at least one field below
+                    </Typography>
+                    <Box>
+                      <FormControl
+                        className={styles.fourFieldsContainer}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          gap: '5.3rem',
+                        }}
+                      >
+                        <TextField
+                          margin="dense"
+                          id="sid"
+                          name="sid"
+                          label="SID"
+                          type="text"
+                          variant="standard"
+                          value={formik.values.sid}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          autoComplete={AUTO_COMPLETE}
+                        />
+                        <TextField
+                          margin="dense"
+                          id="cid"
+                          name="cid"
+                          label="CID"
+                          type="text"
+                          variant="standard"
+                          value={formik.values.cid}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          autoComplete={AUTO_COMPLETE}
+                        />
+                      </FormControl>
+                      <FormControl
+                        className={styles.fourFieldsContainer}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          gap: '5.3rem',
+                        }}
+                      >
+                        <TextField
+                          margin="dense"
+                          id="userName"
+                          name="userName"
+                          label="User Name"
+                          type="text"
+                          variant="standard"
+                          value={formik.values.userName}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          autoComplete={AUTO_COMPLETE}
+                        />
+                        <TextField
+                          margin="dense"
+                          id="cliValue"
+                          name="cliValue"
+                          label="CLI Value"
+                          type="text"
+                          variant="standard"
+                          value={formik.values.cliValue}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          autoComplete={AUTO_COMPLETE}
+                        />
+                      </FormControl>
+                      <FieldError
+                        formik={formik}
+                        name="cliValue"
+                        style={{ marginTop: '0px' }}
+                      />
+                    </Box>
+                  </Box>
+                </div>
+              </div>
+
+              {/* Right Panel - Dropdown Fields */}
+              <div
+                className="flex flex-col gap-1 bg-black rounded-md px-2 pt-3 pb-2 shadow-lg"
+                style={{
+                  border: `1px solid ${colors.blueAccent[900]}`,
+                  backgroundColor: colors.grey[900],
+                }}
+              >
+                {/* Severity Select */}
+                <FormControl
+                  sx={{
+                    marginTop: '8px',
+                    marginBottom: '8px',
+                    minWidth: RIGHT_PANEL_MIN_WIDTH,
+                  }}
+                >
+                  <InputLabel id="severity" sx={{ top: '-7px' }}>
+                    Severity
+                  </InputLabel>
+                  <Select
+                    labelId="severity"
+                    id="severity"
+                    name="severity"
+                    value={formik.values.severity}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoWidth
+                    label="Severities *"
+                    required
+                    sx={{
+                      '& .MuiSelect-select': {
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                      },
+                    }}
+                  >
+                    {severities.map((item: Severity) => (
+                      <MenuItem
+                        key={item.severity_id}
+                        value={item.severity_id}
+                        sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}
+                      >
+                        <span
+                          style={{
+                            color: getSeverityStatusColor(item.severity_id),
+                          }}
+                        >
+                          {item.severity}
+                        </span>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FieldError
+                  formik={formik}
+                  name="severity"
+                  style={{ marginTop: '-12px' }}
+                />
+
+                {/* Category Select */}
+                <FormControl
+                  sx={{
+                    marginTop: '10px',
+                    marginBottom: '3px',
+                    minWidth: RIGHT_PANEL_MIN_WIDTH,
+                  }}
+                >
+                  <InputLabel id="category" sx={{ top: '-7px' }}>
+                    Category
+                  </InputLabel>
+                  <Select
+                    labelId="category"
+                    id="category"
+                    name="category"
+                    value={formik.values.category}
+                    onChange={handleCategoryChange}
+                    onBlur={formik.handleBlur}
+                    autoWidth
+                    label="Categories *"
+                    required
+                    sx={{
+                      '& .MuiSelect-select': {
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                      },
+                    }}
+                  >
+                    {ticketCategories.map((item) => (
+                      <MenuItem
+                        key={item.category_id}
+                        value={item.category_id}
+                        sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}
+                      >
+                        {item.Category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FieldError formik={formik} name="category" />
+
+                {/* Service Type Select */}
+                {selectedCategory && (
+                  <>
+                    <FormControl
+                      sx={{
+                        marginTop: '10px',
+                        marginBottom: '3px',
+                        minWidth: RIGHT_PANEL_MIN_WIDTH,
+                      }}
+                    >
+                      <InputLabel id="service" sx={{ top: '-7px' }}>
+                        Service Type
+                      </InputLabel>
+                      <Select
+                        labelId="service"
+                        id="service"
+                        name="service"
+                        value={formik.values.service}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        autoWidth
+                        label="Service Type"
+                        sx={{
+                          '& .MuiSelect-select': {
+                            paddingTop: '8px',
+                            paddingBottom: '8px',
+                          },
+                        }}
+                      >
+                        {serviceTypes.map((item: ServiceType) => (
+                          <MenuItem
+                            key={item.service_type_id}
+                            value={item.service_type_id}
+                            sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}
+                          >
+                            {item.service_type_name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FieldError formik={formik} name="service" />
+                  </>
+                )}
+
+                {/* Equipment ID */}
+                <FormControl
+                  sx={{ marginTop: '-12px', minWidth: RIGHT_PANEL_MIN_WIDTH }}
+                >
+                  <TextField
+                    margin="dense"
+                    id="equipmentId"
+                    name="equipmentId"
+                    label="Equipment ID (optional)"
+                    fullWidth
+                    variant="standard"
+                    type="number"
+                    value={formik.values.equipmentId}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoComplete={AUTO_COMPLETE}
+                  />
+                </FormControl>
+                <FieldError formik={formik} name="equipmentId" />
+
+                {/* Contact Person */}
+                <FormControl sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}>
+                  <TextField
+                    required
+                    margin="dense"
+                    id="contactPerson"
+                    name="contactPerson"
+                    label="Contact Person"
+                    type="text"
+                    variant="standard"
+                    value={formik.values.contactPerson}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoComplete={AUTO_COMPLETE}
+                  />
+                </FormControl>
+                <FieldError formik={formik} name="contactPerson" />
+
+                {/* Contact Phone */}
+                <FormControl sx={{ minWidth: RIGHT_PANEL_MIN_WIDTH }}>
+                  <TextField
+                    required
+                    margin="dense"
+                    id="contactPhoneNum"
+                    name="contactPhoneNum"
+                    label="Contact Phone"
+                    type="text"
+                    variant="standard"
+                    value={formik.values.contactPhoneNum}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    autoComplete={AUTO_COMPLETE}
+                  />
+                </FormControl>
+                <FieldError formik={formik} name="contactPhoneNum" />
+
+                {/* CC Fields */}
+                <CcFields
+                  showCcFields={showCcFields}
+                  setShowCcFields={setShowCcFields}
+                  formik={formik}
+                  rightPanelMinWidthPx={RIGHT_PANEL_MIN_WIDTH}
+                  autoComplete={AUTO_COMPLETE}
+                />
+
+                {/* Date Picker */}
+                <FormControl sx={{ mt: '.5rem' }}>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <span
+                      style={{
+                        color: 'rgba(0,0,0,.6)',
+                        fontSize: '11.7143px',
+                        fontWeight: '400',
+                      }}
+                    >
+                      Occurrence Date *
+                    </span>
+                    <DateTimePicker
+                      name="occurrenceDate"
+                      value={dayjs(formik.values.occurrenceDate)}
+                      onChange={handleDateChange}
+                      format="DD/MM/YYYY hh:mm A"
+                    />
+                  </LocalizationProvider>
+                </FormControl>
+                <FieldError formik={formik} name="occurrenceDate" />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div
+              className={`${styles.buttonsDiv} flex justify-evenly mt-[1.3rem]`}
+            >
+              <Button
+                onClick={handleClose}
+                variant="outlined"
+                style={{
+                  color: colors.grey[500],
+                  border: `1px solid ${colors.grey[500]}`,
+                }}
+              >
+                Cancel
+              </Button>
+              <SubmitButton
+                label="Submit Ticket"
+                loadingText="Creating..."
+                isValid={formik.dirty && formik.isValid}
+                isSubmitting={formik.isSubmitting}
+                onClick={formik.handleSubmit}
+              />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+});
