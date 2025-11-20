@@ -32,11 +32,12 @@ import { config } from '@b2b-tickets/config';
 
 import styles from './CreateUserModal.module.scss';
 
-function CreateUserModal({ rolesList, closeModal }) {
+function CreateUserModal({ usersList, rolesList, closeModal }) {
   const [loading, setLoading] = useState(false);
   const [customersList, setCustomersList] = useState([]);
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
-
+  const [multipleCompaniesPopupVisible, setMultipleCompaniesPopupVisible] =
+    useState(false);
   const userRoleRef = useRef();
 
   const [roles, setRoles] = useState(rolesList);
@@ -109,6 +110,10 @@ function CreateUserModal({ rolesList, closeModal }) {
 
   useEffect(() => {
     if (formState.status === 'SUCCESS') closeModal();
+
+    if (formState.status === 'INFO') {
+      setMultipleCompaniesPopupVisible(true);
+    }
   }, [formState.status, formState.timestamp]);
 
   useEffect(() => {
@@ -163,6 +168,56 @@ function CreateUserModal({ rolesList, closeModal }) {
       isDisabled: false,
     })),
   ];
+
+  const MultipleCompaniesAssociationPopupMessage = () => {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10 z-20">
+        <div className="min-w-[400px] max-w-[550px] bg-white px-10 py-5 rounded-lg max-h-[70vh] overflow-y-auto text-center border border-gray-400">
+          <div>The following Email address:</div>
+          <div className="text-left my-4 border border-gray-300 p-4 rounded-md bg-gray-100">
+            <div>Email: {formik.values.email}</div>
+          </div>
+          <div>is already associated with the following companies:</div>
+          <div className="py-4 my-4 border border-gray-300 p-4 rounded-md bg-gray-100 text-left">
+            <ol className="list-decimal list-inside">
+              <li>Intracom</li>
+              <li>AB Vassilopoulos</li>
+            </ol>
+          </div>
+          <div className="">
+            Are you sure you want to associate the user with:
+          </div>
+          <div className="py-3 my-4 border border-gray-300 rounded-md bg-gray-100 text-center font-bold">
+            Intracat
+          </div>
+          <div className="">company also ?</div>
+
+          {/* Hidden Input to signal proceeding anyway */}
+          <input
+            type="hidden"
+            name="addUserAnywayToRepresentMultipleCompanies"
+            value={true}
+          />
+
+          <div className="flex justify-around gap-4 my-5">
+            <SubmitButton
+              label="Yes, proceed anyway"
+              loading="Creating ..."
+              isValid={formik.dirty && formik.isValid}
+            />
+
+            <button
+              onClick={() => setMultipleCompaniesPopupVisible(false)}
+              className="border border-black bg-[#fff] text-black rounded-lg px-3 py-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
       <div className="max-w-[695px] bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">
@@ -180,6 +235,9 @@ function CreateUserModal({ rolesList, closeModal }) {
               className="flex flex-col gap-2 pt-3 md:min-w-[500px]"
               action={action}
             >
+              {multipleCompaniesPopupVisible && (
+                <MultipleCompaniesAssociationPopupMessage />
+              )}
               <div className="space-y-1.5">
                 <label htmlFor="company" className={styles.inputDescription}>
                   Company Name

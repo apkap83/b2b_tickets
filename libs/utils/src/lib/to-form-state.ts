@@ -2,7 +2,7 @@ import * as yup from 'yup';
 import { ZodError } from 'zod';
 
 export type FormState = {
-  status: 'UNSET' | 'SUCCESS' | 'ERROR';
+  status: 'UNSET' | 'SUCCESS' | 'ERROR' | 'INFO';
   message: string;
   extraData?: string;
   fieldErrors: Record<string, string[]> | string | undefined;
