@@ -735,3 +735,15 @@ export const isTextContent = (buffer: Buffer): boolean => {
 
   return sample.length > 0 && textChars / sample.length > 0.25; // 25% text characters
 };
+
+export function getUserIdentifier(userName: string, email: string): string {
+  // UUID regex pattern (matches v1, v4, v5, etc.)
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (uuidRegex.test(userName)) {
+    return email;
+  }
+
+  return userName;
+}
