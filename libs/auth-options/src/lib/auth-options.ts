@@ -645,7 +645,7 @@ export const options: NextAuthOptions = {
   },
   secret: process.env['NEXTAUTH_SECRET'],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         const customUser = user as User; // Explicitly cast to extended User type
         token.user_id = Number(customUser.user_id);
@@ -658,6 +658,110 @@ export const options: NextAuthOptions = {
         token.roles = customUser.roles;
         token.permissions = customUser.permissions;
         token.authenticationType = customUser.authenticationType;
+      }
+
+      // Validate company switch on the server
+      if (trigger === 'update' && session) {
+        const logRequest = await getRequestLogger(TransportName.AUTH);
+
+        // Only process if customer_id is being updated
+        if (session.customer_id) {
+          const newCustomerId = Number(session.customer_id);
+
+          try {
+            // Set schema and timezone for database query
+            await setSchemaAndTimezone(pgB2Bpool);
+
+            // SERVER-SIDE VALIDATION: Get full user record for this company
+            const validationQuery = `
+          SELECT DISTINCT 
+            u.user_id, 
+            u.username,
+            u.first_name, 
+            u.last_name, 
+            u.mobile_phone,
+            u.email,
+            c.customer_id, 
+            c.customer_name
+          FROM users u
+          INNER JOIN customers c ON u.customer_id = c.customer_id
+          WHERE u.email = $1
+            AND c.customer_id = $2
+            AND c.customer_id != -1
+            AND u.is_active = 'y'
+        `;
+
+            const result = await pgB2Bpool.query(validationQuery, [
+              token.email, // Use email from existing token (trusted)
+              newCustomerId,
+            ]);
+
+            // AUTHORIZATION CHECK
+            if (result.rows.length > 0) {
+              const userData = result.rows[0];
+
+              // Update basic user fields from database
+              token.user_id = Number(userData.user_id);
+              token.customer_id = Number(userData.customer_id);
+              token.customer_name = userData.customer_name;
+              token.userName = userData.username;
+              token.firstName = userData.first_name;
+              token.lastName = userData.last_name;
+              token.mobilePhone = userData.mobile_phone || '';
+              token.email = userData.email;
+
+              // CRITICAL: Fetch roles and permissions for the NEW user_id
+              const userWithRoles = await B2BUser.findOne({
+                where: { user_id: userData.user_id },
+                include: {
+                  model: AppRole,
+                  include: [AppPermission],
+                },
+              });
+
+              if (userWithRoles) {
+                // Update roles
+                token.roles = userWithRoles.AppRoles.map(
+                  (role: any) => role.roleName as AppRoleTypes
+                );
+
+                // Update permissions
+                token.permissions = userWithRoles.AppRoles.flatMap(
+                  (role: any) =>
+                    role.AppPermissions.map((permission: any) => ({
+                      permissionName: permission.permissionName,
+                      permissionEndPoint: permission.endPoint,
+                      permissionDescription: permission.description,
+                    }))
+                );
+              } else {
+                logRequest.warn(
+                  `No roles found for user_id ${userData.user_id}`
+                );
+                token.roles = [];
+                token.permissions = [];
+              }
+
+              // Log the switch for audit purposes
+              logRequest.info(
+                `JWT Update SUCCESS: Email '${token.email}' switched from user_id ${token.user_id} to ${userData.user_id} for company ${newCustomerId} (${token.customer_name})`
+              );
+            } else {
+              // UNAUTHORIZED ATTEMPT - Do not update token
+              logRequest.error(
+                `SECURITY ALERT: Email '${token.email}' attempted unauthorized company switch to ${newCustomerId}`
+              );
+
+              // Keep the existing token unchanged
+            }
+          } catch (error) {
+            logRequest.error(
+              `JWT Update Error for email ${token.email}: ${error}`
+            );
+
+            // On error, keep existing token unchanged
+          }
+        }
       }
 
       // Add expiration time to the token
