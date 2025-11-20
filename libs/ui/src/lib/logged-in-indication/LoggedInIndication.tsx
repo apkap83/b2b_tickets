@@ -6,7 +6,7 @@ import { FaCircleUser } from 'react-icons/fa6';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
-import { userHasRole } from '@b2b-tickets/utils';
+import { userHasRole, getUserIdentifier } from '@b2b-tickets/utils';
 import { AppRoleTypes } from '@b2b-tickets/shared-models';
 
 export const LoggedInIndication = ({ session, customerName }: any) => {
@@ -58,7 +58,11 @@ export const LoggedInIndication = ({ session, customerName }: any) => {
             }}
           >
             <span className="whitespace-nowrap">
-              Log Out - {session?.user?.userName}
+              Log Out -{' '}
+              {getUserIdentifier(
+                session?.user?.userName,
+                session?.user?.email
+              ) || ''}
             </span>
           </li>
         </ul>
@@ -83,7 +87,8 @@ export const LoggedInIndication = ({ session, customerName }: any) => {
       >
         <PersonOutlinedIcon />
         <span className="loggedInUserName text-xs leading-3 ">
-          {session?.user?.userName || ''}
+          {getUserIdentifier(session?.user?.userName, session?.user?.email) ||
+            ''}
         </span>
         <div
           style={{
