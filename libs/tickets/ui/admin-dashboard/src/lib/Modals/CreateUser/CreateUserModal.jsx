@@ -32,7 +32,7 @@ import { config } from '@b2b-tickets/config';
 
 import styles from './CreateUserModal.module.scss';
 
-function CreateUserModal({ usersList, rolesList, closeModal }) {
+function CreateUserModal({ rolesList, closeModal }) {
   const [loading, setLoading] = useState(false);
   const [customersList, setCustomersList] = useState([]);
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);

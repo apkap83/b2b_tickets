@@ -20,7 +20,11 @@ import { updateMFAMethodForUser } from '@b2b-tickets/admin-server-actions';
 import styles from './css/UsersTab.module.scss';
 import config from '@b2b-tickets/config';
 import toast from 'react-hot-toast';
-import { convertTo24HourFormat, convertToLocalTime } from '@b2b-tickets/utils';
+import {
+  convertTo24HourFormat,
+  convertToLocalTime,
+  getUserIdentifier,
+} from '@b2b-tickets/utils';
 
 const userDetailsInitalState = {
   firstName: null,
@@ -115,7 +119,7 @@ export function UsersTab({ usersList, rolesList }) {
                   <td>{user.last_name}</td>
                   <td className="text-wrap" style={{ maxWidth: '150px' }}>
                     <span style={{ wordBreak: 'break-all' }}>
-                      {user.username}
+                      {getUserIdentifier(user.username, user.email)}
                     </span>{' '}
                   </td>
 

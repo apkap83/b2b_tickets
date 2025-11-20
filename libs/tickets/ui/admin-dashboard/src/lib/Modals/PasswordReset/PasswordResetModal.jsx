@@ -12,7 +12,10 @@ import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { SubmitButton } from '../../common/SubmitButton';
 import { CancelButton } from '../../common/CancelButton';
 import { FaUserLarge } from 'react-icons/fa6';
-import { passwordComplexitySchema } from '@b2b-tickets/utils';
+import {
+  passwordComplexitySchema,
+  getUserIdentifier,
+} from '@b2b-tickets/utils';
 
 const validationSchema = Yup.object({
   password: passwordComplexitySchema,
@@ -87,12 +90,17 @@ export const PasswordResetModal = ({ userDetails, closeModal }) => {
             className="flex flex-col gap-3 pt-3 mx-4 w-[300px]"
             action={action}
           >
+            {/* Hidden Input for email address */}
+            <input type="hidden" name="email" value={userDetails.email} />
             <label className="input input-bordered flex items-center gap-2 text-gray-400">
               <FaUserLarge className="w-4 h-4 opacity-70 " />
               <input
                 type="text"
                 name="username"
-                value={userDetails.userName}
+                value={getUserIdentifier(
+                  userDetails.userName,
+                  userDetails.email
+                )}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 className="grow"
