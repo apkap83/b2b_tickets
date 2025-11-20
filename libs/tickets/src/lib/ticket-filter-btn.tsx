@@ -97,7 +97,7 @@ export const TicketFilter = () => {
         <div className="text-xs flex flex-col justify-center items-center gap-0">
           {searchParams.get('query')?.toString() === FilterTicketsStatus.All ||
           searchParams.get('query')?.toString() === undefined ? (
-            <VscFilterFilled color="#514f4f" />
+            <VscFilterFilled className={'text-[#514f4f]'} />
           ) : (
             <>
               <VscFilterFilled />
