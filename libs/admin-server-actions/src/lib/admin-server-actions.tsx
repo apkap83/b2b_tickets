@@ -39,6 +39,8 @@ import { TransportName } from '@b2b-tickets/shared-models';
 import { sendEmailsForUserCreation } from '@b2b-tickets/email-service/server';
 import { EmailNotificationType } from '@b2b-tickets/shared-models';
 import { PresenceService } from '@b2b-tickets/redis-service';
+//@ts-ignore
+import { v7 as uuidv7 } from 'uuid';
 
 const verifySecurityPermission = async (
   permissionName: AppPermissionTypes | AppPermissionTypes[]
@@ -188,7 +190,6 @@ export const getAdminDashboardData = async () => {
       }
     }
 
-    // console.log('plainUsersListWithRoles:', plainUsersListWithRoles);
     return {
       userStats: {
         totalUsers: plainUsersListWithRoles.length,
@@ -483,9 +484,12 @@ export async function createUser(formState: any, formData: any) {
     const inform_user_for_new_account_by_email = formData.get(
       'inform_user_for_new_account_by_email'
     );
+    const addUserAnywayToRepresentMultipleCompanies = formData.get(
+      'addUserAnywayToRepresentMultipleCompanies'
+    );
 
     // Username === email
-    const userName = email;
+    let userName = email;
 
     // Generate a Random Password and add Some More Complexity
     // This password will never be used from the User since it is unknown even to admin
@@ -511,18 +515,23 @@ export async function createUser(formState: any, formData: any) {
 
     // Check if the user already exists (optional step)
     const existingEmail = await B2BUser.findOne({ where: { email } });
+
+    // Information message for multiple companies representation
+    if (existingEmail && !addUserAnywayToRepresentMultipleCompanies) {
+      return toFormState('INFO', 'User with this email already exists.');
+    }
+    // Proceed anyway
+    if (existingEmail && addUserAnywayToRepresentMultipleCompanies) {
+      // User Name will be a random UUID
+      userName = uuidv7().toString();
+    }
+
     const existingUserName = await B2BUser.findOne({
       where: { username: userName },
     });
-    // const existingMobilePhone = await B2BUser.findOne({
-    //   where: { mobile_phone: mobilePhone },
-    // });
 
-    if (existingEmail) throw new Error('User with this email already exists.');
     if (existingUserName)
       throw new Error('User with this user name already exists.');
-    // if (existingMobilePhone)
-    //   throw new Error('User with this mobile phone already exists.');
 
     // Get next user_id from sequence
     await setSchemaAndTimezone(pgB2Bpool);
@@ -593,10 +602,14 @@ export async function createUser(formState: any, formData: any) {
     );
 
     // If the execution reaches this line, no errors were thrown.
-    // We commit the transaction.
+    // Commit the transaction.
     await t.commit();
 
-    if (inform_user_for_new_account_by_email)
+    // Inform user for New account Only by email
+    if (
+      inform_user_for_new_account_by_email &&
+      !addUserAnywayToRepresentMultipleCompanies
+    )
       sendEmailsForUserCreation({
         emailNotificationType: EmailNotificationType.USER_CREATION,
         email,
@@ -968,6 +981,8 @@ export async function updateUserPassword(formState: any, formData: any) {
 
     const userName = formData.get('username');
     const password = formData.get('password');
+    const email = formData.get('email');
+
     const verifyPassword = formData.get('verifyPassword');
 
     // If the userName provided in this function is different from the logged in user name
@@ -981,6 +996,7 @@ export async function updateUserPassword(formState: any, formData: any) {
 
     const userData = {
       userName,
+      email,
       password,
       verifyPassword,
     };
@@ -990,31 +1006,34 @@ export async function updateUserPassword(formState: any, formData: any) {
     });
 
     // Check if the user already exists
-    const user = await B2BUser.findOne({ where: { username: userName } });
+    const users: (typeof B2BUser)[] = await B2BUser.findAll({
+      where: { email: email },
+    });
 
-    if (!user)
-      throw new Error(`User with user name ${userName} was not found!`);
+    if (!users || users.length === 0) {
+      throw new Error(`No users found with email ${email}`);
+    }
 
-    // Only admin can change the password of admin
-    //@ts-ignore
-    if (userName === 'admin' && session?.user.userName !== 'admin') {
+    // Check if trying to change admin password
+    const hasAdminUser = users.some(
+      (user: typeof B2BUser) => user.userName === 'admin'
+    );
+    if (hasAdminUser && session?.user.userName !== 'admin') {
       logRequest.info(
-        //@ts-ignore
         `A.F.: ${session?.user.userName} - Tried to change the password of admin user and was denied`
       );
-
       throw new Error(`You cannot change the password of admin user`);
     }
 
-    // @ts-ignore
-    user.password = password;
+    // Loop over all users and update their passwords
+    for (const user of users) {
+      user.password = password;
+      await user.save();
 
-    await user.save();
-
-    logRequest.info(
-      //@ts-ignore
-      `A.F.: ${session?.user.userName} - Performing Password change for user: ${userName}`
-    );
+      logRequest.info(
+        `A.F.: ${session?.user.userName} - Password changed for user: ${user.userName} (${email})`
+      );
+    }
 
     revalidatePath('/admin');
 
@@ -1180,3 +1199,116 @@ export async function deletePermission({ permission }: any) {
     return fromErrorToFormState(error);
   }
 }
+
+export const getCurrentUserCompanies = async () => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
+  try {
+    const session = await getServerSession(options);
+
+    if (!session || !session?.user) {
+      throw new Error('Unauthenticated or missing user information');
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    // Get all companies for the current user's email
+    const queryForUserCompanies = `
+      SELECT DISTINCT
+        c.customer_id,
+        c.customer_name,
+        c.customer_code
+      FROM users u
+      INNER JOIN customers c ON u.customer_id = c.customer_id
+      WHERE u.email = $1
+        AND u.is_active = 'y'
+      ORDER BY c.customer_name;
+    `;
+
+    const result = await pgB2Bpool.query(queryForUserCompanies, [
+      session.user.email,
+    ]);
+
+    logRequest.debug(
+      `Retrieved ${result.rows.length} companies for user: ${session.user.userName}`
+    );
+
+    return result.rows;
+  } catch (error) {
+    logRequest.error(error);
+    return [];
+  }
+};
+
+// Pre-validation before the client calls update()
+// Better user experience (can show error messages before attempting update)
+// Audit logging of switch attempts
+export const switchUserCompany = async (newCustomerId: number) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
+  try {
+    const session = await getServerSession(options);
+
+    if (session) {
+      logRequest.info(
+        `Session user: ${JSON.stringify({
+          userName: session.user?.userName,
+          email: session.user?.email,
+          customer_id: session.user?.customer_id,
+          customer_name: session.user?.customer_name,
+        })}`
+      );
+    }
+
+    if (!session || !session?.user) {
+      throw new Error('Unauthenticated or missing user information');
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    // Verify that the user has access to this company
+    const queryForUserCompanies = `
+      SELECT DISTINCT c.customer_id, c.customer_name
+      FROM users u
+      INNER JOIN customers c ON u.customer_id = c.customer_id
+      WHERE u.email = $1
+        AND c.customer_id = $2
+        AND c.customer_id != -1
+        AND u.is_active = 'y'
+    `;
+
+    const result = await pgB2Bpool.query(queryForUserCompanies, [
+      session.user.email,
+      newCustomerId,
+    ]);
+
+    if (result.rows.length === 0) {
+      logRequest.error(
+        `User '${session.user.userName}' attempted to access unauthorized company ${newCustomerId}`
+      );
+      throw new Error('User does not have access to this company');
+    }
+
+    const customer_name = result.rows[0].customer_name;
+
+    const returnValue = {
+      success: true,
+      customer_id: newCustomerId,
+      customer_name: customer_name,
+      shouldUpdateSession: true,
+    };
+
+    return returnValue;
+  } catch (error) {
+    logRequest.error(error);
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+};
