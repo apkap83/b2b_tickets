@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import { Typography } from '@mui/material';
-import { userHasPermission, userHasRole } from '@b2b-tickets/utils';
+import { userHasPermission } from '@b2b-tickets/utils';
 import { AppPermissionTypes, AppRoleTypes } from '@b2b-tickets/shared-models';
 import { NewTicketModal } from './new-ticket-modal';
 
@@ -15,14 +15,12 @@ import { TicketFilter } from './ticket-filter-btn';
 import {
   TicketDetail,
   TicketDetailForTicketCreator,
-  FilterTicketsStatus,
 } from '@b2b-tickets/shared-models';
 import { ExportToExcelButton } from './export-excel-btn';
 import { useEscKeyListener } from '@b2b-tickets/react-hooks';
 
 export const TicketListHeader = ({
   totalRows,
-  ticketsList,
   query,
   filter,
   currentPage,
@@ -45,6 +43,7 @@ export const TicketListHeader = ({
   useEscKeyListener(() => {
     setShowCreateTicketModal(false);
   });
+
   return (
     <Box
       className={clsx(styles.ticketDetailsContainer)}
@@ -59,14 +58,16 @@ export const TicketListHeader = ({
         Tickets
       </Typography>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
+        {/* <CompanySwitchDropdownMenu /> */}
         <ExportToExcelButton
           query={query}
           currentPage={currentPage}
           filter={filter}
-          disabled={totalRows === 0 ? true : false}
+          disabled={totalRows === 0}
         />
         <TicketFilter />
+
         {permissionForTicketCreation && (
           <Button
             variant="contained"
@@ -85,6 +86,12 @@ export const TicketListHeader = ({
                 transform: 'translateY(2px)',
                 boxShadow: '0 5px 10px rgba(0,0,0,.2)',
               },
+
+              '&:disabled': {
+                backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                color: 'rgba(0, 0, 0, 0.26)',
+                boxShadow: 'none',
+              },
             }}
           >
             Create New Ticket
@@ -95,7 +102,6 @@ export const TicketListHeader = ({
       {showCreateTicketModal && (
         <NewTicketModal
           //@ts-ignore
-          userId={session?.user.user_id}
           closeModal={() => setShowCreateTicketModal(false)}
         />
       )}
