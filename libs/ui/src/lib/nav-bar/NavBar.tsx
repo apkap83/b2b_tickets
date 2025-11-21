@@ -63,7 +63,9 @@ export const NavBar = memo(() => {
 
   useEffect(() => {
     async function loadCompanies() {
-      const userCompanies = await getCurrentUserCompanies();
+      const userCompanies = await getCurrentUserCompanies(
+        session?.user?.email || 'unknown'
+      );
       setCompanies(userCompanies);
 
       // Set user's current customer_id as default if available
@@ -155,15 +157,14 @@ export const NavBar = memo(() => {
       // Revert to previous company on error
       setSelectedCompanyId(session?.user?.customer_id?.toString() || '');
     } finally {
-      console.log('Setting isSwitchingCompany to false');
       setIsSwitchingCompany(false);
     }
   };
+
   /* Company Dropdown - Show only if user has multiple companies */
   const CompanySwitchDropdownMenu = () => {
     return (
-      permissionForTicketCreation &&
-      companies.length > 1 &&
+      // companies.length > 1 &&
       isTicketsPath && (
         <div
           className="w-full h-full relative bg-gray-900 flex items-center justify-center mr-3 px-4 "
@@ -174,6 +175,7 @@ export const NavBar = memo(() => {
           <FormControl
             size="small"
             sx={{
+              minWidth: '100px',
               backgroundColor: 'black',
               border: isSwitchingCompany ? '1px dashed gray' : '1px solid gray',
 

@@ -1200,7 +1200,7 @@ export async function deletePermission({ permission }: any) {
   }
 }
 
-export const getCurrentUserCompanies = async () => {
+export const getCurrentUserCompanies = async (emailAddress: string) => {
   const logRequest: CustomLogger = await getRequestLogger(
     TransportName.ACTIONS
   );
@@ -1210,6 +1210,16 @@ export const getCurrentUserCompanies = async () => {
 
     if (!session || !session?.user) {
       throw new Error('Unauthenticated or missing user information');
+    }
+
+    // Ticket Creators can only access their own companies (not belonging to Support Company)
+    if (
+      session.user.customer_id !== -1 &&
+      (await verifySecurityRole(AppRoleTypes.B2B_TicketCreator))
+    ) {
+      if (session.user.email !== emailAddress) {
+        throw new Error('Ticket Creators can only access their own companies');
+      }
     }
 
     await setSchemaAndTimezone(pgB2Bpool);
@@ -1224,13 +1234,11 @@ export const getCurrentUserCompanies = async () => {
       INNER JOIN customers c ON u.customer_id = c.customer_id
       WHERE u.email = $1
         AND u.is_active = 'y'
+        AND u.is_locked = 'n'
       ORDER BY c.customer_name;
     `;
 
-    const result = await pgB2Bpool.query(queryForUserCompanies, [
-      session.user.email,
-    ]);
-
+    const result = await pgB2Bpool.query(queryForUserCompanies, [emailAddress]);
     logRequest.debug(
       `Retrieved ${result.rows.length} companies for user: ${session.user.userName}`
     );
@@ -1277,8 +1285,8 @@ export const switchUserCompany = async (newCustomerId: number) => {
       INNER JOIN customers c ON u.customer_id = c.customer_id
       WHERE u.email = $1
         AND c.customer_id = $2
-        AND c.customer_id != -1
         AND u.is_active = 'y'
+        AND u.is_locked = 'n'
     `;
 
     const result = await pgB2Bpool.query(queryForUserCompanies, [

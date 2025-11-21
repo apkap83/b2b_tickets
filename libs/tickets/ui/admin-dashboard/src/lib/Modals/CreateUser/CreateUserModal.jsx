@@ -16,9 +16,15 @@ import { SubmitButton } from '../../common/SubmitButton';
 import { CancelButton } from '../../common/CancelButton';
 
 import { IoListCircle } from 'react-icons/io5';
+import { HiExclamationCircle } from 'react-icons/hi2';
+import { HiCheckCircle } from 'react-icons/hi2';
+import { IoMdBusiness } from 'react-icons/io';
+import { MdEmail } from 'react-icons/md';
+
 import {
   createUser,
   getCustomersList,
+  getCurrentUserCompanies,
 } from '@b2b-tickets/admin-server-actions';
 import { FormStateError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { passwordComplexitySchema } from '@b2b-tickets/utils';
@@ -38,6 +44,9 @@ function CreateUserModal({ rolesList, closeModal }) {
   const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
   const [multipleCompaniesPopupVisible, setMultipleCompaniesPopupVisible] =
     useState(false);
+
+  const [userCompanies, setUserCompanies] = useState([]);
+
   const userRoleRef = useRef();
 
   const [roles, setRoles] = useState(rolesList);
@@ -112,9 +121,17 @@ function CreateUserModal({ rolesList, closeModal }) {
     if (formState.status === 'SUCCESS') closeModal();
 
     if (formState.status === 'INFO') {
-      setMultipleCompaniesPopupVisible(true);
+      // FETCH THE COMPANIES HERE
+      const fetchUserCompanies = async () => {
+        const listOfCompaniesForUser = await getCurrentUserCompanies(
+          formik.values.email
+        );
+        setUserCompanies(listOfCompaniesForUser);
+        setMultipleCompaniesPopupVisible(true);
+      };
+      fetchUserCompanies();
     }
-  }, [formState.status, formState.timestamp]);
+  }, [formState.status, formState.timestamp, multipleCompaniesPopupVisible]);
 
   useEffect(() => {
     const getCustList = async () => {
@@ -169,49 +186,153 @@ function CreateUserModal({ rolesList, closeModal }) {
     })),
   ];
 
+  // const MultipleCompaniesAssociationPopupMessage = () => {
+  //   console.log('userCompanies:', userCompanies);
+  //   return (
+  //     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10 z-20">
+  //       <div className="min-w-[400px] max-w-[550px] bg-white px-10 py-5 rounded-lg max-h-[70vh] overflow-y-auto text-center border border-gray-400">
+  //         <div>The following Email address:</div>
+  //         <div className="text-left my-4 border border-gray-300 p-4 rounded-md bg-gray-100">
+  //           <div>Email: {formik.values.email}</div>
+  //         </div>
+  //         {userCompanies.length === 1 ? (
+  //           <div>is already associated with the following company:</div>
+  //         ) : (
+  //           <div>is already associated with the following companies:</div>
+  //         )}
+  //         <div className="py-4 my-4 border border-gray-300 p-4 rounded-md bg-gray-100 text-left">
+  //           <ul className="list-disc list-outside pl-4">
+  //             {userCompanies.map((company) => (
+  //               <li key={company.customer_id}>{company.customer_name}</li>
+  //             ))}
+  //           </ul>
+  //         </div>
+  //         <div className="">
+  //           Are you sure you want to associate the user with:
+  //         </div>
+  //         <div className="py-3 my-4 border border-gray-300 rounded-md bg-gray-100 text-center font-bold">
+  //           {formik.values.company.label}
+  //         </div>
+
+  //         {/* Hidden Input to signal proceeding anyway */}
+  //         <input
+  //           type="hidden"
+  //           name="addUserAnywayToRepresentMultipleCompanies"
+  //           value={true}
+  //         />
+
+  //         <div className="flex justify-around gap-4 my-5">
+  //           <SubmitButton
+  //             label="Yes, proceed anyway"
+  //             loading="Creating ..."
+  //             isValid={formik.dirty && formik.isValid}
+  //           />
+
+  //           <button
+  //             onClick={() => setMultipleCompaniesPopupVisible(false)}
+  //             className="border border-black bg-[#fff] text-black rounded-lg px-3 py-1"
+  //           >
+  //             Cancel
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // };
+
   const MultipleCompaniesAssociationPopupMessage = () => {
+    console.log('userCompanies:', userCompanies);
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10 z-20">
-        <div className="min-w-[400px] max-w-[550px] bg-white px-10 py-5 rounded-lg max-h-[70vh] overflow-y-auto text-center border border-gray-400">
-          <div>The following Email address:</div>
-          <div className="text-left my-4 border border-gray-300 p-4 rounded-md bg-gray-100">
-            <div>Email: {formik.values.email}</div>
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20 p-4">
+        <div className="min-w-[400px] max-w-[550px] bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto">
+          {/* Header with Icon */}
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-6 rounded-t-2xl">
+            <div className="flex items-center justify-center gap-3">
+              <HiExclamationCircle className="w-10 h-10 text-white" />
+              <h3 className="text-2xl font-bold text-white">
+                User Already Exists
+              </h3>
+            </div>
           </div>
-          <div>is already associated with the following companies:</div>
-          <div className="py-4 my-4 border border-gray-300 p-4 rounded-md bg-gray-100 text-left">
-            <ol className="list-decimal list-inside">
-              <li>Intracom</li>
-              <li>AB Vassilopoulos</li>
-            </ol>
-          </div>
-          <div className="">
-            Are you sure you want to associate the user with:
-          </div>
-          <div className="py-3 my-4 border border-gray-300 rounded-md bg-gray-100 text-center font-bold">
-            Intracat
-          </div>
-          <div className="">company also ?</div>
 
-          {/* Hidden Input to signal proceeding anyway */}
-          <input
-            type="hidden"
-            name="addUserAnywayToRepresentMultipleCompanies"
-            value={true}
-          />
+          {/* Content */}
+          <div className="px-8 py-6 space-y-5">
+            {/* Email Section */}
+            <div>
+              <p className="text-gray-700 text-center mb-3 font-medium">
+                The following email address:
+              </p>
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <MdEmail className="w-5 h-5 text-blue-600" />
+                  <span className="font-semibold text-gray-800">
+                    {formik.values.email}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          <div className="flex justify-around gap-4 my-5">
-            <SubmitButton
-              label="Yes, proceed anyway"
-              loading="Creating ..."
-              isValid={formik.dirty && formik.isValid}
+            {/* Existing Companies Section */}
+            <div>
+              <p className="text-gray-700 text-center mb-3 font-medium">
+                {userCompanies.length === 1
+                  ? 'is already associated with the following company:'
+                  : 'is already associated with the following companies:'}
+              </p>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
+                <ul className="space-y-2">
+                  {userCompanies.map((company, index) => (
+                    <li
+                      key={company.customer_id}
+                      className="flex items-center gap-3 text-gray-800 bg-white px-4 py-3 rounded-md shadow-sm border border-gray-100"
+                    >
+                      <IoMdBusiness className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                      <span className="font-medium">
+                        {company.customer_name}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Confirmation Section */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <p className="text-gray-700 text-center mb-3 font-medium">
+                Are you sure you want to also associate this user with:
+              </p>
+              <div className="bg-white border-2 border-yellow-400 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <IoMdBusiness className="w-6 h-6 text-yellow-600" />
+                  <span className="text-lg font-bold text-gray-800">
+                    {formik.values.company.label}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hidden Input */}
+            <input
+              type="hidden"
+              name="addUserAnywayToRepresentMultipleCompanies"
+              value={true}
             />
 
-            <button
-              onClick={() => setMultipleCompaniesPopupVisible(false)}
-              className="border border-black bg-[#fff] text-black rounded-lg px-3 py-1"
-            >
-              Cancel
-            </button>
+            {/* Action Buttons */}
+            <div className="flex pt-2 justify-center gap-10">
+              <SubmitButton
+                label="Yes, Proceed"
+                loading="Creating..."
+                isValid={formik.dirty && formik.isValid}
+                className="flex-1"
+              />
+              <button
+                onClick={() => setMultipleCompaniesPopupVisible(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg px-3 py-1 transition-colors duration-200 border border-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       </div>

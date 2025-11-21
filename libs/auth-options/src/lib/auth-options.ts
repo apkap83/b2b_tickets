@@ -660,7 +660,7 @@ export const options: NextAuthOptions = {
         token.authenticationType = customUser.authenticationType;
       }
 
-      // Validate company switch on the server
+      // SECURE: Validate company switch on the server ⭐
       if (trigger === 'update' && session) {
         const logRequest = await getRequestLogger(TransportName.AUTH);
 
@@ -672,88 +672,142 @@ export const options: NextAuthOptions = {
             // Set schema and timezone for database query
             await setSchemaAndTimezone(pgB2Bpool);
 
-            // SERVER-SIDE VALIDATION: Get full user record for this company
+            // CRITICAL: Verify that THIS SPECIFIC USER (by email AND current user_id context)
+            // has a valid user record for the target company
+
+            // Step 1: Get ALL user records for this email
+            const allUserRecordsQuery = `
+        SELECT DISTINCT 
+          u.user_id, 
+          u.username,
+          u.first_name, 
+          u.last_name, 
+          u.mobile_phone,
+          u.email,
+          c.customer_id, 
+          c.customer_name
+        FROM users u
+        INNER JOIN customers c ON u.customer_id = c.customer_id
+        WHERE u.email = $1
+          AND u.is_active = 'y'
+          AND u.is_locked = 'n'
+      `;
+
+            const allRecords = await pgB2Bpool.query(allUserRecordsQuery, [
+              token.email,
+            ]);
+
+            logRequest.info(
+              `User email '${token.email}' has ${allRecords.rows.length} active company associations`
+            );
+
+            // Step 2: Verify the target company is in the user's allowed list
+            const targetCompanyRecord = allRecords.rows.find(
+              (record: any) => Number(record.customer_id) === newCustomerId
+            );
+
+            if (!targetCompanyRecord) {
+              // SECURITY BREACH DETECTED
+              logRequest.error(
+                `SECURITY ALERT: User email '${
+                  token.email
+                }' (current user_id: ${
+                  token.user_id
+                }) attempted unauthorized company switch to ${newCustomerId}. Available companies: ${allRecords.rows
+                  .map((r: any) => r.customer_id)
+                  .join(', ')}`
+              );
+
+              // Keep the existing token unchanged - attack blocked
+              return token;
+            }
+
+            // Step 3: User is authorized - get the specific user record for this company
             const validationQuery = `
-          SELECT DISTINCT 
-            u.user_id, 
-            u.username,
-            u.first_name, 
-            u.last_name, 
-            u.mobile_phone,
-            u.email,
-            c.customer_id, 
-            c.customer_name
-          FROM users u
-          INNER JOIN customers c ON u.customer_id = c.customer_id
-          WHERE u.email = $1
-            AND c.customer_id = $2
-            AND c.customer_id != -1
-            AND u.is_active = 'y'
-        `;
+        SELECT DISTINCT 
+          u.user_id, 
+          u.username,
+          u.first_name, 
+          u.last_name, 
+          u.mobile_phone,
+          u.email,
+          c.customer_id, 
+          c.customer_name
+        FROM users u
+        INNER JOIN customers c ON u.customer_id = c.customer_id
+        WHERE u.email = $1
+          AND c.customer_id = $2
+          AND u.is_active = 'y'
+          AND u.is_locked = 'n'
+      `;
 
             const result = await pgB2Bpool.query(validationQuery, [
-              token.email, // Use email from existing token (trusted)
+              token.email,
               newCustomerId,
             ]);
 
-            // AUTHORIZATION CHECK
-            if (result.rows.length > 0) {
-              const userData = result.rows[0];
+            if (result.rows.length === 0) {
+              logRequest.error(
+                `Unexpected error: Validation query returned no results for email '${token.email}' and company ${newCustomerId}`
+              );
+              return token;
+            }
 
-              // Update basic user fields from database
-              token.user_id = Number(userData.user_id);
-              token.customer_id = Number(userData.customer_id);
-              token.customer_name = userData.customer_name;
-              token.userName = userData.username;
-              token.firstName = userData.first_name;
-              token.lastName = userData.last_name;
-              token.mobilePhone = userData.mobile_phone || '';
-              token.email = userData.email;
+            const userData = result.rows[0];
 
-              // CRITICAL: Fetch roles and permissions for the NEW user_id
-              const userWithRoles = await B2BUser.findOne({
-                where: { user_id: userData.user_id },
-                include: {
-                  model: AppRole,
-                  include: [AppPermission],
-                },
-              });
+            // Log the original user_id before switching
+            const originalUserId = token.user_id;
+            const originalCustomerId = token.customer_id;
 
-              if (userWithRoles) {
-                // Update roles
-                token.roles = userWithRoles.AppRoles.map(
-                  (role: any) => role.roleName as AppRoleTypes
-                );
+            // Update basic user fields from database
+            token.user_id = Number(userData.user_id);
+            token.customer_id = Number(userData.customer_id);
+            token.customer_name = userData.customer_name;
+            token.userName = userData.username;
+            token.firstName = userData.first_name;
+            token.lastName = userData.last_name;
+            token.mobilePhone = userData.mobile_phone || '';
+            token.email = userData.email;
 
-                // Update permissions
-                token.permissions = userWithRoles.AppRoles.flatMap(
-                  (role: any) =>
-                    role.AppPermissions.map((permission: any) => ({
-                      permissionName: permission.permissionName,
-                      permissionEndPoint: permission.endPoint,
-                      permissionDescription: permission.description,
-                    }))
-                );
-              } else {
-                logRequest.warn(
-                  `No roles found for user_id ${userData.user_id}`
-                );
-                token.roles = [];
-                token.permissions = [];
-              }
+            // CRITICAL: Fetch roles and permissions for the NEW user_id
+            const userWithRoles = await B2BUser.findOne({
+              where: { user_id: userData.user_id },
+              include: {
+                model: AppRole,
+                include: [AppPermission],
+              },
+            });
 
-              // Log the switch for audit purposes
+            if (userWithRoles) {
+              // Update roles
+              token.roles = userWithRoles.AppRoles.map(
+                (role: any) => role.roleName as AppRoleTypes
+              );
+
+              // Update permissions
+              token.permissions = userWithRoles.AppRoles.flatMap((role: any) =>
+                role.AppPermissions.map((permission: any) => ({
+                  permissionName: permission.permissionName,
+                  permissionEndPoint: permission.endPoint,
+                  permissionDescription: permission.description,
+                }))
+              );
+
               logRequest.info(
-                `JWT Update SUCCESS: Email '${token.email}' switched from user_id ${token.user_id} to ${userData.user_id} for company ${newCustomerId} (${token.customer_name})`
+                `Roles and permissions updated for user_id ${
+                  userData.user_id
+                }: ${token.roles.join(', ')}`
               );
             } else {
-              // UNAUTHORIZED ATTEMPT - Do not update token
-              logRequest.error(
-                `SECURITY ALERT: Email '${token.email}' attempted unauthorized company switch to ${newCustomerId}`
-              );
-
-              // Keep the existing token unchanged
+              logRequest.warn(`No roles found for user_id ${userData.user_id}`);
+              token.roles = [];
+              token.permissions = [];
             }
+
+            // Log the successful switch with full context
+            logRequest.info(
+              `JWT Update SUCCESS: Email '${token.email}' switched from [user_id: ${originalUserId}, company: ${originalCustomerId}] to [user_id: ${userData.user_id}, company: ${newCustomerId} (${token.customer_name})]`
+            );
           } catch (error) {
             logRequest.error(
               `JWT Update Error for email ${token.email}: ${error}`
