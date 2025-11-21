@@ -26,6 +26,7 @@ jest.mock('@b2b-tickets/db-access', () => ({
   B2BUser: {
     scope: jest.fn().mockReturnThis(),
     findOne: jest.fn(),
+    findAll: jest.fn(), // ⭐ ADD THIS - needed for bulk updates
   },
   pgB2Bpool: {
     query: jest.fn(),
@@ -54,6 +55,7 @@ describe('Testing tryLocalAuthentication function', () => {
   const mockLogger = {
     debug: jest.fn(),
     error: jest.fn(),
+    info: jest.fn(), // ⭐ ADD THIS - your updated code uses info logging
   };
 
   beforeEach(() => {
@@ -72,6 +74,7 @@ describe('Testing tryLocalAuthentication function', () => {
       is_locked: 'n',
       last_login_failed_attempts: 0,
       last_login_status: 'i',
+      last_login_attempt: new Date(),
       is_active: 'y',
       first_name: 'John',
       last_name: 'Doe',
@@ -80,7 +83,7 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
-      save: jest.fn().mockResolvedValue(true), // Add this line
+      save: jest.fn().mockResolvedValue(true),
       AppRoles: [
         {
           roleName: 'admin',
@@ -95,10 +98,13 @@ describe('Testing tryLocalAuthentication function', () => {
       ],
     };
 
-    // Mocking the ORM methods
+    // ⭐ Mock findOne (finds the first user)
     (B2BUser.scope as jest.Mock).mockReturnValue({
       findOne: jest.fn().mockResolvedValue(mockUser),
     });
+
+    // ⭐ Mock findAll (gets all users with same email for bulk update)
+    (B2BUser.findAll as jest.Mock).mockResolvedValue([mockUser]);
 
     // Mock bcrypt.compare to return true
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -108,7 +114,7 @@ describe('Testing tryLocalAuthentication function', () => {
       rows: [{ customer_name: 'Test Customer' }],
     });
 
-    // Mock pgB2Bpool.query to return customer name
+    // Mock setSchemaAndTimezone
     (setSchemaAndTimezone as jest.Mock).mockResolvedValue(null);
 
     const result = await tryLocalAuthentication(
@@ -124,6 +130,9 @@ describe('Testing tryLocalAuthentication function', () => {
     expect(mockLogger.debug).toHaveBeenCalledWith(
       'Valid User Name/Password was provided'
     );
+
+    // ⭐ Verify findAll was called
+    expect(B2BUser.findAll).toHaveBeenCalled();
   });
 
   it('should throw an error if the user is locked', async () => {
@@ -143,12 +152,18 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
-      save: jest.fn().mockResolvedValue(true), // Add this line
+      last_login_status: 'i',
+      last_login_failed_attempts: 0,
+      last_login_attempt: new Date(),
+      save: jest.fn().mockResolvedValue(true),
     };
 
     (B2BUser.scope as jest.Mock).mockReturnValue({
       findOne: jest.fn().mockResolvedValue(mockUser),
     });
+
+    // ⭐ Mock findAll for bulk update
+    (B2BUser.findAll as jest.Mock).mockResolvedValue([mockUser]);
 
     await expect(
       tryLocalAuthentication(credentials, mockLogger as unknown as CustomLogger)
@@ -157,6 +172,9 @@ describe('Testing tryLocalAuthentication function', () => {
     expect(mockLogger.error).toHaveBeenCalledWith(
       "User with user name 'lockedUser' is currently locked"
     );
+
+    // ⭐ Verify all user records were updated
+    expect(mockUser.save).toHaveBeenCalled();
   });
 
   it('should throw an error if the user is inactive', async () => {
@@ -176,12 +194,18 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
-      save: jest.fn().mockResolvedValue(true), // Add this line
+      last_login_status: 'i',
+      last_login_failed_attempts: 0,
+      last_login_attempt: new Date(),
+      save: jest.fn().mockResolvedValue(true),
     };
 
     (B2BUser.scope as jest.Mock).mockReturnValue({
       findOne: jest.fn().mockResolvedValue(mockUser),
     });
+
+    // ⭐ Mock findAll for bulk update
+    (B2BUser.findAll as jest.Mock).mockResolvedValue([mockUser]);
 
     await expect(
       tryLocalAuthentication(credentials, mockLogger as unknown as CustomLogger)
@@ -212,12 +236,18 @@ describe('Testing tryLocalAuthentication function', () => {
       authentication_type: 'local',
       change_password: 'n',
       mfa_method: 'sms',
-      save: jest.fn().mockResolvedValue(true), // Add this line
+      last_login_status: 'i',
+      last_login_failed_attempts: 0,
+      last_login_attempt: new Date(),
+      save: jest.fn().mockResolvedValue(true),
     };
 
     (B2BUser.scope as jest.Mock).mockReturnValue({
       findOne: jest.fn().mockResolvedValue(mockUser),
     });
+
+    // ⭐ Mock findAll for bulk update
+    (B2BUser.findAll as jest.Mock).mockResolvedValue([mockUser]);
 
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
@@ -245,6 +275,94 @@ describe('Testing tryLocalAuthentication function', () => {
       'Incorrect user name provided'
     );
   });
+
+  // Multiple users with same email
+  it('should update all user records with the same email on successful login', async () => {
+    const credentials = {
+      userName: 'test@example.com',
+      password: 'validPassword',
+    };
+
+    const mockUser1 = {
+      user_id: 1,
+      customer_id: 100,
+      username: 'user1',
+      email: 'test@example.com',
+      password: '$2b$10$validhashedpassword',
+      is_locked: 'n',
+      is_active: 'y',
+      first_name: 'John',
+      last_name: 'Doe',
+      mobile_phone: '123456789',
+      authentication_type: 'local',
+      change_password: 'n',
+      mfa_method: 'sms',
+      last_login_status: 'i',
+      last_login_failed_attempts: 0,
+      last_login_attempt: new Date(),
+      save: jest.fn().mockResolvedValue(true),
+      AppRoles: [
+        {
+          roleName: 'admin',
+          AppPermissions: [
+            {
+              permissionName: 'view',
+              endPoint: '/view',
+              description: 'View permission',
+            },
+          ],
+        },
+      ],
+    };
+
+    const mockUser2 = {
+      ...mockUser1,
+      user_id: 2,
+      customer_id: 200,
+      username: 'user2',
+      save: jest.fn().mockResolvedValue(true),
+    };
+
+    (B2BUser.scope as jest.Mock).mockReturnValue({
+      findOne: jest.fn().mockResolvedValue(mockUser1),
+    });
+
+    // Mock findAll returns multiple users
+    (B2BUser.findAll as jest.Mock).mockResolvedValue([mockUser1, mockUser2]);
+
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    (pgB2Bpool.query as jest.Mock).mockResolvedValue({
+      rows: [{ customer_name: 'Test Customer' }],
+    });
+    (setSchemaAndTimezone as jest.Mock).mockResolvedValue(null);
+    (isValidEmail as jest.Mock).mockReturnValue(true);
+    (getWhereObj as jest.Mock).mockReturnValue({ email: 'test@example.com' });
+
+    const result = await tryLocalAuthentication(
+      credentials,
+      mockLogger as unknown as CustomLogger
+    );
+
+    // Verify the function returns the correct user details
+    expect(result).toHaveProperty('userName', 'user1');
+    expect(result).toHaveProperty('email', 'test@example.com');
+    expect(result).toHaveProperty('customer_name', 'Test Customer');
+
+    // Verify both user records were updated (bulk update logic)
+    expect(mockUser1.save).toHaveBeenCalled();
+    expect(mockUser2.save).toHaveBeenCalled();
+
+    // Verify findAll was called to get all user records with same email
+    expect(B2BUser.findAll).toHaveBeenCalledWith({
+      where: { email: 'test@example.com' },
+    });
+
+    // Verify login status was updated to successful for both users
+    expect(mockUser1.last_login_status).toBe('s');
+    expect(mockUser1.last_login_failed_attempts).toBe(0);
+    expect(mockUser2.last_login_status).toBe('s');
+    expect(mockUser2.last_login_failed_attempts).toBe(0);
+  });
 });
 
 describe('Testing performPasswordReset function', () => {
@@ -267,6 +385,7 @@ describe('Testing performPasswordReset function', () => {
     mockFoundUser = {
       password: 'hashedPassword',
       change_password: 'y',
+      password_change_date: new Date(),
       save: jest.fn().mockResolvedValue(true),
     };
 
@@ -303,8 +422,9 @@ describe('Testing performPasswordReset function', () => {
     );
   });
 
+  // ... rest of your performPasswordReset tests remain the same
+
   it('should throw error when user is not found', async () => {
-    // Arrange
     const credentials = {
       userName: 'nonexistent@example.com',
       password: 'password',
@@ -313,7 +433,6 @@ describe('Testing performPasswordReset function', () => {
 
     (B2BUser.findOne as jest.Mock).mockResolvedValue(null);
 
-    // Act & Assert
     await expect(performPasswordReset(credentials, mockLogger)).rejects.toThrow(
       ErrorCode.IncorrectUsernameOrPassword
     );
@@ -324,7 +443,6 @@ describe('Testing performPasswordReset function', () => {
   });
 
   it('should throw error when password does not match', async () => {
-    // Arrange
     const credentials = {
       userName: 'test@example.com',
       password: 'wrongPassword',
@@ -334,7 +452,6 @@ describe('Testing performPasswordReset function', () => {
     (B2BUser.findOne as jest.Mock).mockResolvedValue(mockFoundUser);
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-    // Act & Assert
     await expect(performPasswordReset(credentials, mockLogger)).rejects.toThrow(
       ErrorCode.IncorrectUsernameOrPassword
     );
@@ -345,25 +462,21 @@ describe('Testing performPasswordReset function', () => {
   });
 
   it('should throw error when new password is not provided', async () => {
-    // Arrange
     const credentials = {
       userName: 'test@example.com',
       password: 'currentPassword',
-      // newPassword is missing
     };
 
     (B2BUser.findOne as jest.Mock).mockResolvedValue(mockFoundUser);
 
-    // Act & Assert
     await expect(performPasswordReset(credentials, mockLogger)).rejects.toThrow(
       ErrorCode.NewPasswordRequired
     );
   });
 
   it('should handle username as non-email identifier', async () => {
-    // Arrange
     const credentials = {
-      userName: 'testUsername', // Not an email
+      userName: 'testUsername',
       password: 'currentPassword',
       newPassword: 'newSecurePassword123',
     };
@@ -372,22 +485,18 @@ describe('Testing performPasswordReset function', () => {
     (getWhereObj as jest.Mock).mockReturnValue({ username: 'testUsername' });
     (B2BUser.findOne as jest.Mock).mockResolvedValue(mockFoundUser);
 
-    // Act
     const result = await performPasswordReset(credentials, mockLogger);
 
-    // Assert
     expect(result).toBe(true);
     expect(getWhereObj).toHaveBeenCalledWith(credentials, false);
   });
 
   it('should handle undefined credentials gracefully', async () => {
-    // Arrange
     const credentials = undefined;
 
-    // Act & Assert
     await expect(
       performPasswordReset(credentials, mockLogger)
-    ).rejects.toThrow(); // Some error will be thrown due to trying to access undefined
+    ).rejects.toThrow();
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       'Performing Password Reset for user name: Not Given'
@@ -395,14 +504,12 @@ describe('Testing performPasswordReset function', () => {
   });
 
   it('should throw error when username is null in credentials object', async () => {
-    // Arrange
     const credentials = {
       userName: null,
       password: 'currentPassword',
       newPassword: 'newSecurePassword123',
     };
 
-    // Act & Assert
     await expect(performPasswordReset(credentials, mockLogger)).rejects.toThrow(
       ErrorCode.UserNotFound
     );
