@@ -10,6 +10,7 @@ import {
   AppPermissionType,
   AppRoleTypes,
   CredentialsType,
+  B2BUserType,
 } from '@b2b-tickets/shared-models';
 import {
   AppPermission,
@@ -94,16 +95,40 @@ export const tryLocalAuthentication = async (
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
-    foundUser.last_login_attempt = new Date();
+    // ⭐ Get ALL user records with this email for bulk updates
+    const allUserRecords = await B2BUser.findAll({
+      where: emailProvided
+        ? { email: credentials?.userName.toLowerCase() }
+        : { username: credentials?.userName },
+    });
+
+    // ⭐ Update last_login_attempt for ALL records
+    const updatePromises = allUserRecords.map(async (user: typeof B2BUser) => {
+      user.last_login_attempt = new Date();
+      return user.save();
+    });
+    await Promise.all(updatePromises);
+
+    // foundUser.last_login_attempt = new Date();
 
     if (foundUser.is_locked === 'y') {
       logRequest.error(
         `User with user name '${foundUser.username}' is currently locked`
       );
-      foundUser.last_login_status = 'f';
-      foundUser.last_login_failed_attempts =
-        Number(foundUser.last_login_failed_attempts || 0) + 1;
-      foundUser.save();
+
+      // ⭐ Update ALL user records with failed login
+      const failPromises = allUserRecords.map(async (user: typeof B2BUser) => {
+        user.last_login_status = 'f';
+        user.last_login_failed_attempts =
+          Number(user.last_login_failed_attempts || 0) + 1;
+        return user.save();
+      });
+      await Promise.all(failPromises);
+
+      // foundUser.last_login_status = 'f';
+      // foundUser.last_login_failed_attempts =
+      //   Number(foundUser.last_login_failed_attempts || 0) + 1;
+      // foundUser.save();
       throw new Error(ErrorCode.UserIsLocked);
     }
 
@@ -111,10 +136,20 @@ export const tryLocalAuthentication = async (
       logRequest.error(
         `User with user name '${foundUser.username}' is not currently active`
       );
-      foundUser.last_login_status = 'f';
-      foundUser.last_login_failed_attempts =
-        Number(foundUser.last_login_failed_attempts || 0) + 1;
-      foundUser.save();
+
+      // ⭐ Update ALL user records with failed login
+      const failPromises = allUserRecords.map(async (user: typeof B2BUser) => {
+        user.last_login_status = 'f';
+        user.last_login_failed_attempts =
+          Number(user.last_login_failed_attempts || 0) + 1;
+        return user.save();
+      });
+      await Promise.all(failPromises);
+
+      // foundUser.last_login_status = 'f';
+      // foundUser.last_login_failed_attempts =
+      //   Number(foundUser.last_login_failed_attempts || 0) + 1;
+      // foundUser.save();
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
@@ -125,17 +160,34 @@ export const tryLocalAuthentication = async (
 
     if (!match) {
       logRequest.error(`Incorrect password provided`);
-      foundUser.last_login_status = 'f';
-      foundUser.last_login_failed_attempts =
-        Number(foundUser.last_login_failed_attempts || 0) + 1;
 
-      foundUser.save();
+      // ⭐ Update ALL user records with failed login
+      const failPromises = allUserRecords.map(async (user: typeof B2BUser) => {
+        user.last_login_status = 'f';
+        user.last_login_failed_attempts =
+          Number(user.last_login_failed_attempts || 0) + 1;
+        return user.save();
+      });
+      await Promise.all(failPromises);
+
+      // foundUser.last_login_status = 'f';
+      // foundUser.last_login_failed_attempts =
+      //   Number(foundUser.last_login_failed_attempts || 0) + 1;
+
+      // foundUser.save();
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
 
-    foundUser.last_login_status = 's';
-    foundUser.last_login_failed_attempts = 0;
-    await foundUser.save();
+    const successPromises = allUserRecords.map(async (user: typeof B2BUser) => {
+      user.last_login_status = 's';
+      user.last_login_failed_attempts = 0;
+      return user.save();
+    });
+    await Promise.all(successPromises);
+
+    // foundUser.last_login_status = 's';
+    // foundUser.last_login_failed_attempts = 0;
+    // await foundUser.save();
 
     logRequest.debug(`Given password and DB passwords match`);
 

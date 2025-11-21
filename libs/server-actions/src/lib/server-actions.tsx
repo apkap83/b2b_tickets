@@ -2620,3 +2620,82 @@ export async function updateCcUsers({
     };
   }
 }
+
+export const getTicketCompany = async (ticketId: string) => {
+  const logRequest: CustomLogger = await getRequestLogger(
+    TransportName.ACTIONS
+  );
+
+  try {
+    const session = await getServerSession(options);
+
+    if (!session || !session?.user) {
+      throw new Error('Unauthenticated or missing user information');
+    }
+
+    await setSchemaAndTimezone(pgB2Bpool);
+
+    // Get the ticket's customer_id
+    const queryForTicketCompany = `
+      SELECT customer_id
+      FROM tickets
+      WHERE ticket_id = $1
+    `;
+
+    const result = await pgB2Bpool.query(queryForTicketCompany, [ticketId]);
+
+    if (result.rows.length === 0) {
+      return {
+        success: false,
+        error: 'Ticket not found',
+      };
+    }
+
+    const ticketCustomerId = Number(result.rows[0].customer_id);
+
+    // Check if user has access to this company
+    const userCompaniesQuery = `
+      SELECT DISTINCT c.customer_id, c.customer_name
+      FROM users u
+      INNER JOIN customers c ON u.customer_id = c.customer_id
+      WHERE u.email = $1
+        AND u.is_active = 'y'
+    `;
+
+    const userCompanies = await pgB2Bpool.query(userCompaniesQuery, [
+      session.user.email,
+    ]);
+
+    const hasAccess = userCompanies.rows.some(
+      (company: any) => Number(company.customer_id) === ticketCustomerId
+    );
+
+    if (!hasAccess) {
+      logRequest.warn(
+        `User '${session.user.userName}' attempted to access ticket ${ticketId} for company ${ticketCustomerId} without access`
+      );
+      return {
+        success: false,
+        error: 'You do not have access to this ticket',
+      };
+    }
+
+    const ticketCompany = userCompanies.rows.find(
+      (company: any) => Number(company.customer_id) === ticketCustomerId
+    );
+
+    return {
+      success: true,
+      ticketCustomerId,
+      ticketCompanyName: ticketCompany.customer_name,
+      currentUserCustomerId: session.user.customer_id,
+      needsSwitch: ticketCustomerId !== session.user.customer_id,
+    };
+  } catch (error) {
+    logRequest.error(error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+};
