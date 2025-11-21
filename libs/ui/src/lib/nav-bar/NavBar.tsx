@@ -164,7 +164,7 @@ export const NavBar = memo(() => {
   /* Company Dropdown - Show only if user has multiple companies */
   const CompanySwitchDropdownMenu = () => {
     return (
-      // companies.length > 1 &&
+      companies.length > 1 &&
       isTicketsPath && (
         <div
           className="w-full h-full relative bg-gray-900 flex items-center justify-center mr-3 px-4 "
