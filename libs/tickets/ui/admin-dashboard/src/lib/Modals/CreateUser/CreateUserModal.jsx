@@ -186,62 +186,7 @@ function CreateUserModal({ rolesList, closeModal }) {
     })),
   ];
 
-  // const MultipleCompaniesAssociationPopupMessage = () => {
-  //   console.log('userCompanies:', userCompanies);
-  //   return (
-  //     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-10 z-20">
-  //       <div className="min-w-[400px] max-w-[550px] bg-white px-10 py-5 rounded-lg max-h-[70vh] overflow-y-auto text-center border border-gray-400">
-  //         <div>The following Email address:</div>
-  //         <div className="text-left my-4 border border-gray-300 p-4 rounded-md bg-gray-100">
-  //           <div>Email: {formik.values.email}</div>
-  //         </div>
-  //         {userCompanies.length === 1 ? (
-  //           <div>is already associated with the following company:</div>
-  //         ) : (
-  //           <div>is already associated with the following companies:</div>
-  //         )}
-  //         <div className="py-4 my-4 border border-gray-300 p-4 rounded-md bg-gray-100 text-left">
-  //           <ul className="list-disc list-outside pl-4">
-  //             {userCompanies.map((company) => (
-  //               <li key={company.customer_id}>{company.customer_name}</li>
-  //             ))}
-  //           </ul>
-  //         </div>
-  //         <div className="">
-  //           Are you sure you want to associate the user with:
-  //         </div>
-  //         <div className="py-3 my-4 border border-gray-300 rounded-md bg-gray-100 text-center font-bold">
-  //           {formik.values.company.label}
-  //         </div>
-
-  //         {/* Hidden Input to signal proceeding anyway */}
-  //         <input
-  //           type="hidden"
-  //           name="addUserAnywayToRepresentMultipleCompanies"
-  //           value={true}
-  //         />
-
-  //         <div className="flex justify-around gap-4 my-5">
-  //           <SubmitButton
-  //             label="Yes, proceed anyway"
-  //             loading="Creating ..."
-  //             isValid={formik.dirty && formik.isValid}
-  //           />
-
-  //           <button
-  //             onClick={() => setMultipleCompaniesPopupVisible(false)}
-  //             className="border border-black bg-[#fff] text-black rounded-lg px-3 py-1"
-  //           >
-  //             Cancel
-  //           </button>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // };
-
   const MultipleCompaniesAssociationPopupMessage = () => {
-    console.log('userCompanies:', userCompanies);
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20 p-4">
         <div className="min-w-[400px] max-w-[550px] bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto">

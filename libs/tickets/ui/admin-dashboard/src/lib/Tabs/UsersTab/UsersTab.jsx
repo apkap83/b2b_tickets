@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import { PaginationOld } from '@b2b-tickets/ui';
 import slice from 'lodash/slice';
@@ -51,6 +51,27 @@ export function UsersTab({ usersList, rolesList }) {
     userDetails: userDetailsInitalState,
   });
 
+  // In your component:
+  const [isSticky, setIsSticky] = useState(false);
+  const headerRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (headerRef.current) {
+        const rect = headerRef.current.getBoundingClientRect();
+        setIsSticky(rect.top <= 90);
+        console.log('rect.top', rect.top);
+      }
+    };
+
+    // Listen to ALL scroll events (captures any scrollable element)
+    document.addEventListener('scroll', handleScroll, true); // true = capture phase
+    handleScroll();
+
+    return () => document.removeEventListener('scroll', handleScroll, true);
+  }, []);
+
+  console.log('isSticky', isSticky);
   const itemsPerPage = 15000;
 
   const paginatedUsersList = slice(
@@ -74,12 +95,16 @@ export function UsersTab({ usersList, rolesList }) {
         </div>
         <div>
           <table className={`${styles.myTable} table text-xs`}>
-            <thead className="sticky top-10">
-              <tr>
-                <th></th>
+            <thead className="">
+              <tr
+                ref={headerRef}
+                className={`sticky top-[70px] z-5 bg-white`}
+                style={isSticky ? { backgroundColor: '#fbfbfb' } : {}}
+              >
                 <th className="text-center">First Name</th>
                 <th className="text-center">Last Name</th>
                 <th className="text-center">User Name</th>
+                <th className="text-center">E-mail</th>
                 <th className="text-center">Mobile Phone</th>
                 <th className="text-center">Customer</th>
                 <th className="text-center">Roles</th>
@@ -121,6 +146,10 @@ export function UsersTab({ usersList, rolesList }) {
                     <span style={{ wordBreak: 'break-all' }}>
                       {getUserIdentifier(user.username, user.email)}
                     </span>{' '}
+                  </td>
+
+                  <td className="text-wrap" style={{ maxWidth: '150px' }}>
+                    <span style={{ wordBreak: 'break-all' }}>{user.email}</span>{' '}
                   </td>
 
                   <td className="text-wrap" style={{ maxWidth: '150px' }}>

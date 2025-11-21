@@ -60,7 +60,8 @@ export const AdminDashboard = ({
                     🟢
                   </span>
                   &nbsp;
-                  {user.username} ({getMinutesSince(user.last_login_attempt)}
+                  {user.email || user.username} (
+                  {getMinutesSince(user.last_login_attempt)}
                   &nbsp;mins)
                 </span>
               </div>
@@ -73,7 +74,7 @@ export const AdminDashboard = ({
 
   return (
     <>
-      <div className="relative m-0 py-1 px-5 flex flex-col overflow-y-auto z-5">
+      <div className="relative m-0 py-1 px-5 flex flex-col  z-5">
         <div className="text-center text-4xl"></div>
 
         <div className="pt-5 flex flex-col flex-grow ">
