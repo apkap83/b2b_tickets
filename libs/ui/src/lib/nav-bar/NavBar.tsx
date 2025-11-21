@@ -186,7 +186,7 @@ export const NavBar = memo(() => {
 
               // ⭐ Keep gray even when focused
               '& .Mui-focused': {
-                // color: 'gray', // Stay gray on focus
+                color: 'gray', // Stay gray on focus
               },
               // ⭐ Keep gray when filled
               '& .MuiFormLabel-filled': {
@@ -216,7 +216,7 @@ export const NavBar = memo(() => {
                 position: 'relative',
                 fontSize: '12px',
                 backgroundColor: 'black',
-                color: 'white',
+                color: 'gray',
                 boxShadow: '0 2px 8px rgba(0,0,0,.1)',
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: 'rgba(0, 0, 0, 0.23)',
