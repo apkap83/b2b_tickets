@@ -1,8 +1,10 @@
 import React from 'react';
+import { getServerSession } from 'next-auth';
+import { options } from '@b2b-tickets/auth-options';
 import { TicketsList } from '@b2b-tickets/tickets';
 import Container from '@mui/material/Container';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 const App: React.FC = async ({
   searchParams = {}, // Provide a default empty object
@@ -13,6 +15,13 @@ const App: React.FC = async ({
     [key: string]: string | undefined; // Handle dynamic filter keys
   };
 }) => {
+  // Authentication check
+  const session = await getServerSession(options);
+
+  if (!session?.user) {
+    redirect('/signin?callbackUrl=/tickets');
+  }
+
   const query = searchParams.query || ''; // Use the query parameter or default to an empty string
   const page = Number(searchParams.page) || 1; // Parse page number or default to 1
 
