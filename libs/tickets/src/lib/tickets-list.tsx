@@ -74,6 +74,20 @@ export const TicketsList = memo(
       getTicketList();
     }, [getTicketList]);
 
+    // Listen for company change events from NavBar
+    useEffect(() => {
+      const handleCompanyChange = (event: CustomEvent) => {
+        console.log('Company changed, refreshing tickets...', event.detail);
+        getTicketList();
+      };
+
+      window.addEventListener('companyChanged', handleCompanyChange as EventListener);
+
+      return () => {
+        window.removeEventListener('companyChanged', handleCompanyChange as EventListener);
+      };
+    }, [getTicketList]);
+
     // Memoize query to avoid unnecessary string operations
     const query = useMemo(() => params.get('query') || '', [params]);
 

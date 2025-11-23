@@ -60,11 +60,15 @@ export const NavBar = memo(() => {
     session?.user?.customer_id?.toString() || ''
   );
   const [isSwitchingCompany, setIsSwitchingCompany] = useState<boolean>(false);
+  const isUserInitiatedChange = useRef<boolean>(false);
 
   useEffect(() => {
+    // Only load companies once when session is available, not on every customer_id change
     async function loadCompanies() {
+      if (!session?.user?.email || companies.length > 0) return;
+      
       const userCompanies = await getCurrentUserCompanies(
-        session?.user?.email || 'unknown'
+        session.user.email
       );
       setCompanies(userCompanies);
 
@@ -77,7 +81,18 @@ export const NavBar = memo(() => {
     }
 
     loadCompanies();
-  }, [session?.user?.customer_id]);
+  }, [session?.user?.email]); // Changed dependency to email instead of customer_id
+
+  // Separate effect to update selectedCompanyId when session changes
+  useEffect(() => {
+    if (session?.user?.customer_id && !isSwitchingCompany && !isUserInitiatedChange.current) {
+      const newCompanyId = session.user.customer_id.toString();
+      // Only update if it's actually different to prevent unnecessary re-renders
+      if (newCompanyId !== selectedCompanyId) {
+        setSelectedCompanyId(newCompanyId);
+      }
+    }
+  }, [session?.user?.customer_id, isSwitchingCompany, selectedCompanyId]);
 
   const customerName = session?.user?.customer_name;
   const isAdminPath = pathname === '/admin';
@@ -125,44 +140,64 @@ export const NavBar = memo(() => {
   );
 
   // Handle company switching
-  const handleCompanyChange = async (newCompanyId: string) => {
+  const handleCompanyChange = useCallback(async (newCompanyId: string) => {
+    // Prevent multiple clicks during switching
+    if (isSwitchingCompany) return;
+    
     setIsSwitchingCompany(true);
+    isUserInitiatedChange.current = true;
+    let switchSuccessful = false;
 
     try {
       // Switch company on the server (with security validation)
       const result = await switchUserCompany(Number(newCompanyId));
 
       if (result.success) {
+        switchSuccessful = true;
+        
+        // Update local state first to prevent flickering
+        setSelectedCompanyId(newCompanyId);
+
         // Update the session with new company info
         await update({
           customer_id: Number(newCompanyId),
         });
-
-        // Update local state
-        setSelectedCompanyId(newCompanyId);
-
-        // Small delay to ensure session is updated before refresh
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Refresh the page to load tickets for the new company
-        router.refresh();
+        
+        // Small delay to ensure session is fully updated
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Dispatch custom event to trigger tickets refresh without page reload
+        // This provides a smoother experience than router.refresh()
+        window.dispatchEvent(new CustomEvent('companyChanged', {
+          detail: { newCompanyId: Number(newCompanyId) }
+        }));
+        
+        // Small delay to allow tickets to refresh before hiding loading
+        setTimeout(() => {
+          setIsSwitchingCompany(false);
+        }, 500);
       } else {
         //@ts-ignore
         alert('Failed to switch company: ' + result.error);
         // Revert to previous company on error
         setSelectedCompanyId(session?.user?.customer_id?.toString() || '');
+        setIsSwitchingCompany(false);
       }
     } catch (error) {
       alert('Error switching company. Please try again.');
       // Revert to previous company on error
       setSelectedCompanyId(session?.user?.customer_id?.toString() || '');
-    } finally {
       setIsSwitchingCompany(false);
+    } finally {
+      // Reset flag after a short delay to allow session to update
+      setTimeout(() => {
+        isUserInitiatedChange.current = false;
+      }, switchSuccessful ? 300 : 100);
     }
-  };
+  }, [isSwitchingCompany, session, update]);
 
   /* Company Dropdown - Show only if user has multiple companies */
-  const CompanySwitchDropdownMenu = () => {
+  const CompanySwitchDropdownMenu = useCallback(() => {
     return (
       companies.length > 1 &&
       isTicketsPath && (
@@ -179,9 +214,19 @@ export const NavBar = memo(() => {
               backgroundColor: 'black',
               border: isSwitchingCompany ? '1px dashed gray' : '1px solid gray',
 
-              // ⭐ Lock the label in place
+              // ⭐ Lock the label in place and prevent disappearing
               '& .MuiInputLabel-root': {
                 transition: 'none',
+                transform: 'translate(14px, -9px) scale(0.75)', // Keep label in shrunk position
+                zIndex: 1,
+                pointerEvents: 'none',
+                '&.MuiInputLabel-shrink': {
+                  transform: 'translate(14px, -9px) scale(0.75)',
+                },
+                '&.Mui-focused': {
+                  color: 'gray',
+                  transform: 'translate(14px, -9px) scale(0.75)',
+                },
               },
 
               // ⭐ Keep gray even when focused
@@ -196,11 +241,15 @@ export const NavBar = memo(() => {
           >
             <InputLabel
               id="company-select-label2"
+              shrink
               sx={{
                 color: 'gray',
-                bgcolor: 'black',
                 fontSize: '12px',
                 paddingX: '5px',
+                bgcolor: 'black', // Add back black background to cover border
+                '&.MuiInputLabel-shrink': {
+                  bgcolor: 'black',
+                },
               }}
             >
               Company
@@ -292,7 +341,7 @@ export const NavBar = memo(() => {
         </div>
       )
     );
-  };
+  }, [companies.length, isTicketsPath, selectedCompanyId, isSwitchingCompany, handleCompanyChange]);
 
   return (
     <>
