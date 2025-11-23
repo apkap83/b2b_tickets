@@ -1,108 +1,137 @@
-'use client';
-import React, { useState } from 'react';
-
-import { useSession } from 'next-auth/react';
+// app/profile/page.tsx (Server Component)
 import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth/next';
 import Link from 'next/link';
-import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { options } from '@b2b-tickets/auth-options';
 import { AuthenticationTypes } from '@b2b-tickets/shared-models';
+import { PasswordResetModal } from '@b2b-tickets/tickets/ui/admin-dashboard';
+import { getUserIdentifier } from '@b2b-tickets/utils';
 
-const MyProfile = () => {
-  const [showPasswordResetModal, setShowPasswordResetModal] = useState({
-    visible: false,
-  });
-  // const [gitVersion, setGitVersion] = useState('');
+const MyProfile = async ({ searchParams }) => {
+  const session = await getServerSession(options);
 
-  const { data: session } = useSession({
-    required: true,
-    onUnauthenticated() {
-      redirect('/api/auth/signin?callbackUrl=/profile');
-    },
-  });
+  if (!session) {
+    redirect('/api/auth/signin?callbackUrl=/profile');
+  }
+
+  const showPasswordReset = searchParams?.modal === 'password-reset';
 
   const userDetails = {
-    firstName: session?.user.firstName,
-    lastName: session?.user.lastName,
-    userName: session?.user.userName,
-    authenticationType: session?.user.authenticationType,
+    firstName: session.user?.firstName || 'N/A',
+    lastName: session.user?.lastName || 'N/A',
+    userName: session.user?.userName || 'N/A',
+    email: session.user?.email || 'N/A',
   };
 
-  // useEffect(() => {
-  //   const getMyAppVersion = async () => {
-  //     const resp = await getAppVersion();
-  //     if (resp.error) toast.error(error.message);
-  //     setGitVersion(resp.data);
-  //   };
-  //   getMyAppVersion();
-  // }, []);
-
   return (
-    <div className="absolute inset-0 flex justify-center items-center -translate-y-5 bg-black bg-opacity-50">
-      <div className="card lg:card-side bg-base-100 shadow-xl p-10 dark:bg-white">
-        <div className="card-body py-1">
-          <h2 className="card-title text-center">User Profile Details</h2>
-          <label className="inline">
-            First Name: &nbsp;<span>{session?.user.firstName}</span>
-          </label>
-          <label className="inline">
-            Last Name: &nbsp;<span>{session?.user.lastName}</span>
-          </label>
-          <label className="inline">
-            User Name: &nbsp;<span>{session?.user.userName}</span>
-          </label>
-          <label className="inline">
-            Account Type: &nbsp;<span>{session?.user.authenticationType}</span>
-          </label>
-          {/* <label className="inline">
-            Git Commit: &nbsp;
-            <span>{gitVersion}</span>
-          </label> */}
+    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-60 backdrop-blur-sm">
+      <div className="relative max-w-md w-full mx-4">
+        {/* Profile Card */}
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden  transform transition-all hover:scale-[1.01] hover:shadow-3xl">
+          {/* Header */}
+          <div className="bg-black px-8 py-6 border-b-4 border-gray-800">
+            <h2 className="text-2xl font-bold text-white text-center tracking-wide">
+              User Profile
+            </h2>
+          </div>
 
-          <ProfilePageButtons
-            setShowPasswordResetModal={setShowPasswordResetModal}
-            userDetails={userDetails}
-          />
+          {/* Profile Content */}
+          <div className="px-8 py-6 space-y-4">
+            {/* Profile Info Grid */}
+            <div className="space-y-3">
+              <ProfileField label="First Name" value={userDetails.firstName} />
+              <ProfileField label="Last Name" value={userDetails.lastName} />
+              <ProfileField
+                label="User Name"
+                value={getUserIdentifier(
+                  userDetails.userName,
+                  userDetails.email
+                )}
+              />
+              <ProfileField
+                label="Account Type"
+                value={session.user?.authenticationType || 'N/A'}
+                badge
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-6">
+              <ProfilePageButtons
+                authenticationType={session.user?.authenticationType}
+              />
+            </div>
+          </div>
         </div>
       </div>
-      {showPasswordResetModal.visible ? (
-        <PasswordResetModal
-          userDetails={showPasswordResetModal.userDetails}
-          closeModal={() => setShowPasswordResetModal(false)}
-        />
-      ) : null}
+
+      {showPasswordReset && <PasswordResetModal userDetails={userDetails} />}
     </div>
   );
 };
 
-const ProfilePageButtons = ({ setShowPasswordResetModal, userDetails }) => {
-  const CloseButton = () => (
-    <Link className="btn btn-tertiary" href="/">
-      Close
-    </Link>
+const ProfileField = ({ label, value, badge = false }) => {
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0 hover:bg-gray-50 px-2 -mx-2 rounded transition-colors">
+      <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+        {label}
+      </span>
+      {badge ? (
+        <span className="px-4 py-1.5 text-xs font-bold text-white bg-black rounded-full uppercase tracking-wider shadow-sm">
+          {value}
+        </span>
+      ) : (
+        <span className="text-sm font-semibold text-black text-right max-w-[60%] break-words">
+          {value}
+        </span>
+      )}
+    </div>
   );
+};
 
-  const PasswordResetButton = () => (
-    <button
-      className="btn btn-primary"
-      onClick={() => setShowPasswordResetModal({ visible: true, userDetails })}
-    >
-      Reset Password
-    </button>
-  );
-  if (userDetails.authenticationType === AuthenticationTypes.LDAP)
+const ProfilePageButtons = ({ authenticationType }) => {
+  if (authenticationType === AuthenticationTypes.LDAP) {
     return (
-      <div className="mt-3">
-        <CloseButton />
-      </div>
-    );
-  if (userDetails.authenticationType === AuthenticationTypes.LOCAL) {
-    return (
-      <div className="flex gap-3 pt-4">
-        <PasswordResetButton />
-        <CloseButton />
+      <div className="flex justify-center">
+        <Link
+          className="w-full btn bg-black hover:bg-gray-800 text-white border-0 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl font-semibold uppercase tracking-wide"
+          href="/"
+        >
+          Close
+        </Link>
       </div>
     );
   }
+
+  if (authenticationType === AuthenticationTypes.LOCAL) {
+    return (
+      <div className="flex gap-3">
+        <Link
+          className="flex-1 btn bg-black hover:bg-gray-800 text-white border-0 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl font-semibold uppercase tracking-wide"
+          href="/profile?modal=password-reset"
+        >
+          Reset Password
+        </Link>
+        <Link
+          className="flex-1 btn bg-white hover:bg-gray-100 text-black border-2 border-black rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl font-semibold uppercase tracking-wide"
+          href="/"
+        >
+          Close
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-center">
+      <Link
+        className="w-full btn bg-black hover:bg-gray-800 text-white border-0 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl font-semibold uppercase tracking-wide"
+        href="/"
+      >
+        Close
+      </Link>
+    </div>
+  );
 };
 
 export default MyProfile;

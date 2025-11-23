@@ -979,10 +979,14 @@ export async function updateUserPassword(formState: any, formData: any) {
   try {
     const session = await getServerSession(options);
 
+    // ✅ Ensure user is authenticated
+    if (!session?.user) {
+      throw new Error('Unauthorized: No active session');
+    }
+
     const userName = formData.get('username');
     const password = formData.get('password');
     const email = formData.get('email');
-
     const verifyPassword = formData.get('verifyPassword');
 
     // If the userName provided in this function is different from the logged in user name
@@ -992,6 +996,10 @@ export async function updateUserPassword(formState: any, formData: any) {
       await verifySecurityPermission(
         AppPermissionTypes.API_Security_Management
       );
+
+      logRequest.warn(
+        `A.F.: SECURITY ALERT:  ${session.user.userName} - Attempting to change password for different user: ${userName}`
+      );
     }
 
     const userData = {
@@ -1000,24 +1008,42 @@ export async function updateUserPassword(formState: any, formData: any) {
       password,
       verifyPassword,
     };
+
     // Validate input data with yup
     await userSchema_updateUserPassword.validate(userData, {
       abortEarly: false,
     });
 
-    // Check if the user already exists
-    const users: (typeof B2BUser)[] = await B2BUser.findAll({
-      where: { email: email },
-    });
+    // Find users by email OR username (for users without email like admin)
+    let users: (typeof B2BUser)[] = [];
+
+    if (email && email.trim() !== '') {
+      // Find by email if provided
+      users = await B2BUser.findAll({
+        where: { email: email.toLowerCase() },
+      });
+    }
+
+    // If no users found by email, or email is empty, try username
+    if (users.length === 0 && userName) {
+      users = await B2BUser.findAll({
+        where: { username: userName },
+      });
+    }
 
     if (!users || users.length === 0) {
-      throw new Error(`No users found with email ${email}`);
+      throw new Error(
+        `No users found with ${
+          email ? `email ${email}` : `username ${userName}`
+        }`
+      );
     }
 
     // Check if trying to change admin password
     const hasAdminUser = users.some(
-      (user: typeof B2BUser) => user.userName === 'admin'
+      (user: typeof B2BUser) => user.username === 'admin'
     );
+
     if (hasAdminUser && session?.user.userName !== 'admin') {
       logRequest.info(
         `A.F.: ${session?.user.userName} - Tried to change the password of admin user and was denied`
@@ -1025,9 +1051,19 @@ export async function updateUserPassword(formState: any, formData: any) {
       throw new Error(`You cannot change the password of admin user`);
     }
 
+    // ✅ Additional check: Verify user is active and not locked
+    const inactiveOrLockedUsers = users.filter(
+      (user: typeof B2BUser) => user.is_active !== 'y' || user.is_locked === 'y'
+    );
+
+    if (inactiveOrLockedUsers.length > 0) {
+      throw new Error('Cannot change password for inactive or locked users');
+    }
+
     // Loop over all users and update their passwords
     for (const user of users) {
       user.password = password;
+      user.password_change_date = new Date();
       await user.save();
 
       logRequest.info(
