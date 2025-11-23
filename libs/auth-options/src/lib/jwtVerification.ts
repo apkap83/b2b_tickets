@@ -12,7 +12,7 @@ export function verifyJWTTotp({ req }: { req: any }) {
       throw new Error(ErrorCode.TotpJWTTokenRequired);
     }
 
-    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key';
+    const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key :-)';
 
     type DecodedJWTType = {
       emailProvided: string;
@@ -20,7 +20,6 @@ export function verifyJWTTotp({ req }: { req: any }) {
     };
 
     const decoded = jwt.verify(totpJWTToken, JWT_SECRET) as DecodedJWTType;
-
     if (!decoded) {
       throw new Error(ErrorCode.TotpJWTTokenInvalid);
     }

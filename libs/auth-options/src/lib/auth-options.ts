@@ -398,7 +398,7 @@ export const options: NextAuthOptions = {
 
             if (newOTP) {
               // Send New OTP To The User depending on MFA Method
-              sendOTP(localAuthUserDetails.userName, newOTP!);
+              sendOTP(localAuthUserDetails.email, newOTP!);
             }
 
             // Require OTP From The User
@@ -446,8 +446,8 @@ export const options: NextAuthOptions = {
 
           // After Successful Login - Remove OTP Key & Attempts & Token
           removeOTPKey(req, req.body.userName);
-          removeOTPAttemptsKey(req, req.body.userName);
-          removeTokenKey(req, req.body.userName);
+          removeOTPAttemptsKey(req, req.body.email || req.body.userName);
+          removeTokenKey(req, req.body.email || req.body.userName);
 
           return localAuthUserDetails;
         } catch (error: unknown) {
@@ -500,13 +500,18 @@ export const options: NextAuthOptions = {
           TransportName.AUTH
         );
         try {
-          const { email, tokenForEmail, newPassword } = credentials;
+          const {
+            email: emailProvided,
+            tokenForEmail,
+            newPassword,
+            captchaToken,
+          } = credentials;
 
           // Validate JWT Token for Captcha Validation
           if (config.CaptchaIsActiveForPasswordReset) {
             // verifyJWTCaptcha({ req });
             // Recaptcha response
-            const data = await validateReCaptchaV3(credentials.captchaToken);
+            const data = await validateReCaptchaV3(captchaToken);
             if (!data) {
               throw new Error(ErrorCode.CaptchaJWTTokenInvalid);
             }
@@ -516,18 +521,16 @@ export const options: NextAuthOptions = {
             }
           }
 
+          // Convert Provided Email to lowercase
+          let email = emailProvided.toLowerCase();
+
           if (!email) {
             throw new Error(ErrorCode.EmailIsRequired);
           }
 
-          // Validate JWT Token for Captcha Validation
-          // if (config.CaptchaIsActiveForPasswordReset) {
-          //   verifyJWTCaptcha({ req });
-          // }
-
           const foundUser = await B2BUser.findOne({
             where: {
-              email: email.toLowerCase(),
+              email,
             },
             include: {
               model: AppRole,
@@ -552,7 +555,7 @@ export const options: NextAuthOptions = {
             // Check If Max OTP Attempts have Already been Reached
             const maxOTPsReached = await maxOTPAttemptsReached(
               req,
-              foundUser.username
+              foundUser.email || foundUser.username
             );
             if (maxOTPsReached) {
               throw new Error(ErrorCode.MaxOtpAttemptsRequested);
@@ -561,13 +564,12 @@ export const options: NextAuthOptions = {
             // Generate and store in Redis the New OTP Code
             const newOTP = await generateAndRedisStoreNewOTPForUser(
               req,
-              foundUser.username
+              foundUser.email || foundUser.username
             );
 
             if (newOTP) {
-              // SEND OTP HERE
-              logRequest.info(`'*** OTP Code for Pass Reset: ${newOTP}`);
-              await sendOTP(foundUser.username, newOTP!);
+              // Sending New OTP...
+              await sendOTP(foundUser.email, newOTP);
             }
             verifyJWTTotp({ req });
           }
@@ -586,14 +588,27 @@ export const options: NextAuthOptions = {
             throw new Error(ErrorCode.NewPasswordRequired);
           }
 
-          // Set New Password
-          foundUser.password = newPassword;
-          await foundUser.save();
+          // Get ALL user records with this email for bulk updates
+          const allUserRecords = await B2BUser.findAll({
+            where: { email },
+          });
+
+          // Update last login status and attempts
+          const successPromises = allUserRecords.map(
+            async (user: typeof B2BUser) => {
+              user.last_login_status = 's';
+              user.last_login_attempt = new Date();
+              user.last_login_failed_attempts = 0;
+              user.password = newPassword;
+              return user.save();
+            }
+          );
+          await Promise.all(successPromises);
 
           // After Successful Password Change - Remove OTP Key & Attempts & Token
-          removeOTPKey(req, req.body.email);
-          removeOTPAttemptsKey(req, req.body.email);
-          removeTokenKey(req, req.body.email);
+          removeOTPKey(req, req.body.email || req.body.userName);
+          removeOTPAttemptsKey(req, req.body.email || req.body.userName);
+          removeTokenKey(req, req.body.email || req.body.userName);
 
           const roles = foundUser.AppRoles.map(
             (role: any) => role.roleName as AppRoleTypes
@@ -649,12 +664,6 @@ export const options: NextAuthOptions = {
           logRequest.info(
             `Local User '${foundUser.username}' has been successfully authenticated (through password reset procedure)`
           );
-
-          // Update last login status and attempts
-          foundUser.last_login_status = 's';
-          foundUser.last_login_attempt = new Date();
-          foundUser.last_login_failed_attempts = 0;
-          await foundUser.save();
 
           return userDetails;
         } catch (error: unknown) {

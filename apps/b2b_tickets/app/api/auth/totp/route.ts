@@ -7,11 +7,6 @@ import { authenticator } from 'otplib';
 import { B2BUser } from '@b2b-tickets/db-access';
 import { validateReCaptchaV3 } from '@b2b-tickets/utils';
 import { config } from '@b2b-tickets/config';
-import {
-  logFaultyOTPAttempt,
-  clearFaultyOTPAttempts,
-  maxOTPAttemptsReached,
-} from '@b2b-tickets/totp-service/server';
 import { validateOTPCodeForUserThroughRedis } from '@b2b-tickets/totp-service/server';
 import { NextApiRequest } from 'next';
 
@@ -66,14 +61,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const userName = foundUser.username;
+    const identificationString = foundUser.email || foundUser.username;
 
     const myRequestObj = {
       headers: {
         'x-forwarded-for': ip,
       },
       body: {
-        userName,
+        identificationString,
       },
     };
 

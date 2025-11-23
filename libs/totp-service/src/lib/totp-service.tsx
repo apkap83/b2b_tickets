@@ -19,24 +19,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { redisClient } from '@b2b-tickets/redis-service';
 import { NextApiRequest } from 'next';
 
-export async function sendOTP(userName: string, OTPCode: string) {
+export async function sendOTP(email: string, OTPCode: string) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   try {
     // Step 1: Check if user exists
     // TODO Add Index There
     const user: B2BUserType = await B2BUser.scope('withPassword').findOne({
-      where: { username: userName },
+      where: { email },
     });
 
     if (!user) {
       logRequest.error(
-        `User with user name ${userName} was not found. TOTP will not be sent.`
+        `User with Email address ${email} was not found. TOTP will not be sent.`
       );
       return;
     }
 
     logRequest.info(
-      `Trying to send TOTP for user: ${userName} with OTP Code: ${OTPCode} using MFA Method: ${user.mfa_method}`
+      `Trying to send TOTP for user: ${email} with OTP Code: ${OTPCode} using MFA Method: ${user.mfa_method}`
     );
 
     // Step 2: Check if the new OTP is the same as the last one sent
@@ -151,7 +151,7 @@ export async function sendOTP(userName: string, OTPCode: string) {
       //@ts-ignore
       await user.save();
       logRequest.info(
-        `User with mobile ${user.mobile_phone} updated with new lastOTPSent: ${user.lastotpsent}`
+        `User with Email address ${user.email} was updated with new lastOTPSent: ${user.lastotpsent}`
       );
     }
   } catch (error) {
@@ -208,7 +208,6 @@ export async function logTokenOTPAttempt(req: NextRequest): Promise<{
   const key = `token_attempts:${ip}`;
 
   let numfOfAttemptsInRedis = Number(await redisClient.get(key)) || 0;
-
   await redisClient.set(
     key,
     numfOfAttemptsInRedis + 1,
@@ -235,7 +234,7 @@ export async function logTokenOTPAttempt(req: NextRequest): Promise<{
 
 export async function generateAndRedisStoreNewOTPForUser(
   req: NextApiRequest,
-  definedUsername?: string
+  definedUser?: string
 ): Promise<string | undefined | null> {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   try {
@@ -243,8 +242,8 @@ export async function generateAndRedisStoreNewOTPForUser(
 
     const ip =
       req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    const userName = definedUsername || req.body['userName'];
-    const key = `otp_value:${ip}:${userName}`;
+    const identity = definedUser || req.body['userName'];
+    const key = `otp_value:${ip}:${identity}`;
 
     // Verify if OTP Value for User already exists in Redis
     const savedOTP = await redisClient.get(key);
@@ -254,7 +253,6 @@ export async function generateAndRedisStoreNewOTPForUser(
     if (savedOTP) return null;
 
     await redisClient.set(key, newOTP, 'EX', config.TwoFactorValiditySeconds);
-    logRequest.info(`'*** OTP Code: ${newOTP}`);
     return newOTP;
   } catch (error) {
     logRequest.error(error);
@@ -277,12 +275,14 @@ export async function validateOTPCodeForUserThroughRedis(
   try {
     const ip =
       req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    const userName = req.body['userName'];
-    const keyOTPValue = `otp_value:${ip}:${userName}`;
-    const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
+    const identificationString =
+      req.body['identificationString'] ||
+      req.body['email'] ||
+      req.body['userName'];
+    const keyOTPValue = `otp_value:${ip}:${identificationString}`;
+    const keyOtpAttempts = `otp_attempts:${ip}:${identificationString}`;
 
     const savedOTP = await redisClient.get(keyOTPValue);
-
     // Wrong OTP Provided By User
     if (userProvidedOTP !== savedOTP) {
       let numfOfAttemptsInRedis =
@@ -324,15 +324,16 @@ export async function validateOTPCodeForUserThroughRedis(
 
 export async function maxOTPAttemptsReached(
   req: NextApiRequest,
-  definedUserName?: string
+  identificationString?: string
 ) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
 
   try {
     const ip =
       req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-    const userName = definedUserName || req.body['userName'];
-    const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
+    const identity =
+      identificationString || req.body['email'] || req.body['userName'];
+    const keyOtpAttempts = `otp_attempts:${ip}:${identity}`;
 
     const numOfOTPAttempts = (await redisClient.get(keyOtpAttempts)) || 0;
     if (Number(numOfOTPAttempts) >= Number(config.maxOTPAttemps)) {
@@ -347,13 +348,14 @@ export async function maxOTPAttemptsReached(
 
 export async function removeOTPAttemptsKey(
   req: NextApiRequest,
-  definedUserName?: string
+  identificationString?: string
 ) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   const ip =
     req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-  const userName = definedUserName || req.body['userName'];
-  const keyOtpAttempts = `otp_attempts:${ip}:${userName}`;
+  const identity =
+    identificationString || req.body['email'] || req.body['userName'];
+  const keyOtpAttempts = `otp_attempts:${ip}:${identity}`;
 
   logRequest.info(
     `Removing OTP Attempts Value from Redis instance: ${keyOtpAttempts}`
@@ -363,13 +365,14 @@ export async function removeOTPAttemptsKey(
 
 export async function removeTokenKey(
   req: NextApiRequest,
-  definedUserName?: string
+  identificationString?: string
 ) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   const ip =
     req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-  const userName = definedUserName || req.body['userName'];
-  const keyTokenAttempts = `token_attempts:${ip}`;
+  const identity =
+    identificationString || req.body['email'] || req.body['userName'];
+  const keyTokenAttempts = `token_attempts:${ip}:${identity}`;
 
   logRequest.info(
     `Removing Token Attempts Value from Redis instance: ${keyTokenAttempts}`
@@ -379,13 +382,14 @@ export async function removeTokenKey(
 
 export async function removeOTPKey(
   req: NextApiRequest,
-  definedUserName?: string
+  identificationString?: string
 ) {
   const logRequest: CustomLogger = await getRequestLogger(TransportName.AUTH);
   const ip =
     req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-  const userName = definedUserName || req.body['userName'];
-  const keyOTPValue = `otp_value:${ip}:${userName}`;
+  const identity =
+    identificationString || req.body['email'] || req.body['userName'];
+  const keyOTPValue = `otp_value:${ip}:${identity}`;
 
   logRequest.info(`Removing OTP Value from Redis instance: ${keyOTPValue}`);
   await redisClient.del(keyOTPValue);
