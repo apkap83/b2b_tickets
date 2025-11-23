@@ -105,7 +105,7 @@ export async function middleware(req) {
 
   // Execute the authorization middleware only for specific paths
   if (
-    ['/tickets', '/ticket', '/admin'].some((path) =>
+    ['/tickets', '/ticket', '/admin', '/profile'].some((path) =>
       req.nextUrl.pathname.startsWith(path)
     )
   ) {
