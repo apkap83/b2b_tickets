@@ -39,6 +39,7 @@ import toast from 'react-hot-toast';
 import { useWebSocketContext } from '@b2b-tickets/contexts';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
 import 'react-quill/dist/quill.snow.css';
+import { FaArrowCircleRight } from 'react-icons/fa';
 
 // Constants
 const AUTO_COMPLETE = 'off';
@@ -186,25 +187,16 @@ const SubmitButton = memo<SubmitButtonProps>(
       [isSubmitting, onClick]
     );
 
-    const buttonStyles = useMemo(
-      () => ({
-        color: '#ddd7d7',
-        backgroundColor: isValid && !isSubmitting ? '#1e197b' : '#5b5b5d',
-      }),
-      [isValid, isSubmitting]
-    );
-
     return (
-      <Button
-        variant="contained"
-        type="button"
-        className="btn btn-primary"
+      <button
+        type="submit"
+        className="btn btn-primary flex items-center gap-2"
         disabled={!isValid || isSubmitting}
         onClick={handleClick}
-        style={buttonStyles}
       >
-        {isSubmitting ? loadingText : label}
-      </Button>
+        <span>{isSubmitting ? loadingText : label}</span>
+        <FaArrowCircleRight size={20} />
+      </button>
     );
   }
 );
@@ -911,16 +903,9 @@ export const NewTicketModal = memo<NewTicketModalProps>(({ closeModal }) => {
             <div
               className={`${styles.buttonsDiv} flex justify-evenly mt-[1.3rem]`}
             >
-              <Button
-                onClick={handleClose}
-                variant="outlined"
-                style={{
-                  color: colors.grey[500],
-                  border: `1px solid ${colors.grey[500]}`,
-                }}
-              >
+              <button onClick={handleClose} className="btn btn-secondary px-6">
                 Cancel
-              </Button>
+              </button>
               <SubmitButton
                 label="Submit Ticket"
                 loadingText="Creating..."

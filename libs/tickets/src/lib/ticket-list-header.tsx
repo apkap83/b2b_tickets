@@ -69,33 +69,12 @@ export const TicketListHeader = ({
         <TicketFilter />
 
         {permissionForTicketCreation && (
-          <Button
-            variant="contained"
+          <button
             onClick={() => setShowCreateTicketModal(true)}
-            sx={{
-              boxShadow: '0 10px 20px rgba(0,0,0,.2)',
-              transition: 'all .2s',
-
-              '&:hover': {
-                boxShadow: '0 10px 20px rgba(0,0,0,.2)',
-                backgroundColor: 'black',
-                color: 'white',
-              },
-
-              '&:active': {
-                transform: 'translateY(2px)',
-                boxShadow: '0 5px 10px rgba(0,0,0,.2)',
-              },
-
-              '&:disabled': {
-                backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                color: 'rgba(0, 0, 0, 0.26)',
-                boxShadow: 'none',
-              },
-            }}
+            className="btn btn-primary btn-sm"
           >
             Create New Ticket
-          </Button>
+          </button>
         )}
       </div>
 

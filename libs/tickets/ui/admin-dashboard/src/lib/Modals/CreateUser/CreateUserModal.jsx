@@ -46,6 +46,7 @@ function CreateUserModal({ rolesList, closeModal }) {
     useState(false);
 
   const [userCompanies, setUserCompanies] = useState([]);
+  const [localFormError, setLocalFormError] = useState(null);
 
   const userRoleRef = useRef();
 
@@ -126,12 +127,31 @@ function CreateUserModal({ rolesList, closeModal }) {
         const listOfCompaniesForUser = await getCurrentUserCompanies(
           formik.values.email
         );
+
+        // Check if the selected company is already in the user's companies
+        const selectedCompanyId = formik.values.company.value;
+        const companyAlreadyExists = listOfCompaniesForUser.some(
+          (company) => String(company.customer_id) === String(selectedCompanyId)
+        );
+
+        if (companyAlreadyExists) {
+          // User already has access to this company - show error message
+
+          // Set local error state
+          setLocalFormError({
+            status: 'ERROR',
+            message: `This email address is already associated with ${formik.values.company.label} company`,
+            timestamp: Date.now(),
+          });
+          return;
+        }
+
         setUserCompanies(listOfCompaniesForUser);
         setMultipleCompaniesPopupVisible(true);
       };
       fetchUserCompanies();
     }
-  }, [formState.status, formState.timestamp, multipleCompaniesPopupVisible]);
+  }, [formState.status, formState.timestamp]);
 
   useEffect(() => {
     const getCustList = async () => {
@@ -191,7 +211,7 @@ function CreateUserModal({ rolesList, closeModal }) {
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20 p-4">
         <div className="min-w-[400px] max-w-[550px] bg-white rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto">
           {/* Header with Icon */}
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-6 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-black to-orange-500 px-8 py-6 rounded-t-2xl">
             <div className="flex items-center justify-center gap-3">
               <HiExclamationCircle className="w-10 h-10 text-white" />
               <h3 className="text-2xl font-bold text-white">
@@ -266,14 +286,14 @@ function CreateUserModal({ rolesList, closeModal }) {
             {/* Action Buttons */}
             <div className="flex pt-2 justify-center gap-10">
               <SubmitButton
-                label="Yes, Proceed"
+                label="Yes, proceed"
                 loading="Creating..."
                 isValid={formik.dirty && formik.isValid}
                 className="flex-1"
               />
               <button
                 onClick={() => setMultipleCompaniesPopupVisible(false)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg px-3 py-1 transition-colors duration-200 border border-gray-300"
+                className="btn btn-secondary btn-sm"
               >
                 Cancel
               </button>
@@ -286,292 +306,305 @@ function CreateUserModal({ rolesList, closeModal }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-      <div className="max-w-[695px] bg-white px-10 py-5 rounded-lg max-h-[80vh] overflow-y-auto">
+      <div className="flex flex-col max-w-[695px] max-h-[80vh] bg-white rounded-2xl overflow-hidden">
         {loading ? (
-          <Box className="flex flex-col gap-3 justify-center items-center">
+          <Box className="flex flex-col gap-3 justify-center items-center p-7">
             <CircularProgress />
             <p className="text-gray-500">Loading...</p>
           </Box>
         ) : (
           <>
-            <h3 className="font-bold text-2xl text-center mb-2">
+            <h3 className="font-bold text-2xl text-center bg-gradient-to-br from-[#455bab] to-[#050a6a] py-4 rounded-t-2xl text-white shrink-0">
               Create User Form
             </h3>
-            <form
-              className="flex flex-col gap-2 pt-3 md:min-w-[500px]"
-              action={action}
-            >
-              {multipleCompaniesPopupVisible && (
-                <MultipleCompaniesAssociationPopupMessage />
-              )}
-              <div className="space-y-1.5">
-                <label htmlFor="company" className={styles.inputDescription}>
-                  Company Name
-                </label>
-                <div className="relative">
-                  {/* Select with padding to make room for icon */}
-                  <Select
-                    id="company"
-                    name="company"
-                    value={customersSelectOptions.find(
-                      (option) => option === formik.values.company
-                    )}
-                    onChange={(option) => {
-                      formik.setFieldValue('company', option);
-                    }}
-                    onBlur={formik.handleBlur}
-                    options={customersSelectOptions}
-                    placeholder="Select Company"
-                    styles={{
-                      control: (base, state) => ({
-                        ...base,
-                        paddingLeft: '1.6rem',
-                        borderColor: state.isFocused ? '#57575f' : '#d1d5db',
-                        boxShadow: state.isFocused
-                          ? '0 0 0 1px #57575f'
-                          : 'none',
-                        '&:hover': {
-                          borderColor: '#9b9ba5',
-                        },
-                      }),
-                      placeholder: (base) => ({
-                        ...base,
-                        color: '#9ca3af',
-                      }),
-                      option: (base, state) => ({
-                        ...base,
-                        backgroundColor: state.isSelected
-                          ? '#57575f'
-                          : state.isFocused
-                          ? '#e5e5e7'
-                          : 'white',
-                        color: state.isSelected ? 'white' : '#374151',
-                        cursor: 'pointer',
-                        '&:active': {
-                          backgroundColor: '#57575f',
-                        },
-                      }),
-                      menu: (base) => ({
-                        ...base,
-                        borderRadius: '0.5rem',
-                        marginTop: '4px',
-                        boxShadow:
-                          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                      }),
-                    }}
-                  />
-                  {/* Icon positioned absolutely */}
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none pr-1">
-                    <BusinessIcon fontSize="medium" className="text-gray-500" />
-                  </div>
-                </div>
-              </div>
-              <FieldError formik={formik} name="company" />
-
-              <div className="space-y-1.5">
-                <label htmlFor="role" className={styles.inputDescription}>
-                  App Role
-                </label>
-                <div className="relative">
-                  {/* Select with padding to make room for icon */}
-                  <Select
-                    id="role"
-                    name="role"
-                    ref={userRoleRef}
-                    value={rolesSelectOptions.find(
-                      (option) => option === formik.values.role
-                    )}
-                    onChange={(option) => formik.setFieldValue('role', option)}
-                    onBlur={formik.handleBlur}
-                    options={rolesSelectOptions}
-                    placeholder="Select Role"
-                    styles={{
-                      control: (base, state) => ({
-                        ...base,
-                        paddingLeft: '1.6rem', // Make room for icon
-                        borderColor: state.isFocused ? '#57575f' : '#d1d5db',
-                        boxShadow: state.isFocused
-                          ? '0 0 0 1px #57575f'
-                          : 'none',
-                        '&:hover': {
-                          borderColor: '#9b9ba5',
-                        },
-                      }),
-                      placeholder: (base) => ({
-                        ...base,
-                        color: '#9ca3af',
-                      }),
-                      option: (base, state) => ({
-                        ...base,
-                        backgroundColor: state.isSelected
-                          ? '#57575f'
-                          : state.isFocused
-                          ? '#e5e5e7'
-                          : 'white',
-                        color: state.isSelected ? 'white' : '#374151',
-                        cursor: 'pointer',
-                        '&:active': {
-                          backgroundColor: '#57575f',
-                        },
-                      }),
-                      menu: (base) => ({
-                        ...base,
-                        borderRadius: '0.5rem',
-                        marginTop: '4px',
-                        boxShadow:
-                          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                      }),
-                    }}
-                  />
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <GiRank3 size={22} className="text-gray-500" />
-                  </div>
-                </div>
-              </div>
-              <FieldError formik={formik} name="role" />
-
-              <div className="space-y-1.5">
-                <label className={styles.inputDescription} htmlFor="first_name">
-                  First Name
-                </label>
-                <div
-                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="w-4 h-4 opacity-70"
-                  >
-                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-                  </svg>
-                  <input
-                    id="first_name"
-                    name="first_name"
-                    type="text"
-                    value={formik.values.first_name}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="grow"
-                  />
-                </div>
-              </div>
-              <FieldError formik={formik} name="first_name" />
-
-              <div className="space-y-1.5">
-                <label htmlFor="last_name" className={styles.inputDescription}>
-                  Last Name
-                </label>
-                <div
-                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="w-4 h-4 opacity-70"
-                  >
-                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
-                  </svg>
-                  <input
-                    id="last_name"
-                    name="last_name"
-                    type="text"
-                    value={formik.values.last_name}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="grow"
-                  />
-                </div>
-              </div>
-              <FieldError formik={formik} name="last_name" />
-
-              <div className="space-y-1.5">
-                <label className={styles.inputDescription}>E-mail</label>
-                <div
-                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="w-4 h-4 opacity-70"
-                  >
-                    <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
-                    <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
-                  </svg>
-                  <input
-                    type="text"
-                    name="email"
-                    value={formik.values.email}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="grow"
-                  />
-                </div>
-              </div>
-              <FieldError formik={formik} name="email" />
-
-              <div className="space-y-1.5">
-                <label className={styles.inputDescription}>
-                  Mobile Phone (optional)
-                </label>
-                <div
-                  className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
-                >
-                  <FaMobileRetro className="w-4 h-4 opacity-70" />
-
-                  <input
-                    type="text"
-                    name="mobile_phone"
-                    value={formik.values.mobile_phone}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    className="grow"
-                  />
-                </div>
-              </div>
-              <FieldError formik={formik} name="mobile_phone" />
-
-              <div className="flex items-center mt-3 gap-2 ml-1">
-                <input
-                  id="inform_user_for_new_account_by_email"
-                  type="checkbox"
-                  name="inform_user_for_new_account_by_email"
-                  value={formik.values.inform_user_for_new_account_by_email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  className="h-5 w-5 rounded border-gray-300 accent-black cursor-pointer"
-                />
-
-                <label
-                  className="text-sm"
-                  htmlFor="inform_user_for_new_account_by_email"
-                >
-                  Inform User by Email
-                </label>
-              </div>
-              <FieldError formik={formik} name="mobile_phone" />
-
-              <div
-                className="flex my-3 items-end space-x-1"
-                aria-live="polite"
-                aria-atomic="true"
+            <div className="py-1 px-5 pb-3 flex-1 overflow-x-auto">
+              <form
+                className="flex flex-col gap-2 pt-3 md:min-w-[500px]"
+                action={action}
               >
-                <FormStateError formState={formState} />
-              </div>
-              <div className="mt-1 mb-2 flex justify-around">
-                <SubmitButton
-                  label="Create User"
-                  loading="Creating ..."
-                  isValid={formik.dirty && formik.isValid}
-                />
+                {multipleCompaniesPopupVisible && (
+                  <MultipleCompaniesAssociationPopupMessage />
+                )}
+                <div className="space-y-1.5">
+                  <label htmlFor="company" className={styles.inputDescription}>
+                    Company Name
+                  </label>
+                  <div className="relative">
+                    {/* Select with padding to make room for icon */}
+                    <Select
+                      id="company"
+                      name="company"
+                      value={customersSelectOptions.find(
+                        (option) => option === formik.values.company
+                      )}
+                      onChange={(option) => {
+                        formik.setFieldValue('company', option);
+                      }}
+                      onBlur={formik.handleBlur}
+                      options={customersSelectOptions}
+                      placeholder="Select Company"
+                      styles={{
+                        control: (base, state) => ({
+                          ...base,
+                          paddingLeft: '1.6rem',
+                          borderColor: state.isFocused ? '#57575f' : '#d1d5db',
+                          boxShadow: state.isFocused
+                            ? '0 0 0 1px #57575f'
+                            : 'none',
+                          '&:hover': {
+                            borderColor: '#9b9ba5',
+                          },
+                        }),
+                        placeholder: (base) => ({
+                          ...base,
+                          color: '#9ca3af',
+                        }),
+                        option: (base, state) => ({
+                          ...base,
+                          backgroundColor: state.isSelected
+                            ? '#57575f'
+                            : state.isFocused
+                            ? '#e5e5e7'
+                            : 'white',
+                          color: state.isSelected ? 'white' : '#374151',
+                          cursor: 'pointer',
+                          '&:active': {
+                            backgroundColor: '#57575f',
+                          },
+                        }),
+                        menu: (base) => ({
+                          ...base,
+                          borderRadius: '0.5rem',
+                          marginTop: '4px',
+                          boxShadow:
+                            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        }),
+                      }}
+                    />
+                    {/* Icon positioned absolutely */}
+                    <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none pr-1">
+                      <BusinessIcon
+                        fontSize="medium"
+                        className="text-gray-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <FieldError formik={formik} name="company" />
 
-                <CancelButton onClick={closeModal} />
+                <div className="space-y-1.5">
+                  <label htmlFor="role" className={styles.inputDescription}>
+                    App Role
+                  </label>
+                  <div className="relative">
+                    {/* Select with padding to make room for icon */}
+                    <Select
+                      id="role"
+                      name="role"
+                      ref={userRoleRef}
+                      value={rolesSelectOptions.find(
+                        (option) => option === formik.values.role
+                      )}
+                      onChange={(option) =>
+                        formik.setFieldValue('role', option)
+                      }
+                      onBlur={formik.handleBlur}
+                      options={rolesSelectOptions}
+                      placeholder="Select Role"
+                      styles={{
+                        control: (base, state) => ({
+                          ...base,
+                          paddingLeft: '1.6rem', // Make room for icon
+                          borderColor: state.isFocused ? '#57575f' : '#d1d5db',
+                          boxShadow: state.isFocused
+                            ? '0 0 0 1px #57575f'
+                            : 'none',
+                          '&:hover': {
+                            borderColor: '#9b9ba5',
+                          },
+                        }),
+                        placeholder: (base) => ({
+                          ...base,
+                          color: '#9ca3af',
+                        }),
+                        option: (base, state) => ({
+                          ...base,
+                          backgroundColor: state.isSelected
+                            ? '#57575f'
+                            : state.isFocused
+                            ? '#e5e5e7'
+                            : 'white',
+                          color: state.isSelected ? 'white' : '#374151',
+                          cursor: 'pointer',
+                          '&:active': {
+                            backgroundColor: '#57575f',
+                          },
+                        }),
+                        menu: (base) => ({
+                          ...base,
+                          borderRadius: '0.5rem',
+                          marginTop: '4px',
+                          boxShadow:
+                            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        }),
+                      }}
+                    />
+                    <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <GiRank3 size={22} className="text-gray-500" />
+                    </div>
+                  </div>
+                </div>
+                <FieldError formik={formik} name="role" />
 
-                {noScriptFallback}
-              </div>
-            </form>
+                <div className="space-y-1.5">
+                  <label
+                    className={styles.inputDescription}
+                    htmlFor="first_name"
+                  >
+                    First Name
+                  </label>
+                  <div
+                    className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="w-4 h-4 opacity-70"
+                    >
+                      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
+                    </svg>
+                    <input
+                      id="first_name"
+                      name="first_name"
+                      type="text"
+                      value={formik.values.first_name}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="grow"
+                    />
+                  </div>
+                </div>
+                <FieldError formik={formik} name="first_name" />
+
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="last_name"
+                    className={styles.inputDescription}
+                  >
+                    Last Name
+                  </label>
+                  <div
+                    className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="w-4 h-4 opacity-70"
+                    >
+                      <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z" />
+                    </svg>
+                    <input
+                      id="last_name"
+                      name="last_name"
+                      type="text"
+                      value={formik.values.last_name}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="grow"
+                    />
+                  </div>
+                </div>
+                <FieldError formik={formik} name="last_name" />
+
+                <div className="space-y-1.5">
+                  <label className={styles.inputDescription}>E-mail</label>
+                  <div
+                    className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="w-4 h-4 opacity-70"
+                    >
+                      <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z" />
+                      <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z" />
+                    </svg>
+                    <input
+                      type="text"
+                      name="email"
+                      value={formik.values.email}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="grow"
+                    />
+                  </div>
+                </div>
+                <FieldError formik={formik} name="email" />
+
+                <div className="space-y-1.5">
+                  <label className={styles.inputDescription}>
+                    Mobile Phone (optional)
+                  </label>
+                  <div
+                    className={`${styles.inputControl} input input-bordered flex items-center gap-2`}
+                  >
+                    <FaMobileRetro className="w-4 h-4 opacity-70" />
+
+                    <input
+                      type="text"
+                      name="mobile_phone"
+                      value={formik.values.mobile_phone}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="grow"
+                    />
+                  </div>
+                </div>
+                <FieldError formik={formik} name="mobile_phone" />
+
+                <div className="flex items-center mt-3 gap-2 ml-1">
+                  <input
+                    id="inform_user_for_new_account_by_email"
+                    type="checkbox"
+                    name="inform_user_for_new_account_by_email"
+                    value={formik.values.inform_user_for_new_account_by_email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="h-5 w-5 rounded border-gray-300 accent-black cursor-pointer"
+                  />
+
+                  <label
+                    className="text-sm"
+                    htmlFor="inform_user_for_new_account_by_email"
+                  >
+                    Inform User by Email
+                  </label>
+                </div>
+                <FieldError formik={formik} name="mobile_phone" />
+
+                <div
+                  className="flex my-3 items-end space-x-1"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  <FormStateError formState={localFormError || formState} />
+                </div>
+                <div className="mt-1 mb-3 flex justify-around">
+                  <SubmitButton
+                    label="Create User"
+                    loading="Creating ..."
+                    isValid={formik.dirty && formik.isValid}
+                  />
+
+                  <CancelButton onClick={closeModal} />
+
+                  {noScriptFallback}
+                </div>
+              </form>
+            </div>
           </>
         )}
       </div>

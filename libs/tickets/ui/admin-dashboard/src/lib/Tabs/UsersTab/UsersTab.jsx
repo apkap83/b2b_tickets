@@ -85,7 +85,7 @@ export function UsersTab({ usersList, rolesList }) {
       <div style={{ marginTop: '-50px' }}>
         <div className="float-right py-5 flex gap-1 items-center justify-end -translate-y-[16px]">
           <button
-            className="btn btn-sm  bg-black text-white hover:bg-gray-700"
+            className="btn btn-primary btn-sm"
             onClick={() => {
               setShowCreateUserModal(true);
             }}
@@ -101,6 +101,7 @@ export function UsersTab({ usersList, rolesList }) {
                 className={`sticky top-[70px] z-5 bg-white`}
                 style={isSticky ? { backgroundColor: '#fbfbfb' } : {}}
               >
+                <th></th>
                 <th className="text-center">First Name</th>
                 <th className="text-center">Last Name</th>
                 <th className="text-center">User Name</th>
@@ -274,7 +275,7 @@ export function UsersTab({ usersList, rolesList }) {
       <div className="px-5 pt-2 flex justify-between items-center">
         <div className="py-5 flex gap-1 ">
           <button
-            className="btn btn-sm bg-black text-white"
+            className="btn btn-primary btn-sm"
             onClick={() => {
               setShowCreateUserModal(true);
             }}

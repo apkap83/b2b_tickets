@@ -29,6 +29,16 @@ module.exports = {
   },
   plugins: [require('daisyui')],
   daisyui: {
-    themes: ['light'], // Only enable light mode
+    themes: [
+      {
+        light: {
+          ...require('daisyui/src/theming/themes')['light'], // ← Gets ALL default colors
+          primary: '#000000',
+          'primary-content': '#ffffff',
+          secondary: 'white',
+          'secondary-content': '#000000',
+        },
+      },
+    ], // Only enable light mode
   },
 };

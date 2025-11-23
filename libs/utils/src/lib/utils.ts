@@ -15,7 +15,7 @@ import {
   AuthenticationTypes,
   CredentialsType,
 } from '@b2b-tickets/shared-models';
-
+import { FilterTicketsStatus } from '@b2b-tickets/shared-models';
 import * as crypto from 'crypto';
 import * as Yup from 'yup';
 
@@ -747,3 +747,17 @@ export function getUserIdentifier(userName: string, email: string): string {
 
   return userName;
 }
+
+export const getFilterIconColor = (query: string | null): string => {
+  const colorMap: Record<string, string> = {
+    [FilterTicketsStatus.Open]: `text-[${TicketStatusColors.WORKING}]`,
+    [FilterTicketsStatus.Closed]: `text-[${TicketStatusColors.CLOSED}]`,
+    [FilterTicketsStatus.SeverityHigh]: 'text-[#dc5743]',
+    [FilterTicketsStatus.SeverityMedium]: 'text-[#916430]',
+    [FilterTicketsStatus.SeverityLow]: 'text-[#f0a500]',
+    [FilterTicketsStatus.Escalated]: 'text-[#fa5f5f]',
+    [FilterTicketsStatus.StatusNew]: `text-[${TicketStatusColors.NEW}]`,
+  };
+
+  return colorMap[query || ''] || 'text-black';
+};

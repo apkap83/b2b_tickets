@@ -12,9 +12,9 @@ export default async function MyLayout({
   const session = await getServerSession(options);
   return (
     <>
-      {session ? <NavBar /> : null}
+      <NavBar />
       {children}
-      {session ? <Footer /> : null}
+      <Footer />
     </>
   );
 }

@@ -259,10 +259,6 @@ export enum TicketStatusIsFinal {
 }
 
 export enum TicketStatusColors {
-  // NEW = '#6870fa',
-  // WORKING = '#916430',
-  // CANCELLED = '#dc5743',
-  // CLOSED = '#3d8d52',
   NEW = '#6870fa',
   WORKING = '#722665',
   CANCELLED = '#dc5743',

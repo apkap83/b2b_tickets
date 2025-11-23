@@ -35,6 +35,32 @@ html {
   /* scrollbar-color: #ff0000 #f1f1f1; */
 }
 
+@layer components {
+  .btn {
+    animation: none !important;
+  }
+
+  .btn-primary:hover {
+    @apply bg-gray-800 border-gray-800;
+  }
+
+  .btn-primary:disabled,
+  .btn-primary[disabled] {
+    @apply bg-gray-300 border-gray-300 text-gray-500 opacity-100;
+  }
+
+  .btn-secondary {
+    @apply border-gray-300;
+  }
+
+  .btn-primary:hover svg {
+    transform: translateX(4px);
+  }
+
+  .btn-primary svg {
+    transition: transform 0.3s ease;
+  }
+}
 /* Entire scrollbar */
 /*
 ::-webkit-scrollbar {
