@@ -71,7 +71,6 @@ export function UsersTab({ usersList, rolesList }) {
     return () => document.removeEventListener('scroll', handleScroll, true);
   }, []);
 
-  console.log('isSticky', isSticky);
   const itemsPerPage = 15000;
 
   const paginatedUsersList = slice(
