@@ -88,7 +88,7 @@ export const TicketRow = memo(
           {item.Service}
         </TableCell>
         <TableCell data-label="Opened By" align="center">
-          {item['Opened By']}
+          {item['ticket_creator_email']}
         </TableCell>
         <TableCell data-label="Serverity" align="center">
           {item.Severity}
