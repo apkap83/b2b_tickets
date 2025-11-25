@@ -79,6 +79,10 @@ export function UsersTab({ usersList, rolesList }) {
     (activePage - 1) * itemsPerPage + itemsPerPage
   );
 
+  const getDuplicateEmailCount = (email) => {
+    return paginatedUsersList.filter((item) => item.email === email).length;
+  };
+
   return (
     <>
       <div style={{ marginTop: '-50px' }}>
@@ -152,15 +156,11 @@ export function UsersTab({ usersList, rolesList }) {
                   <td /*className="text-wrap" style={{ maxWidth: '150px' }}*/>
                     <span style={{ wordBreak: 'break-all' }}>{user.email}</span>
                     <br />
-                    <span className="inline-block rounded-full bg-green-500 text-white px-1">
-                      {paginatedUsersList.filter(
-                        (item) => item.email === user.email
-                      ).length > 1
-                        ? paginatedUsersList.filter(
-                            (item) => item.email === user.email
-                          ).length + ' accounts'
-                        : null}
-                    </span>
+                    {getDuplicateEmailCount(user.email) > 1 && (
+                      <span className="inline-block rounded-full bg-green-500 text-white px-2 py-1 mt-1">
+                        {getDuplicateEmailCount(user.email)} accounts
+                      </span>
+                    )}
                     <br />
                   </td>
 
