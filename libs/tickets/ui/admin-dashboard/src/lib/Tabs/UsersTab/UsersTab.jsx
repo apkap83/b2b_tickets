@@ -146,11 +146,23 @@ export function UsersTab({ usersList, rolesList }) {
                   <td className="text-wrap" style={{ maxWidth: '150px' }}>
                     <span style={{ wordBreak: 'break-all' }}>
                       {getUserIdentifier(user.username, user.email)}
+                      &nbsp;
                     </span>{' '}
                   </td>
 
-                  <td className="text-wrap" style={{ maxWidth: '150px' }}>
-                    <span style={{ wordBreak: 'break-all' }}>{user.email}</span>{' '}
+                  <td /*className="text-wrap" style={{ maxWidth: '150px' }}*/>
+                    <span style={{ wordBreak: 'break-all' }}>{user.email}</span>
+                    <br />
+                    <span className="inline-block rounded-full bg-green-500 text-white px-1">
+                      {paginatedUsersList.filter(
+                        (item) => item.email === user.email
+                      ).length > 1
+                        ? paginatedUsersList.filter(
+                            (item) => item.email === user.email
+                          ).length + ' accounts'
+                        : null}
+                    </span>
+                    <br />
                   </td>
 
                   <td className="text-wrap" style={{ maxWidth: '150px' }}>
