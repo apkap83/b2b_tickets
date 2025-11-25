@@ -991,12 +991,10 @@ export async function updateUserPassword(formState: any, formData: any) {
 
     // If the userName provided in this function is different from the logged in user name
     // then you have to belong to API_Security_Management Role to proceed with Password Reset
-    if (session?.user.userName !== userName) {
-      // Verify Security Permission
-      await verifySecurityPermission(
-        AppPermissionTypes.API_Security_Management
-      );
-
+    if (
+      session?.user.userName !== userName &&
+      !userHasRole(session, AppRoleTypes.Security_Admin)
+    ) {
       logRequest.warn(
         `A.F.: SECURITY ALERT:  ${session.user.userName} - Attempting to change password for different user: ${userName}`
       );
@@ -1059,7 +1057,6 @@ export async function updateUserPassword(formState: any, formData: any) {
     if (inactiveOrLockedUsers.length > 0) {
       throw new Error('Cannot change password for inactive or locked users');
     }
-
     // Loop over all users and update their passwords
     for (const user of users) {
       user.password = password;
@@ -1067,7 +1064,7 @@ export async function updateUserPassword(formState: any, formData: any) {
       await user.save();
 
       logRequest.info(
-        `A.F.: ${session?.user.userName} - Password changed for user: ${user.userName} (${email})`
+        `A.F.: ${session?.user.userName} - Password changed for user: ${user.username} (${email})`
       );
     }
 
