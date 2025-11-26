@@ -9,7 +9,6 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import { signOut } from 'next-auth/react';
 import config from '@b2b-tickets/config';
 import { NovaLogo } from '@b2b-tickets/assets';
 import { FaChevronRight } from 'react-icons/fa6';
@@ -43,44 +42,36 @@ const CookieDetails = () => (
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
             _GRECAPTCHA
           </td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Essential</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Protects the site from spam and abuse using Google reCAPTCHA.
+            Protects the site from spam and abuse using Google reCAPTCHA. Required for security.
           </td>
         </tr>
         <tr>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
             next-auth.csrf-token
           </td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Essential</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Protection against CSRF attacks
-          </td>
-        </tr>
-        <tr>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>ENID</td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Ensures secure user authentication and stores preferences for Google
-            services.
+            Protection against CSRF attacks. Required for security.
           </td>
         </tr>
         <tr>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
             next-auth.callback-url
           </td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Essential</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Used by NextAuth.js to handle authentication redirects.
+            Used by NextAuth.js to handle authentication redirects. Required for login functionality.
           </td>
         </tr>
         <tr>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
             next-auth.session-token
           </td>
-          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Security</td>
+          <td style={{ border: '1px solid #ddd', padding: '8px' }}>Essential</td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Used by NextAuth.js to handle authentication.
+            Used by NextAuth.js to maintain your login session. Required for authentication.
           </td>
         </tr>
         <tr>
@@ -88,10 +79,10 @@ const CookieDetails = () => (
             cookieConsent
           </td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Necessary
+            Essential
           </td>
           <td style={{ border: '1px solid #ddd', padding: '8px' }}>
-            Used by application for storing Consent response
+            Remembers your cookie consent choice. Required to avoid showing the banner repeatedly.
           </td>
         </tr>
       </tbody>
@@ -129,23 +120,18 @@ const CookiePolicy = () => (
 
     <h2 className="text-center font-black my-5">Why Do We Use Cookies?</h2>
     <ul className="list-disc ml-5">
-      <li>To ensure website functionality.</li>
-      <li>To improve user experience and analyze traffic.</li>
+      <li>To ensure website functionality and authentication.</li>
       <li>To secure the website against spam and abuse.</li>
+      <li>To remember your preferences and consent choices.</li>
     </ul>
 
-    <h2 className="text-left font-black my-5">1. Security Cookies</h2>
+    <h2 className="text-left font-black my-5">Essential Cookies</h2>
     <p>
       These cookies are essential for the proper functioning of our website and
-      cannot be disabled. They are typically set in response to actions made by
+      cannot be disabled. They are set in response to actions made by
       you, such as logging in, filling out forms, or ensuring website security.
-    </p>
-
-    <h2 className="text-left font-black my-5">2. Analytics Cookies</h2>
-    <p>
-      These cookies allow us to measure and improve the performance of our
-      website by collecting and reporting information on how users interact with
-      it.
+      These cookies do not store any personally identifiable information and are
+      required for the website to function properly.
     </p>
   </div>
 );
@@ -175,30 +161,6 @@ const CookieConsentBanner = () => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Strict',
     });
-
-    // Log analytics consent (if needed)
-    //@ts-ignore
-    if (window.gtag) {
-      //@ts-ignore
-      window.gtag('consent', 'update', { analytics_storage: 'granted' });
-    }
-  };
-
-  const handleReject = async () => {
-    setShowBanner(false);
-    cookie.set('cookieConsent', 'rejected', {
-      expires: config.cookieConsentValidityInDays,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Strict',
-    });
-
-    //@ts-ignore
-    if (window.gtag) {
-      //@ts-ignore
-      window.gtag('consent', 'update', { analytics_storage: 'denied' });
-    }
-
-    await signOut({ callbackUrl: process.env.SIGNOUT_CALLBACKURL });
   };
 
   const toggleDetails = () => {
@@ -248,11 +210,11 @@ const CookieConsentBanner = () => {
             </div>
             <div style={{ maxWidth: '60%' }}>
               <p style={{ fontSize: '0.875rem', margin: '0.5rem 8px' }}>
-                <strong>This page uses cookies</strong>
+                <strong>This site uses essential cookies</strong>
               </p>
               <p style={{ fontSize: '0.875rem', marginLeft: '8px' }}>
-                Cookies are essential for the proper functioning of the site and
-                for improving your browsing experience.
+                We use essential cookies for authentication, security, and basic functionality. 
+                These cannot be disabled as they are required for the site to work properly.
               </p>
               <Button
                 variant="text"
@@ -268,43 +230,19 @@ const CookieConsentBanner = () => {
                 <FaChevronRight size="12" />
               </Button>
             </div>
-            <div className="flex flex-col gap-3 justify-center">
+            <div className="flex justify-center">
               <Button
                 variant="contained"
                 style={{
                   backgroundColor: '#000',
                   color: '#fff',
                   fontSize: '0.875rem',
-                  padding: '0.5rem 1rem',
+                  padding: '0.75rem 1.5rem',
                   textTransform: 'none',
                 }}
                 onClick={handleAccept}
               >
-                Accept All
-              </Button>
-              {/* <Button
-                variant="outlined"
-                style={{
-                  fontSize: '0.875rem',
-                  padding: '0.5rem 1rem',
-                  textTransform: 'none',
-                  whiteSpace: 'nowrap',
-                }}
-                onClick={handleReject}
-              >
-                Customize &nbsp;
-                <FaChevronRight size="12" />
-              </Button> */}
-              <Button
-                variant="outlined"
-                style={{
-                  fontSize: '0.875rem',
-                  padding: '0.5rem 1rem',
-                  textTransform: 'none',
-                }}
-                onClick={handleReject}
-              >
-                Reject All
+                I Understand
               </Button>
             </div>
           </div>
