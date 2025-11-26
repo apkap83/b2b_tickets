@@ -157,7 +157,7 @@ export function UsersTab({ usersList, rolesList }) {
                     <span style={{ wordBreak: 'break-all' }}>{user.email}</span>
                     <br />
                     {getDuplicateEmailCount(user.email) > 1 && (
-                      <span className="inline-block rounded-full bg-green-500 text-white px-2 py-1 mt-1">
+                      <span className="inline-block rounded-full bg-green-600 text-white px-2 py-1 mt-1">
                         {getDuplicateEmailCount(user.email)} accounts
                       </span>
                     )}
