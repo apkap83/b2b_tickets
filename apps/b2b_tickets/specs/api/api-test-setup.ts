@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Session } from '@b2b-tickets/shared-models';
+import { Session, AppRoleTypes } from '@b2b-tickets/shared-models';
 
 // Mock NextAuth
 jest.mock('next-auth', () => ({
@@ -117,7 +117,7 @@ jest.mock('@b2b-tickets/auth-options', () => ({
 // Mock crypto functions
 global.crypto = {
   ...global.crypto,
-  randomUUID: jest.fn(() => 'test-uuid-1234'),
+  randomUUID: jest.fn(() => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee') as any,
   subtle: {
     ...global.crypto?.subtle,
     encrypt: jest.fn(),
@@ -207,7 +207,7 @@ export class APITestUtils {
         lastName: 'User',
         customer_id: 1,
         company: 'Test Company',
-        roles: ['Admin'],
+        roles: ['Admin'] as AppRoleTypes[],
         permissions: [
           { permissionName: 'Admin_Access' },
           { permissionName: 'Manage_Users' },
