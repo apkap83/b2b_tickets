@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Session, AppRoleTypes } from '@b2b-tickets/shared-models';
+import { Session, AppRoleTypes, AppPermissionTypes } from '@b2b-tickets/shared-models';
 
 // Mock NextAuth
 jest.mock('next-auth', () => ({
@@ -175,17 +175,28 @@ export class APITestUtils {
   static createMockSession(overrides: Partial<Session> = {}): Session {
     return {
       user: {
+        id: 'test-user-123',
         user_id: 123,
         userName: 'testuser',
         email: 'test@example.com',
         firstName: 'Test',
         lastName: 'User',
         customer_id: 1,
-        company: 'Test Company',
+        customer_name: 'Test Company',
+        mobilePhone: '+1234567890',
+        authenticationType: 'LOCAL',
         roles: ['B2B_TicketCreator'],
         permissions: [
-          { permissionName: 'Create_New_Ticket' },
-          { permissionName: 'View_Own_Tickets' },
+          { 
+            permissionName: AppPermissionTypes.Create_New_Ticket,
+            permissionEndPoint: '/api/tickets',
+            permissionDescription: 'Create new tickets'
+          },
+          { 
+            permissionName: AppPermissionTypes.Tickets_Page,
+            permissionEndPoint: '/tickets',
+            permissionDescription: 'View tickets page'
+          },
         ],
         ...overrides.user,
       },
@@ -200,18 +211,33 @@ export class APITestUtils {
   static createMockAdminSession(overrides: Partial<Session> = {}): Session {
     return this.createMockSession({
       user: {
+        id: 'admin-user-1',
         user_id: 1,
         userName: 'admin',
         email: 'admin@example.com',
         firstName: 'Admin',
         lastName: 'User',
         customer_id: 1,
-        company: 'Test Company',
+        customer_name: 'Test Company',
+        mobilePhone: '+1234567890',
+        authenticationType: 'LOCAL',
         roles: ['Admin'] as AppRoleTypes[],
         permissions: [
-          { permissionName: 'Admin_Access' },
-          { permissionName: 'Manage_Users' },
-          { permissionName: 'Manage_Tickets' },
+          { 
+            permissionName: AppPermissionTypes.API_Admin,
+            permissionEndPoint: '/api/admin',
+            permissionDescription: 'Admin API access'
+          },
+          { 
+            permissionName: AppPermissionTypes.Create_New_App_User,
+            permissionEndPoint: '/api/users',
+            permissionDescription: 'Create new users'
+          },
+          { 
+            permissionName: AppPermissionTypes.Edit_User,
+            permissionEndPoint: '/api/users',
+            permissionDescription: 'Edit users'
+          },
         ],
         ...overrides.user,
       },
@@ -292,8 +318,8 @@ beforeEach(() => {
   // Clear all mocks before each test
   jest.clearAllMocks();
   
-  // Reset environment variables
-  process.env.NODE_ENV = 'test';
+  // Reset environment variables (use Object.defineProperty for read-only properties)
+  Object.defineProperty(process.env, 'NODE_ENV', { value: 'test', writable: true });
   process.env.NEXTAUTH_SECRET = 'test-secret';
   
   // Reset global fetch mock
