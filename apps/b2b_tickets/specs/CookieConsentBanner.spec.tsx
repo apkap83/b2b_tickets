@@ -19,7 +19,7 @@ jest.mock('react-icons/fa6', () => ({
 jest.mock('@mui/material/Button', () => {
   return {
     __esModule: true,
-    default: ({ children, onClick, variant, style }) => (
+    default: ({ children, onClick, variant, style }: { children: React.ReactNode; onClick: () => void; variant: string; style: React.CSSProperties }) => (
       <button 
         onClick={onClick} 
         data-variant={variant}
@@ -34,7 +34,7 @@ jest.mock('@mui/material/Button', () => {
 jest.mock('@mui/material/Dialog', () => {
   return {
     __esModule: true,
-    default: ({ children, open, onClose, maxWidth, fullWidth }) => (
+    default: ({ children, open, onClose, maxWidth, fullWidth }: { children: React.ReactNode; open: boolean; onClose: () => void; maxWidth: string; fullWidth: boolean }) => (
       open ? (
         <div data-testid="mui-dialog">
           {children}
@@ -48,14 +48,14 @@ jest.mock('@mui/material/Dialog', () => {
 jest.mock('@mui/material/DialogContent', () => {
   return {
     __esModule: true,
-    default: ({ children }) => <div data-testid="mui-dialog-content">{children}</div>,
+    default: ({ children }: { children: React.ReactNode }) => <div data-testid="mui-dialog-content">{children}</div>,
   };
 });
 
 jest.mock('@mui/material/DialogTitle', () => {
   return {
     __esModule: true,
-    default: ({ children }) => <div data-testid="mui-dialog-title">{children}</div>,
+    default: ({ children }: { children: React.ReactNode }) => <div data-testid="mui-dialog-title">{children}</div>,
   };
 });
 

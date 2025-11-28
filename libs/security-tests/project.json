@@ -11,16 +11,6 @@
       "options": {
         "jestConfig": "libs/security-tests/jest.config.ts"
       }
-    },
-    "build": {
-      "executor": "@nx/js:swc",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "dist/libs/security-tests",
-        "main": "libs/security-tests/src/index.ts",
-        "tsConfig": "libs/security-tests/tsconfig.lib.json",
-        "assets": ["libs/security-tests/*.md"]
-      }
     }
   }
 }
