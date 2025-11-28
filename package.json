@@ -32,7 +32,7 @@
     "@mui/material-nextjs": "5.16.14",
     "@mui/x-data-grid": "7.29.2",
     "@mui/x-date-pickers": "7.29.2",
-    "axios": "1.9.0",
+    "axios": "1.13.2",
     "bcryptjs": "2.4.3",
     "clsx": "2.1.1",
     "config": "3.3.12",
@@ -83,7 +83,7 @@
     "winston-daily-rotate-file": "5.0.0",
     "xlsx": "0.18.5",
     "yup": "1.6.1",
-    "zod": "3.24.4"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@babel/core": "7.27.1",
@@ -106,7 +106,7 @@
     "@playwright/test": "1.52.0",
     "@swc-node/register": "1.10.10",
     "@swc/cli": "0.6.0",
-    "@swc/core": "1.11.24",
+    "@swc/core": "1.15.3",
     "@swc/helpers": "0.5.17",
     "@swc/jest": "0.2.38",
     "@swc/plugin-styled-components": "1.5.122",
