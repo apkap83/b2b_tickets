@@ -11,7 +11,7 @@ export default defineConfig({
 
   plugins: [
     react(),
-    nxViteTsPaths(),
+    nxViteTsPaths({ debug: false }),
     dts({
       entryRoot: 'src',
       tsconfigPath: path.join(__dirname, 'tsconfig.lib.json'),
