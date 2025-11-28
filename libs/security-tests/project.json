@@ -1,0 +1,26 @@
+{
+  "name": "security-tests",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/security-tests/src",
+  "projectType": "library",
+  "tags": ["type:security", "scope:b2b_tickets"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/security-tests/jest.config.ts"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/security-tests",
+        "main": "libs/security-tests/src/index.ts",
+        "tsConfig": "libs/security-tests/tsconfig.lib.json",
+        "assets": ["libs/security-tests/*.md"]
+      }
+    }
+  }
+}
