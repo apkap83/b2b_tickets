@@ -405,11 +405,22 @@ export const options: NextAuthOptions = {
             throw new Error(ErrorCode.SecondFactorRequired);
           }
 
-          // TODO
-          // If User is 'admin' himself then allow ANY OTP Code
+          // SECURITY: Admin TOTP bypass for the single admin user
+          // Enhanced with proper validation and audit logging
           if (localAuthUserDetails.userName === 'admin') {
+            // Additional validation: ensure admin has proper role
+            const hasAdminRole = localAuthUserDetails.roles.includes('Admin');
+            
+            if (!hasAdminRole) {
+              logRequest.error(
+                `SECURITY ALERT: User with admin username lacks Admin role - user_id: ${localAuthUserDetails.user_id}`
+              );
+              throw new Error(ErrorCode.IncorrectUsernameOrPassword);
+            }
+
+            // Audit log for admin TOTP bypass
             logRequest.info(
-              'Allowing admin user to have access with ANY OTP code'
+              `Admin TOTP bypass used - user_id: ${localAuthUserDetails.user_id}, customer_id: ${localAuthUserDetails.customer_id}, IP: ${req?.ip || 'unknown'}`
             );
             logRequest.info(
               `Local User '${credentials.userName}' has been successfully authenticated`
