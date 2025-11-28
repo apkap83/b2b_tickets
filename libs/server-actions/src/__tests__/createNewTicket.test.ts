@@ -75,24 +75,26 @@ describe('createNewTicket', () => {
   });
 
   it('should create a new ticket successfully', async () => {
-    // Mock database responses with more comprehensive setup
-    mockPgB2BpoolQuery
-      .mockResolvedValue({
-        rows: [{ category_service_type_id: 1 }]
-      }); // Default response for any pgB2BpoolQuery calls
+    // Mock database responses for category service type query
+    mockPgB2BpoolQuery.mockResolvedValueOnce({
+      rows: [{ category_service_type_id: 1 }]
+    });
 
+    // Mock client queries in sequence
     mockClient.query
+      .mockResolvedValueOnce(undefined) // SET search_path
       .mockResolvedValueOnce(undefined) // BEGIN transaction
       .mockResolvedValueOnce({
         rows: [{ tck_new: 'TCK001' }]
       }) // Ticket creation
-      .mockResolvedValue(undefined); // Default response for other queries
+      .mockResolvedValueOnce(undefined) // COMMIT
+      .mockResolvedValue(undefined); // Any other queries
 
     const result = await createNewTicket(null, mockFormData);
 
-    // Current implementation has database setup issues, expecting error for now
-    expect(result.status).toBe('ERROR');
-    expect(result.message).toContain('Cannot read properties of undefined');
+    expect(result.status).toBe('SUCCESS');
+    expect(result.message).toBe('Ticket Created!');
+    expect(result.extraData).toBe('TCK001');
 
     // Verify database interactions
     expect(mockSetSchemaAndTimezone).toHaveBeenCalledWith(pgB2Bpool);
@@ -101,13 +103,18 @@ describe('createNewTicket', () => {
       ['1', '1']
     );
 
-    // Verify transaction management - BEGIN is attempted
+    // Verify transaction management
     expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-    // Function fails before COMMIT due to database setup issues
+    expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
     
-    // Email notification and path revalidation not called due to function failure
-    expect(mockSendEmailOnTicketUpdate).not.toHaveBeenCalled();
-    expect(mockRevalidatePath).not.toHaveBeenCalled();
+    // Verify email notification
+    expect(mockSendEmailOnTicketUpdate).toHaveBeenCalledWith(
+      EmailNotificationType.TICKET_CREATION,
+      'TCK001'
+    );
+
+    // Verify path revalidation
+    expect(mockRevalidatePath).toHaveBeenCalledWith('/tickets');
     
     // Verify client cleanup
     expect(mockClient.release).toHaveBeenCalled();
@@ -145,7 +152,7 @@ describe('createNewTicket', () => {
     const result = await createNewTicket(null, mockFormData);
 
     expect(result.status).toBe('ERROR');
-    expect(result.message).toBe('Category Service Type ID was not found!');
+    expect(result.message).toBe('Failed to retrieve category service type information from database');
     
     // Should rollback transaction
     expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
@@ -215,7 +222,7 @@ describe('createNewTicket', () => {
     const result = await createNewTicket(null, mockFormData);
 
     expect(result.status).toBe('ERROR');
-    expect(result.message).toContain('Cannot read properties of undefined');
+    expect(result.message).toContain('Failed to create new ticket - database returned no results');
     
     expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
   });
@@ -230,6 +237,7 @@ describe('createNewTicket', () => {
     });
 
     mockClient.query
+      .mockResolvedValueOnce(undefined) // SET search_path
       .mockResolvedValueOnce(undefined) // BEGIN
       .mockResolvedValueOnce({
         rows: [{ tck_new: 'TCK002' }]
@@ -238,10 +246,10 @@ describe('createNewTicket', () => {
 
     const result = await createNewTicket(null, mockFormData);
 
-    expect(result.status).toBe('ERROR');
-    expect(result.message).toContain('Cannot read properties of undefined');
+    expect(result.status).toBe('SUCCESS');
+    expect(result.extraData).toBe('TCK002');
 
-    // Database setup includes additional calls
-    expect(mockClient.query).toHaveBeenCalledTimes(4); // Includes schema setup
+    // Should not call CC procedures
+    expect(mockClient.query).toHaveBeenCalledTimes(4); // SET search_path, BEGIN, ticket creation, COMMIT only
   });
 });

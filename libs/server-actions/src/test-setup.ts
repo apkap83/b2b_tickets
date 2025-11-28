@@ -44,7 +44,7 @@ jest.mock('@b2b-tickets/config', () => ({
   },
 }));
 
-// Mock file system operations  
+// Mock file system operations
 jest.mock('fs/promises', () => ({
   writeFile: jest.fn(),
   readFile: jest.fn(),
@@ -65,7 +65,7 @@ jest.mock('@b2b-tickets/logging', () => ({
     info = jest.fn();
     warn = jest.fn();
     error = jest.fn();
-  }
+  },
 }));
 
 jest.mock('@b2b-tickets/server-actions/server', () => ({
@@ -86,20 +86,20 @@ jest.mock('winston', () => ({
     printf: jest.fn(),
     colorize: jest.fn(),
     align: jest.fn(),
-    errors: jest.fn()
+    errors: jest.fn(),
   },
   createLogger: jest.fn(),
   transports: {
     Console: jest.fn(),
-    File: jest.fn()
-  }
+    File: jest.fn(),
+  },
 }));
 
 // Mock winston-daily-rotate-file
 jest.mock('winston-daily-rotate-file', () => {
   return jest.fn().mockImplementation(() => ({
     filename: 'test.log',
-    level: 'info'
+    level: 'info',
   }));
 });
 
@@ -151,26 +151,37 @@ jest.mock('@b2b-tickets/utils', () => ({
     fieldErrors: {},
     timestamp: Date.now(),
   },
-  // Mock user permission functions
-  userHasPermission: jest.fn((session, permissionName) => {
-    return session?.user?.permissions?.some((p: any) => p.permissionName === permissionName) || false;
+  // Mock user permission functions with correct Admin bypass logic
+  userHasPermission: jest.fn((session: unknown, permissionName: unknown) => {
+    const typedSession = session as { user?: { roles?: string[], permissions?: { permissionName: string }[] } } | null;
+    if (!typedSession?.user) return false;
+    // Admin role bypass - Admin users have access to all permissions
+    if (typedSession.user.roles?.includes('Admin')) return true;
+    return (
+      typedSession?.user?.permissions?.some(
+        (p: { permissionName: string }) => p.permissionName === permissionName
+      ) || false
+    );
   }),
-  userHasRole: jest.fn((session, roleName) => {
-    if (!session?.user?.roles) return false;
-    // Admin role has access to everything
-    if (session.user.roles.includes('Admin')) return true;
-    return session.user.roles.includes(roleName);
+  userHasRole: jest.fn((session: unknown, roleName: unknown) => {
+    const typedSession = session as { user?: { roles?: string[] } } | null;
+    if (!typedSession?.user?.roles) return false;
+    // Normalize roleName to array for consistent handling
+    const rolesToCheck = Array.isArray(roleName) ? roleName : [roleName];
+    return typedSession.user.roles.some(
+      (role: string) => rolesToCheck.includes(role) || role === 'Admin'
+    );
   }),
   // Mock data mapping functions
-  mapToTicketCreator: jest.fn((ticket) => ticket),
-  mapToTicketHandler: jest.fn((ticket) => ticket)
+  mapToTicketCreator: jest.fn((ticket: unknown) => ticket),
+  mapToTicketHandler: jest.fn((ticket: unknown) => ticket),
 }));
 
 // Set up global test environment
 beforeEach(() => {
   // Clear all mocks before each test
   jest.clearAllMocks();
-  
+
   // Reset environment variables
   process.env.NODE_ENV = 'test';
   process.env.NEXT_PUBLIC_APP_ENV = 'test';

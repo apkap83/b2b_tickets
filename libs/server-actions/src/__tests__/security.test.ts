@@ -109,8 +109,8 @@ describe('Security Verification', () => {
       // This function accepts both B2B_TicketHandler and B2B_TicketCreator
       const result = await getTicketCategories();
       
-      // Current implementation requires specific permission checking
-      expect(result.error).toContain('Unauthorized access');
+      expect(result.error).toBeUndefined();
+      expect(result.data).toBeDefined();
     });
   });
 

@@ -814,6 +814,11 @@ export const createNewTicket = async (
       [category, service]
     );
 
+    // Validate database response before accessing rows
+    if (!res || !res.rows || res.rows.length === 0) {
+      throw new Error('Failed to retrieve category service type information from database');
+    }
+
     const categoryServiceTypeId = res.rows[0]?.category_service_type_id;
 
     if (!categoryServiceTypeId) {
@@ -866,6 +871,11 @@ export const createNewTicket = async (
       argsForTicketNew
     );
 
+    // Validate database response before accessing rows
+    if (!result || !result.rows || result.rows.length === 0) {
+      throw new Error('Failed to create new ticket - database returned no results');
+    }
+
     const newTicketId = result.rows[0]?.tck_new;
     if (!newTicketId) {
       throw new Error('New Ticket Id cannot be retrieved during insertion');
@@ -874,24 +884,37 @@ export const createNewTicket = async (
     logRequest.info('✅ New ticket created with ID:', newTicketId);
 
     if (ccEmails && ccEmails.length > 0) {
-      await client.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
-        newTicketId,
-        ccEmails,
-        config.api.user,
-        config.api.process,
-        config.postgres_b2b_database.debugMode,
-      ]);
+      try {
+        logRequest.debug('🔄 Setting CC emails...');
+        await client.query('CALL tck_set_cc_users($1, $2, $3, $4, $5)', [
+          newTicketId,
+          ccEmails,
+          config.api.user,
+          config.api.process,
+          config.postgres_b2b_database.debugMode,
+        ]);
+        logRequest.debug('✅ CC emails set successfully');
+      } catch (ccEmailError) {
+        logRequest.warn('⚠️ Failed to set CC emails:', ccEmailError as Error);
+        // Don't throw error - CC emails are optional, continue with ticket creation
+      }
     }
 
     if (ccPhones && ccPhones.length > 0) {
-      logRequest.debug('🔄 Setting CC phones...');
-      await client.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
-        newTicketId,
-        ccPhones,
-        config.api.user,
-        config.api.process,
-        config.postgres_b2b_database.debugMode,
-      ]);
+      try {
+        logRequest.debug('🔄 Setting CC phones...');
+        await client.query('CALL tck_set_cc_phones($1, $2, $3, $4, $5)', [
+          newTicketId,
+          ccPhones,
+          config.api.user,
+          config.api.process,
+          config.postgres_b2b_database.debugMode,
+        ]);
+        logRequest.debug('✅ CC phones set successfully');
+      } catch (ccPhoneError) {
+        logRequest.warn('⚠️ Failed to set CC phones:', ccPhoneError as Error);
+        // Don't throw error - CC phones are optional, continue with ticket creation
+      }
     }
 
     await client.query('COMMIT');
@@ -909,11 +932,23 @@ export const createNewTicket = async (
 
     return successResponse;
   } catch (error) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+      logRequest.error('🔄 Transaction rolled back due to error');
+    } catch (rollbackError) {
+      logRequest.error('❌ Failed to rollback transaction:', rollbackError as Error);
+    }
+
+    logRequest.error('❌ Error creating ticket:', error as Error);
     const errorResponse = fromErrorToFormState(error);
     return errorResponse;
   } finally {
-    client.release();
+    try {
+      client.release();
+      logRequest.debug('🔄 Database client released');
+    } catch (releaseError) {
+      logRequest.error('❌ Failed to release database client:', releaseError as Error);
+    }
   }
 };
 
@@ -1969,7 +2004,7 @@ async function insertAttachment(params: AttachmentInsertParams): Promise<{
   }
 }
 
-const getAttachmentFullPath = ({ pathFromDB }: { pathFromDB: string }) => {
+const getAttachmentFullPath = ({ pathFromDB }: { pathFromDB: string }): string => {
   const isProdEnv = process.env['NODE_ENV'] === 'production';
   const isStagingEnv = process.env['NEXT_PUBLIC_APP_ENV'] === 'staging';
   const isDevelopmentEnv = process.env['NODE_ENV'] === 'development';
@@ -1984,6 +2019,9 @@ const getAttachmentFullPath = ({ pathFromDB }: { pathFromDB: string }) => {
     const fileNameOnly = path.basename(pathFromDB);
     return path.join(config.attachmentsPrefixPath, fileNameOnly);
   }
+  
+  // Fallback - return the path from DB if environment doesn't match expected values
+  return pathFromDB;
 };
 
 /**
@@ -2104,9 +2142,56 @@ export async function processFileAttachment(formData: FormData): Promise<{
     };
   } catch (error) {
     logRequest.error(`Error processing file attachment: ${error}`);
+    
+    // Provide specific error messages based on error type
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      
+      // File size or permission errors
+      if (errorMessage.includes('enospc') || errorMessage.includes('no space')) {
+        return {
+          data: '',
+          error: 'Upload failed: Insufficient disk space on server. Please try again later or contact support.',
+        };
+      }
+      
+      // Permission errors
+      if (errorMessage.includes('eacces') || errorMessage.includes('permission denied')) {
+        return {
+          data: '',
+          error: 'Upload failed: Server permission error. Please contact support.',
+        };
+      }
+      
+      // File size limit errors  
+      if (errorMessage.includes('file too large') || errorMessage.includes('entity too large')) {
+        return {
+          data: '',
+          error: 'Upload failed: File is too large. Please select a smaller file.',
+        };
+      }
+      
+      // Network or timeout errors
+      if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
+        return {
+          data: '',
+          error: 'Upload failed: Network timeout. Please check your connection and try again.',
+        };
+      }
+      
+      // Database connection errors
+      if (errorMessage.includes('database') || errorMessage.includes('connection')) {
+        return {
+          data: '',
+          error: 'Upload failed: Database connection issue. Please try again later.',
+        };
+      }
+    }
+    
+    // Generic fallback for unknown errors
     return {
       data: '',
-      error: 'ERROR: Internal server error while processing file attachment',
+      error: 'Upload failed: An unexpected error occurred. Please try again or contact support.',
     };
   }
 }
@@ -2167,8 +2252,26 @@ export async function getTicketAttachments({
     };
   } catch (error) {
     logRequest.error(`Error getting ticket attachments: ${error}`);
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('unauthorized') || errorMessage.includes('access') || errorMessage.includes('permission')) {
+        return {
+          error: 'Access denied: You do not have permission to view attachments for this ticket.',
+        };
+      }
+      if (errorMessage.includes('connection') || errorMessage.includes('timeout')) {
+        return {
+          error: 'Database connection error: Please try again later or contact support.',
+        };
+      }
+      if (errorMessage.includes('not found') || errorMessage.includes('invalid ticket')) {
+        return {
+          error: 'Ticket not found: The specified ticket does not exist or has been removed.',
+        };
+      }
+    }
     return {
-      error: 'ERROR: Internal server error while retrieving attachments',
+      error: 'Unable to retrieve attachments: An unexpected error occurred. Please try again or contact support.',
     };
   }
 }
@@ -2347,9 +2450,42 @@ export async function downloadAttachment(params: {
     };
   } catch (error) {
     logRequest.error(`Download attachment error: ${error}`);
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('unauthorized') || errorMessage.includes('access') || errorMessage.includes('permission')) {
+        return {
+          status: 'ERROR',
+          message: 'Access denied: You do not have permission to download this attachment.',
+        };
+      }
+      if (errorMessage.includes('not found') || errorMessage.includes('enoent')) {
+        return {
+          status: 'ERROR',
+          message: 'File not found: The attachment file may have been moved or deleted.',
+        };
+      }
+      if (errorMessage.includes('connection') || errorMessage.includes('timeout')) {
+        return {
+          status: 'ERROR',
+          message: 'Database connection error: Please try again later or contact support.',
+        };
+      }
+      if (errorMessage.includes('eacces') || errorMessage.includes('eperm')) {
+        return {
+          status: 'ERROR',
+          message: 'File access error: Unable to read the attachment file. Please contact support.',
+        };
+      }
+      if (errorMessage.includes('emfile') || errorMessage.includes('enfile')) {
+        return {
+          status: 'ERROR',
+          message: 'System resource limit: Too many files open. Please try again later.',
+        };
+      }
+    }
     return {
       status: 'ERROR',
-      message: 'An error occurred while downloading the file',
+      message: 'Download failed: An unexpected error occurred. Please try again or contact support.',
     };
   }
 }
@@ -2493,9 +2629,42 @@ export async function deleteAttachment(params: {
     };
   } catch (error) {
     logRequest.error(`Delete attachment error: ${error}`);
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
+      if (errorMessage.includes('unauthorized') || errorMessage.includes('access') || errorMessage.includes('permission')) {
+        return {
+          status: 'ERROR',
+          message: 'Access denied: You do not have permission to delete this attachment.',
+        };
+      }
+      if (errorMessage.includes('not found') || errorMessage.includes('enoent')) {
+        return {
+          status: 'ERROR',
+          message: 'Attachment not found: The attachment may have already been deleted or does not exist.',
+        };
+      }
+      if (errorMessage.includes('connection') || errorMessage.includes('timeout')) {
+        return {
+          status: 'ERROR',
+          message: 'Database connection error: Please try again later or contact support.',
+        };
+      }
+      if (errorMessage.includes('constraint') || errorMessage.includes('foreign key')) {
+        return {
+          status: 'ERROR',
+          message: 'Cannot delete attachment: This attachment is referenced by other records.',
+        };
+      }
+      if (errorMessage.includes('ebusy') || errorMessage.includes('locked')) {
+        return {
+          status: 'ERROR',
+          message: 'File in use: The attachment file is currently being used. Please try again later.',
+        };
+      }
+    }
     return {
       status: 'ERROR',
-      message: 'An error occurred while deleting the attachment',
+      message: 'Delete failed: An unexpected error occurred. Please try again or contact support.',
     };
   }
 }

@@ -140,12 +140,12 @@ describe('File Operations', () => {
 
       const result = await processFileAttachment(mockFormData);
 
-      // Function is likely failing validation - adjust expectations
-      expect(result.data).toBe('');
-      expect(result.error).toBeDefined();
+      // Function now works correctly - file upload successful
+      expect(result.data).toBe('test.txt');
+      expect(result.error).toBe('');
       
-      // Only one database call for filename generation
-      expect(mockPgB2BpoolQuery).toHaveBeenCalledTimes(1);
+      // Two database calls: filename generation and file record insertion
+      expect(mockPgB2BpoolQuery).toHaveBeenCalledTimes(2);
     });
 
     it('should handle missing file', async () => {
@@ -225,15 +225,17 @@ describe('File Operations', () => {
 
       const result = await downloadAttachment({ attachmentId: '1' });
 
-      expect(result.status).toBe('ERROR');
-      expect(result.message).toBeDefined();
+      expect(result.status).toBe('SUCCESS');
+      expect(result.message).toBe('File retrieved successfully');
+      expect(result.data?.filename).toBe('test.txt');
+      expect(result.data?.mimeType).toBe('text/plain');
     });
 
     it('should handle missing attachment ID', async () => {
       const result = await downloadAttachment({ attachmentId: '' });
 
       expect(result.status).toBe('ERROR');
-      expect(result.message).toContain('An error occurred while downloading the file');
+      expect(result.message).toContain('Missing required parameters for file download');
     });
 
     it('should handle permission denied', async () => {
@@ -251,7 +253,7 @@ describe('File Operations', () => {
       const result = await downloadAttachment({ attachmentId: '1' });
 
       expect(result.status).toBe('ERROR');
-      expect(result.message).toContain('An error occurred while downloading the file');
+      expect(result.message).toContain('Access denied: You do not have permission to download this attachment');
     });
 
     it('should handle file not found', async () => {
@@ -266,12 +268,12 @@ describe('File Operations', () => {
         .mockResolvedValueOnce({ rows: [mockAttachmentDetails] })
         .mockResolvedValueOnce(undefined);
 
-      mockReadFile.mockRejectedValue(new Error('File not found'));
+      mockReadFile.mockRejectedValue(new Error('ENOENT: no such file or directory'));
 
       const result = await downloadAttachment({ attachmentId: '1' });
 
       expect(result.status).toBe('ERROR');
-      expect(result.message).toContain('An error occurred while downloading the file');
+      expect(result.message).toContain('File not found or cannot be accessed');
     });
 
     it('should determine correct MIME type', async () => {
@@ -298,7 +300,8 @@ describe('File Operations', () => {
 
         const result = await downloadAttachment({ attachmentId: '1' });
 
-        expect(result.status).toBe('ERROR'); // Function currently fails
+        expect(result.status).toBe('SUCCESS');
+        expect(result.data?.mimeType).toBe(testCase.expectedMimeType);
         
         jest.clearAllMocks();
         mockGetServerSession.mockResolvedValue(mockSession);
@@ -323,8 +326,8 @@ describe('File Operations', () => {
 
       const result = await deleteAttachment({ attachmentId: '1' });
 
-      expect(result.status).toBe('ERROR');
-      expect(result.message).toContain('An error occurred while deleting the attachment');
+      expect(result.status).toBe('SUCCESS');
+      expect(result.message).toContain('deleted successfully');
     });
 
     it('should handle missing attachment', async () => {
@@ -333,7 +336,7 @@ describe('File Operations', () => {
       const result = await deleteAttachment({ attachmentId: '999' });
 
       expect(result.status).toBe('ERROR');
-      expect(result.message).toContain('An error occurred while deleting the attachment');
+      expect(result.message).toBe('Attachment not found');
     });
 
     it('should handle database deletion errors', async () => {
@@ -346,12 +349,12 @@ describe('File Operations', () => {
 
       mockPgB2BpoolQuery
         .mockResolvedValueOnce({ rows: [mockAttachmentDetails] })
-        .mockRejectedValueOnce(new Error('Permission denied'));
+        .mockRejectedValueOnce(new Error('Database error'));
 
       const result = await deleteAttachment({ attachmentId: '1' });
 
       expect(result.status).toBe('ERROR');
-      expect(result.message).toContain('An error occurred while deleting the attachment');
+      expect(result.message).toContain('Failed to delete attachment from database');
     });
 
     it('should refuse to delete files outside b2b_tickets directory', async () => {
@@ -372,8 +375,9 @@ describe('File Operations', () => {
 
       const result = await deleteAttachment({ attachmentId: '1' });
 
-      // Function currently fails with database issues
-      expect(result.status).toBe('ERROR');
+      // Function should successfully delete from DB but warn about file cleanup
+      expect(result.status).toBe('SUCCESS');
+      expect(result.message).toContain('deleted successfully');
     });
 
     it('should continue if file cleanup fails but DB deletion succeeds', async () => {
@@ -388,12 +392,12 @@ describe('File Operations', () => {
         .mockResolvedValueOnce({ rows: [mockAttachmentDetails] })
         .mockResolvedValueOnce(undefined);
 
-      mockUnlink.mockRejectedValue(new Error('File locked'));
+      mockUnlink.mockRejectedValue(new Error('EBUSY: resource busy or locked'));
 
       const result = await deleteAttachment({ attachmentId: '1' });
 
-      expect(result.status).toBe('ERROR');
-      expect(result.message).toContain('An error occurred while deleting the attachment');
+      expect(result.status).toBe('SUCCESS');
+      expect(result.message).toContain('deleted successfully');
     });
   });
 
@@ -422,14 +426,14 @@ describe('File Operations', () => {
 
       const result = await getTicketAttachments({ ticketId: '123' });
 
-      expect(result.data).toBeUndefined();
-      expect(result.error).toContain('ERROR: Internal server error');
+      expect(result.data).toEqual(mockAttachments);
+      expect(result.error).toBe('');
     });
 
     it('should handle missing ticket ID', async () => {
       const result = await getTicketAttachments({ ticketId: '' });
 
-      expect(result.error).toContain('ERROR: Internal server error');
+      expect(result.error).toContain('ERROR: Ticket ID is required');
     });
 
     it('should handle database errors', async () => {
@@ -437,7 +441,7 @@ describe('File Operations', () => {
 
       const result = await getTicketAttachments({ ticketId: '123' });
 
-      expect(result.error).toContain('Internal server error');
+      expect(result.error).toContain('Unable to retrieve attachments: An unexpected error occurred');
     });
 
     it('should return empty array for tickets with no attachments', async () => {
@@ -445,8 +449,8 @@ describe('File Operations', () => {
 
       const result = await getTicketAttachments({ ticketId: '123' });
 
-      expect(result.data).toBeUndefined();
-      expect(result.error).toContain('ERROR: Internal server error');
+      expect(result.data).toEqual([]);
+      expect(result.error).toBe('');
     });
   });
 });
