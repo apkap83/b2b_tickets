@@ -43,6 +43,11 @@ export const userHasPermission = (
 ): boolean => {
   if (!session || !session.user) return false;
 
+  // Admin role bypass - Admin users have access to all permissions
+  if (session.user.roles?.includes(AppRoleTypes.Admin)) {
+    return true;
+  }
+
   // Normalize permissionName to an array for consistent handling
   const permissionsToCheck = Array.isArray(permissionName)
     ? permissionName
