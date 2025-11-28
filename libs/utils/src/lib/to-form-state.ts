@@ -33,7 +33,7 @@ export const toFormState = (
 export const fromErrorToFormState = (error: unknown): FormState => {
   // if (error instanceof yup.ValidationError) {
   if (error instanceof ZodError) {
-    const validationErrors = error.errors.map((err) => ({
+    const validationErrors = error.issues.map((err: any) => ({
       path: err.path,
       message: err.message,
     }));
