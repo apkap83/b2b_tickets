@@ -10,7 +10,7 @@ import { EmailNotificationType } from '@b2b-tickets/shared-models';
 import { config } from '@b2b-tickets/config';
 import { logTokenOTPAttempt } from '@b2b-tickets/totp-service/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
+const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key'; // Use an environment variable in production
 
 export async function POST(req: NextRequest) {
   const logRequest = await getRequestLogger(TransportName.AUTH);
@@ -55,9 +55,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!foundUser) {
-      // Introduce a delay before returning error response
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
+      // Use consistent timing to prevent email enumeration attacks
+      // No additional delay - both valid and invalid emails should take similar time
       return NextResponse.json(
         { message: 'Email address invalid' },
         { status: 400 }

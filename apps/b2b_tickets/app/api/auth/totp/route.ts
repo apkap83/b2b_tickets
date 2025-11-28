@@ -10,7 +10,7 @@ import { config } from '@b2b-tickets/config';
 import { validateOTPCodeForUserThroughRedis } from '@b2b-tickets/totp-service/server';
 import { NextApiRequest } from 'next';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
+const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key'; // Use an environment variable in production
 
 export async function POST(req: NextRequest) {
   const logRequest = await getRequestLogger(TransportName.AUTH);

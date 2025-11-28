@@ -2429,7 +2429,7 @@ export async function downloadAttachment(params: {
         default: 'application/octet-stream',
       };
 
-      return mimeTypes[extension || ''] || mimeTypes.default;
+      return mimeTypes[extension || ''] || mimeTypes['default'];
     };
 
     const mimeType = getMimeType(attachmentDetails.Filename);

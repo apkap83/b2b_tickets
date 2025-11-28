@@ -5,7 +5,9 @@
     "module": "commonjs",
     "types": ["jest", "node"],
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "es6"]
   },
   "include": [
     "jest.config.ts",
