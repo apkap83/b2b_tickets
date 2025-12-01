@@ -5,5 +5,20 @@
   "projectType": "library",
   "tags": ["type:server", "scope:b2b_tickets"],
   "// targets": "to see all targets run: nx show project admin-server-actions --web",
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/admin-server-actions/jest.config.ts"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/admin-server-actions/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  }
 }
