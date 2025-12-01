@@ -204,6 +204,9 @@ declare module 'uuid' {
 // Set up global test environment
 beforeEach(() => {
   jest.clearAllMocks();
-  process.env.NODE_ENV = 'test';
-  process.env.NEXT_PUBLIC_APP_ENV = 'test';
+  // Use Object.assign to avoid read-only property issues
+  Object.assign(process.env, {
+    NODE_ENV: 'test',
+    NEXT_PUBLIC_APP_ENV: 'test'
+  });
 });
