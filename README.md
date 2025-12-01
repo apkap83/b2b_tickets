@@ -14,7 +14,7 @@ This is a B2B ticketing system built as an Nx monorepo. The system consists of m
 - PostgreSQL database with Sequelize ORM
 - Well-organized library structure with clear separation of concerns
 - Secure authentication with NextAuth.js and TOTP (Time-based One-Time Password)
-- Modern frontend stack (React, Material UI, Tailwind CSS)
+- Modern frontend stack (React, Material UI, Tailwind CSS, DaisyUI)
 - Docker-based deployment with support for both staging and production
 - Comprehensive testing setup with Jest and Playwright
 
@@ -47,14 +47,26 @@ The project follows the Nx monorepo architecture with:
    - `ui`: Shared UI components
    - `ui-theme`: Theme configuration
    - `utils`: Utility functions
+   - `security-tests`: Comprehensive security testing suite
 
-### Authentication System
+### Authentication & Security System
 
-The project uses NextAuth.js for authentication with:
+The project uses NextAuth.js for authentication with comprehensive security protections:
 
+#### Authentication Features
 - TOTP (Time-based One-Time Password) support
 - Email-based password reset
-- Role-based access control
+- Role-based access control (RBAC) with Admin bypass functionality
+
+#### Security Protections
+- **Timing Attack Protection**: Consistent response times prevent user enumeration
+- **JWT Security**: Comprehensive token validation and tampering detection
+- **Session Security**: Hijacking prevention and secure timeout controls
+- **File Upload Security**: Malicious file detection, type validation, path traversal prevention
+- **SQL Injection Prevention**: Parameterized queries and input sanitization
+- **CSRF Protection**: Cross-site request forgery prevention
+- **Rate Limiting**: Protection against brute force attacks on authentication endpoints
+- **Data Isolation**: Customer data segregation with cross-customer access prevention
 
 ### Database
 
@@ -65,7 +77,8 @@ The project uses NextAuth.js for authentication with:
 
 - Next.js application with both client and server components
 - MUI (Material UI) for component library
-- Tailwind CSS for styling
+- Tailwind CSS for utility-first styling
+- DaisyUI for additional component styling and themes
 
 ### Real-time Communication
 
@@ -83,6 +96,9 @@ The project uses NextAuth.js for authentication with:
 ### Development
 
 ```bash
+# Start both applications together (recommended)
+npm run dev
+
 # Start the main application in development mode
 nx dev b2b_tickets
 
@@ -90,13 +106,7 @@ nx dev b2b_tickets
 nx dev b2b_tickets -p 3500
 
 # Start the socket server in development mode
-export DEBUG=1
-export NODE_ENV=development
-export PORT=3455
-export SOCKET_CORS_ORIGIN=http://127.0.0.1:3000
-export NEXT_AUTH_SESSION_URL=http://127.0.0.1:3000/api/auth/session
-export NODE_TLS_REJECT_UNAUTHORIZED=0
-nx serve socket-server
+npm run dev:socket
 ```
 
 ### Building
@@ -114,34 +124,43 @@ nx build socket-server --configuration=production --verbose
 
 ### Testing
 
+The project maintains comprehensive test coverage with 477+ tests achieving 100% success rate:
+
+#### Test Suites
+- **Security Tests** (115 tests): Authentication, authorization, file upload security, vulnerability prevention
+- **Server Actions Tests** (68 tests): Ticket operations, file handling, admin functions
+- **Database Tests** (38 tests): Schema validation, transaction integrity, data consistency
+- **API Routes Tests** (7 tests): Authentication and ticket management endpoints
+- **Component Tests** (249+ tests): Utils, config, auth options, Redis service, React components
+
 ```bash
+# Run all tests in the monorepo
+npm run test:all
+
+# Run specific test suites
+nx run server-actions:test --detectOpenHandles
+nx run security-tests:test --detectOpenHandles  
+nx run db-access:test --detectOpenHandles
+
 # Run tests for a specific library with coverage and watch mode
 nx test config --coverage --verbose --watch
 nx test utils --coverage --verbose --watch
-
-# Run all tests in the monorepo
-nx run-many --target=test --all
 
 # Run E2E tests with Playwright
 cd apps/b2b_tickets-e2e
 npx playwright test --project chromium
 
+# Run E2E tests in mock mode (no server needed)
+npm run test:e2e:mock-only
+
 # Or using nx
 nx run b2b_tickets-e2e:e2e
+nx run b2b_tickets-e2e:e2e --configuration=mock-only
 ```
 
-### Running Tasks with Nx
+### Project Visualization
 
 ```bash
-# Run a single task for a project
-npx nx <target> <project> <...options>
-
-# Run multiple targets
-npx nx run-many -t <target1> <target2>
-
-# Run multiple targets for specific projects
-npx nx run-many -t <target1> <target2> -p <proj1> <proj2>
-
 # Show the project graph
 npx nx graph
 ```
@@ -149,15 +168,88 @@ npx nx graph
 ### Docker Commands
 
 ```bash
-# Build the base image for macOS
-sudo docker build --build-arg USE_PROXY=false -t my-monorepo-base -f Dockerfile .
-
-# Build containers with docker-compose
+# Build and start all services
 docker compose up --build
 
-# Build and start a specific service
-sudo docker compose up -d --build --no-cache --remove-orphans staging_b2b_tickets_pre_entry_1
+# Build and start specific services
+docker compose up --build staging_b2b_tickets_pre_entry_1 staging_socket_server_pre_entry_1
+
+# Start staging services in detached mode
+docker compose up -d staging_b2b_tickets_pre_entry_1 staging_b2b_tickets_pre_entry_2 staging_socket_server_pre_entry_1
+
+# Start production services
+docker compose up -d prod_b2b_tickets_1 prod_b2b_tickets_2 production_socket_server_1
+
+# View logs for specific service
+docker compose logs -f staging_b2b_tickets_pre_entry_1
+
+# Stop all services
+docker compose down
 
 # Clean up unused Docker resources
-sudo docker system prune -a -f --volumes
+docker system prune -a -f --volumes
+```
+
+## Development Tools & Commands
+
+### Creating New Libraries and Components
+
+```bash
+# Create a new library under libs folder
+nx g lib library-name --directory libs --tags type:utils,scope:shared
+
+# Create a UI library
+nx g lib --directory libs --appProject b2b_tickets --tags type:ui,scope:b2b_tickets
+
+# Create a Next.js library  
+nx g @nx/next:library library-name --directory libs --tags type:server,scope:b2b_tickets
+
+# Create a component in existing library
+nx g component ComponentName --project ui --export --tags type:ui,scope=b2b_tickets
+
+# Create a Node.js application
+nx generate @nx/node:application app-name --verbose
+```
+
+### Database & Models
+
+```bash
+# Generate Sequelize models automatically for entire database
+npx sequelize-auto -o "./models" -d postgres -h 127.0.0.1 -p 9002 -u postgres -x postgres -s 'b2btickets_dev' --dialect postgres -l ts
+
+# Generate specific table model
+npx sequelize-auto -o "./models" -d postgres -h 127.0.0.1 -p 9002 -u postgres -x postgres -s 'b2btickets_dev' --dialect postgres -l ts
+```
+
+### Project Analysis
+
+```bash
+# Show project dependency graph
+nx graph
+
+# Get project information
+nx show project socket-server
+
+# Generate project report
+nx report
+
+# Count lines of code (requires cloc)
+cloc . --exclude-dir=node_modules,.next,coverage,playwright-report --exclude-ext=json,lock,yaml --include-lang=TypeScript,JSX,JavaScript,SQL,SCSS,CSS,HTML
+```
+
+### Socket Server Environments
+
+```bash
+# Development mode (already handled by npm scripts)
+npm run dev:socket
+
+# Manual staging build and run
+export DEBUG=1 NODE_ENV=staging PORT=3456
+nx build socket-server --configuration=staging --verbose
+node dist/apps/socket-server/main.js
+
+# Manual production build and run  
+export DEBUG=1 NODE_ENV=production PORT=3457
+nx build socket-server --configuration=production --verbose
+node dist/apps/socket-server/main.js
 ```
