@@ -14,6 +14,7 @@ module.exports = {
     extend: {
       fontFamily: {
         myCustomFont: ['FrederickaTheGreat', 'serif'], // Add your custom font here
+        gulzarRegular: ['GulzarRegular', 'sans-serif'],
       },
       // keyframes: {
       //   'grow-and-shrink': {

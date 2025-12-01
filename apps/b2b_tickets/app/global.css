@@ -21,6 +21,13 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'GulzarRegular';
+  src: url('/fonts/Gulzar/Gulzar-Regular.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
