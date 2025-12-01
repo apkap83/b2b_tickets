@@ -207,7 +207,7 @@ The project uses NextAuth.js for authentication with enterprise-grade security:
 
 ## Testing Infrastructure
 
-### Comprehensive Test Coverage (540+ tests, 100% success rate)
+### Comprehensive Test Coverage (542+ tests, 100% success rate)
 
 The project maintains extensive test coverage across multiple domains:
 
@@ -218,10 +218,11 @@ The project maintains extensive test coverage across multiple domains:
 - Key security tests for role-based access control (RBAC)
 
 #### 2. Admin Server Actions Testing (`libs/admin-server-actions/src/__tests__/`)
-- **65 tests** covering comprehensive admin functionality and security
+- **67 tests** covering comprehensive admin functionality and security
 - Test files: `admin-functions-behavior.test.ts`, `security-auth.test.ts`, `basic-functions.test.ts`, `working-demo.test.ts`, `simple.test.ts`
 - Covers: User management, role/permission management, company management, dashboard data
 - Advanced security testing for admin-level operations and RBAC validation
+- Foreign key constraint handling and database integrity testing
 - Comprehensive function signature and API contract testing
 
 #### 3. API Routes Testing (`apps/b2b_tickets/specs/api/`)
@@ -257,11 +258,19 @@ The project maintains extensive test coverage across multiple domains:
 
 ### Security Features & Fixes
 
-#### Critical Security Issue Resolved: Admin TOTP Bypass
+#### Critical Security Issues Resolved: 
+
+**1. Admin TOTP Bypass**
 - **Location**: `/libs/auth-options/src/lib/auth-options.ts` (lines 408-431)
 - **Fix Applied**: Enhanced admin TOTP bypass with proper role validation and audit logging
 - **Security Enhancement**: Only users with actual Admin role can use bypass functionality
 - **Audit logging**: All admin bypass usage is logged with user_id, customer_id, and IP address
+
+**2. Database Foreign Key Constraint Violation**
+- **Location**: `/libs/admin-server-actions/src/lib/admin-server-actions.tsx` (lines 640-651)
+- **Fix Applied**: Added ticket count validation before user deletion to prevent foreign key violations
+- **Security Enhancement**: Prevents data integrity issues and system crashes during user management
+- **Business Logic**: Users with associated tickets cannot be deleted, maintaining audit trail integrity
 
 #### Documented Vulnerabilities (for awareness):
 1. **Bulk User Update Security Issue** (HIGH priority) - Updates all users with same email during login attempts
@@ -271,7 +280,7 @@ The project maintains extensive test coverage across multiple domains:
 ### Test Execution Commands
 
 ```bash
-# Run all tests (540+ tests)
+# Run all tests (542+ tests)
 npm run test:all
 
 # Run specific test suites
