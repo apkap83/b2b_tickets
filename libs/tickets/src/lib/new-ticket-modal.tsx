@@ -190,12 +190,16 @@ const SubmitButton = memo<SubmitButtonProps>(
     return (
       <button
         type="submit"
-        className="btn btn-primary flex items-center gap-2"
+        className="btn btn-primary "
         disabled={!isValid || isSubmitting}
         onClick={handleClick}
       >
-        <span>{isSubmitting ? loadingText : label}</span>
-        <FaArrowCircleRight size={20} />
+        <div className="flex items-center justify-center gap-2">
+          <span className="inline-block h-5 leading-[1.32rem]">
+            {isSubmitting ? loadingText : label}
+          </span>
+          <FaArrowCircleRight size={20} />
+        </div>
       </button>
     );
   }
