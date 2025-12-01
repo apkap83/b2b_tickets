@@ -124,14 +124,15 @@ nx build socket-server --configuration=production --verbose
 
 ### Testing
 
-The project maintains comprehensive test coverage with 477+ tests achieving 100% success rate:
+The project maintains comprehensive test coverage with 540+ tests achieving 100% success rate:
 
 #### Test Suites
 - **Security Tests** (115 tests): Authentication, authorization, file upload security, vulnerability prevention
 - **Server Actions Tests** (68 tests): Ticket operations, file handling, admin functions
+- **Admin Server Actions Tests** (65 tests): User management, role/permission management, company management, admin dashboard functionality
 - **Database Tests** (38 tests): Schema validation, transaction integrity, data consistency
 - **API Routes Tests** (7 tests): Authentication and ticket management endpoints
-- **Component Tests** (249+ tests): Utils, config, auth options, Redis service, React components
+- **Component Tests** (247+ tests): Utils, config, auth options, Redis service, React components
 
 ```bash
 # Run all tests in the monorepo
@@ -139,6 +140,7 @@ npm run test:all
 
 # Run specific test suites
 nx run server-actions:test --detectOpenHandles
+nx run admin-server-actions:test --detectOpenHandles
 nx run security-tests:test --detectOpenHandles  
 nx run db-access:test --detectOpenHandles
 

@@ -207,7 +207,7 @@ The project uses NextAuth.js for authentication with enterprise-grade security:
 
 ## Testing Infrastructure
 
-### Comprehensive Test Coverage (477+ tests, 100% success rate)
+### Comprehensive Test Coverage (540+ tests, 100% success rate)
 
 The project maintains extensive test coverage across multiple domains:
 
@@ -217,17 +217,24 @@ The project maintains extensive test coverage across multiple domains:
 - Covers: Authentication, authorization, database operations, file uploads/downloads
 - Key security tests for role-based access control (RBAC)
 
-#### 2. API Routes Testing (`apps/b2b_tickets/specs/api/`)
+#### 2. Admin Server Actions Testing (`libs/admin-server-actions/src/__tests__/`)
+- **65 tests** covering comprehensive admin functionality and security
+- Test files: `admin-functions-behavior.test.ts`, `security-auth.test.ts`, `basic-functions.test.ts`, `working-demo.test.ts`, `simple.test.ts`
+- Covers: User management, role/permission management, company management, dashboard data
+- Advanced security testing for admin-level operations and RBAC validation
+- Comprehensive function signature and API contract testing
+
+#### 3. API Routes Testing (`apps/b2b_tickets/specs/api/`)
 - **7 tests** for authentication and ticket management endpoints
 - Test files: `simple-api.test.ts`, `captcha-standalone.test.ts`
 - Includes Next.js API route testing with proper request/response mocking
 
-#### 3. Database Operations Testing (`libs/db-access/src/test/`)
+#### 4. Database Operations Testing (`libs/db-access/src/test/`)
 - **38 tests** for schema validation, data consistency, transaction integrity
 - Test files: `database-schema.test.ts`, `data-consistency.test.ts`, `transaction-integrity.test.ts`
 - Covers: PostgreSQL schema validation, ACID compliance, concurrent operations
 
-#### 4. Security Testing (`libs/security-tests/`)
+#### 5. Security Testing (`libs/security-tests/`)
 - **55 comprehensive security tests** across 6 test suites
 - **Authentication & Authorization**: Role-based access control, permission validation
 - **Password & TOTP Security**: Complexity requirements, rate limiting, brute force protection
@@ -241,7 +248,7 @@ The project maintains extensive test coverage across multiple domains:
   - `vulnerability-prevention.test.ts` - Common web vulnerability prevention
   - `basic.test.ts` - Security test utilities validation
 
-#### 5. Additional Test Suites
+#### 6. Additional Test Suites
 - **Config Tests**: 116 tests for environment configuration
 - **Utils Tests**: 155 tests for utility functions and React components
 - **Auth Options Tests**: 25 tests for authentication logic
@@ -264,11 +271,12 @@ The project maintains extensive test coverage across multiple domains:
 ### Test Execution Commands
 
 ```bash
-# Run all tests (477+ tests)
+# Run all tests (540+ tests)
 npm run test:all
 
 # Run specific test suites
 nx run server-actions:test --detectOpenHandles
+nx run admin-server-actions:test --detectOpenHandles
 nx run security-tests:test --detectOpenHandles  
 nx run db-access:test --detectOpenHandles
 nx run b2b_tickets:test --detectOpenHandles
