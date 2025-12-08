@@ -73,32 +73,23 @@ export async function register() {
     process.on('SIGTERM', () => console.error('[INSTRUMENTATION] SIGTERM'));
     process.on('SIGINT', () => console.error('[INSTRUMENTATION] SIGINT'));
 
-    // CRITICAL: Override process.exit to block digest-related crashes
+    // CRITICAL: Override process.exit to block ALL crashes in production
     const originalExit = process.exit;
     process.exit = ((code?: number) => {
       const stack = new Error().stack || '';
 
-      console.error(`[INSTRUMENTATION] process.exit(${code}) called!`);
-      console.error('[INSTRUMENTATION] Exit called from:', stack);
+      console.error(`[INSTRUMENTATION] PREVENTED process.exit(${code})!`);
+      console.error('[INSTRUMENTATION] Exit attempt from:', stack);
 
-      // Check if this exit is related to the digest error
-      const isDigestRelated =
-        stack.includes('digest') ||
-        stack.includes('.next/server/chunks/') ||
-        stack.includes('7383.js') ||
-        stack.toLowerCase().includes('timeout');
-
-      if (isDigestRelated) {
-        console.warn(
-          '[INSTRUMENTATION] 🛑 BLOCKING EXIT - digest/chunk related'
-        );
+      // In production, NEVER allow process.exit()
+      if (process.env.NODE_ENV === 'production') {
+        console.warn('[INSTRUMENTATION] 🛑 PRODUCTION MODE - BLOCKING ALL EXITS');
         console.warn('[INSTRUMENTATION] Server will continue running...');
-        // Return without calling originalExit - this blocks the exit
         return undefined as never;
       }
 
-      // Allow legitimate exits (SIGTERM, SIGINT, etc.)
-      console.error('[INSTRUMENTATION] Allowing exit...');
+      // In development, allow exits for debugging
+      console.error('[INSTRUMENTATION] Development mode - allowing exit');
       return originalExit.call(process, code);
     }) as typeof process.exit;
 
