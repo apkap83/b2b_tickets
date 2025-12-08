@@ -7,8 +7,14 @@ export async function register() {
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
       // Check for the specific Next.js digest error
-      if (reason?.message?.includes("Cannot read properties of null (reading 'digest')")) {
-        console.warn('[INSTRUMENTATION] Next.js Server Actions digest error - client/server build ID mismatch');
+      if (
+        reason?.message?.includes(
+          "Cannot read properties of null (reading 'digest')"
+        )
+      ) {
+        console.warn(
+          '[INSTRUMENTATION] Next.js Server Actions digest error - client/server build ID mismatch'
+        );
         // Don't crash the server for this specific error
         return;
       }
@@ -17,30 +23,33 @@ export async function register() {
       console.error('[INSTRUMENTATION] Unhandled Promise Rejection:', {
         reason: reason,
         message: reason?.message || 'Unknown error',
-        stack: reason?.stack || 'No stack trace'
+        stack: reason?.stack || 'No stack trace',
       });
-      
+
       // Don't exit for unhandled rejections - let them fail gracefully
     });
 
+    const SAFE_ERROR_PATTERNS = [
+      "Cannot read properties of null (reading 'digest')",
+      // Add other known safe patterns
+    ];
+
     // Handle uncaught exceptions
     process.on('uncaughtException', (error: Error) => {
-      // Check for the specific Next.js digest error
-      if (error.message?.includes("Cannot read properties of null (reading 'digest')")) {
-        console.warn('[INSTRUMENTATION] Digest error in uncaughtException - continuing');
-        // Don't crash the server for this specific error
+      const isSafeError = SAFE_ERROR_PATTERNS.some((pattern) =>
+        error.message?.includes(pattern)
+      );
+
+      if (isSafeError) {
+        console.warn(
+          '[INSTRUMENTATION] Known safe error - continuing',
+          error.message
+        );
         return;
       }
 
-      // Log other uncaught exceptions
-      console.error('[INSTRUMENTATION] Uncaught Exception:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-      
-      // Don't exit for any uncaught exceptions - just log and continue
-      // This prevents the container from restarting on errors
+      console.error('[INSTRUMENTATION] Fatal uncaught exception:', error);
+      process.exit(1);
     });
 
     // Add debugging to see what's causing process exits
@@ -54,7 +63,7 @@ export async function register() {
     });
 
     process.on('SIGINT', () => {
-      console.error('[INSTRUMENTATION] Received SIGINT signal');  
+      console.error('[INSTRUMENTATION] Received SIGINT signal');
     });
 
     process.on('SIGHUP', () => {
@@ -78,6 +87,8 @@ export async function register() {
       return originalExit.call(process, code);
     }) as typeof process.exit;
 
-    console.info('[INSTRUMENTATION] Global error handlers and exit debugging registered');
+    console.info(
+      '[INSTRUMENTATION] Global error handlers and exit debugging registered'
+    );
   }
 }
