@@ -43,6 +43,28 @@ export async function register() {
       // This prevents the container from restarting on errors
     });
 
-    console.info('[INSTRUMENTATION] Global error handlers registered');
+    // Add debugging to see what's causing process exits
+    process.on('exit', (code) => {
+      console.error(`[INSTRUMENTATION] Process exiting with code: ${code}`);
+      console.error(`[INSTRUMENTATION] Exit stack trace:`, new Error().stack);
+    });
+
+    process.on('SIGTERM', () => {
+      console.error('[INSTRUMENTATION] Received SIGTERM signal');
+    });
+
+    process.on('SIGINT', () => {
+      console.error('[INSTRUMENTATION] Received SIGINT signal');  
+    });
+
+    process.on('SIGHUP', () => {
+      console.error('[INSTRUMENTATION] Received SIGHUP signal');
+    });
+
+    process.on('beforeExit', (code) => {
+      console.error(`[INSTRUMENTATION] Before exit with code: ${code}`);
+    });
+
+    console.info('[INSTRUMENTATION] Global error handlers and exit debugging registered');
   }
 }
