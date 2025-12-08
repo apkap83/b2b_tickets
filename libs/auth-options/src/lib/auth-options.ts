@@ -53,12 +53,16 @@ function getRequestLogger(transportName: TransportName) {
 
     return logRequest;
   } catch (error) {
-    // Log or handle the error if this function is called outside server-side context
-    console.error(
-      'Failed to retrieve headers. Ensure this is used server-side:',
-      error
+    // DON'T THROW - Return a fallback logger for NextAuth context
+    console.warn('Headers not available, using fallback logger for NextAuth context');
+    
+    // Return a fallback logger that works in NextAuth context
+    return createRequestLogger(
+      transportName,
+      'nextauth-context',
+      'auth-api',
+      'auth-session'
     );
-    throw new Error('getRequestLogger must be used in a server-side context.');
   }
 }
 
