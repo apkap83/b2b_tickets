@@ -6,12 +6,12 @@ export async function register() {
 
     const SAFE_ERROR_PATTERNS = [
       /Cannot read properties of null \(reading 'digest'\)/,
-      /next.*digest/i, // More specific than just 'digest'
+      /next.*digest/i,
     ];
 
     // Track error frequency to detect cascading failures
     const errorCounts = new Map<string, number>();
-    const ERROR_THRESHOLD = 10; // Max errors per pattern in 60s
+    const ERROR_THRESHOLD = 10;
     const resetInterval = setInterval(() => errorCounts.clear(), 60000);
 
     process.on('unhandledRejection', (reason: any) => {
@@ -64,7 +64,7 @@ export async function register() {
       );
     });
 
-    // Exit debugging (keep your existing code)
+    // Exit debugging
     process.on('exit', (code) => {
       clearInterval(resetInterval);
       console.error(`[INSTRUMENTATION] Process exiting with code: ${code}`);
@@ -73,12 +73,32 @@ export async function register() {
     process.on('SIGTERM', () => console.error('[INSTRUMENTATION] SIGTERM'));
     process.on('SIGINT', () => console.error('[INSTRUMENTATION] SIGINT'));
 
+    // CRITICAL: Override process.exit to block digest-related crashes
     const originalExit = process.exit;
     process.exit = ((code?: number) => {
-      console.error(
-        `[INSTRUMENTATION] process.exit(${code}) called from:`,
-        new Error().stack
-      );
+      const stack = new Error().stack || '';
+
+      console.error(`[INSTRUMENTATION] process.exit(${code}) called!`);
+      console.error('[INSTRUMENTATION] Exit called from:', stack);
+
+      // Check if this exit is related to the digest error
+      const isDigestRelated =
+        stack.includes('digest') ||
+        stack.includes('.next/server/chunks/') ||
+        stack.includes('7383.js') ||
+        stack.toLowerCase().includes('timeout');
+
+      if (isDigestRelated) {
+        console.warn(
+          '[INSTRUMENTATION] 🛑 BLOCKING EXIT - digest/chunk related'
+        );
+        console.warn('[INSTRUMENTATION] Server will continue running...');
+        // Return without calling originalExit - this blocks the exit
+        return undefined as never;
+      }
+
+      // Allow legitimate exits (SIGTERM, SIGINT, etc.)
+      console.error('[INSTRUMENTATION] Allowing exit...');
       return originalExit.call(process, code);
     }) as typeof process.exit;
 
