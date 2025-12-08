@@ -24,12 +24,12 @@ const nextConfig = {
     version,
   },
   // Generate consistent build ID to prevent Server Action mismatches
-  generateBuildId: async () => {
-    // Use version from package.json for build ID consistency
-    // This ensures the same build has the same ID across deployments
-    // Use a unique ID each time to force client refresh
-    return `${version}-${process.env.BUILD_ID || Date.now()}`;
-  },
+  // generateBuildId: async () => {
+  //   // Use version from package.json for build ID consistency
+  //   // This ensures the same build has the same ID across deployments
+  //   // Use a unique ID each time to force client refresh
+  //   return `${version}-${process.env.BUILD_ID || Date.now()}`;
+  // },
   experimental: {
     // Enable instrumentation hook for global error handlers
     instrumentationHook: true,
