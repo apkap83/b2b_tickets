@@ -14,28 +14,24 @@ export const LiveUpdatesIndicator = () => {
   const [connected, setConnected] = useState(isConnected);
   const [lastActivity, setLastActivity] = useState(new Date());
   const [showPulse, setShowPulse] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(() => {
-    if (typeof window === 'undefined') return true;
+  // Always start with consistent server-side values to prevent hydration mismatches
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [showShrunkContent, setShowShrunkContent] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
-    const hasSeenIndicator = sessionStorage.getItem('liveUpdatesIndicatorSeen');
-    return !hasSeenIndicator;
-  });
-
-  // Control delayed fade-in of shrunk content
-  const [showShrunkContent, setShowShrunkContent] = useState(() => {
-    if (typeof window === 'undefined') return false;
-
-    const hasSeenIndicator = sessionStorage.getItem('liveUpdatesIndicatorSeen');
-    return !!hasSeenIndicator; // Show immediately if already seen
-  });
-
-  // Auto-shrink after initial display
+  // Initialize state from sessionStorage after hydration to prevent mismatches
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
+    
+    setHasHydrated(true);
     const hasSeenIndicator = sessionStorage.getItem('liveUpdatesIndicatorSeen');
-
-    if (!hasSeenIndicator) {
+    
+    if (hasSeenIndicator) {
+      // User has seen indicator before - start in collapsed state
+      setIsExpanded(false);
+      setShowShrunkContent(true);
+    } else {
+      // First time user - keep expanded but set up auto-collapse
       const shrinkTimer = setTimeout(() => {
         setIsExpanded(false);
         sessionStorage.setItem('liveUpdatesIndicatorSeen', 'true');
@@ -95,6 +91,11 @@ export const LiveUpdatesIndicator = () => {
     minute: '2-digit',
     second: '2-digit',
   });
+
+  // Don't render until hydrated to prevent content mismatch
+  if (!hasHydrated) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-[2.87rem] right-0 z-5 hidden md:block">
