@@ -37,6 +37,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     event: WebSocketMessage;
     data: WebSocketData[WebSocketMessage];
   } | null>(null);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRetryingRef = useRef(false);
@@ -115,9 +116,14 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
     setSocket(socketInstance);
   }, [socketURL]);
 
+  // Set hydrated flag on client-side
   useEffect(() => {
-    // Only create socket connection if user is authenticated and no socket exists
-    if (status === 'authenticated' && !socket && !socketRef.current) {
+    setHasHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    // Only create socket connection after hydration and if user is authenticated
+    if (hasHydrated && status === 'authenticated' && !socket && !socketRef.current) {
       createSocketConnection();
     }
 
@@ -134,7 +140,7 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
         socketRef.current = null;
       }
     };
-  }, [status, createSocketConnection]);
+  }, [hasHydrated, status, createSocketConnection]);
 
   // Separate effect to handle authentication changes
   useEffect(() => {
