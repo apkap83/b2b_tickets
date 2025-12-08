@@ -192,11 +192,23 @@ export const WebSocketProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useWebSocketContext = (): UseSocketReturn => {
-  const context = useContext(WebSocketContext);
-  if (!context) {
-    throw new Error(
-      'useWebSocketContext must be used within a WebSocketProvider'
-    );
+  try {
+    const context = useContext(WebSocketContext);
+    if (!context) {
+      throw new Error(
+        'useWebSocketContext must be used within a WebSocketProvider'
+      );
+    }
+    return context;
+  } catch (error) {
+    // Fallback in case useContext fails during hydration
+    console.warn('WebSocket context access failed:', error);
+    return {
+      socket: null,
+      connected: false,
+      emitEvent: () => console.warn('WebSocket not available'),
+      latestEventEmitted: null,
+      resetLatestEventEmitted: () => {},
+    };
   }
-  return context;
 };
