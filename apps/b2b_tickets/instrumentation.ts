@@ -1,6 +1,9 @@
 // Next.js instrumentation for global error handling
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // Remove any existing listeners to prevent conflicts
+    process.removeAllListeners('uncaughtException');
+    process.removeAllListeners('unhandledRejection');
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
       // Check for the specific Next.js digest error
@@ -36,7 +39,8 @@ export async function register() {
         name: error.name
       });
       
-      // For other uncaught exceptions, log but continue (you can change this to process.exit(1) if needed)
+      // Don't exit for any uncaught exceptions - just log and continue
+      // This prevents the container from restarting on errors
     });
 
     console.info('[INSTRUMENTATION] Global error handlers registered');
