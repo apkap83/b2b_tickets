@@ -31,6 +31,8 @@ export async function register() {
 
     const SAFE_ERROR_PATTERNS = [
       "Cannot read properties of null (reading 'digest')",
+      "digest",
+      "Server Actions digest",
       // Add other known safe patterns
     ];
 
@@ -49,7 +51,7 @@ export async function register() {
       }
 
       console.error('[INSTRUMENTATION] Fatal uncaught exception:', error);
-      process.exit(1);
+      // Don't exit - let the server continue running
     });
 
     // Add debugging to see what's causing process exits
