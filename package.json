@@ -51,7 +51,7 @@
     "mammoth": "^1.11.0",
     "mmmagic": "^0.5.3",
     "mui-one-time-password-input": "2.0.3",
-    "next": "14.2.28",
+    "next": "14.2.33",
     "next-auth": "4.24.11",
     "next-recaptcha-v3": "1.5.2",
     "nodemailer": "6.10.1",
