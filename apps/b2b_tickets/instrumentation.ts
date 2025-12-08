@@ -1,45 +1,44 @@
-// apps/your-app-name/instrumentation.ts
-import { logErr, logInfo } from '@b2b-tickets/logging';
-
+// Next.js instrumentation for global error handling
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // Handle unhandled promise rejections
     process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-      if (
-        reason?.message?.includes(
-          "Cannot read properties of null (reading 'digest')"
-        )
-      ) {
-        logInfo.warn(
-          'Next.js Server Actions digest error - client/server build ID mismatch'
-        );
+      // Check for the specific Next.js digest error
+      if (reason?.message?.includes("Cannot read properties of null (reading 'digest')")) {
+        console.warn('[INSTRUMENTATION] Next.js Server Actions digest error - client/server build ID mismatch');
+        // Don't crash the server for this specific error
         return;
       }
 
-      logErr.error(reason, {
-        type: 'unhandledRejection',
-        promise: String(promise),
+      // Log other unhandled rejections
+      console.error('[INSTRUMENTATION] Unhandled Promise Rejection:', {
+        reason: reason,
+        message: reason?.message || 'Unknown error',
+        stack: reason?.stack || 'No stack trace'
       });
-
-      process.exit(1);
+      
+      // Don't exit for unhandled rejections - let them fail gracefully
     });
 
+    // Handle uncaught exceptions
     process.on('uncaughtException', (error: Error) => {
-      if (
-        error.message?.includes(
-          "Cannot read properties of null (reading 'digest')"
-        )
-      ) {
-        logInfo.warn('Digest error in uncaughtException - continuing');
+      // Check for the specific Next.js digest error
+      if (error.message?.includes("Cannot read properties of null (reading 'digest')")) {
+        console.warn('[INSTRUMENTATION] Digest error in uncaughtException - continuing');
+        // Don't crash the server for this specific error
         return;
       }
 
-      logErr.error(error, {
-        type: 'uncaughtException',
+      // Log other uncaught exceptions
+      console.error('[INSTRUMENTATION] Uncaught Exception:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
       });
-
-      process.exit(1);
+      
+      // For other uncaught exceptions, log but continue (you can change this to process.exit(1) if needed)
     });
 
-    logInfo.info('Global error handlers registered');
+    console.info('[INSTRUMENTATION] Global error handlers registered');
   }
 }
