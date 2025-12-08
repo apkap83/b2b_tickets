@@ -1,96 +1,89 @@
 // Next.js instrumentation for global error handling
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    // Remove any existing listeners to prevent conflicts
     process.removeAllListeners('uncaughtException');
     process.removeAllListeners('unhandledRejection');
-    // Handle unhandled promise rejections
-    process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-      // Check for the specific Next.js digest error
-      if (
-        reason?.message?.includes(
-          "Cannot read properties of null (reading 'digest')"
-        )
-      ) {
-        console.warn(
-          '[INSTRUMENTATION] Next.js Server Actions digest error - client/server build ID mismatch'
-        );
-        // Don't crash the server for this specific error
-        return;
-      }
-
-      // Log other unhandled rejections
-      console.error('[INSTRUMENTATION] Unhandled Promise Rejection:', {
-        reason: reason,
-        message: reason?.message || 'Unknown error',
-        stack: reason?.stack || 'No stack trace',
-      });
-
-      // Don't exit for unhandled rejections - let them fail gracefully
-    });
 
     const SAFE_ERROR_PATTERNS = [
-      "Cannot read properties of null (reading 'digest')",
-      'digest',
-      'Server Actions digest',
-      // Add other known safe patterns
+      /Cannot read properties of null \(reading 'digest'\)/,
+      /next.*digest/i, // More specific than just 'digest'
     ];
 
-    // Handle uncaught exceptions
-    process.on('uncaughtException', (error: Error) => {
-      const isSafeError = SAFE_ERROR_PATTERNS.some((pattern) =>
-        error.message?.includes(pattern)
-      );
+    // Track error frequency to detect cascading failures
+    const errorCounts = new Map<string, number>();
+    const ERROR_THRESHOLD = 10; // Max errors per pattern in 60s
+    const resetInterval = setInterval(() => errorCounts.clear(), 60000);
 
-      if (isSafeError) {
-        console.warn(
-          '[INSTRUMENTATION] Known safe error - continuing',
-          error.message
-        );
+    process.on('unhandledRejection', (reason: any) => {
+      const message = reason?.message || String(reason);
+
+      if (SAFE_ERROR_PATTERNS.some((p) => p.test(message))) {
+        console.warn('[INSTRUMENTATION] Known digest error:', message);
         return;
       }
 
-      console.error('[INSTRUMENTATION] Fatal uncaught exception:', error);
-      // Don't exit - let the server continue running
+      console.error('[INSTRUMENTATION] Unhandled Rejection:', {
+        message,
+        stack: reason?.stack,
+      });
     });
 
-    // Add debugging to see what's causing process exits
+    process.on('uncaughtException', (error: Error) => {
+      const message = error.message || String(error);
+
+      // Check if it's a "safe" error
+      const isSafe = SAFE_ERROR_PATTERNS.some((p) => p.test(message));
+
+      if (isSafe) {
+        console.warn('[INSTRUMENTATION] Known safe error:', message);
+        return;
+      }
+
+      // Track error frequency
+      const key = error.name + ':' + message.substring(0, 50);
+      const count = (errorCounts.get(key) || 0) + 1;
+      errorCounts.set(key, count);
+
+      console.error('[INSTRUMENTATION] Uncaught Exception:', {
+        message,
+        stack: error.stack,
+        name: error.name,
+        occurrenceCount: count,
+      });
+
+      // If same error happens too many times, crash to prevent infinite loops
+      if (count >= ERROR_THRESHOLD) {
+        console.error('[INSTRUMENTATION] Error threshold exceeded - exiting');
+        clearInterval(resetInterval);
+        process.exit(1);
+      }
+
+      // Otherwise continue (but log prominently)
+      console.warn(
+        '[INSTRUMENTATION] ⚠️  Continuing despite uncaught exception'
+      );
+    });
+
+    // Exit debugging (keep your existing code)
     process.on('exit', (code) => {
+      clearInterval(resetInterval);
       console.error(`[INSTRUMENTATION] Process exiting with code: ${code}`);
-      console.error(`[INSTRUMENTATION] Exit stack trace:`, new Error().stack);
     });
 
-    process.on('SIGTERM', () => {
-      console.error('[INSTRUMENTATION] Received SIGTERM signal');
-    });
+    process.on('SIGTERM', () => console.error('[INSTRUMENTATION] SIGTERM'));
+    process.on('SIGINT', () => console.error('[INSTRUMENTATION] SIGINT'));
 
-    process.on('SIGINT', () => {
-      console.error('[INSTRUMENTATION] Received SIGINT signal');
-    });
-
-    process.on('SIGHUP', () => {
-      console.error('[INSTRUMENTATION] Received SIGHUP signal');
-    });
-
-    process.on('beforeExit', (code) => {
-      console.error(`[INSTRUMENTATION] Before exit with code: ${code}`);
-    });
-
-    // Catch ANY process termination
-    process.on('warning', (warning) => {
-      console.error('[INSTRUMENTATION] Process warning:', warning);
-    });
-
-    // Override process.exit to see who's calling it
     const originalExit = process.exit;
     process.exit = ((code?: number) => {
-      console.error(`[INSTRUMENTATION] process.exit(${code}) called!`);
-      console.error('[INSTRUMENTATION] Exit called from:', new Error().stack);
+      console.error(
+        `[INSTRUMENTATION] process.exit(${code}) called from:`,
+        new Error().stack
+      );
       return originalExit.call(process, code);
     }) as typeof process.exit;
 
     console.info(
-      '[INSTRUMENTATION] Global error handlers and exit debugging registered'
+      '[INSTRUMENTATION] Error handlers registered (TEMPORARY DEBUG MODE)'
     );
   }
 }
