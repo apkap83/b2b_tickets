@@ -33,6 +33,8 @@ export async function register() {
       "Cannot read properties of null (reading 'digest')",
       "digest",
       "Server Actions digest",
+      "reading 'digest'",
+      "digest error",
       // Add other known safe patterns
     ];
 
@@ -81,12 +83,21 @@ export async function register() {
       console.error('[INSTRUMENTATION] Process warning:', warning);
     });
 
-    // Override process.exit to see who's calling it
+    // Override process.exit to prevent ALL crashes
     const originalExit = process.exit;
     process.exit = ((code?: number) => {
-      console.error(`[INSTRUMENTATION] process.exit(${code}) called!`);
-      console.error('[INSTRUMENTATION] Exit called from:', new Error().stack);
-      return originalExit.call(process, code);
+      console.error(`[INSTRUMENTATION] PREVENTED process.exit(${code}) - server will continue running`);
+      console.error('[INSTRUMENTATION] Exit attempt from:', new Error().stack);
+      
+      // For development, you might want to actually exit
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[INSTRUMENTATION] Development mode - allowing exit');
+        return originalExit.call(process, code);
+      }
+      
+      // In production, NEVER exit - just log and continue
+      console.error('[INSTRUMENTATION] Production mode - ignoring exit request');
+      return undefined as never;
     }) as typeof process.exit;
 
     console.info(
