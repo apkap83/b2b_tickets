@@ -1,6 +1,9 @@
 //@ts-check
 const { version } = require('../../package.json');
 
+// Add global error handler to prevent server crashes
+require('./error-handler');
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
 
