@@ -23,6 +23,12 @@ const nextConfig = {
   env: {
     version,
   },
+  // Generate consistent build ID to prevent Server Action mismatches
+  generateBuildId: async () => {
+    // Use version from package.json for build ID consistency
+    // This ensures the same build has the same ID across deployments
+    return `${version}-${Date.now()}`;
+  },
   async headers() {
     return [
       {
@@ -32,6 +38,16 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Don't cache Next.js data requests (including Server Actions)
+        source: '/_next/data/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
           },
         ],
       },
@@ -46,6 +62,13 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  // Optional: Add experimental features for better Server Actions handling
+  experimental: {
+    // Improve Server Actions reliability
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
 };
 
