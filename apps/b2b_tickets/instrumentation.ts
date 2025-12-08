@@ -65,6 +65,19 @@ export async function register() {
       console.error(`[INSTRUMENTATION] Before exit with code: ${code}`);
     });
 
+    // Catch ANY process termination
+    process.on('warning', (warning) => {
+      console.error('[INSTRUMENTATION] Process warning:', warning);
+    });
+
+    // Override process.exit to see who's calling it
+    const originalExit = process.exit;
+    process.exit = ((code?: number) => {
+      console.error(`[INSTRUMENTATION] process.exit(${code}) called!`);
+      console.error('[INSTRUMENTATION] Exit called from:', new Error().stack);
+      return originalExit.call(process, code);
+    }) as typeof process.exit;
+
     console.info('[INSTRUMENTATION] Global error handlers and exit debugging registered');
   }
 }
