@@ -27,7 +27,8 @@ const nextConfig = {
   generateBuildId: async () => {
     // Use version from package.json for build ID consistency
     // This ensures the same build has the same ID across deployments
-    return `${version}-${Date.now()}`;
+    // Use a unique ID each time to force client refresh
+    return `${version}-${process.env.BUILD_ID || Date.now()}`;
   },
   async headers() {
     return [
