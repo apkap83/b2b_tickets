@@ -22,10 +22,10 @@ export const LiveUpdatesIndicator = () => {
   // Initialize state from sessionStorage after hydration to prevent mismatches
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     setHasHydrated(true);
     const hasSeenIndicator = sessionStorage.getItem('liveUpdatesIndicatorSeen');
-    
+
     if (hasSeenIndicator) {
       // User has seen indicator before - start in collapsed state
       setIsExpanded(false);
@@ -92,37 +92,38 @@ export const LiveUpdatesIndicator = () => {
     second: '2-digit',
   });
 
-  // Don't render until hydrated to prevent content mismatch
-  if (!hasHydrated) {
-    return null;
-  }
-
   return (
     <div className="fixed bottom-[2.87rem] right-0 z-5 hidden md:block">
-      <IndicatorContainer
-        isExpanded={isExpanded}
-        connected={connected}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <BackgroundGlow connected={connected} />
-
-        {isExpanded ? (
-          <ExpandedDot showPulse={showPulse} />
-        ) : (
-          <ShrunkIndicator
-            connected={connected}
-            showContent={showShrunkContent}
-          />
-        )}
-
-        <ExpandedContent
+      {!hasHydrated ? (
+        // Server-side placeholder - same structure but hidden content
+        <div style={{ opacity: 0 }} />
+      ) : (
+        // Client-side full content
+        <IndicatorContainer
           isExpanded={isExpanded}
-          formattedTime={formattedTime}
-        />
-      </IndicatorContainer>
+          connected={connected}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <BackgroundGlow connected={connected} />
 
-      {!isExpanded && <HoverTooltip />}
+          {isExpanded ? (
+            <ExpandedDot showPulse={showPulse} />
+          ) : (
+            <ShrunkIndicator
+              connected={connected}
+              showContent={showShrunkContent}
+            />
+          )}
+
+          <ExpandedContent
+            isExpanded={isExpanded}
+            formattedTime={formattedTime}
+          />
+        </IndicatorContainer>
+      )}
+
+      {hasHydrated && !isExpanded && <HoverTooltip />}
     </div>
   );
 };
