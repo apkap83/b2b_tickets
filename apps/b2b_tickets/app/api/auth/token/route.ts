@@ -15,9 +15,6 @@ const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key'; // Use an env
 export async function POST(req: NextRequest) {
   const logRequest = await getRequestLogger(TransportName.AUTH);
 
-  // Introduce a delay
-  await new Promise((resolve) => setTimeout(resolve, 750));
-
   try {
     if (req.method !== 'POST') {
       return NextResponse.json(
@@ -30,9 +27,6 @@ export async function POST(req: NextRequest) {
       await logTokenOTPAttempt(req);
 
     if (!eligibleForNewOtpAttempt) {
-      // Introduce a delay before returning error response
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       return NextResponse.json(
         {
           error: `Too many Token attempts. Banned for ${Math.floor(
@@ -44,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json(); // Extract JSON from request
+    const body = await req.json();
     const { emailProvided } = body;
 
     // Find User By email address
@@ -55,8 +49,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (!foundUser) {
-      // Use consistent timing to prevent email enumeration attacks
-      // No additional delay - both valid and invalid emails should take similar time
       return NextResponse.json(
         { message: 'Email address invalid' },
         { status: 400 }
@@ -77,9 +69,9 @@ export async function POST(req: NextRequest) {
 
     // Generate a JWT token
     const token = jwt.sign(
-      { emailProvided, token: encryptedSecret }, // Payload
-      JWT_SECRET, // Secret key
-      { expiresIn: '5m' } // Token is valid for 5 minutes
+      { emailProvided, token: encryptedSecret },
+      JWT_SECRET,
+      { expiresIn: '5m' }
     );
 
     // Set the token in an httpOnly cookie
@@ -92,15 +84,15 @@ export async function POST(req: NextRequest) {
       'Set-Cookie',
       serialize('emailJWTToken', token, {
         path: '/',
-        httpOnly: true, // Ensure cookie is not accessible via JavaScript
-        maxAge: config.emailJWTTokenCookieValidityInSec, // 300 seconds (5 minutes)
-        secure: process.env.NODE_ENV === 'production', // Set to true in production
+        httpOnly: true,
+        maxAge: config.emailJWTTokenCookieValidityInSec,
+        secure: process.env.NODE_ENV === 'production',
       })
     );
 
     return response;
   } catch (error) {
-    // Catch any unexpected errors and return a JSON response
+    logRequest.error(error);
     return NextResponse.json(
       { message: 'Internal Server Error' },
       { status: 500 }

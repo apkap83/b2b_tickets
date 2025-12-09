@@ -14,6 +14,7 @@ const JWT_SECRET = process.env['JWT_SECRET'] || 'your-secret-key'; // Use an env
 
 export async function POST(req: NextRequest) {
   const logRequest = await getRequestLogger(TransportName.AUTH);
+
   try {
     if (req.method !== 'POST') {
       return NextResponse.json(
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
         { status: 405 }
       );
     }
+
     const body = await req.json();
     const { emailProvided, totpCode, captchaV3token } = body;
     const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
@@ -52,9 +54,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (!foundUser) {
-      // Introduce a delay before returning error response
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       return NextResponse.json(
         { message: 'Error during TOTP operation' },
         { status: 400 }
@@ -78,6 +77,7 @@ export async function POST(req: NextRequest) {
       myRequestObj as NextApiRequest,
       totpCode
     );
+
     let remainingAttempts;
     if (typeof otpProvidedCorrect === 'object') {
       remainingAttempts = otpProvidedCorrect.remainingOTPAttempts;
@@ -106,9 +106,9 @@ export async function POST(req: NextRequest) {
 
     // Generate a JWT token after successful captcha validation
     const token = jwt.sign(
-      { emailProvided, otpValidatedForEmailAddress: true }, // Payload
-      JWT_SECRET, // Secret key
-      { expiresIn: '5m' } // Token is valid for 5 minutes
+      { emailProvided, otpValidatedForEmailAddress: true },
+      JWT_SECRET,
+      { expiresIn: '5m' }
     );
 
     logRequest.info(`OTP Validated for E-mail address ${emailProvided}`);
@@ -123,16 +123,15 @@ export async function POST(req: NextRequest) {
       'Set-Cookie',
       serialize('totpJWTToken', token, {
         path: '/',
-        httpOnly: true, // Ensure cookie is not accessible via JavaScript
-        maxAge: config.totpJWTTokenCookieValidityInSec, // 300 seconds (5 minutes)
-        secure: process.env.NODE_ENV === 'production', // Set to true in production
+        httpOnly: true,
+        maxAge: config.totpJWTTokenCookieValidityInSec,
+        secure: process.env.NODE_ENV === 'production',
       })
     );
 
     return response;
   } catch (error) {
     logRequest.error(error);
-    // Catch any unexpected errors and return a JSON response
     return NextResponse.json(
       { message: 'Internal Server Error' },
       { status: 500 }
