@@ -639,14 +639,14 @@ export async function deleteUser({ userName }: any) {
 
     // Check if user has associated tickets
     const userTicketCount = await pgB2Bpool.query(
-      'SELECT COUNT(*) as ticket_count FROM tickets WHERE owner_user_id = (SELECT user_id FROM users WHERE username = $1)',
+      'SELECT COUNT(*) as ticket_count FROM tickets WHERE open_user_id = (SELECT user_id FROM users WHERE username = $1)',
       [userName]
     );
 
     if (userTicketCount.rows[0]?.ticket_count > 0) {
       return {
         status: 'ERROR',
-        message: `Cannot delete user '${userName}': User has ${userTicketCount.rows[0].ticket_count} associated tickets. Please reassign or close tickets before deletion.`
+        message: `Cannot delete user '${userName}': User has ${userTicketCount.rows[0].ticket_count} associated tickets. Please reassign or close tickets before deletion.`,
       };
     }
 
