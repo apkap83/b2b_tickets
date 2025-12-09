@@ -17,12 +17,16 @@ export const pgB2Bpool = new Pool({
   keepAlive: true,
 });
 
-// Set timezone for each connection (ensure this is only registered once)
+// Set timezone and schema for each connection (ensure this is only registered once)
 let poolListenersRegistered = false;
 if (!poolListenersRegistered) {
   pgB2Bpool.on('connect', (client) => {
-    client.query("SET TIME ZONE 'Europe/Athens';").catch((err) => {
-      console.error('Error setting timezone:', err);
+    // Set BOTH timezone and schema on every new connection
+    client.query(`
+      SET TIME ZONE '${config.TimeZone}';
+      SET search_path TO ${config.postgres_b2b_database.schemaName};
+    `).catch((err) => {
+      console.error('Error setting connection defaults:', err);
     });
   });
   poolListenersRegistered = true;

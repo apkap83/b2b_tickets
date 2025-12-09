@@ -637,6 +637,9 @@ export async function deleteUser({ userName }: any) {
       AppPermissionTypes.API_Security_Management,
     ])) as Session;
 
+    // Get next user_id from sequence
+    await setSchemaAndTimezone(pgB2Bpool);
+
     // Check if user has associated tickets
     const userTicketCount = await pgB2Bpool.query(
       'SELECT COUNT(*) as ticket_count FROM tickets WHERE open_user_id = (SELECT user_id FROM users WHERE username = $1)',
