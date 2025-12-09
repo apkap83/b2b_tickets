@@ -30,6 +30,11 @@ const nextConfig = {
   //   // Use a unique ID each time to force client refresh
   //   return `${version}-${process.env.BUILD_ID || Date.now()}`;
   // },
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
   experimental: {
     // Enable instrumentation hook for global error handlers
     instrumentationHook: true,
