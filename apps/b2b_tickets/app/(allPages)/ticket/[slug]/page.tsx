@@ -89,7 +89,11 @@ async function renderTicketDetails(
         theTicketDetails={ticketDetails}
         theTicketNumber={ticketNumber}
       />
-      {showLiveIndicator && <LiveUpdatesIndicator />}
+      {showLiveIndicator && (
+        <div>
+          <LiveUpdatesIndicator />
+        </div>
+      )}
     </>
   );
 }
