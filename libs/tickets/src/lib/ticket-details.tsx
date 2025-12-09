@@ -475,7 +475,7 @@ export function TicketDetails({
         className="relative text-white max-w-[170px] text-center font-medium leading-[1] text-[12px] flex gap-2 justify-center items-center rounded-full px-4 py-1 pointer-events-none"
       >
         <div className="bg-white text-blue-300 w-[0.30rem] h-[0.30rem] absolute left-[0.65rem] top-[0.30rem] rounded-full"></div>
-        <Image src={escalateIcon} alt="escalate icon" width={24} height={24} />
+        <Image src={escalateIcon} alt="escalate icon" height={24} />
         <span>
           Escalation Option
           <br />
