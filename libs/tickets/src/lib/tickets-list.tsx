@@ -81,10 +81,16 @@ export const TicketsList = memo(
         getTicketList();
       };
 
-      window.addEventListener('companyChanged', handleCompanyChange as EventListener);
+      window.addEventListener(
+        'companyChanged',
+        handleCompanyChange as EventListener
+      );
 
       return () => {
-        window.removeEventListener('companyChanged', handleCompanyChange as EventListener);
+        window.removeEventListener(
+          'companyChanged',
+          handleCompanyChange as EventListener
+        );
       };
     }, [getTicketList]);
 
@@ -112,7 +118,9 @@ export const TicketsList = memo(
           currentPage={currentPageNumber}
         />
         {userHasRole(session, AppRoleTypes.B2B_TicketHandler) && (
-          <LiveUpdatesIndicator />
+          <div>
+            <LiveUpdatesIndicator />
+          </div>
         )}
       </>
     );
