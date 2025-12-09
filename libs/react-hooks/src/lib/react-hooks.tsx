@@ -51,11 +51,15 @@ export const useEscKeyListener = (onEscPress: () => void) => {
 
   useEffect(() => {
     // Attach the event listener
-    window.addEventListener('keydown', handleEscKeyPress);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', handleEscKeyPress);
+    }
 
     // Cleanup the event listener on component unmount
     return () => {
-      window.removeEventListener('keydown', handleEscKeyPress);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('keydown', handleEscKeyPress);
+      }
     };
   }, [handleEscKeyPress]);
 };

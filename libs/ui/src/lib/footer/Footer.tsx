@@ -38,8 +38,7 @@ export const Footer: React.FC = () => {
               fill: 'white',
             }}
           />{' '} */}
-          NOVA&nbsp;
-          {new Date().getFullYear()}
+          NOVA&nbsp;2025
         </div>
 
         <Image

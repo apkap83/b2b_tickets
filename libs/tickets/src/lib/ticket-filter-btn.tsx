@@ -48,12 +48,14 @@ export const TicketFilter = () => {
       }
     };
 
-    if (isTicketFilterDropdownOpen) {
+    if (typeof window !== 'undefined' && isTicketFilterDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (typeof window !== 'undefined') {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
     };
   }, [isTicketFilterDropdownOpen]);
 
@@ -63,11 +65,15 @@ export const TicketFilter = () => {
       if (term === FilterTicketsStatus.All) {
         params.delete('query');
         params.set('page', '1');
-        sessionStorage.removeItem('ticketFilter');
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('ticketFilter');
+        }
       } else {
         params.set('query', term);
         params.set('page', '1');
-        sessionStorage.setItem('ticketFilter', params.toString()); // Use params directly
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('ticketFilter', params.toString()); // Use params directly
+        }
       }
     } else {
       params.delete('query');
