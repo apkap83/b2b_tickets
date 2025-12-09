@@ -24,14 +24,18 @@ export const LoggedInIndication = ({ session, customerName }: any) => {
         setProfileMenuOpen(false);
       }
     };
-    if (profileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
+    if (typeof window !== 'undefined') {
+      if (profileMenuOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
+      } else {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      if (typeof window !== 'undefined') {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
     };
   }, [profileMenuOpen]);
 

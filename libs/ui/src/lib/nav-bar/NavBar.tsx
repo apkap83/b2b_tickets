@@ -100,9 +100,13 @@ export const NavBar = memo(() => {
 
   // Memoize navigation handlers
   const navigateToTickets = useCallback(() => {
-    const savedFilter = sessionStorage.getItem('ticketFilter');
-    if (savedFilter) {
-      router.replace(`/tickets?${savedFilter}`);
+    if (typeof window !== 'undefined') {
+      const savedFilter = sessionStorage.getItem('ticketFilter');
+      if (savedFilter) {
+        router.replace(`/tickets?${savedFilter}`);
+      } else {
+        router.replace(`/tickets`);
+      }
     } else {
       router.replace(`/tickets`);
     }
@@ -168,9 +172,11 @@ export const NavBar = memo(() => {
         
         // Dispatch custom event to trigger tickets refresh without page reload
         // This provides a smoother experience than router.refresh()
-        window.dispatchEvent(new CustomEvent('companyChanged', {
-          detail: { newCompanyId: Number(newCompanyId) }
-        }));
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('companyChanged', {
+            detail: { newCompanyId: Number(newCompanyId) }
+          }));
+        }
         
         // Small delay to allow tickets to refresh before hiding loading
         setTimeout(() => {
