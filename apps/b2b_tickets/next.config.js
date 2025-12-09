@@ -38,6 +38,8 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  // Enable React Strict Mode only in development to catch hydration issues
+  reactStrictMode: process.env.NODE_ENV === 'development',
 };
 
 const plugins = [

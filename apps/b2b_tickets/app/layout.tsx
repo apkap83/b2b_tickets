@@ -15,7 +15,6 @@ import { AppThemeProvider } from '@b2b-tickets/ui-theme';
 import CookieConsentBanner from './CookieConsentBanner';
 import WebSocketWrapper from './WebSocketWrapper';
 
-// TODO Fix Error With the below entry
 // import StyledComponentsRegistry from './lib/registry';
 
 export const metadata = {
@@ -61,7 +60,6 @@ export default async function RootLayout({
     <html lang="en">
       <body className={'subpixel-antialiased'}>
         <AuthProvider>
-          {/* <StyledComponentsRegistry> */}
           <CssBaseline />
           <AppRouterCacheProvider>
             <AppThemeProvider>
@@ -75,7 +73,6 @@ export default async function RootLayout({
               </ToastProvider>
             </AppThemeProvider>
           </AppRouterCacheProvider>
-          {/* </StyledComponentsRegistry> */}
         </AuthProvider>
         <Script src="https://scripts.simpleanalyticscdn.com/latest.js" />
       </body>
