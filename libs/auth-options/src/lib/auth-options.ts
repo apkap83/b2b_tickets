@@ -54,8 +54,10 @@ function getRequestLogger(transportName: TransportName) {
     return logRequest;
   } catch (error) {
     // DON'T THROW - Return a fallback logger for NextAuth context
-    console.warn('Headers not available, using fallback logger for NextAuth context');
-    
+    console.warn(
+      'Headers not available, using fallback logger for NextAuth context'
+    );
+
     // Return a fallback logger that works in NextAuth context
     return createRequestLogger(
       transportName,
@@ -94,7 +96,7 @@ export const tryLocalAuthentication = async (
     if (!foundUser) {
       logRequest.error(`Incorrect user name provided`);
       // Introduce a 1500ms delay before returning error response
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // await new Promise((resolve) => setTimeout(resolve, 1500));
 
       throw new Error(ErrorCode.IncorrectUsernameOrPassword);
     }
@@ -414,7 +416,7 @@ export const options: NextAuthOptions = {
           if (localAuthUserDetails.userName === 'admin') {
             // Additional validation: ensure admin has proper role
             const hasAdminRole = localAuthUserDetails.roles.includes('Admin');
-            
+
             if (!hasAdminRole) {
               logRequest.error(
                 `SECURITY ALERT: User with admin username lacks Admin role - user_id: ${localAuthUserDetails.user_id}`
@@ -424,7 +426,11 @@ export const options: NextAuthOptions = {
 
             // Audit log for admin TOTP bypass
             logRequest.info(
-              `Admin TOTP bypass used - user_id: ${localAuthUserDetails.user_id}, customer_id: ${localAuthUserDetails.customer_id}, IP: ${req?.ip || 'unknown'}`
+              `Admin TOTP bypass used - user_id: ${
+                localAuthUserDetails.user_id
+              }, customer_id: ${localAuthUserDetails.customer_id}, IP: ${
+                req?.ip || 'unknown'
+              }`
             );
             logRequest.info(
               `Local User '${credentials.userName}' has been successfully authenticated`
@@ -559,7 +565,7 @@ export const options: NextAuthOptions = {
             );
 
             // Introduce a 1500ms delay before returning error response
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            // await new Promise((resolve) => setTimeout(resolve, 1500));
 
             throw new Error(
               ErrorCode.IfAccountExistsYouWillReceivePasswordResetLink
