@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -41,7 +41,7 @@ import styles from './CreateUserModal.module.scss';
 function CreateUserModal({ rolesList, closeModal }) {
   const [loading, setLoading] = useState(false);
   const [customersList, setCustomersList] = useState([]);
-  const [formState, action] = useFormState(createUser, EMPTY_FORM_STATE);
+  const [formState, action] = useActionState(createUser, EMPTY_FORM_STATE);
   const [multipleCompaniesPopupVisible, setMultipleCompaniesPopupVisible] =
     useState(false);
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import { createRole } from '@b2b-tickets/admin-server-actions';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import { useFormik } from 'formik';
@@ -13,7 +13,7 @@ import { CancelButton } from '../../common/CancelButton';
 import styles from './CreateRoleModal.module.scss';
 
 const CreateRoleModal = ({ closeModal }) => {
-  const [formState, action] = useFormState(createRole, EMPTY_FORM_STATE);
+  const [formState, action] = useActionState(createRole, EMPTY_FORM_STATE);
 
   const noScriptFallback = useToastMessage(formState);
 

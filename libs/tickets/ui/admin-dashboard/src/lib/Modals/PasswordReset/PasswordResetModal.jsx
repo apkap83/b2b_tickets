@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import React, { useEffect, useActionState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useRouter } from 'next/navigation';
@@ -27,7 +26,7 @@ const validationSchema = Yup.object({
 
 export const PasswordResetModal = ({ userDetails }) => {
   const router = useRouter();
-  const [formState, action] = useFormState(
+  const [formState, action] = useActionState(
     updateUserPassword,
     EMPTY_FORM_STATE
   );

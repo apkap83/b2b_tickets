@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import { useState, useEffect } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import { styled } from '@mui/material/styles';
@@ -83,7 +83,7 @@ export function EscalateModal({
 
   const [submitButtonLabel, setSubmitButtonLabel] = useState('Submit Comment');
 
-  const [formState, action] = useFormState<any, any>(
+  const [formState, action] = useActionState<any, any>(
     escalateTicket,
     EMPTY_FORM_STATE
   );

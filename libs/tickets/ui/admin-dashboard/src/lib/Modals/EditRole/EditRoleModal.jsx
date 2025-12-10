@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useActionState } from 'react';
 import * as Yup from 'yup';
-import { useFormState } from 'react-dom';
 import { useFormik } from 'formik';
 import { FieldError } from '@b2b-tickets/tickets/ui/admin-dashboard';
 import { useToastMessage } from '@b2b-tickets/react-hooks';
@@ -17,7 +16,7 @@ const validationSchema = Yup.object({
 });
 
 const EditRoleModal = ({ roleDetails, permissionsList, closeModal }) => {
-  const [formState, action] = useFormState(editRole, EMPTY_FORM_STATE);
+  const [formState, action] = useActionState(editRole, EMPTY_FORM_STATE);
 
   const noScriptFallback = useToastMessage(formState);
 

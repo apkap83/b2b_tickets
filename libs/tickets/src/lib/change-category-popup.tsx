@@ -1,6 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import { useFormState } from 'react-dom';
+import React, { useState, useEffect, useRef, useActionState } from 'react';
 import { EMPTY_FORM_STATE } from '@b2b-tickets/utils';
 import {
   TicketDetail,
@@ -44,7 +43,7 @@ export const ChangeCategoryPopup = ({
   const [selectedCategoryServiceTypeId, setSelectedCategoryServiceTypeId] =
     useState('');
 
-  const [formState, action] = useFormState<any, any>(
+  const [formState, action] = useActionState<any, any>(
     setNewCategoryServiceTypeForTicket,
     EMPTY_FORM_STATE
   );

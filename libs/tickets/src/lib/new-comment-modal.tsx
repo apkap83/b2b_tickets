@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useSession } from 'next-auth/react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Button from '@mui/material/Button';
 import { Typography, useTheme } from '@mui/material';
@@ -49,7 +49,7 @@ export const NewCommentModal = memo(
     const [submitButtonLabel, setSubmitButtonLabel] =
       useState('Submit Comment');
 
-    const [formState, action] = useFormState<any, any>(
+    const [formState, action] = useActionState<any, any>(
       createNewComment,
       EMPTY_FORM_STATE
     );
