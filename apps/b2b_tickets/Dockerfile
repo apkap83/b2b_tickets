@@ -16,6 +16,7 @@ RUN pnpm run test:safe
 
 # Build the NMS_Portal project using nx
 RUN nx reset
+RUN nx build b2b_tickets --prod
 
 # Set Permisssions to Centos for /app dir
 RUN chown -R centos:centos /app /home/centos/
