@@ -1,4 +1,4 @@
-import type { Config } from 'jest';
+const { Config } = require('jest');
 
 const config: Config = {
   displayName: 'server-actions',
@@ -15,7 +15,7 @@ const config: Config = {
   coverageThreshold: {
     global: {
       statements: 70,
-      branches: 60, 
+      branches: 60,
       functions: 70,
       lines: 70,
     },
@@ -30,4 +30,4 @@ const config: Config = {
   ],
 };
 
-export default config;
+module.exports = config;

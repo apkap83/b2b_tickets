@@ -35,9 +35,8 @@ const nextConfig = {
       fullUrl: true,
     },
   },
+
   experimental: {
-    // Enable instrumentation hook for global error handlers
-    instrumentationHook: true,
     // Improve Server Actions reliability
     serverActions: {
       bodySizeLimit: '2mb',
@@ -45,6 +44,8 @@ const nextConfig = {
   },
   // Enable React Strict Mode only in development to catch hydration issues
   reactStrictMode: process.env.NODE_ENV === 'development',
+
+  allowedDevOrigins: ['http://127.0.0.1:3455'],
 };
 
 const plugins = [

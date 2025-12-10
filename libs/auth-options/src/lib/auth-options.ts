@@ -35,10 +35,10 @@ import {
 
 import { verifyJWTTotp, verifyJWTTokenForEmail } from './jwtVerification';
 
-function getRequestLogger(transportName: TransportName) {
+async function getRequestLogger(transportName: TransportName) {
   // Ensure this is executed in a server-side context
   try {
-    const headersList = headers(); // Server-side request headers
+    const headersList = await headers(); // Server-side request headers
     const reqIP = headersList.get('request-ip') || 'unknown-ip';
     const reqURL = headersList.get('request-url') || 'unknown-url';
     const sessionId = headersList.get('session-id') || 'unknown-session';

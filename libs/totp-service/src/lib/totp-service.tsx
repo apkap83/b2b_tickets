@@ -163,7 +163,12 @@ export async function logFaultyOTPAttempt(req: NextRequest): Promise<{
   eligibleForNewOtpAttempt: boolean;
   remainingOTPAttempts: number;
 }> {
-  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  // const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  // This will work because NGINX passes the headers:
+  const ip =
+    req.headers.get('x-forwarded-for') ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
   const key = `otp_attempts:${ip}`;
 
   let numfOfAttemptsInRedis = Number(await redisClient.get(key)) || 0;
@@ -193,7 +198,12 @@ export async function logFaultyOTPAttempt(req: NextRequest): Promise<{
 }
 
 export async function clearFaultyOTPAttempts(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  // const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  // This will work because NGINX passes the headers:
+  const ip =
+    req.headers.get('x-forwarded-for') ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
   const key = `otp_attempts:${ip}`;
 
   // Clear OTP Attempts on Success
@@ -204,7 +214,12 @@ export async function logTokenOTPAttempt(req: NextRequest): Promise<{
   eligibleForNewOtpAttempt: boolean;
   remainingOTPAttempts: number;
 }> {
-  const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  // const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+  // This will work because NGINX passes the headers:
+  const ip =
+    req.headers.get('x-forwarded-for') ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
   const key = `token_attempts:${ip}`;
 
   let numfOfAttemptsInRedis = Number(await redisClient.get(key)) || 0;

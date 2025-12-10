@@ -6,15 +6,17 @@ import Container from '@mui/material/Container';
 import { getFilteredTicketsForCustomer } from '@b2b-tickets/server-actions';
 import { notFound, redirect } from 'next/navigation';
 
-const App: React.FC = async ({
-  searchParams = {}, // Provide a default empty object
-}: {
-  searchParams?: {
-    query?: string;
-    page?: string;
-    [key: string]: string | undefined; // Handle dynamic filter keys
-  };
-}) => {
+interface SearchParams {
+  query?: string;
+  page?: string;
+  [key: string]: string | undefined; // Handle dynamic filter keys
+}
+
+interface PageProps {
+  searchParams?: Promise<SearchParams>;
+}
+
+const App = async ({ searchParams }: PageProps) => {
   // Authentication check
   const session = await getServerSession(options);
 
@@ -22,19 +24,23 @@ const App: React.FC = async ({
     redirect('/signin?callbackUrl=/tickets');
   }
 
-  const query = searchParams.query || ''; // Use the query parameter or default to an empty string
-  const page = Number(searchParams.page) || 1; // Parse page number or default to 1
+  // ✅ FIX: Await searchParams first
+  const params = (await searchParams) || {};
+
+  const query = params.query || ''; // Use the query parameter or default to an empty string
+  const page = Number(params.page) || 1; // Parse page number or default to 1
 
   // Extract additional filters from searchParams
   const filters: Record<string, string[]> = {};
 
-  // console.log('searchParams', searchParams);
+  // console.log('searchParams', params);
 
-  Object.keys(searchParams).forEach((key) => {
-    filters[key] = decodeURIComponent(searchParams[key]!)
+  Object.keys(params).forEach((key) => {
+    filters[key] = decodeURIComponent(params[key]!)
       .split('\x1F') // Use the delimiter to split values
       .filter(Boolean); // Remove empty values
   });
+
   const { pageData, totalRows } = await getFilteredTicketsForCustomer(
     page,
     query,

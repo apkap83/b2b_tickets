@@ -25,7 +25,12 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { emailProvided, totpCode, captchaV3token } = body;
-    const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+    // const ip = req.headers.get('x-forwarded-for') || req.ip || 'unknown';
+    // This will work because NGINX passes the headers:
+    const ip =
+      req.headers.get('x-forwarded-for') ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
 
     // Validate the captcha token
     if (config.CaptchaIsActiveForPasswordReset) {

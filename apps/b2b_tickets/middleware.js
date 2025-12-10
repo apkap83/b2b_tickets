@@ -8,7 +8,6 @@ function getClientIp(req) {
   const ip =
     req.headers.get('x-forwarded-for')?.split(',').shift() ||
     req.headers.get('x-real-ip') ||
-    req.ip ||
     '0.0.0.0';
   return ip;
 }

@@ -102,22 +102,24 @@ async function renderTicketDetails(
 // MAIN COMPONENT
 // ============================================================================
 
-const App = async ({ params }: { params: { slug?: string } }) => {
+const App = async ({ params }: { params: Promise<{ slug?: string }> }) => {
   // Step 1: Authentication
   const session = await getServerSession(options);
 
+  const { slug } = await params;
+
   if (!session?.user) {
-    redirect(`/signin?callbackUrl=/ticket/${params.slug || ''}`);
+    redirect(`/signin?callbackUrl=/ticket/${slug || ''}`);
   }
 
-  if (!params.slug) {
+  if (!slug) {
     notFound();
   }
 
   await setSchemaAndTimezone(pgB2Bpool);
 
   const { user } = session;
-  const ticketNumber = params.slug;
+  const ticketNumber = slug;
 
   // Step 2: Check if user is ticket handler (bypass all company logic)
   const isTicketHandler = userHasRole(session, AppRoleTypes.B2B_TicketHandler);

@@ -1,4 +1,4 @@
-import type { Config } from 'jest';
+const { Config } = require('jest');
 
 const config: Config = {
   displayName: 'auth-options',
@@ -25,4 +25,4 @@ const config: Config = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
 };
 
-export default config;
+module.exports = config;

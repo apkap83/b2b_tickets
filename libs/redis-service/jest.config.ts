@@ -1,4 +1,4 @@
-import type { Config } from 'jest';
+const { Config } = require('jest');
 
 const config: Config = {
   displayName: 'redis-service',
@@ -28,4 +28,4 @@ const config: Config = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
 };
 
-export default config;
+module.exports = config;

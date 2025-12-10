@@ -38,7 +38,6 @@ import {
 import toast from 'react-hot-toast';
 import { useWebSocketContext } from '@b2b-tickets/contexts';
 import { Tooltip as ReactTooltip } from 'react-tooltip';
-import 'react-quill/dist/quill.snow.css';
 import { FaArrowCircleRight } from 'react-icons/fa';
 
 // Constants

@@ -18,7 +18,8 @@ export default async function SignIn({ searchParams }) {
   const session = await getServerSession(options);
 
   // Get the callback URL from search parameters
-  const callbackUrl = searchParams?.callbackUrl || '/tickets';
+  const params = await searchParams;
+  const callbackUrl = params?.callbackUrl || '/tickets';
 
   // If authenticated, redirect to the callback URL or tickets
   if (session) {

@@ -652,48 +652,42 @@ describe('passwordComplexitySchema', () => {
     const error = `Password must be at least ${config.MinimumPasswordCharacters} characters long`;
     await expect(
       passwordComplexitySchema.validate(shortPassword)
-    ).rejects.toThrowError(error);
+    ).rejects.toThrow(error);
   });
 
   it('should reject a password without an uppercase letter', async () => {
     const noUppercase = 'lowercase1!';
     await expect(
       passwordComplexitySchema.validate(noUppercase)
-    ).rejects.toThrowError(
-      'Password must contain at least one uppercase letter'
-    );
+    ).rejects.toThrow('Password must contain at least one uppercase letter');
   });
 
   it('should reject a password without a lowercase letter', async () => {
     const noLowercase = 'UPPERCASE1!';
     await expect(
       passwordComplexitySchema.validate(noLowercase)
-    ).rejects.toThrowError(
-      'Password must contain at least one lowercase letter'
-    );
+    ).rejects.toThrow('Password must contain at least one lowercase letter');
   });
 
   it('should reject a password without a number', async () => {
     const noNumber = 'NoNumber!';
-    await expect(
-      passwordComplexitySchema.validate(noNumber)
-    ).rejects.toThrowError('Password must contain at least one number');
+    await expect(passwordComplexitySchema.validate(noNumber)).rejects.toThrow(
+      'Password must contain at least one number'
+    );
   });
 
   it('should reject a password without a special character', async () => {
     const noSpecialChar = 'NoSpecial123';
     await expect(
       passwordComplexitySchema.validate(noSpecialChar)
-    ).rejects.toThrowError(
-      'Password must contain at least one special character'
-    );
+    ).rejects.toThrow('Password must contain at least one special character');
   });
 
   it('should reject an empty password', async () => {
     const emptyPassword = '';
     await expect(
       passwordComplexitySchema.validate(emptyPassword)
-    ).rejects.toThrowError(
+    ).rejects.toThrow(
       `Password must be at least ${config.MinimumPasswordCharacters} characters long`
     );
   });
