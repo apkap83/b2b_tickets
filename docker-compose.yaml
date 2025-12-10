@@ -28,7 +28,7 @@ services:
     command: >
       sh -c "cp /app/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
              cp /app/env-files/staging.ts /app/libs/config/src/lib/production.ts &&
-             nx start b2b_tickets --verbose"
+             next start apps/b2b_tickets --verbose"
     volumes:
       - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
       - /home/centos/Staging_Environment_Variables/.env.staging:/app/env-files/.env.staging
@@ -61,7 +61,7 @@ services:
     command: >
       sh -c "cp /app/env-files/.env.staging /app/apps/b2b_tickets/.env.production &&
              cp /app/env-files/staging.ts /app/libs/config/src/lib/production.ts &&
-             nx start b2b_tickets --verbose"
+             next start apps/b2b_tickets --verbose"
     volumes:
       - /var/log/b2b_test:/app/apps/b2b_tickets/logs/development
       - /home/centos/Staging_Environment_Variables/.env.staging:/app/env-files/.env.staging
@@ -90,7 +90,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - NODE_TLS_REJECT_UNAUTHORIZED=0
-    command: ['nx', 'start', 'b2b_tickets', '--verbose']
+    command: ['next', 'start', 'apps/b2b_tickets', '--verbose']
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
       - /home/centos/applications/b2b_tickets/attachment_files_prod:/home/centos/applications/b2b_tickets/attachment_files_prod
@@ -117,7 +117,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - NODE_TLS_REJECT_UNAUTHORIZED=0
-    command: ['nx', 'start', 'b2b_tickets', '--verbose']
+    command: ['next', 'start', 'apps/b2b_tickets', '--verbose']
     volumes:
       - /var/log/b2b_prod:/app/apps/b2b_tickets/logs/production
       - /home/centos/applications/b2b_tickets/attachment_files_prod:/home/centos/applications/b2b_tickets/attachment_files_prod
