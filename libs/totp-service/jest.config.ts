@@ -1,6 +1,6 @@
 const { Config } = require('jest');
 
-const config: Config = {
+const config: typeof Config = {
   displayName: 'totp-service',
   preset: '../../jest.preset.js',
   // // testMatch: ['<rootDir>/src/lib/__tests__/**/*.spec.ts'],
@@ -16,7 +16,6 @@ const config: Config = {
     '/node_modules/(?!your-esm-package|another-esm-package)', // Make sure Jest can process ESM modules
   ],
 
-  collectCoverage: true,
   coverageThreshold: {
     global: {
       statements: 80,

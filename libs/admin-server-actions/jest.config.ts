@@ -1,6 +1,6 @@
 const { Config } = require('jest');
 
-const config: Config = {
+const config: typeof Config = {
   displayName: 'admin-server-actions',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
